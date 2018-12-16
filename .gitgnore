@@ -1,0 +1,30 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Go template
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+mocks
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Contains docker temp files
+.tmp
+.ssh
+
+# ide
+.idea/*
+
+# mac files generate
+.DS_Store
+
+# Ansible
+*.retry
+
+# GENERAL PURPOSE
+vendor
