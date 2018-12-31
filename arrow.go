@@ -50,6 +50,7 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	table := array.NewTableFromRecords(schema, recs)
 	defer table.Release()
 
+
 	// makes a events buffer
 	events := make([]Event, table.NumRows())
 
