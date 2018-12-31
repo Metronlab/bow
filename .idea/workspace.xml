@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e3b25a06-c8dc-4da1-8107-1c0a91d9795a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/bow.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arrow.go" beforeDir="false" afterPath="$PROJECT_DIR$/arrow.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitgnore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitgnore" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -16,10 +15,10 @@
       <split-first>
         <leaf>
           <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/bow.go">
+            <entry file="file://$PROJECT_DIR$/.gitgnore">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="210">
-                  <caret line="17" column="62" lean-forward="true" selection-start-line="17" selection-start-column="62" selection-end-line="17" selection-end-column="62" />
+                <state relative-caret-position="300">
+                  <caret line="20" column="5" selection-start-line="20" selection-start-column="5" selection-end-line="20" selection-end-column="5" />
                 </state>
               </provider>
             </entry>
@@ -53,6 +52,7 @@
       <list>
         <option value="$PROJECT_DIR$/arrow.go" />
         <option value="$PROJECT_DIR$/bow.go" />
+        <option value="$PROJECT_DIR$/.gitgnore" />
       </list>
     </option>
   </component>
@@ -103,7 +103,7 @@
     </option>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-3" y="-2" width="1926" height="1060" extended-state="7" />
+    <frame x="-3" y="-2" width="1926" height="1060" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
@@ -202,8 +202,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/bow.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="17" column="62" lean-forward="true" selection-start-line="17" selection-start-column="62" selection-end-line="17" selection-end-column="62" />
+        <state relative-caret-position="165">
+          <caret line="14" column="1" selection-start-line="14" selection-start-column="1" selection-end-line="14" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitgnore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="20" column="5" selection-start-line="20" selection-start-column="5" selection-end-line="20" selection-end-column="5" />
         </state>
       </provider>
     </entry>
