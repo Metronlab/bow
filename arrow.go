@@ -2,6 +2,7 @@ package arrow
 
 import (
 	"fmt"
+
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
@@ -19,8 +20,8 @@ var (
 )
 
 type Event struct {
-	Time arrow.Time32
-	Value interface{}
+	Time    arrow.Time32
+	Value   interface{}
 	quality int64
 }
 
@@ -49,7 +50,6 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	// Make a table read only based on many records
 	table := array.NewTableFromRecords(schema, recs)
 	defer table.Release()
-
 
 	// makes a events buffer
 	events := make([]Event, table.NumRows())
@@ -97,7 +97,7 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 
 	// Prints buffer
 	for _, e := range events {
-		fmt.Println("time:", e.Time,", value:",e.Value,", quality:",e.quality)
+		fmt.Println("time:", e.Time, ", value:", e.Value, ", quality:", e.quality)
 	}
 }
 
