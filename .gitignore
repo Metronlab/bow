@@ -18,7 +18,7 @@ mocks
 .ssh
 
 # ide
-.idea
+.idea/*
 
 # mac files generate
 .DS_Store
