@@ -3,12 +3,13 @@ package bow
 import (
 	"errors"
 	"fmt"
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
 	"os"
 	"reflect"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
 )
 
 //Bow is a wrapper of apache arrow array record.
@@ -57,29 +58,32 @@ func NewBow(series ...Series) (Bow, error) {
 
 func (b *bow) PrintRows() {
 	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
+	// tabs will be replaced by two spaces by formater
+	w.Init(os.Stdout, 0, 4, 2, ' ', 0)
+
+	// format any line (header or row)
+	formatRow := func(getCellStr func(colIndex int) string) {
+		var cells []string
+		for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
+			cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
+		}
+		_, err := fmt.Fprintln(w, strings.Join(cells, "\t"))
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// Print col names on buffer
-	var header []string
-	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
-		header = append(header, fmt.Sprintf("%v\t", b.Schema().Field(colIndex).Name))
-	}
-	_, err := fmt.Fprintln(w, strings.Join(header, ""))
-	if err != nil {
-		panic(err)
-	}
+	formatRow(func(colIndex int) string {
+		return b.Schema().Field(colIndex).Name
+	})
 
 	// Print each row on buffer
 	rowChan := b.RowMapIter()
 	for row := range rowChan {
-		var ss []string
-		for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
-			ss = append(ss, fmt.Sprintf("%v\t", row[b.Schema().Field(colIndex).Name]))
-		}
-		_, err := fmt.Fprintln(w, strings.Join(ss, ""))
-		if err != nil {
-			panic(err)
-		}
+		formatRow(func(colIndex int) string {
+			return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
+		})
 	}
 
 	// Flush buffer and format lines along the way
@@ -131,6 +135,6 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 
 func (b *bow) NewSlice(i, j int64) Bow {
 	return &bow{
-		Record: b.Record.NewSlice(i,j),
+		Record: b.Record.NewSlice(i, j),
 	}
 }
