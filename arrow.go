@@ -51,7 +51,7 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	table := array.NewTableFromRecords(schema, recs)
 	defer table.Release()
 
-	// makes a events buffer
+	// makes a events series
 	events := make([]Event, table.NumRows())
 
 	// Seek schema index for event
@@ -74,7 +74,7 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	tr := array.NewTableReader(table, 1)
 	defer tr.Release()
 
-	// fill buffer with TableReader iteration
+	// fill series with TableReader iteration
 	index := 0
 	for tr.Next() {
 		rec := tr.Record()
@@ -95,7 +95,7 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 		index++
 	}
 
-	// Prints buffer
+	// Prints series
 	for _, e := range events {
 		fmt.Println("time:", e.Time, ", value:", e.Value, ", quality:", e.quality)
 	}
