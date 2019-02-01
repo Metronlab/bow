@@ -25,6 +25,19 @@ func NewSeries(name string, t Type, dataArray interface{}, validArray []bool) Se
 	}
 }
 
+func NewSeriesFromInterfaces(name string, typeOf Type, cells []interface{}) (series Series, err error) {
+	if typeOf == Unknown {
+		if typeOf, err = seekType(cells); err != nil {
+			return
+		}
+	}
+	buf, err := NewBufferFromInterfaces(typeOf, cells)
+	if err != nil {
+		return Series{}, err
+	}
+	return NewSeries(name, typeOf, buf.Value, buf.Valid), nil
+}
+
 func newRecordFromSeries(series ...Series) (array.Record, error) {
 	var fields []arrow.Field
 
@@ -68,4 +81,3 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 
 	return b.NewRecord(), nil
 }
-
