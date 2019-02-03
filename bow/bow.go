@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"text/tabwriter"
@@ -18,7 +17,9 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
-	PrintRows()
+	// stringer interface for printing rows
+	String() string
+
 	RowMapIter() chan map[string]interface{}
 
 	Equal(Bow) bool
@@ -102,13 +103,14 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
 }
 
-func (b *bow) PrintRows() {
+func (b *bow) String() string {
 	if b.Record == nil {
-		return
+		return ""
 	}
 	w := new(tabwriter.Writer)
+	writer := new(strings.Builder)
 	// tabs will be replaced by two spaces by formater
-	w.Init(os.Stdout, 0, 4, 2, ' ', 0)
+	w.Init(writer, 0, 4, 2, ' ', 0)
 
 	// format any line (header or row)
 	formatRow := func(getCellStr func(colIndex int) string) {
@@ -139,6 +141,8 @@ func (b *bow) PrintRows() {
 	if err := w.Flush(); err != nil {
 		panic(err)
 	}
+
+	return writer.String()
 }
 
 func (b *bow) RowMapIter() chan map[string]interface{} {
