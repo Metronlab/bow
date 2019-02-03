@@ -21,6 +21,8 @@ type Bow interface {
 	PrintRows()
 	RowMapIter() chan map[string]interface{}
 
+	InnerJoin(b2 Bow) Bow
+
 	Equal(Bow) bool
 	// todo: design and rethink:
 	// Merge(bows ...Bow) (Bow, error)
@@ -180,6 +182,102 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 		}
 		mapChan <- m
 	}
+}
+
+func (b *bow) InnerJoin(B2 Bow) Bow {
+	b2, ok := B2.(*bow)
+	if !ok {
+		panic("bow: non bow object pass as argument")
+	}
+
+	// build indexing over column names
+	commonColumns, err := b.seekCommonColumnsNames(b2)
+	if err != nil {
+		panic(err)
+	}
+
+	// build leftOver indexes from b2
+	var rColIndexes []int
+	for i, rField := range b2.Schema().Fields() {
+		if _, ok := commonColumns[rField.Name]; !ok {
+			rColIndexes = append(rColIndexes, i)
+		}
+	}
+
+	// dump join in columns oriented interfaces
+	resultInterfaces := make([][]interface{}, len(b.Schema().Fields())+len(rColIndexes))
+	for l := range b.RowMapIter() {
+		for r := range b2.RowMapIter() {
+			if !keysEquals(l, r, commonColumns) {
+				continue
+			}
+
+			for i, lField := range b.Schema().Fields() {
+				resultInterfaces[i] = append(resultInterfaces[i], l[lField.Name])
+			}
+			for i, rIndex := range rColIndexes {
+				resultInterfaces[len(b.Schema().Fields())+ i] =
+					append(resultInterfaces[len(b.Schema().Fields())+i], r[b2.Schema().Field(rIndex).Name])
+			}
+		}
+	}
+
+	columnNames, columnsTypes := b.makeColNamesAndTypesOnJoin(b2, commonColumns, rColIndexes)
+
+	res, err := NewBowFromColumnBasedInterfaces(columnNames, columnsTypes, resultInterfaces)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
+	commonColumns := map[string]struct{}{}
+	for _, lField := range b.Schema().Fields() {
+		rField, ok := b2.Schema().FieldByName(lField.Name)
+		if !ok {
+			continue
+		}
+		if rField.Type.ID() != lField.Type.ID() {
+			return nil, errors.New("bow: left and right bow on join columns are of incompatible types: "+lField.Name)
+		}
+		commonColumns[lField.Name] = struct{}{}
+
+	}
+	if len(commonColumns) == 0 {
+		return nil, errors.New("bow: cannot join bows without communs columns names")
+	}
+	return commonColumns, nil
+}
+
+func keysEquals(l, r map[string]interface{}, columnNames map[string]struct{}) bool {
+	for name := range columnNames {
+		if !reflect.DeepEqual(l[name], r[name]){
+			return false
+		}
+	}
+	return true
+}
+
+func (b *bow) makeColNamesAndTypesOnJoin(
+	b2 *bow, commonColumns map[string]struct{}, rColNotInLIndexes []int) ([]string, []Type) {
+	var err error
+	colNames := make([]string, len(b.Schema().Fields())+len(rColNotInLIndexes))
+	colType := make([]Type, len(b.Schema().Fields())+len(rColNotInLIndexes))
+	for i, f := range b.Schema().Fields() {
+		colNames[i] = f.Name
+		if colType[i], err = getTypeFromArrowType(f.Type.Name()); err != nil {
+			panic(err)
+		}
+	}
+	for i, index := range rColNotInLIndexes {
+		colNames[len(b.Schema().Fields())+i] = b2.Schema().Field(index).Name
+		if colType[len(b.Schema().Fields())+i], err = getTypeFromArrowType(b2.Schema().Field(index).Type.Name());
+			err != nil {
+			panic(err)
+		}
+	}
+	return colNames, colType
 }
 
 func (b *bow) Equal(b2 Bow) bool {
