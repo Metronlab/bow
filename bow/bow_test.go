@@ -48,7 +48,7 @@ func TestBow_UnmarshalJSON(t *testing.T) {
 func TestBow_InnerJoin(t *testing.T) {
 	bow1, err := NewBow(
 		NewSeries("index", Int64, []int64{1, 2, 3, 4}, nil),
-		NewSeries("col1", Float64, []float64{1.1, 2.2, 3.3, 4}, []bool{true, false, true, true}),
+		NewSeries("col1", Float64, []float64{1.1, 2.2, 3.3, 4.4}, []bool{true, false, true, true}),
 	)
 	defer bow1.Release()
 	if err != nil {
@@ -74,11 +74,14 @@ func TestBow_InnerJoin(t *testing.T) {
 		panic(err)
 	}
 
-
 	bow3 := bow1.InnerJoin(bow2)
 	defer bow3.Release()
 	if !bow3.Equal(expectedBow) {
-		t.Errorf("expect: \n%v\nhave:%v", expectedBow, bow3)
+		t.Log("expect")
+		expectedBow.PrintRows()
+		t.Log("have")
+		bow3.PrintRows()
+		t.Error("fail")
 	}
 }
 

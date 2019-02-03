@@ -19,6 +19,7 @@ import (
 // while arrow is in beta
 type Bow interface {
 	PrintRows()
+	GetValue(colIndex, rowIndex int) interface{}
 	RowMapIter() chan map[string]interface{}
 
 	InnerJoin(b2 Bow) Bow
@@ -43,7 +44,9 @@ type Bow interface {
 }
 
 type bow struct {
+	indexes map[string]index
 	marshalJSONRowBased bool
+
 	array.Record
 }
 
@@ -159,29 +162,38 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 	for rowIndex := 0; rowIndex < int(b.NumRows()); rowIndex++ {
 		m := map[string]interface{}{}
 		for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
-			switch b.Schema().Field(colIndex).Type.ID() {
-			case arrow.FLOAT64:
-				vd := array.NewFloat64Data(b.Column(colIndex).Data())
-				if vd.IsValid(rowIndex) {
-					m[b.Schema().Field(colIndex).Name] = vd.Value(rowIndex)
-				}
-			case arrow.INT64:
-				vd := array.NewInt64Data(b.Column(colIndex).Data())
-				if vd.IsValid(rowIndex) {
-					m[b.Schema().Field(colIndex).Name] = vd.Value(rowIndex)
-				}
-			case arrow.BOOL:
-				vd := array.NewBooleanData(b.Column(colIndex).Data())
-				if vd.IsValid(rowIndex) {
-					m[b.Schema().Field(colIndex).Name] = vd.Value(rowIndex)
-				}
-			default:
-				panic(fmt.Sprintf("bow: unhandled type %s",
-					b.Schema().Field(colIndex).Type.Name()))
+			val := b.GetValue(colIndex, rowIndex)
+			if val == nil {
+				continue
 			}
+			m[b.Schema().Field(colIndex).Name] = val
 		}
 		mapChan <- m
 	}
+}
+
+func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
+	switch b.Schema().Field(colIndex).Type.ID() {
+	case arrow.FLOAT64:
+		vd := array.NewFloat64Data(b.Column(colIndex).Data())
+		if vd.IsValid(rowIndex) {
+			return vd.Value(rowIndex)
+		}
+	case arrow.INT64:
+		vd := array.NewInt64Data(b.Column(colIndex).Data())
+		if vd.IsValid(rowIndex) {
+			return vd.Value(rowIndex)
+		}
+	case arrow.BOOL:
+		vd := array.NewBooleanData(b.Column(colIndex).Data())
+		if vd.IsValid(rowIndex) {
+			return vd.Value(rowIndex)
+		}
+	default:
+		panic(fmt.Sprintf("bow: unhandled type %s",
+			b.Schema().Field(colIndex).Type.Name()))
+	}
+	return nil
 }
 
 func (b *bow) InnerJoin(B2 Bow) Bow {
@@ -204,23 +216,53 @@ func (b *bow) InnerJoin(B2 Bow) Bow {
 		}
 	}
 
+	for name := range commonColumns {
+		b2.newIndex(name)
+	}
+
 	// dump join in columns oriented interfaces
 	resultInterfaces := make([][]interface{}, len(b.Schema().Fields())+len(rColIndexes))
-	for l := range b.RowMapIter() {
-		for r := range b2.RowMapIter() {
-			if !keysEquals(l, r, commonColumns) {
-				continue
+	for rowIndex := int64(0); rowIndex < b.NumRows(); rowIndex++ {
+		var possibleIndexes [][]int
+		for name := range commonColumns {
+			indexes, ok := b2.getIndex(name, b.GetValue(b.Schema().FieldIndex(name), int(rowIndex)))
+			if !ok {
+				possibleIndexes = [][]int{}
+				break
 			}
+			possibleIndexes = append(possibleIndexes, indexes)
+		}
+		if len(possibleIndexes) == 0 {
+			continue
+		}
 
-			for i, lField := range b.Schema().Fields() {
-				resultInterfaces[i] = append(resultInterfaces[i], l[lField.Name])
+		indexes := commonInt(possibleIndexes...)
+		for _, rValIndex := range indexes {
+			for colIndex := range b.Schema().Fields() {
+				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, int(rowIndex)))
 			}
-			for i, rIndex := range rColIndexes {
+			for i, rColIndex := range rColIndexes {
 				resultInterfaces[len(b.Schema().Fields())+ i] =
-					append(resultInterfaces[len(b.Schema().Fields())+i], r[b2.Schema().Field(rIndex).Name])
+					append(resultInterfaces[len(b.Schema().Fields())+i], b2.GetValue(rColIndex, rValIndex))
 			}
 		}
 	}
+
+	//for l := range b.RowMapIter() {
+	//	for r := range b2.RowMapIter() {
+	//		if !keysEquals(l, r, commonColumns) {
+	//			continue
+	//		}
+	//
+	//		for rowIndex, lField := range b.Schema().Fields() {
+	//			resultInterfaces[rowIndex] = append(resultInterfaces[rowIndex], l[lField.Name])
+	//		}
+	//		for rowIndex, rIndex := range rColIndexes {
+	//			resultInterfaces[len(b.Schema().Fields())+ rowIndex] =
+	//				append(resultInterfaces[len(b.Schema().Fields())+rowIndex], r[b2.Schema().Field(rIndex).Name])
+	//		}
+	//	}
+	//}
 
 	columnNames, columnsTypes := b.makeColNamesAndTypesOnJoin(b2, commonColumns, rColIndexes)
 
