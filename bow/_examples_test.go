@@ -16,7 +16,7 @@ func ExampleNewBow() {
 		panic(err)
 	}
 
-	bow.PrintRows()
+	fmt.Print(bow)
 	// output:
 	// col1  col2   col3
 	// 1     1.1    true
@@ -24,7 +24,6 @@ func ExampleNewBow() {
 	// 3     3.3    true
 	// 4     4      false
 }
-
 
 func ExampleNewBowFromColumnBasedInterfaces() {
 	columns := []string{"time", "value", "valueFromJson"}
@@ -36,21 +35,20 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	// columns time will filter on float64 only
 	b, err := NewBowFromColumnBasedInterfaces(columns, ts, rows)
 	if err != nil {
-		panic(err)
+		t.Error(err)
 	}
-	b.PrintRows()
+	fmt.Print(b)
 	b.Release()
 
-	fmt.Println()
-	// columns time will filter on first value type found
-	b, err = NewBowFromColumnBasedInterfaces(columns, nil, rows)
+	b.SetMarshalJSONRowBased(true)
+	js, err := b.MarshalJSON()
 	if err != nil {
+		t.Error(err)
 		panic(err)
 	}
-	b.PrintRows()
+	fmt.Print(b)
 	b.Release()
 
 	// output:
@@ -70,30 +68,31 @@ func ExampleNewBowFromRowBasedInterfaces() {
 	ts := make([]Type, len(columns))
 	ts[0] = Int64
 	rows := [][]interface{}{
-		{1,1,json.Number("1.1")},
-		{1.2,json.Number("1.2"), 2},
+		{1, 1, json.Number("1.1")},
+		{1.2, json.Number("1.2"), 2},
 		{json.Number("3"), 3, 1.3},
 		{1, 1.2, json.Number("3")},
 		{1, json.Number("1.2"), 3},
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	// columns time will filter on float64 only
-	b, err := NewBowFromRowBasedInterfaces(columns, ts, rows)
+	b2test, err := NewBow()
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
-	b.PrintRows()
 	b.Release()
 
-	// output:
-	//time   value  valueFromJson
-	//1      1      1.1
-	//<nil>  <nil>  <nil>
-	//3      3      1.3
-	//1      <nil>  3
-	//1      <nil>  <nil>
-	//<nil>  2      1.3
+	if err = json.Unmarshal(js, &b2test); err != nil {
+		t.Error(err)
+	}
+
+	if !b.Equal(b2test) {
+		fmt.Println("got:")
+		fmt.Println(b2test)
+		fmt.Println("want:")
+		fmt.Println(b)
+		t.Fail()
+	}
 }
 
 func ExampleBow_MarshalJSON() {
@@ -118,7 +117,7 @@ func ExampleBow_MarshalJSON() {
 	}
 	// pretty print json
 	var out bytes.Buffer
-	if err := json.Indent(&out, js, "", "\t");err != nil {
+	if err := json.Indent(&out, js, "", "\t"); err != nil {
 		panic(err)
 	}
 	fmt.Println(string(out.Bytes()))

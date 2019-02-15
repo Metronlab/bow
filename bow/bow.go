@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"text/tabwriter"
@@ -18,8 +17,10 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
-	PrintRows()
 	GetValue(colIndex, rowIndex int) interface{}
+	// stringer interface for printing rows
+	String() string
+
 	RowMapIter() chan map[string]interface{}
 
 	InnerJoin(b2 Bow) Bow
@@ -44,7 +45,7 @@ type Bow interface {
 }
 
 type bow struct {
-	indexes map[string]index
+	indexes             map[string]index
 	marshalJSONRowBased bool
 
 	array.Record
@@ -100,20 +101,21 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 		if len(columnsNames) < len(row) {
 			return nil, errors.New("bow: mismatch between columnsNames names and row len")
 		}
-		for colI  := range columnsNames {
+		for colI := range columnsNames {
 			columnBasedRows[colI][rowI] = row[colI]
 		}
 	}
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
 }
 
-func (b *bow) PrintRows() {
+func (b *bow) String() string {
 	if b.Record == nil {
-		return
+		return ""
 	}
 	w := new(tabwriter.Writer)
+	writer := new(strings.Builder)
 	// tabs will be replaced by two spaces by formater
-	w.Init(os.Stdout, 0, 4, 2, ' ', 0)
+	w.Init(writer, 0, 4, 2, ' ', 0)
 
 	// format any line (header or row)
 	formatRow := func(getCellStr func(colIndex int) string) {
@@ -144,6 +146,8 @@ func (b *bow) PrintRows() {
 	if err := w.Flush(); err != nil {
 		panic(err)
 	}
+
+	return writer.String()
 }
 
 func (b *bow) RowMapIter() chan map[string]interface{} {
@@ -242,27 +246,11 @@ func (b *bow) InnerJoin(B2 Bow) Bow {
 				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, int(rowIndex)))
 			}
 			for i, rColIndex := range rColIndexes {
-				resultInterfaces[len(b.Schema().Fields())+ i] =
+				resultInterfaces[len(b.Schema().Fields())+i] =
 					append(resultInterfaces[len(b.Schema().Fields())+i], b2.GetValue(rColIndex, rValIndex))
 			}
 		}
 	}
-
-	//for l := range b.RowMapIter() {
-	//	for r := range b2.RowMapIter() {
-	//		if !keysEquals(l, r, commonColumns) {
-	//			continue
-	//		}
-	//
-	//		for rowIndex, lField := range b.Schema().Fields() {
-	//			resultInterfaces[rowIndex] = append(resultInterfaces[rowIndex], l[lField.Name])
-	//		}
-	//		for rowIndex, rIndex := range rColIndexes {
-	//			resultInterfaces[len(b.Schema().Fields())+ rowIndex] =
-	//				append(resultInterfaces[len(b.Schema().Fields())+rowIndex], r[b2.Schema().Field(rIndex).Name])
-	//		}
-	//	}
-	//}
 
 	columnNames, columnsTypes := b.makeColNamesAndTypesOnJoin(b2, commonColumns, rColIndexes)
 
@@ -281,7 +269,7 @@ func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 			continue
 		}
 		if rField.Type.ID() != lField.Type.ID() {
-			return nil, errors.New("bow: left and right bow on join columns are of incompatible types: "+lField.Name)
+			return nil, errors.New("bow: left and right bow on join columns are of incompatible types: " + lField.Name)
 		}
 		commonColumns[lField.Name] = struct{}{}
 
@@ -294,7 +282,7 @@ func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 
 func keysEquals(l, r map[string]interface{}, columnNames map[string]struct{}) bool {
 	for name := range columnNames {
-		if !reflect.DeepEqual(l[name], r[name]){
+		if !reflect.DeepEqual(l[name], r[name]) {
 			return false
 		}
 	}
@@ -314,8 +302,7 @@ func (b *bow) makeColNamesAndTypesOnJoin(
 	}
 	for i, index := range rColNotInLIndexes {
 		colNames[len(b.Schema().Fields())+i] = b2.Schema().Field(index).Name
-		if colType[len(b.Schema().Fields())+i], err = getTypeFromArrowType(b2.Schema().Field(index).Type.Name());
-			err != nil {
+		if colType[len(b.Schema().Fields())+i], err = getTypeFromArrowType(b2.Schema().Field(index).Type.Name()); err != nil {
 			panic(err)
 		}
 	}
@@ -326,13 +313,13 @@ func (b *bow) Equal(b2 Bow) bool {
 	b1Chan := b.RowMapIter()
 	b2Chan := b2.RowMapIter()
 	for {
-		i1, ok1 := <- b1Chan
-		i2, ok2 := <- b2Chan
+		i1, ok1 := <-b1Chan
+		i2, ok2 := <-b2Chan
 		for (i1 == nil || len(i1) == 0) && ok1 {
-			i1, ok1 = <- b1Chan
+			i1, ok1 = <-b1Chan
 		}
 		for (i2 == nil || len(i2) == 0) && ok2 {
-			i2, ok2 = <- b2Chan
+			i2, ok2 = <-b2Chan
 		}
 		if ok1 != ok2 {
 			return false
@@ -372,7 +359,7 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (b* bow) UnmarshalJSON(data []byte) error {
+func (b *bow) UnmarshalJSON(data []byte) error {
 	jsonBow := struct {
 		// Columns specifics
 		Columns map[string]interface{} `json:"columns"`
@@ -396,9 +383,9 @@ func (b* bow) UnmarshalJSON(data []byte) error {
 			if err != nil {
 				return err
 			}
-			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Rows), func()chan interface{} {
+			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Rows), func() chan interface{} {
 				cellsChan := make(chan interface{})
-				go func (cellsChan chan interface{}, colName string){
+				go func(cellsChan chan interface{}, colName string) {
 					for _, row := range jsonBow.Rows {
 						val, ok := row[colName]
 						if !ok {

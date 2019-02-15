@@ -2,7 +2,6 @@ package bow
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -32,16 +31,12 @@ func TestBow_UnmarshalJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = json.Unmarshal(js,&b2test); err != nil {
+	if err = json.Unmarshal(js, &b2test); err != nil {
 		t.Error(err)
 	}
 
 	if !b.Equal(b2test) {
-		fmt.Println("got:")
-		b2test.PrintRows()
-		fmt.Println("want:")
-		b.PrintRows()
-		t.Fail()
+		t.Error(b2test, b)
 	}
 }
 
@@ -77,52 +72,6 @@ func TestBow_InnerJoin(t *testing.T) {
 	bow3 := bow1.InnerJoin(bow2)
 	defer bow3.Release()
 	if !bow3.Equal(expectedBow) {
-		t.Log("expect")
-		expectedBow.PrintRows()
-		t.Log("have")
-		bow3.PrintRows()
-		t.Error("fail")
-	}
-}
-
-func BenchmarkBow_InnerJoin(b *testing.B) {
-	bow1, err := NewBow(
-		NewSeries("index", Int64, []int64{
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-		}, nil),
-		NewSeries("col1", Float64, []float64{
-			1.1, 2.2, 3.3, 4, 6,
-			1.1, 2.2, 3.3, 4, 6,
-			1.1, 2.2, 3.3, 4, 6,
-		}, nil),
-	)
-	defer bow1.Release()
-	if err != nil {
-		panic(err)
-	}
-
-	bow2, err := NewBow(
-		NewSeries("index", Int64, []int64{
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-		}, nil),
-		NewSeries("col2", Float64, []float64{
-			1.1, 2.2, 3.3, 4, 6,
-			1.1, 2.2, 3.3, 4, 6,
-			1.1, 2.2, 3.3, 4, 6,
-		}, nil),
-	)
-	defer bow2.Release()
-	if err != nil {
-		panic(err)
-	}
-
-	b.ResetTimer()
-	for n:=0; n < b.N; n++ {
-		bow3 := bow1.InnerJoin(bow2)
-		bow3.Release()
+		t.Error(expectedBow, bow3)
 	}
 }
