@@ -17,7 +17,7 @@ func ExampleNewBow() {
 		panic(err)
 	}
 
-	bow.PrintRows()
+	fmt.Print(bow)
 	// output:
 	// col1  col2   col3
 	// 1     1.1    true
@@ -41,7 +41,7 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 	if err != nil {
 		panic(err)
 	}
-	b.PrintRows()
+	fmt.Print(b)
 	b.Release()
 
 	fmt.Println()
@@ -50,7 +50,7 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 	if err != nil {
 		panic(err)
 	}
-	b.PrintRows()
+	fmt.Print(b)
 	b.Release()
 
 	// output:
@@ -83,7 +83,7 @@ func ExampleNewBowFromRowBasedInterfaces() {
 	if err != nil {
 		panic(err)
 	}
-	b.PrintRows()
+	fmt.Print(b)
 	b.Release()
 
 	// output:
@@ -176,9 +176,9 @@ func TestBow_UnmarshalJSON(t *testing.T) {
 
 	if !b.Equal(b2test) {
 		fmt.Println("got:")
-		b2test.PrintRows()
+		fmt.Print(b2test)
 		fmt.Println("want:")
-		b.PrintRows()
+		fmt.Print(b)
 		t.Fail()
 	}
 }
