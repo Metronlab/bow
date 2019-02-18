@@ -302,7 +302,7 @@ func (b *bow) Equal(B2 Bow) bool {
 	}
 
 	if b.Record == nil && b2.Record == nil {
-		return false
+		return true
 	}
 	if b.Record == nil && b2.Record != nil {
 		return false
