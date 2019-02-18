@@ -2,9 +2,15 @@ git.prod.metronlab.io/backend_libraries/go-representation v0.0.0 h1:2RJLz5dQzlo6
 git.prod.metronlab.io/backend_libraries/go-representation v0.0.0/go.mod h1:OKe2D77iwVJvD3sNTxeiFCqvCPIDlFqaEIOXLfq6wEI=
 github.com/apache/arrow/go/arrow v0.0.0-20190110213553-76618f66ee8c h1:l6PnygbuXOon2PXnYGxjkJkk5xAXo09ML7u9t9BlXe4=
 github.com/apache/arrow/go/arrow v0.0.0-20190110213553-76618f66ee8c/go.mod h1:GjvccvtI06FGFvRU1In/maF7tKp3h7GBV9Sexo5rNPM=
+github.com/apache/arrow/go/arrow v0.0.0-20190218223018-9600d8b85d44 h1:1p+KpmCX9XxHFmmJQaRhPaHuTZTBFYGNoThQ8Wkn9VA=
+github.com/apache/arrow/go/arrow v0.0.0-20190218223018-9600d8b85d44/go.mod h1:GjvccvtI06FGFvRU1In/maF7tKp3h7GBV9Sexo5rNPM=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.0 h1:LThGCOvhuJic9Gyd1VBCkhyUXmO8vKaBFvBsJ2k03rg=
 github.com/stretchr/testify v1.2.0/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
+github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
