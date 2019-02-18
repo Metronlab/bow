@@ -48,7 +48,7 @@ func TestBow_InnerJoin(t *testing.T) {
 	)
 	defer bow1.Release()
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	bow2, err := NewBow(
@@ -58,7 +58,7 @@ func TestBow_InnerJoin(t *testing.T) {
 	)
 	defer bow2.Release()
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	expectedBow, err := NewBow(
@@ -76,7 +76,7 @@ func TestBow_InnerJoin(t *testing.T) {
 	)
 	defer expectedBow.Release()
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	bow3 := bow1.InnerJoin(bow2)
@@ -84,15 +84,62 @@ func TestBow_InnerJoin(t *testing.T) {
 	if !bow3.Equal(expectedBow) {
 		t.Error(expectedBow, bow3)
 	}
+}
+func TestBow_InnerJoin_noResultingRow(t *testing.T) {
+	bow1, err := NewBow(
+		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
+		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+	)
+	defer bow1.Release()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	noResultingValuesBow, err := NewBow(
+		NewSeries("index1", Int64, []int64{10}, nil),
+		NewSeries("col2", Int64, []int64{10}, nil),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer noResultingValuesBow.Release()
+
+	expectedBow, err := NewBow(
+		NewSeries("index1", Int64, []int64{}, nil),
+		NewSeries("index2", Float64, []float64{}, nil),
+		NewSeries("col1", Int64, []int64{}, []bool{}),
+		NewSeries("col2", Int64, []int64{}, nil),
+	)
+	defer expectedBow.Release()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bow3 := bow1.InnerJoin(noResultingValuesBow)
+	if !bow3.Equal(expectedBow) {
+		t.Errorf("expect:\n%v\nhave\n%v", expectedBow, bow3)
+	}
+}
+
+func TestBow_InnerJoin_NonComplyingType(t *testing.T) {
+	bow1, err := NewBow(
+		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
+		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+	)
+	defer bow1.Release()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	uncomplyingBow, err := NewBow(
 		NewSeries("index1", Float64, []float64{1}, nil),
 	)
-	defer uncomplyingBow.Release()
 	if err != nil {
 		panic(err)
 	}
-
+	defer uncomplyingBow.Release()
 	defer func() {
 		if r := recover(); r == nil ||
 			r.(error).Error() != "bow: left and right bow on join columns are of incompatible types: index1" {

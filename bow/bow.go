@@ -52,10 +52,6 @@ type bow struct {
 }
 
 func NewBow(series ...Series) (Bow, error) {
-	if len(series) == 0 {
-		return &bow{}, nil
-	}
-
 	record, err := newRecordFromSeries(series...)
 	if err != nil {
 		return nil, err
@@ -238,8 +234,7 @@ func (b *bow) InnerJoin(B2 Bow) Bow {
 func (b *bow) innerJoinInColumnBaseInterfaces(b2 *bow, commonColumns map[string]struct{}, rColIndexes []int) [][]interface{} {
 	resultInterfaces := make([][]interface{}, len(b.Schema().Fields())+len(rColIndexes))
 	for rowIndex := int64(0); rowIndex < b.NumRows(); rowIndex++ {
-		indexes := b.getRightBowIndexesAtRow(b2, commonColumns, rowIndex)
-		for _, rValIndex := range indexes {
+		for _, rValIndex := range b.getRightBowIndexesAtRow(b2, commonColumns, rowIndex) {
 			for colIndex := range b.Schema().Fields() {
 				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, int(rowIndex)))
 			}
@@ -300,7 +295,26 @@ func (b *bow) makeColNamesAndTypesOnJoin(
 	return colNames, colType
 }
 
-func (b *bow) Equal(b2 Bow) bool {
+func (b *bow) Equal(B2 Bow) bool {
+	b2, ok := B2.(*bow)
+	if !ok {
+		panic("bow: cannot Equal on non bow object")
+	}
+
+	if b.Record == nil && b2.Record == nil {
+		return false
+	}
+	if b.Record == nil && b2.Record != nil {
+		return false
+	}
+	if b2.Record == nil && b.Record != nil {
+		return false
+	}
+
+	if !b.Schema().Equal(b2.Schema()) {
+		return false
+	}
+
 	b1Chan := b.RowMapIter()
 	b2Chan := b2.RowMapIter()
 	for {
@@ -345,9 +359,8 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 			rowBased.ColumnsTypes[col.Name] = col.Type.Name()
 		}
 		return json.Marshal(rowBased)
-	} else {
-		panic("bow: column based json marshaller not implemented")
 	}
+	panic("bow: column based json marshaller not implemented")
 }
 
 func (b *bow) UnmarshalJSON(data []byte) error {
