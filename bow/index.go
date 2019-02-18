@@ -42,8 +42,30 @@ func (b *bow) newIndex(colName string) {
 }
 
 func (b *bow) getIndex(name string, val interface{}) ([]int, bool) {
-	res, ok := b.indexes[name].m[val]
+	index, ok := b.indexes[name]
+	if !ok {
+		return []int{}, false
+	}
+	res, ok := index.m[val]
 	return res, ok
+}
+
+func (b *bow) getRightBowIndexesAtRow(b2 *bow, commonColumns map[string]struct{}, rowIndex int64) []int {
+	var possibleIndexes [][]int
+	for name := range commonColumns {
+		val := b.GetValue(b.Schema().FieldIndex(name), int(rowIndex))
+		if val == nil {
+			return []int{}
+		}
+
+		indexes, ok := b2.getIndex(name, val)
+		if !ok {
+			return []int{}
+		}
+
+		possibleIndexes = append(possibleIndexes, indexes)
+	}
+	return commonInt(possibleIndexes...)
 }
 
 func commonInt(ints ...[]int) []int {

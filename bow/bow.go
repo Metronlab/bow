@@ -252,24 +252,6 @@ func (b *bow) innerJoinInColumnBaseInterfaces(b2 *bow, commonColumns map[string]
 	return resultInterfaces
 }
 
-func (b *bow) getRightBowIndexesAtRow(b2 *bow, commonColumns map[string]struct{}, rowIndex int64) []int {
-	var possibleIndexes [][]int
-	for name := range commonColumns {
-		val := b.GetValue(b.Schema().FieldIndex(name), int(rowIndex))
-		if val == nil {
-			return []int{}
-		}
-
-		indexes, ok := b2.getIndex(name, val)
-		if !ok {
-			return []int{}
-		}
-
-		possibleIndexes = append(possibleIndexes, indexes)
-	}
-	return commonInt(possibleIndexes...)
-}
-
 func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 	commonColumns := map[string]struct{}{}
 	for _, lField := range b.Schema().Fields() {
