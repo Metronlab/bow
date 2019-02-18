@@ -23,22 +23,26 @@ func (b *bow) newIndex(colName string) {
 	}
 
 	m := make(map[interface{}][]int)
-	for i:=int64(0); i < b.NumRows(); i++ {
-		if _, ok := m[b.GetValue(colIndex, int(i))]; !ok {
-			m[b.GetValue(colIndex, int(i))] = []int{int(i)}
+	for i := int64(0); i < b.NumRows(); i++ {
+		val := b.GetValue(colIndex, int(i))
+		if val == nil {
+			continue
+		}
+		if _, ok := m[val]; !ok {
+			m[val] = []int{int(i)}
 		} else {
-			m[b.GetValue(colIndex, int(i))] = append(m[b.GetValue(colIndex, int(i))], int(i))
+			m[val] = append(m[val], int(i))
 		}
 	}
 
 	if b.indexes == nil {
 		b.indexes = map[string]index{}
 	}
-	b.indexes[colName] = index{t:dType, m:m}
+	b.indexes[colName] = index{t: dType, m: m}
 }
 
 func (b *bow) getIndex(name string, val interface{}) ([]int, bool) {
-	res, ok  := b.indexes[name].m[val]
+	res, ok := b.indexes[name].m[val]
 	return res, ok
 }
 

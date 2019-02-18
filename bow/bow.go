@@ -224,23 +224,21 @@ func (b *bow) InnerJoin(B2 Bow) Bow {
 		b2.newIndex(name)
 	}
 
-	// dump join in columns oriented interfaces
+	resultInterfaces := b.innerJoinInColumnBaseInterfaces(b2, commonColumns, rColIndexes)
+
+	columnNames, columnsTypes := b.makeColNamesAndTypesOnJoin(b2, commonColumns, rColIndexes)
+
+	res, err := NewBowFromColumnBasedInterfaces(columnNames, columnsTypes, resultInterfaces)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+func (b *bow) innerJoinInColumnBaseInterfaces(b2 *bow, commonColumns map[string]struct{}, rColIndexes []int) [][]interface{} {
 	resultInterfaces := make([][]interface{}, len(b.Schema().Fields())+len(rColIndexes))
 	for rowIndex := int64(0); rowIndex < b.NumRows(); rowIndex++ {
-		var possibleIndexes [][]int
-		for name := range commonColumns {
-			indexes, ok := b2.getIndex(name, b.GetValue(b.Schema().FieldIndex(name), int(rowIndex)))
-			if !ok {
-				possibleIndexes = [][]int{}
-				break
-			}
-			possibleIndexes = append(possibleIndexes, indexes)
-		}
-		if len(possibleIndexes) == 0 {
-			continue
-		}
-
-		indexes := commonInt(possibleIndexes...)
+		indexes := b.getRightBowIndexesAtRow(b2, commonColumns, rowIndex)
 		for _, rValIndex := range indexes {
 			for colIndex := range b.Schema().Fields() {
 				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, int(rowIndex)))
@@ -251,14 +249,25 @@ func (b *bow) InnerJoin(B2 Bow) Bow {
 			}
 		}
 	}
+	return resultInterfaces
+}
 
-	columnNames, columnsTypes := b.makeColNamesAndTypesOnJoin(b2, commonColumns, rColIndexes)
+func (b *bow) getRightBowIndexesAtRow(b2 *bow, commonColumns map[string]struct{}, rowIndex int64) []int {
+	var possibleIndexes [][]int
+	for name := range commonColumns {
+		val := b.GetValue(b.Schema().FieldIndex(name), int(rowIndex))
+		if val == nil {
+			return []int{}
+		}
 
-	res, err := NewBowFromColumnBasedInterfaces(columnNames, columnsTypes, resultInterfaces)
-	if err != nil {
-		panic(err)
+		indexes, ok := b2.getIndex(name, val)
+		if !ok {
+			return []int{}
+		}
+
+		possibleIndexes = append(possibleIndexes, indexes)
 	}
-	return res
+	return commonInt(possibleIndexes...)
 }
 
 func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
