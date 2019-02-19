@@ -3,6 +3,7 @@ package bow
 import (
 	"errors"
 	"fmt"
+
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
@@ -17,7 +18,7 @@ type Series struct {
 func NewSeries(name string, t Type, dataArray interface{}, validArray []bool) Series {
 	return Series{
 		Name: name,
-		Type:t,
+		Type: t,
 		Data: Buffer{
 			Value: dataArray,
 			Valid: validArray,
@@ -39,6 +40,10 @@ func NewSeriesFromInterfaces(name string, typeOf Type, cells []interface{}) (ser
 }
 
 func newRecordFromSeries(series ...Series) (array.Record, error) {
+	if len(series) == 0 {
+		return nil, nil
+	}
+
 	var fields []arrow.Field
 
 	for _, s := range series {
@@ -48,9 +53,12 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 		field := arrow.Field{Name: s.Name}
 
 		switch s.Type {
-		case Float64: field.Type = arrow.PrimitiveTypes.Float64
-		case Int64: field.Type = arrow.PrimitiveTypes.Int64
-		case Bool: field.Type = arrow.FixedWidthTypes.Boolean
+		case Float64:
+			field.Type = arrow.PrimitiveTypes.Float64
+		case Int64:
+			field.Type = arrow.PrimitiveTypes.Int64
+		case Bool:
+			field.Type = arrow.FixedWidthTypes.Boolean
 		default:
 			return nil, fmt.Errorf("bow: unknown type")
 		}
@@ -64,6 +72,9 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 	b := array.NewRecordBuilder(pool, schema)
 	defer b.Release()
 
+	if len(series[0].Data.Valid) == 0 {
+		return b.NewRecord(), nil
+	}
 
 	for colIndex, s := range series {
 		switch s.Type {
