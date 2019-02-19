@@ -149,3 +149,38 @@ func TestBow_InnerJoin_NonComplyingType(t *testing.T) {
 	}()
 	bow1.InnerJoin(uncomplyingBow)
 }
+
+func TestBow_InnerJoin_NoCommonColumn(t *testing.T) {
+	bow1, err := NewBow(
+		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
+		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+	)
+	defer bow1.Release()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	uncomplyingBow, err := NewBow(
+		NewSeries("index3", Float64, []float64{1.1}, nil),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	expectedBow, err := NewBow(
+		NewSeries("index1", Int64, []int64{}, nil),
+		NewSeries("index2", Float64, []float64{}, nil),
+		NewSeries("col1", Int64, []int64{}, nil),
+		NewSeries("index3", Float64, []float64{}, []bool{}),
+	)
+	defer expectedBow.Release()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res := bow1.InnerJoin(uncomplyingBow)
+	if !res.Equal(expectedBow) {
+		t.Errorf("Have:\n%v,\nExpect:\n%v", res, expectedBow)
+	}
+}

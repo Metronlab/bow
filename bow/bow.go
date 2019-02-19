@@ -260,9 +260,6 @@ func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 		commonColumns[lField.Name] = struct{}{}
 
 	}
-	if len(commonColumns) == 0 {
-		return nil, errors.New("bow: cannot join bows without communs columns names")
-	}
 	return commonColumns, nil
 }
 
