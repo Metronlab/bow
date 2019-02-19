@@ -234,10 +234,13 @@ func (b *bow) InnerJoin(B2 Bow) Bow {
 func (b *bow) innerJoinInColumnBaseInterfaces(b2 *bow, commonColumns map[string]struct{}, rColIndexes []int) [][]interface{} {
 	resultInterfaces := make([][]interface{}, len(b.Schema().Fields())+len(rColIndexes))
 	for rowIndex := int64(0); rowIndex < b.NumRows(); rowIndex++ {
+		// for each right values found on given indexes, create a new row:
 		for _, rValIndex := range b.getRightBowIndexesAtRow(b2, commonColumns, rowIndex) {
+			// fill values based on left bow
 			for colIndex := range b.Schema().Fields() {
 				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, int(rowIndex)))
 			}
+			// then fill values only present on right bow
 			for i, rColIndex := range rColIndexes {
 				resultInterfaces[len(b.Schema().Fields())+i] =
 					append(resultInterfaces[len(b.Schema().Fields())+i], b2.GetValue(rColIndex, rValIndex))
