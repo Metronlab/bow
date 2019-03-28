@@ -194,6 +194,6 @@ func TestBow_Empty(t *testing.T) {
 
 	if emptyBow.NumRows() != 0 || emptyBow.NumCols() != 0 {
 		emptyBow.Release()
-		t.Errorf("Empty Bow should not have any rows")
+		t.Errorf("Empty Bow should not have any rows or cols")
 	}
 }
