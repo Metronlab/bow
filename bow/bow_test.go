@@ -184,3 +184,16 @@ func TestBow_InnerJoin_NoCommonColumn(t *testing.T) {
 		t.Errorf("Have:\n%v,\nExpect:\n%v", res, expectedBow)
 	}
 }
+
+func TestBow_Empty(t *testing.T) {
+	emptyBow, err := NewBow()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if emptyBow.NumRows() != 0 || emptyBow.NumCols() != 0 {
+		emptyBow.Release()
+		t.Errorf("Empty Bow should not have any rows")
+	}
+}
