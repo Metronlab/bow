@@ -436,3 +436,17 @@ func (b *bow) NewSlice(i, j int64) Bow {
 		Record: b.Record.NewSlice(i, j),
 	}
 }
+
+func (b *bow) NumRows() int64 {
+	if b.Record == nil {
+		return 0
+	}
+	return b.Record.NumRows()
+}
+
+func (b *bow) NumCols() int64 {
+	if b.Record == nil {
+		return 0
+	}
+	return b.Record.NumCols()
+}
