@@ -40,6 +40,43 @@ func TestBow_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestBow_GetValue(t *testing.T) {
+	colNames := []string{"time", "value"}
+	types := []Type{Int64, Float64}
+	cols := [][]interface{}{
+		{1, 2, 3},
+		{1.1, 2.2, 3.3},
+	}
+
+	b, err := NewBowFromColumnBasedInterfaces(colNames, types, cols)
+	if err != nil {
+		t.Error(err)
+	}
+
+	{
+		v := b.GetValue(1, 2)
+		expected := 3.3
+		if v != expected {
+			t.Error(expected, v)
+		}
+	}
+	{
+		v := b.GetValueByName("value", 2)
+		expected := 3.3
+		if v != expected {
+			t.Error(expected, v)
+		}
+	}
+	{
+		r := b.GetRow(1)
+		v := r["value"].(float64)
+		expected := 2.2
+		if v != expected {
+			t.Error(expected, v)
+		}
+	}
+}
+
 func TestBow_InnerJoin(t *testing.T) {
 	bow1, err := NewBow(
 		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
