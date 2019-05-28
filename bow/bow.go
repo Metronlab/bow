@@ -18,6 +18,9 @@ import (
 // while arrow is in beta
 type Bow interface {
 	GetValue(colIndex, rowIndex int) interface{}
+	GetValueByName(colName string, rowIndex int) interface{}
+	GetRow(rowIndex int) map[string]interface{}
+
 	// stringer interface for printing rows
 	String() string
 
@@ -160,16 +163,30 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 	}
 
 	for rowIndex := 0; rowIndex < int(b.NumRows()); rowIndex++ {
-		m := map[string]interface{}{}
-		for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
-			val := b.GetValue(colIndex, rowIndex)
-			if val == nil {
-				continue
-			}
-			m[b.Schema().Field(colIndex).Name] = val
-		}
-		mapChan <- m
+		mapChan <- b.GetRow(rowIndex)
 	}
+}
+
+func (b *bow) GetRow(rowIndex int) map[string]interface{} {
+	m := map[string]interface{}{}
+	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
+		val := b.GetValue(colIndex, rowIndex)
+		if val == nil {
+			continue
+		}
+		m[b.Schema().Field(colIndex).Name] = val
+	}
+	return m
+}
+
+func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
+	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
+		name := b.Schema().Field(colIndex).Name
+		if colName == name {
+			return b.GetValue(colIndex, rowIndex)
+		}
+	}
+	return nil
 }
 
 func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
