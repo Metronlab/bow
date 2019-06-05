@@ -39,6 +39,14 @@ func NewSeriesFromInterfaces(name string, typeOf Type, cells []interface{}) (ser
 	return NewSeries(name, typeOf, buf.Value, buf.Valid), nil
 }
 
+func newEmptyRecord(schema *arrow.Schema) array.Record {
+	pool := memory.NewGoAllocator()
+	b := array.NewRecordBuilder(pool, schema)
+	defer b.Release()
+
+	return b.NewRecord()
+}
+
 func newRecordFromSeries(series ...Series) (array.Record, error) {
 	if len(series) == 0 {
 		return nil, nil
