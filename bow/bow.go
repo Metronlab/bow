@@ -39,6 +39,8 @@ type Bow interface {
 
 	// Surcharged on Record:
 	NewSlice(i, j int64) Bow
+	NewColumns(columns ...[]interface{}) (bobow Bow, err error)
+	NewEmpty() Bow
 
 	// Exposed from Record:
 	Release()
@@ -46,6 +48,7 @@ type Bow interface {
 
 	NumRows() int64
 	NumCols() int64
+	Schema() *arrow.Schema
 }
 
 type bow struct {
@@ -106,6 +109,33 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 		}
 	}
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
+}
+
+func (b *bow) NewEmpty() (bobow Bow) {
+	return b.NewSlice(0, 0)
+}
+
+func (b *bow) NewColumns(columns ...[]interface{}) (bobow Bow, err error) {
+	if len(columns) != len(b.Schema().Fields()) {
+		return nil, errors.New("bow: schema and data have a different amount of columns")
+	}
+	seriess := make([]Series, len(columns))
+	for i, c := range columns {
+		typ, err := getTypeFromArrowType(b.Schema().Field(i).Type.Name())
+		if err != nil {
+			return nil, err
+		}
+		buf, err := NewBufferFromInterfaces(typ, c)
+		if err != nil {
+			return nil, err
+		}
+		seriess[i] = Series{
+			Name: b.Schema().Field(i).Name,
+			Type: typ,
+			Data: buf,
+		}
+	}
+	return NewBow(seriess...)
 }
 
 func (b *bow) String() string {
