@@ -17,6 +17,7 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
+	GetType(colIndex int) (Type, error)
 	GetValue(colIndex, rowIndex int) interface{}
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetRow(rowIndex int) map[string]interface{}
@@ -39,7 +40,7 @@ type Bow interface {
 
 	// Surcharged on Record:
 	NewSlice(i, j int64) Bow
-	NewColumns(columns ...[]interface{}) (bobow Bow, err error)
+	NewColumns(columns [][]interface{}) (bobow Bow, err error)
 	NewEmpty() Bow
 
 	// Exposed from Record:
@@ -48,7 +49,7 @@ type Bow interface {
 
 	NumRows() int64
 	NumCols() int64
-	Schema() *arrow.Schema
+	NumSchemaCols() int
 }
 
 type bow struct {
@@ -111,12 +112,12 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
 }
 
-func (b *bow) NewEmpty() (bobow Bow) {
+func (b *bow) NewEmpty() Bow {
 	return b.NewSlice(0, 0)
 }
 
-func (b *bow) NewColumns(columns ...[]interface{}) (bobow Bow, err error) {
-	if len(columns) != len(b.Schema().Fields()) {
+func (b *bow) NewColumns(columns [][]interface{}) (Bow, error) {
+	if len(columns) != b.NumSchemaCols() {
 		return nil, errors.New("bow: schema and data have a different amount of columns")
 	}
 	seriess := make([]Series, len(columns))
@@ -242,6 +243,10 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 	return nil
+}
+
+func (b *bow) GetType(colIndex int) (Type, error) {
+	return getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
 }
 
 func (b *bow) InnerJoin(B2 Bow) Bow {
@@ -497,4 +502,10 @@ func (b *bow) NumCols() int64 {
 		return 0
 	}
 	return b.Record.NumCols()
+}
+
+// NumSchemaCols counts columns based on schema fields,
+// independently of data written.
+func (b *bow) NumSchemaCols() int {
+	return len(b.Schema().Fields())
 }

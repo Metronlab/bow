@@ -59,23 +59,23 @@ func TestArithmeticMean_Next(t *testing.T) {
 	fmt.Println("full bow")
 	fmt.Println(b)
 
-	step(t, 0, 2,
+	next(t, 0, 2,
 		iter, [][]interface{}{{0, 1, 2}, {5.0, 5.0, 5.0}},
 		aggr, [][]interface{}{{0}, {5.0}})
 
-	step(t, 3, 5,
+	next(t, 3, 5,
 		iter, [][]interface{}{{3, 4, 5}, {6.0, 7.0, 8.0}},
 		aggr, [][]interface{}{{3}, {7.0}})
 
-	step(t, 6, 8,
+	next(t, 6, 8,
 		iter, [][]interface{}{{6, 7, 8}, {0.0, 0.0, 100.0}},
-		aggr, [][]interface{}{{6}, {33.333333333333336}})
+		aggr, [][]interface{}{{6}, {33.333333333333336}}) // todo: precision
 
-	step(t, 9, 11,
+	next(t, 9, 11,
 		iter, emptyCols,
 		aggr, emptyCols)
 
-	step(t, 12, 14,
+	next(t, 12, 14,
 		iter, [][]interface{}{{12}, {100.0}},
 		aggr, [][]interface{}{{12}, {100.0}})
 
@@ -84,7 +84,7 @@ func TestArithmeticMean_Next(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func step(t *testing.T,
+func next(t *testing.T,
 	start, end int64,
 	iter bow.RollingIterator,
 	iterColumns [][]interface{},
