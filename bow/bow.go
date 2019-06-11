@@ -18,6 +18,7 @@ import (
 // while arrow is in beta
 type Bow interface {
 	GetType(colIndex int) (Type, error)
+	GetName(colIndex int) string
 	GetValue(colIndex, rowIndex int) interface{}
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetRow(rowIndex int) map[string]interface{}
@@ -26,7 +27,7 @@ type Bow interface {
 	String() string
 
 	RowMapIter() chan map[string]interface{}
-	IntervalRolling(column int, interval int64, options IntervalRollingOptions) (*IntervalRollingIterator, error)
+	IntervalRolling(column int, interval int64, options RollingOptions) (Rolling, error)
 
 	InnerJoin(b2 Bow) Bow
 
@@ -118,7 +119,7 @@ func (b *bow) NewEmpty() Bow {
 
 func (b *bow) NewColumns(columns [][]interface{}) (Bow, error) {
 	if len(columns) != b.NumSchemaCols() {
-		return nil, errors.New("bow: schema and data have a different amount of columns")
+		return nil, errors.New("bow: mismatch between schema and data")
 	}
 	seriess := make([]Series, len(columns))
 	for i, c := range columns {
@@ -247,6 +248,10 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 
 func (b *bow) GetType(colIndex int) (Type, error) {
 	return getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
+}
+
+func (b *bow) GetName(colIndex int) string {
+	return b.Schema().Field(colIndex).Name
 }
 
 func (b *bow) InnerJoin(B2 Bow) Bow {

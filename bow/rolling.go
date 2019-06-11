@@ -3,21 +3,28 @@ package bow
 import (
 	"errors"
 	"fmt"
-	"sync"
 )
 
-type RollingIterator interface {
-	Next() (*Window, error)
+// Rolling allows to process a windowed bow to produce a bow.
+// Chain `Fill` and `Aggregate` calls to declare operations on windows.
+type Rolling interface {
+	Fill() Rolling // todo
+	Aggregate(...ColumnAggregation) Rolling
+	Bow() (Bow, error)
 }
 
-// IntervalRolling provides an iterator over interval-based windows of bow rows.
-// `column`: values to place rows in intervals
-// `interval`: window length
+type RollingOptions struct {
+	Offset int64
+}
+
+// IntervalRolling provides an interval-based `Rolling`.
+// `column`: dimension of interval
+// `interval`: length of interval
 //
 // Todo:
-// - handle more than int64 timestamps
 // - bound inclusion option (for now it's `[[`)
-func (b *bow) IntervalRolling(column int, interval int64, options IntervalRollingOptions) (*IntervalRollingIterator, error) {
+// - handle more than int64 intervals
+func (b *bow) IntervalRolling(column int, interval int64, options RollingOptions) (Rolling, error) {
 	if column > len(b.Schema().Fields())-1 {
 		return nil, fmt.Errorf("no column at index %d", column)
 	}
@@ -28,29 +35,45 @@ func (b *bow) IntervalRolling(column int, interval int64, options IntervalRollin
 		return nil, errors.New("positive offset required")
 	}
 
-	return &IntervalRollingIterator{
-		bow:       b,
-		column:    column,
-		interval:  interval,
-		options:   options,
-		currStart: options.Offset,
+	numWins, err := numWindows(b, column, interval, options.Offset)
+	if err != nil {
+		return nil, err
+	}
+
+	var start int64
+	if b.NumRows() > 0 {
+		v := b.GetValue(column, 0)
+		var ok bool
+		start, ok = v.(int64)
+		if !ok {
+			return nil, fmt.Errorf("could not cast %v to int64", v)
+		}
+	}
+	start += options.Offset
+
+	return &intervalRollingIterator{
+		bow:        b,
+		column:     column,
+		interval:   interval,
+		options:    options,
+		numWindows: numWins,
+		currStart:  start,
 	}, nil
 }
 
-type IntervalRollingOptions struct {
-	Offset int64
-}
+type intervalRollingIterator struct {
+	// todo: sync.Mutex
 
-type IntervalRollingIterator struct {
-	sync.Mutex
+	bow        Bow
+	column     int
+	interval   int64
+	options    RollingOptions
+	numWindows int64
 
-	bow      Bow
-	column   int
-	interval int64
-	options  IntervalRollingOptions
-
-	currStart int64 // e.g. start time
-	currIndex int64
+	currStart   int64 // e.g. start time
+	currIndex   int64
+	windowIndex int64
+	err         error
 }
 
 type Window struct {
@@ -59,15 +82,102 @@ type Window struct {
 	End   int64
 }
 
-// Next window if any left.
-//
-// e.g. `for w, err := iter.Next(); w != nil; {...}`
-func (it *IntervalRollingIterator) Next() (*Window, error) {
-	it.Lock()
-	defer it.Unlock()
+func (it *intervalRollingIterator) Bow() (Bow, error) {
+	return it.bow, it.err
+}
 
+// todo
+func (it *intervalRollingIterator) Fill() Rolling {
+	if it.err != nil {
+		return it
+	}
+	return it
+}
+
+// Aggregate each column using a ColumnAggregation
+func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling {
+	const logPrefix = "Aggregate: "
+
+	if it.err != nil {
+		return it
+	}
+
+	if len(aggrs) != it.bow.NumSchemaCols() {
+		return it.setError(fmt.Errorf("mismatch between columns and aggregations"))
+	}
+
+	columns := make([][]interface{}, len(aggrs))
+	seriess := make([]Series, len(aggrs))
+
+	for i, aggr := range aggrs {
+		iterCopy := *it // fresh iteration per aggregation
+
+		switch aggr.Type {
+		case Int64, Float64, Bool:
+			columns[i] = make([]interface{}, it.numWindows)
+		default:
+			return it.setError(fmt.Errorf(logPrefix+"invalid return type %s for aggregation %d", aggr.Type, i))
+		}
+
+		for iterCopy.hasNext() {
+			wi, w, err := iterCopy.next()
+			if err != nil {
+				return iterCopy.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
+			}
+
+			val, err := aggr.Func(i, *w)
+			if err != nil {
+				return iterCopy.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
+			}
+			if val == nil {
+				continue
+			}
+
+			var ok bool
+			switch aggr.Type {
+			case Int64:
+				columns[i][wi], ok = val.(int64)
+			case Float64:
+				columns[i][wi], ok = val.(float64)
+			case Bool:
+				columns[i][wi], ok = val.(bool)
+			}
+			if !ok {
+				return iterCopy.setError(
+					fmt.Errorf(logPrefix+"aggregation %d should return %s, returned %t, value: %v", i, aggr.Type, val, val))
+			}
+		}
+
+		name := aggr.GetName()
+		if name == "" {
+			name = iterCopy.bow.GetName(i)
+		}
+		series, err := NewSeriesFromInterfaces(name, aggr.Type, columns[i])
+		if err != nil {
+			return iterCopy.setError(errors.New(logPrefix + err.Error()))
+		}
+		seriess[i] = series
+	}
+
+	b, err := NewBow(seriess...)
+	if err != nil {
+		return it.setError(errors.New(logPrefix + err.Error()))
+	}
+	r, err := b.IntervalRolling(it.column, it.interval, it.options)
+	if err != nil {
+		return it.setError(errors.New(logPrefix + err.Error()))
+	}
+	return r
+}
+
+func (it *intervalRollingIterator) hasNext() bool {
+	return it.currIndex < it.bow.NumRows() &&
+		it.currStart <= it.bow.GetValue(it.column, int(it.bow.NumRows()-1)).(int64)
+}
+
+func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err error) {
 	if !it.hasNext() {
-		return nil, nil
+		return it.windowIndex, nil, nil
 	}
 
 	start := it.currStart
@@ -81,7 +191,7 @@ func (it *IntervalRollingIterator) Next() (*Window, error) {
 		v := it.bow.GetValue(it.column, int(i))
 		ref, ok := v.(int64)
 		if !ok {
-			return nil, fmt.Errorf("can't cast '%v' to int64", v)
+			return it.windowIndex, nil, fmt.Errorf("can't cast '%v' to int64", v)
 		}
 
 		if ref < start {
@@ -99,20 +209,48 @@ func (it *IntervalRollingIterator) Next() (*Window, error) {
 
 	it.currIndex = i
 	it.currStart = end + 1
+	windowIndex = it.windowIndex
+	it.windowIndex++
+
 	var b Bow
 	if firstIndex == -1 {
 		b = it.bow.NewSlice(0, 0) // empty
 	} else {
 		b = it.bow.NewSlice(firstIndex, lastIndex+1)
 	}
-	return &Window{
+	return windowIndex, &Window{
 		Bow:   b,
 		Start: start,
 		End:   end,
 	}, nil
 }
 
-func (it *IntervalRollingIterator) hasNext() bool {
-	return it.currIndex < it.bow.NumRows() &&
-		it.currStart <= it.bow.GetValue(it.column, int(it.bow.NumRows()-1)).(int64)
+func (it *intervalRollingIterator) setError(err error) Rolling {
+	it.err = err
+	return it
+}
+
+func numWindows(b Bow, column int, interval int64, offset int64) (int64, error) {
+	nrows := b.NumRows()
+	if nrows == 0 {
+		return nrows, nil
+	}
+
+	first := b.GetValue(column, 0)
+	last := b.GetValue(column, int(nrows-1))
+
+	tfirst, ok := first.(int64)
+	if !ok {
+		return 0, fmt.Errorf("could not cast %v to int64", first)
+	}
+	tfirst += offset
+	tlast, ok := last.(int64)
+	if !ok {
+		return 0, fmt.Errorf("could not cast %v to int64", last)
+	}
+	if tfirst > tlast {
+		return 0, nil
+	}
+
+	return int64((tlast-tfirst)/interval) + 1, nil
 }
