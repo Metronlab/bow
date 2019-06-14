@@ -80,19 +80,24 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 	b := array.NewRecordBuilder(pool, schema)
 	defer b.Release()
 
-	if len(series[0].Data.Valid) == 0 {
-		return b.NewRecord(), nil
-	}
-
 	for colIndex, s := range series {
 		switch s.Type {
 		case Float64:
+			if len(s.Data.Value.([]float64)) == 0 {
+				return b.NewRecord(), nil
+			}
 			b.Field(colIndex).(*array.Float64Builder).
 				AppendValues(s.Data.Value.([]float64), s.Data.Valid)
 		case Int64:
+			if len(s.Data.Value.([]int64)) == 0 {
+				return b.NewRecord(), nil
+			}
 			b.Field(colIndex).(*array.Int64Builder).
 				AppendValues(s.Data.Value.([]int64), s.Data.Valid)
 		case Bool:
+			if len(s.Data.Value.([]bool)) == 0 {
+				return b.NewRecord(), nil
+			}
 			b.Field(colIndex).(*array.BooleanBuilder).
 				AppendValues(s.Data.Value.([]bool), s.Data.Valid)
 		}
