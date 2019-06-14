@@ -24,15 +24,22 @@ type RollingOptions struct {
 // Todo:
 // - bound inclusion option (for now it's `[[`)
 // - handle more than int64 intervals
-func (b *bow) IntervalRolling(column int, interval int64, options RollingOptions) (Rolling, error) {
-	if column > len(b.Schema().Fields())-1 {
-		return nil, fmt.Errorf("no column at index %d", column)
+func (b *bow) IntervalRolling(column string, interval int64, options RollingOptions) (Rolling, error) {
+	index, err := b.GetIndex(column)
+	if err != nil {
+		return nil, errors.New("intervalrolling: " + err.Error())
 	}
+	return b.IntervalRollingForIndex(index, interval, options)
+}
+
+func (b *bow) IntervalRollingForIndex(column int, interval int64, options RollingOptions) (Rolling, error) {
+	logPrefix := "intervalrolling: "
+
 	if interval <= 0 {
-		return nil, errors.New("strictly positive interval required")
+		return nil, errors.New(logPrefix + "strictly positive interval required")
 	}
 	if options.Offset < 0 {
-		return nil, errors.New("positive offset required")
+		return nil, errors.New(logPrefix + "positive offset required")
 	}
 
 	numWins, err := numWindows(b, column, interval, options.Offset)
@@ -46,7 +53,7 @@ func (b *bow) IntervalRolling(column int, interval int64, options RollingOptions
 		var ok bool
 		start, ok = v.(int64)
 		if !ok {
-			return nil, fmt.Errorf("could not cast %v to int64", v)
+			return nil, fmt.Errorf(logPrefix+"could not cast %v to int64", v)
 		}
 	}
 	start += options.Offset
@@ -189,7 +196,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 	if err != nil {
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
-	r, err := b.IntervalRolling(newIntervalColumn, it2.interval, it2.options)
+	r, err := b.IntervalRollingForIndex(newIntervalColumn, it2.interval, it2.options)
 	if err != nil {
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}

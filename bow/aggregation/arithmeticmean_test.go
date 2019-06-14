@@ -1,16 +1,17 @@
 package aggregation
 
 import (
-	"git.metronlab.com/backend_libraries/go-bow/bow"
 	"testing"
+
+	"git.metronlab.com/backend_libraries/go-bow/bow"
 
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	timeCol  = 0
-	valueCol = 1
-	badCol   = 99
+	timeCol  = "time"
+	valueCol = "value"
+	badCol   = "badcol"
 
 	emptyCols = [][]interface{}{{}, {}}
 	sparseBow = newIntervalRollingTestBow([][]interface{}{
@@ -29,8 +30,8 @@ func TestArithmeticMean(t *testing.T) {
 	r, _ := sparseBow.IntervalRolling(timeCol, 10, bow.RollingOptions{})
 	aggregated, err := r.
 		Aggregate(
-			WindowStart("time"),
-			ArithmeticMean("value")).
+			WindowStart(timeCol),
+			ArithmeticMean(valueCol)).
 		Bow()
 	assert.Nil(t, err)
 	assert.NotNil(t, aggregated)
@@ -50,7 +51,7 @@ func TestArithmeticMean(t *testing.T) {
 }
 
 func newIntervalRollingTestBow(cols [][]interface{}) bow.Bow {
-	colNames := []string{"time", "value"}
+	colNames := []string{timeCol, valueCol}
 	types := []bow.Type{bow.Int64, bow.Float64}
 	b, err := bow.NewBowFromColumnBasedInterfaces(colNames, types, cols)
 	if err != nil {

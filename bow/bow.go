@@ -29,7 +29,8 @@ type Bow interface {
 	String() string
 
 	RowMapIter() chan map[string]interface{}
-	IntervalRolling(column int, interval int64, options RollingOptions) (Rolling, error)
+	IntervalRolling(column string, interval int64, options RollingOptions) (Rolling, error)
+	IntervalRollingForIndex(column int, interval int64, options RollingOptions) (Rolling, error)
 
 	InnerJoin(b2 Bow) Bow
 
