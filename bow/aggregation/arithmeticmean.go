@@ -1,7 +1,7 @@
 package aggregation
 
 import (
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"git.metronlab.com/backend_libraries/go-bow/bow"
 )
 
 func ArithmeticMean(col string) bow.ColumnAggregation {

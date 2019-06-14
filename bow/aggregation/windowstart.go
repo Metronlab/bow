@@ -1,6 +1,6 @@
 package aggregation
 
-import "git.prod.metronlab.io/backend_libraries/go-bow/bow"
+import "git.metronlab.com/backend_libraries/go-bow/bow"
 
 func WindowStart(col string) bow.ColumnAggregation {
 	return bow.NewColumnAggregation(col, bow.Int64,

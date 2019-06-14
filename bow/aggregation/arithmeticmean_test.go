@@ -1,9 +1,9 @@
 package aggregation
 
 import (
+	"git.metronlab.com/backend_libraries/go-bow/bow"
 	"testing"
 
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 	"github.com/stretchr/testify/assert"
 )
 
