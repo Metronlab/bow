@@ -10,8 +10,6 @@ type ColumnAggregation interface {
 
 	Type() Type
 	Func() ColumnAggregationFunc
-
-	// IsDeletion() bool
 }
 
 type columnAggregation struct {
@@ -20,7 +18,6 @@ type columnAggregation struct {
 	outputName string
 	typ        Type
 	fun        ColumnAggregationFunc
-	// isDeletion bool
 }
 
 func NewColumnAggregation(col string, typ Type, f ColumnAggregationFunc) ColumnAggregation {
@@ -50,6 +47,7 @@ func (a columnAggregation) FromIndex(i int) ColumnAggregation {
 func (a columnAggregation) Type() Type {
 	return a.typ
 }
+
 func (a columnAggregation) Func() ColumnAggregationFunc {
 	return a.fun
 }
@@ -62,15 +60,3 @@ func (a columnAggregation) Rename(name string) ColumnAggregation {
 	a.outputName = name
 	return a
 }
-
-// func (a columnAggregation) IsDeletion() bool {
-// 	return a.isDeletion
-// }
-
-// // ColumnDeletion bypasses a column, but doesn't affect the writing of the same column via another column aggregation.
-// func ColumnDeletion(name string) ColumnAggregation {
-// 	return columnAggregation{
-// 		outputName: name,
-// 		isDeletion: true,
-// 	}
-// }

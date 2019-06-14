@@ -98,67 +98,55 @@ func (it *intervalRollingIterator) Fill() Rolling {
 func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling {
 	const logPrefix = "Aggregate: "
 
-	if it.err != nil {
-		return it
-	}
+	it2 := *it // preserve previous states still referenced
 
-	// var len(aggrs) int
-	// for _, aggr := range aggrs {
-	// 	if !aggr.IsDeletion() {
-	// 		len(aggrs)++
-	// 	}
-	// }
+	if it2.err != nil {
+		return &it2
+	}
 
 	newIntervalColumn := -1
 	if len(aggrs) == 0 {
-		return it.setError(fmt.Errorf("at least one column aggregation is required"))
+		return it2.setError(fmt.Errorf("at least one column aggregation is required"))
 	}
 	for i, aggr := range aggrs {
-		// if aggr.IsDeletion() {
-		// 	continue
-		// }
 		if aggr.InputName() == "" {
-			return it.setError(fmt.Errorf(logPrefix+"aggregation %d has no column name", i))
+			return it2.setError(fmt.Errorf(logPrefix+"aggregation %d has no column name", i))
 		}
-		readIndex, err := it.bow.GetIndex(aggr.InputName())
+		readIndex, err := it2.bow.GetIndex(aggr.InputName())
 		if err != nil {
-			return it.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
+			return it2.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 		}
 		aggrs[i] = aggr.FromIndex(readIndex)
-		if readIndex == it.column {
+		if readIndex == it2.column {
 			newIntervalColumn = i
 		}
 	}
 	if newIntervalColumn == -1 {
-		return it.setError(fmt.Errorf(logPrefix+"must keep column %d for intervals", it.column))
+		return it2.setError(fmt.Errorf(logPrefix+"must keep column %d for intervals", it2.column))
 	}
 
 	columns := make([][]interface{}, len(aggrs))
 	seriess := make([]Series, len(aggrs))
 
 	for writeIndex, aggr := range aggrs {
-		// if aggr.IsDeletion() {
-		// 	continue
-		// }
-
-		iterCopy := *it // fresh iteration per aggregation
+		it3 := it2
 
 		switch aggr.Type() {
 		case Int64, Float64, Bool:
-			columns[writeIndex] = make([]interface{}, it.numWindows)
+			columns[writeIndex] = make([]interface{}, it3.numWindows)
 		default:
-			return it.setError(fmt.Errorf(logPrefix+"aggregation %d has invalid return type %s", writeIndex, aggr.Type()))
+			return it3.setError(fmt.Errorf(logPrefix+"aggregation %d has invalid return type %s", writeIndex, aggr.Type()))
 		}
 
-		for iterCopy.hasNext() {
-			winIndex, w, err := iterCopy.next()
+		for it3.hasNext() {
+			winIndex, w, err := it3.next()
 			if err != nil {
-				return iterCopy.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
+				return it3.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 			}
 
 			val, err := aggr.Func()(aggr.InputIndex(), *w)
 			if err != nil {
-				return iterCopy.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
+				return it3.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 			}
 			if val == nil {
 				continue
@@ -174,7 +162,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				columns[writeIndex][winIndex], ok = val.(bool)
 			}
 			if !ok {
-				return iterCopy.setError(
+				return it3.setError(
 					fmt.Errorf(logPrefix+"aggregation %d should return %s, returned %t, value: %v", writeIndex, aggr.Type(), val, val))
 			}
 		}
@@ -182,25 +170,25 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		name := aggr.OutputName()
 		if name == "" {
 			var err error
-			name, err = iterCopy.bow.GetName(aggr.InputIndex())
+			name, err = it3.bow.GetName(aggr.InputIndex())
 			if err != nil {
-				return iterCopy.setError(errors.New(logPrefix + err.Error()))
+				return it3.setError(errors.New(logPrefix + err.Error()))
 			}
 		}
 		series, err := NewSeriesFromInterfaces(name, aggr.Type(), columns[writeIndex])
 		if err != nil {
-			return iterCopy.setError(errors.New(logPrefix + err.Error()))
+			return it3.setError(errors.New(logPrefix + err.Error()))
 		}
 		seriess[writeIndex] = series
 	}
 
 	b, err := NewBow(seriess...)
 	if err != nil {
-		return it.setError(errors.New(logPrefix + err.Error()))
+		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
-	r, err := b.IntervalRolling(newIntervalColumn, it.interval, it.options)
+	r, err := b.IntervalRolling(newIntervalColumn, it2.interval, it2.options)
 	if err != nil {
-		return it.setError(errors.New(logPrefix + err.Error()))
+		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
 	return r
 }
@@ -226,7 +214,7 @@ func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err err
 		v := it.bow.GetValue(it.column, int(i))
 		ref, ok := v.(int64)
 		if !ok {
-			return it.windowIndex, nil, fmt.Errorf("can't cast '%v' to int64", v)
+			return it.windowIndex, nil, fmt.Errorf("can't cast '%v' to int64 to handle value in interval", v)
 		}
 
 		if ref < start {
