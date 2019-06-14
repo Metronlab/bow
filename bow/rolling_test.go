@@ -262,13 +262,13 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 
 	{
 		_, err := r.Aggregate(valueAggr).Bow()
-		assert.EqualError(t, err, fmt.Sprintf("Aggregate: must keep column %d for intervals", timeCol))
+		assert.EqualError(t, err, fmt.Sprintf("aggregate: must keep column %d for intervals", timeCol))
 	}
 
 	{
 		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", Int64,
 			func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
-		assert.EqualError(t, err, "Aggregate: no column '-'")
+		assert.EqualError(t, err, "aggregate: no column '-'")
 	}
 }
 
