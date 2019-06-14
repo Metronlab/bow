@@ -96,7 +96,7 @@ func (it *intervalRollingIterator) Fill() Rolling {
 
 // Aggregate each column using a ColumnAggregation
 func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling {
-	const logPrefix = "Aggregate: "
+	const logPrefix = "aggregate: "
 
 	it2 := *it // preserve previous states still referenced
 
@@ -135,7 +135,9 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		case Int64, Float64, Bool:
 			columns[writeIndex] = make([]interface{}, it3.numWindows)
 		default:
-			return it3.setError(fmt.Errorf(logPrefix+"aggregation %d has invalid return type %s", writeIndex, aggr.Type()))
+			return it3.setError(fmt.Errorf(
+				logPrefix+"aggregation %d has invalid return type %s",
+				writeIndex, aggr.Type()))
 		}
 
 		for it3.hasNext() {
@@ -162,8 +164,9 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				columns[writeIndex][winIndex], ok = val.(bool)
 			}
 			if !ok {
-				return it3.setError(
-					fmt.Errorf(logPrefix+"aggregation %d should return %s, returned %t, value: %v", writeIndex, aggr.Type(), val, val))
+				return it3.setError(fmt.Errorf(
+					logPrefix+"aggregation %d should return %s, returned %t, value: %v",
+					writeIndex, aggr.Type(), val, val))
 			}
 		}
 
