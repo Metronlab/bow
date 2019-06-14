@@ -28,64 +28,67 @@ var (
 )
 
 func TestIntervalRolling_numWindows(t *testing.T) {
-	{
+	t.Run("empty bow", func(t *testing.T) {
 		n, err := numWindows(newIntervalRollingTestBow(emptyCols), timeCol, 1, 0)
 		assert.Nil(t, err)
 		assert.Equal(t, int64(0), n)
-	}
-	{
+	})
+
+	t.Run("one liner bow", func(t *testing.T) {
 		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
 			{0}, {0.1}}),
 			timeCol, 1, 0)
 		assert.Nil(t, err)
 		assert.Equal(t, int64(1), n)
-	}
-	{
-		fmt.Println("included last value")
+	})
+
+	t.Run("included last value", func(t *testing.T) {
 		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
 			{0, 9}, {0.1, 0.1}}),
 			timeCol, 10, 0)
 		assert.Nil(t, err)
 		assert.Equal(t, int64(1), n)
-	}
-	{
-		fmt.Println("excluded last value")
+	})
+
+	t.Run("excluded last value", func(t *testing.T) {
 		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
 			{0, 10}, {0.1, 0.1}}),
 			timeCol, 10, 0)
 		assert.Nil(t, err)
 		assert.Equal(t, int64(2), n)
-	}
-	{
-		fmt.Println("excluded first value (offset)")
+	})
+
+	t.Run("excluded first value (offset)", func(t *testing.T) {
 		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
 			{0, 10}, {0.1, 0.1}}),
 			timeCol, 10, 1)
 		assert.Nil(t, err)
 		assert.Equal(t, int64(1), n)
-	}
+	})
 }
 
 func TestIntervalRolling_init(t *testing.T) {
-	{
+	t.Run("one liner", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {0.1}})
 		rolling, err := b.IntervalRolling(timeCol, 0, RollingOptions{})
 		assert.EqualError(t, err, "strictly positive interval required")
 		assert.Nil(t, rolling)
-	}
-	{
+	})
+
+	t.Run("one line with offset", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {0.1}})
 		rolling, err := b.IntervalRolling(timeCol, 1, RollingOptions{Offset: -1})
 		assert.EqualError(t, err, "positive offset required")
 		assert.Nil(t, rolling)
-	}
-	{
+	})
+
+	t.Run("non existing index", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {0.1}})
 		_, err := b.IntervalRolling(badCol, 1, RollingOptions{})
 		assert.EqualError(t, err, fmt.Sprintf("no column at index %d", badCol))
-	}
-	{
-		fmt.Println("offset too big gives valid finished iterator")
+	})
+
+	t.Run("offset too big gives valid finished iterator", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {0.1}})
 		rolling, err := b.IntervalRolling(timeCol, 1, RollingOptions{Offset: 1e9})
 		iter := rolling.(*intervalRollingIterator)
@@ -94,9 +97,9 @@ func TestIntervalRolling_init(t *testing.T) {
 		_, w, err := iter.next()
 		assert.Nil(t, w)
 		assert.Nil(t, err)
-	}
-	{
-		fmt.Println("empty bow gives valid finished iterator")
+	})
+
+	t.Run("empty bow gives valid finished iterator", func(t *testing.T) {
 		b := newIntervalRollingTestBow(emptyCols)
 		rolling, err := b.IntervalRolling(timeCol, 1, RollingOptions{})
 		iter := rolling.(*intervalRollingIterator)
@@ -104,7 +107,7 @@ func TestIntervalRolling_init(t *testing.T) {
 		_, w, err := iter.next()
 		assert.Nil(t, w)
 		assert.Nil(t, err)
-	}
+	})
 }
 
 func TestIntervalRolling_iterate(t *testing.T) {

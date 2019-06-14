@@ -122,6 +122,7 @@ func TestBow_InnerJoin(t *testing.T) {
 		t.Error(expectedBow, bow3)
 	}
 }
+
 func TestBow_InnerJoin_noResultingRow(t *testing.T) {
 	bow1, err := NewBow(
 		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
