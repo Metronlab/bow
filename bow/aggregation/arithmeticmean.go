@@ -4,10 +4,9 @@ import (
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 )
 
-func ArithmeticMean() bow.ColumnAggregation {
-	return bow.ColumnAggregation{
-		Type: bow.Float64,
-		Func: func(col int, w bow.Window) (interface{}, error) {
+func ArithmeticMean(col string) bow.ColumnAggregation {
+	return bow.NewColumnAggregation(col, bow.Float64,
+		func(col int, w bow.Window) (interface{}, error) {
 			t, err := w.Bow.GetType(col)
 			if err != nil {
 				return 0.0, err
@@ -30,5 +29,5 @@ func ArithmeticMean() bow.ColumnAggregation {
 				sum += value
 			}
 			return sum / float64(w.Bow.NumRows()), nil
-		}}
+		})
 }

@@ -1,7 +1,6 @@
 package aggregation
 
 import (
-	"fmt"
 	"testing"
 
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
@@ -30,8 +29,8 @@ func TestArithmeticMean(t *testing.T) {
 	r, _ := sparseBow.IntervalRolling(timeCol, 10, bow.RollingOptions{})
 	aggregated, err := r.
 		Aggregate(
-			TimeStart(),
-			ArithmeticMean()).
+			WindowStart("time"),
+			ArithmeticMean("value")).
 		Bow()
 	assert.Nil(t, err)
 	assert.NotNil(t, aggregated)
@@ -47,9 +46,6 @@ func TestArithmeticMean(t *testing.T) {
 			150.0,
 		},
 	})
-	fmt.Println("expected", expected)
-	fmt.Println("actual", aggregated)
-
 	assert.Equal(t, true, aggregated.Equal(expected))
 }
 

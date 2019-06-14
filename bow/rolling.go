@@ -102,30 +102,61 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return it
 	}
 
-	if len(aggrs) != it.bow.NumSchemaCols() {
-		return it.setError(fmt.Errorf("mismatch between columns and aggregations"))
+	// var len(aggrs) int
+	// for _, aggr := range aggrs {
+	// 	if !aggr.IsDeletion() {
+	// 		len(aggrs)++
+	// 	}
+	// }
+
+	newIntervalColumn := -1
+	if len(aggrs) == 0 {
+		return it.setError(fmt.Errorf("at least one column aggregation is required"))
+	}
+	for i, aggr := range aggrs {
+		// if aggr.IsDeletion() {
+		// 	continue
+		// }
+		if aggr.InputName() == "" {
+			return it.setError(fmt.Errorf(logPrefix+"aggregation %d has no column name", i))
+		}
+		readIndex, err := it.bow.GetIndex(aggr.InputName())
+		if err != nil {
+			return it.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
+		}
+		aggrs[i] = aggr.FromIndex(readIndex)
+		if readIndex == it.column {
+			newIntervalColumn = i
+		}
+	}
+	if newIntervalColumn == -1 {
+		return it.setError(fmt.Errorf(logPrefix+"must keep column %d for intervals", it.column))
 	}
 
 	columns := make([][]interface{}, len(aggrs))
 	seriess := make([]Series, len(aggrs))
 
-	for i, aggr := range aggrs {
+	for writeIndex, aggr := range aggrs {
+		// if aggr.IsDeletion() {
+		// 	continue
+		// }
+
 		iterCopy := *it // fresh iteration per aggregation
 
-		switch aggr.Type {
+		switch aggr.Type() {
 		case Int64, Float64, Bool:
-			columns[i] = make([]interface{}, it.numWindows)
+			columns[writeIndex] = make([]interface{}, it.numWindows)
 		default:
-			return it.setError(fmt.Errorf(logPrefix+"invalid return type %s for aggregation %d", aggr.Type, i))
+			return it.setError(fmt.Errorf(logPrefix+"aggregation %d has invalid return type %s", writeIndex, aggr.Type()))
 		}
 
 		for iterCopy.hasNext() {
-			wi, w, err := iterCopy.next()
+			winIndex, w, err := iterCopy.next()
 			if err != nil {
 				return iterCopy.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 			}
 
-			val, err := aggr.Func(i, *w)
+			val, err := aggr.Func()(aggr.InputIndex(), *w)
 			if err != nil {
 				return iterCopy.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 			}
@@ -134,36 +165,40 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 			}
 
 			var ok bool
-			switch aggr.Type {
+			switch aggr.Type() {
 			case Int64:
-				columns[i][wi], ok = val.(int64)
+				columns[writeIndex][winIndex], ok = val.(int64)
 			case Float64:
-				columns[i][wi], ok = val.(float64)
+				columns[writeIndex][winIndex], ok = val.(float64)
 			case Bool:
-				columns[i][wi], ok = val.(bool)
+				columns[writeIndex][winIndex], ok = val.(bool)
 			}
 			if !ok {
 				return iterCopy.setError(
-					fmt.Errorf(logPrefix+"aggregation %d should return %s, returned %t, value: %v", i, aggr.Type, val, val))
+					fmt.Errorf(logPrefix+"aggregation %d should return %s, returned %t, value: %v", writeIndex, aggr.Type(), val, val))
 			}
 		}
 
-		name := aggr.GetName()
+		name := aggr.OutputName()
 		if name == "" {
-			name = iterCopy.bow.GetName(i)
+			var err error
+			name, err = iterCopy.bow.GetName(aggr.InputIndex())
+			if err != nil {
+				return iterCopy.setError(errors.New(logPrefix + err.Error()))
+			}
 		}
-		series, err := NewSeriesFromInterfaces(name, aggr.Type, columns[i])
+		series, err := NewSeriesFromInterfaces(name, aggr.Type(), columns[writeIndex])
 		if err != nil {
 			return iterCopy.setError(errors.New(logPrefix + err.Error()))
 		}
-		seriess[i] = series
+		seriess[writeIndex] = series
 	}
 
 	b, err := NewBow(seriess...)
 	if err != nil {
 		return it.setError(errors.New(logPrefix + err.Error()))
 	}
-	r, err := b.IntervalRolling(it.column, it.interval, it.options)
+	r, err := b.IntervalRolling(newIntervalColumn, it.interval, it.options)
 	if err != nil {
 		return it.setError(errors.New(logPrefix + err.Error()))
 	}

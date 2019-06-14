@@ -18,7 +18,9 @@ import (
 // while arrow is in beta
 type Bow interface {
 	GetType(colIndex int) (Type, error)
-	GetName(colIndex int) string
+	GetName(colIndex int) (string, error)
+	GetIndex(colName string) (int, error)
+
 	GetValue(colIndex, rowIndex int) interface{}
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetRow(rowIndex int) map[string]interface{}
@@ -250,8 +252,20 @@ func (b *bow) GetType(colIndex int) (Type, error) {
 	return getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
 }
 
-func (b *bow) GetName(colIndex int) string {
-	return b.Schema().Field(colIndex).Name
+func (b *bow) GetName(colIndex int) (string, error) {
+	if colIndex > len(b.Schema().Fields()) {
+		return "", fmt.Errorf("no index %d", colIndex)
+	}
+	return b.Schema().Field(colIndex).Name, nil
+}
+
+func (b *bow) GetIndex(colName string) (int, error) {
+	for i, field := range b.Schema().Fields() {
+		if field.Name == colName {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("no column '%s'", colName)
 }
 
 func (b *bow) InnerJoin(B2 Bow) Bow {

@@ -170,46 +170,102 @@ func checkTestWindow(t *testing.T, iter *intervalRollingIterator, expected testW
 
 func TestIntervalRolling_Aggregate(t *testing.T) {
 	r, _ := sparseBow.IntervalRolling(timeCol, 10, RollingOptions{})
-	aggregated, err := r.
-		Aggregate(
-			ColumnAggregation{
-				Type: Int64,
-				Func: func(col int, w Window) (interface{}, error) {
-					return w.Start, nil
-				}}.SetName("start"),
-			ColumnAggregation{
-				Type: Int64,
-				Func: func(col int, w Window) (interface{}, error) {
-					return w.Start * 2, nil
-				}}.SetName("startDouble"),
-		).
-		Bow()
-	assert.Nil(t, err)
-	assert.NotNil(t, aggregated)
+	timeAggr := NewColumnAggregation("time", Int64,
+		func(col int, w Window) (interface{}, error) {
+			return w.Start, nil
+		})
+	valueAggr := NewColumnAggregation("value", Float64,
+		func(col int, w Window) (interface{}, error) {
+			return float64(w.Bow.NumRows()), nil
+		})
+	doubleAggr := NewColumnAggregation("value", Float64,
+		func(col int, w Window) (interface{}, error) {
+			return float64(w.Bow.NumRows()) * 2, nil
+		})
 
-	expected, _ := NewBowFromColumnBasedInterfaces(
-		[]string{"start", "startDouble"},
-		[]Type{Int64, Int64},
-		[][]interface{}{
-			{10, 20},
-			{20, 40}})
-	assert.Equal(t, true, aggregated.Equal(expected))
-}
-
-func TestIntervalRolling_Aggregate_mismatch(t *testing.T) {
-	r, _ := sparseBow.IntervalRolling(timeCol, 10, RollingOptions{})
-	aggr := ColumnAggregation{
-		Type: Int64,
-		Func: func(col int, w Window) (interface{}, error) {
-			return 0, nil
-		}}
-	{
-		_, err := r.Aggregate(aggr).Bow()
-		assert.EqualError(t, err, "mismatch between columns and aggregations")
+	{ // keep columns
+		aggregated, err := r.
+			Aggregate(timeAggr, valueAggr).
+			Bow()
+		assert.Nil(t, err)
+		assert.NotNil(t, aggregated)
+		expected, _ := NewBowFromColumnBasedInterfaces(
+			[]string{"time", "value"},
+			[]Type{Int64, Float64},
+			[][]interface{}{
+				{10, 20},
+				{3.0, 1.0},
+			})
+		assert.Equal(t, true, aggregated.Equal(expected))
 	}
+
+	{ // swap columns
+		aggregated, err := r.
+			Aggregate(valueAggr, timeAggr).
+			Bow()
+		assert.Nil(t, err)
+		assert.NotNil(t, aggregated)
+		expected, _ := NewBowFromColumnBasedInterfaces(
+			[]string{"value", "time"},
+			[]Type{Float64, Int64},
+			[][]interface{}{
+				{3.0, 1.0},
+				{10, 20},
+			})
+		assert.Equal(t, true, aggregated.Equal(expected))
+	}
+
+	{ // rename
+		aggregated, err := r.Aggregate(timeAggr.Rename("a"), valueAggr.Rename("b")).Bow()
+		assert.Nil(t, err)
+		assert.NotNil(t, aggregated)
+		expected, _ := NewBowFromColumnBasedInterfaces(
+			[]string{"a", "b"},
+			[]Type{Int64, Float64},
+			[][]interface{}{
+				{10, 20},
+				{3.0, 1.0},
+			})
+		assert.Equal(t, true, aggregated.Equal(expected))
+	}
+
+	{ // less than in original
+		aggregated, err := r.Aggregate(timeAggr).Bow()
+		assert.Nil(t, err)
+		assert.NotNil(t, aggregated)
+		expected, _ := NewBowFromColumnBasedInterfaces(
+			[]string{"time"},
+			[]Type{Int64},
+			[][]interface{}{
+				{10, 20},
+			})
+		assert.Equal(t, true, aggregated.Equal(expected))
+	}
+
+	{ // more than in original
+		aggregated, err := r.Aggregate(timeAggr, doubleAggr.Rename("double"), valueAggr).Bow()
+		assert.Nil(t, err)
+		assert.NotNil(t, aggregated)
+		expected, _ := NewBowFromColumnBasedInterfaces(
+			[]string{"time", "double", "value"},
+			[]Type{Int64, Float64, Float64},
+			[][]interface{}{
+				{10, 20},
+				{6.0, 2.0},
+				{3.0, 1.0},
+			})
+		assert.Equal(t, true, aggregated.Equal(expected))
+	}
+
 	{
-		_, err := r.Aggregate(aggr, aggr, aggr).Bow()
-		assert.EqualError(t, err, "mismatch between columns and aggregations")
+		_, err := r.Aggregate(valueAggr).Bow()
+		assert.EqualError(t, err, fmt.Sprintf("Aggregate: must keep column %d for intervals", timeCol))
+	}
+
+	{
+		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", Int64,
+			func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
+		assert.EqualError(t, err, "Aggregate: no column '-'")
 	}
 }
 
