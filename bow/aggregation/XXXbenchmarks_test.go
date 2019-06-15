@@ -50,7 +50,6 @@ func benchmarkBow(b *testing.B) {
 		NoErr(b, err)
 	}
 
-
 	{
 		var columns [][]interface{}
 		b.Run("creating 'Column' oriented [][]interface{}", func(b *testing.B) {
@@ -99,7 +98,7 @@ func benchmarkBow(b *testing.B) {
 					)
 					for i := int64(0); i < size; i++ {
 						tCol.Data.Value.([]int64)[i] = i
-						tCol.Data.Valid[i] = i % 2 != 0
+						tCol.Data.Valid[i] = i%2 != 0
 					}
 					return tCol
 				}(BenchSize)
@@ -111,7 +110,7 @@ func benchmarkBow(b *testing.B) {
 					)
 					for i := int64(0); i < size; i++ {
 						tCol.Data.Value.([]float64)[i] = rand.Float64()
-						tCol.Data.Valid[i] = i % 2 != 0
+						tCol.Data.Valid[i] = i%2 != 0
 					}
 					return tCol
 				}(BenchSize)

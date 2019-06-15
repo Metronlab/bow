@@ -9,11 +9,8 @@ import (
 )
 
 var (
-	timeCol  = "time"
-	valueCol = "value"
-	badCol   = "badcol"
-
-	emptyCols = [][]interface{}{{}, {}}
+	timeCol   = "time"
+	valueCol  = "value"
 	sparseBow = newIntervalRollingTestBow([][]interface{}{
 		{
 			10,
