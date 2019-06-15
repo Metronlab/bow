@@ -16,11 +16,15 @@ job-spelling:
   stage: test
   script:
     - ./tools/scripts/code-checks.sh
+  tags:
+    - docker
 
 job-test:
   stage: test
   script:
     - ./tools/scripts/test.sh
+  tags:
+    - docker
 
 job-sonar:
   stage: sonar
@@ -33,4 +37,6 @@ job-benchmark:
   stage: bench
   script:
     - go test ./... -run=XXX -bench=. -benchmem
+  tags:
+    - docker
 
