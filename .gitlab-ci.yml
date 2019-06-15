@@ -1,0 +1,35 @@
+image: golang:1.12
+
+stages:
+  - test
+  - bench
+
+before_script:
+  # define and print VERSION
+  - export VERSION="${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}"
+  - export SERVICE_NAME=$CI_PROJECT_NAME
+  - export IMAGE=$SERVICE_NAME:$VERSION
+  - echo $IMAGE
+
+job-spelling:
+  stage: test
+  script:
+    - ./tools/scripts/code-checks.sh
+
+job-test:
+  stage: test
+  script:
+    - ./tools/scripts/test.sh
+
+job-sonar:
+  stage: test
+  script:
+    - docker run -v $(pwd):/home/sonarscan/$CI_COMMIT_REF_NAME metronlab/sonarscanner:master-e62871ec4bbdf95f51ab10ab24e1903c53f630b9 sonar-scanner "-Dsonar.host.url=https://sonarqube.prod.metronlab.io" "-Dsonar.login=34d377d8d0ca83abd228d8c841b3f64cc5a0f938" "-Dsonar.projectKey=$CI_PROJECT_NAME" "-Dsonar.projectName=$CI_PROJECT_NAME" "-Dsonar.sources=/home/sonarscan/$CI_COMMIT_REF_NAME" 
+  tags:
+    - shell
+
+job-benchmark:
+  stage: bench
+  script:
+    - go test ./... -run=XXX -bench=. -benchmem
+
