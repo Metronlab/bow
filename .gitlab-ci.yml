@@ -2,6 +2,7 @@ image: golang:1.12
 
 stages:
   - test
+  - sonar
   - bench
 
 before_script:
@@ -22,9 +23,9 @@ job-test:
     - ./tools/scripts/test.sh
 
 job-sonar:
-  stage: test
+  stage: sonar
   script:
-    - docker run -v $(pwd):/home/sonarscan/$CI_COMMIT_REF_NAME metronlab/sonarscanner:master-e62871ec4bbdf95f51ab10ab24e1903c53f630b9 sonar-scanner "-Dsonar.host.url=https://sonarqube.prod.metronlab.io" "-Dsonar.login=34d377d8d0ca83abd228d8c841b3f64cc5a0f938" "-Dsonar.projectKey=$CI_PROJECT_NAME" "-Dsonar.projectName=$CI_PROJECT_NAME" "-Dsonar.sources=/home/sonarscan/$CI_COMMIT_REF_NAME" 
+    - docker run -v $(pwd):/home/sonarscan/$CI_COMMIT_REF_NAME metronlab/sonarscanner:master-e62871ec4bbdf95f51ab10ab24e1903c53f630b9 sonar-scanner "-Dsonar.host.url=https://sonarqube.prod.metronlab.io" "-Dsonar.login=34d377d8d0ca83abd228d8c841b3f64cc5a0f938" "-Dsonar.projectKey=$CI_PROJECT_NAME" "-Dsonar.projectName=$CI_PROJECT_NAME" "-Dsonar.sources=/home/sonarscan/$CI_COMMIT_REF_NAME" "-Dsonar.branch.name=$CI_COMMIT_REF_NAME"
   tags:
     - shell
 
