@@ -15,6 +15,12 @@ before_script:
 job-spelling:
   stage: test
   script:
+    - go get \
+      golang.org/x/lint/golint \
+      github.com/jstemmer/go-junit-report \
+      honnef.co/go/tools/cmd/staticcheck \
+      github.com/client9/misspell/cmd/misspell \
+      golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
     - ./tools/script/code-checks.sh
   tags:
     - docker
@@ -22,6 +28,10 @@ job-spelling:
 job-test:
   stage: test
   script:
+    - go get \
+      github.com/vektra/mockery/.../ \
+      github.com/jstemmer/go-junit-report \
+      golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
     - ./tools/script/test.sh
   tags:
     - docker
