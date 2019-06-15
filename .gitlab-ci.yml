@@ -38,7 +38,7 @@ job-sonar:
 job-benchmark:
   stage: bench
   script:
-    - make count bench
+    - make bench
   tags:
     - docker
 
