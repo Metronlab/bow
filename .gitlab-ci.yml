@@ -15,14 +15,14 @@ before_script:
 job-spelling:
   stage: test
   script:
-    - ./tools/scripts/code-checks.sh
+    - ./tools/script/code-checks.sh
   tags:
     - docker
 
 job-test:
   stage: test
   script:
-    - ./tools/scripts/test.sh
+    - ./tools/script/test.sh
   tags:
     - docker
 
