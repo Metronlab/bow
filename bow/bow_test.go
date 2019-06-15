@@ -181,7 +181,7 @@ func TestBow_InnerJoin_NonComplyingType(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil ||
 			r.(error).Error() != "bow: left and right bow on join columns are of incompatible types: index1" {
-			t.Errorf("indexes of bow1 and uncomplyingBow are uncompatible and should panic. Have %v, expect %v",
+			t.Errorf("indexes of bow1 and uncomplyingBow are incompatible and should panic. Have %v, expect %v",
 				r, "bow: left and right bow on join columns are of incompatible types: index1")
 		}
 	}()

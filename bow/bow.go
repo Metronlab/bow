@@ -348,15 +348,6 @@ func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 	return commonColumns, nil
 }
 
-func keysEquals(l, r map[string]interface{}, columnNames map[string]struct{}) bool {
-	for name := range columnNames {
-		if !reflect.DeepEqual(l[name], r[name]) {
-			return false
-		}
-	}
-	return true
-}
-
 func (b *bow) makeColNamesAndTypesOnJoin(
 	b2 *bow, commonColumns map[string]struct{}, rColNotInLIndexes []int) ([]string, []Type) {
 	var err error
@@ -402,10 +393,10 @@ func (b *bow) Equal(B2 Bow) bool {
 	for {
 		i1, ok1 := <-b1Chan
 		i2, ok2 := <-b2Chan
-		for (i1 == nil || len(i1) == 0) && ok1 {
+		for len(i1) == 0 && ok1 {
 			i1, ok1 = <-b1Chan
 		}
-		for (i2 == nil || len(i2) == 0) && ok2 {
+		for len(i2) == 0 && ok2 {
 			i2, ok2 = <-b2Chan
 		}
 		if ok1 != ok2 {

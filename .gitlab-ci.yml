@@ -15,21 +15,16 @@ before_script:
 job-spelling:
   stage: test
   script:
-    - go get
-      golang.org/x/lint/golint
-      honnef.co/go/tools/cmd/staticcheck
-      github.com/client9/misspell/cmd/misspell
-      golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
-    - ./tools/script/code-checks.sh
+    - make install
+    - make check
   tags:
     - docker
 
 job-test:
   stage: test
   script:
-    - go get
-      github.com/jstemmer/go-junit-report
-    - ./tools/script/test.sh
+    - make install
+    - make test
   tags:
     - docker
 
@@ -43,7 +38,7 @@ job-sonar:
 job-benchmark:
   stage: bench
   script:
-    - go test ./... -run=XXX -bench=. -benchmem
+    - make count bench
   tags:
     - docker
 
