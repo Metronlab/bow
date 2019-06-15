@@ -1,14 +1,14 @@
 package aggregation
 
 import (
+	"fmt"
 	"git.metronlab.com/backend_libraries/go-bow/bow"
 	"math/rand"
 	"testing"
 )
 
-const (
-	BenchSize = 1e7
-)
+// BenchSize of 1e8 triggers out of memory on a 16Go mem computer
+var BenchSize int64
 
 func NoErr(b *testing.B, err error) {
 	if err != nil {
@@ -17,6 +17,13 @@ func NoErr(b *testing.B, err error) {
 }
 
 func BenchmarkBow(b *testing.B) {
+	for _, BenchSize = range []int64{1e3, 1e5, 1e7} {
+		b.Run(fmt.Sprintf("Size %d", BenchSize), benchmarkBow)
+		b.Log("\n")
+	}
+}
+
+func benchmarkBow(b *testing.B) {
 	var benchBow bow.Bow
 	var err error
 
