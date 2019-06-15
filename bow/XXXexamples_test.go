@@ -74,7 +74,7 @@ func ExampleBow_MarshalJSON() {
 	if err := json.Indent(&out, js, "", "\t"); err != nil {
 		panic(err)
 	}
-	fmt.Println(string(out.Bytes()))
+	fmt.Println(out.String())
 	//output:
 	//	{
 	//	"columnsTypes": {
