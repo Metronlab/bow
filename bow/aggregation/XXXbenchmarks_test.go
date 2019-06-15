@@ -97,8 +97,7 @@ func benchmarkBow(b *testing.B) {
 						make([]bool, size),
 					)
 					for i := int64(0); i < size; i++ {
-						tCol.Data.Value.([]int64)[i] = i
-						tCol.Data.Valid[i] = i%2 != 0
+						tCol.Data.Value.([]int64)[i], tCol.Data.Valid[i] = i, true
 					}
 					return tCol
 				}(BenchSize)
@@ -109,8 +108,7 @@ func benchmarkBow(b *testing.B) {
 						make([]bool, size),
 					)
 					for i := int64(0); i < size; i++ {
-						tCol.Data.Value.([]float64)[i] = rand.Float64()
-						tCol.Data.Valid[i] = i%2 != 0
+						tCol.Data.Value.([]float64)[i], tCol.Data.Valid[i] = rand.Float64(), true
 					}
 					return tCol
 				}(BenchSize)
