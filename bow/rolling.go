@@ -132,19 +132,18 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return it2.setError(fmt.Errorf(logPrefix+"must keep column %d for intervals", it2.column))
 	}
 
-	columns := make([][]interface{}, len(aggrs))
-	seriess := make([]Series, len(aggrs))
-
-	for writeIndex, aggr := range aggrs {
+	outputSeries := make([]Series, len(aggrs))
+	for wColIndex, aggr := range aggrs {
 		it3 := it2
 
+		var buf Buffer
 		switch aggr.Type() {
 		case Int64, Float64, Bool:
-			columns[writeIndex] = make([]interface{}, it3.numWindows)
+			buf = NewBuffer(int(it3.numWindows), aggr.Type(), true)
 		default:
 			return it3.setError(fmt.Errorf(
 				logPrefix+"aggregation %d has invalid return type %s",
-				writeIndex, aggr.Type()))
+				wColIndex, aggr.Type()))
 		}
 
 		for it3.hasNext() {
@@ -161,20 +160,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				continue
 			}
 
-			var ok bool
-			switch aggr.Type() {
-			case Int64:
-				columns[writeIndex][winIndex], ok = val.(int64)
-			case Float64:
-				columns[writeIndex][winIndex], ok = val.(float64)
-			case Bool:
-				columns[writeIndex][winIndex], ok = val.(bool)
-			}
-			if !ok {
-				return it3.setError(fmt.Errorf(
-					logPrefix+"aggregation %d should return %s, returned %t, value: %v",
-					writeIndex, aggr.Type(), val, val))
-			}
+			buf.SetOrDrop(int(winIndex), val)
 		}
 
 		name := aggr.OutputName()
@@ -185,14 +171,11 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				return it3.setError(errors.New(logPrefix + err.Error()))
 			}
 		}
-		series, err := NewSeriesFromInterfaces(name, aggr.Type(), columns[writeIndex])
-		if err != nil {
-			return it3.setError(errors.New(logPrefix + err.Error()))
-		}
-		seriess[writeIndex] = series
+
+		outputSeries[wColIndex] = NewSeries(name, aggr.Type(), buf.Value, buf.Valid)
 	}
 
-	b, err := NewBow(seriess...)
+	b, err := NewBow(outputSeries...)
 	if err != nil {
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
