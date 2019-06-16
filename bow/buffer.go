@@ -15,6 +15,32 @@ type Buffer struct {
 	Valid []bool
 }
 
+func NewBuffer(size int, t Type, nullable bool) Buffer {
+	var valid []bool
+	if nullable {
+		valid = make([]bool, size)
+	}
+	switch t {
+	case Float64:
+		return Buffer{
+			Value: make([]float64, size),
+			Valid: valid,
+		}
+	case Int64:
+		return Buffer{
+			Value: make([]int64, size),
+			Valid: valid,
+		}
+	case Bool:
+		return Buffer{
+			Value: make([]bool, size),
+			Valid: valid,
+		}
+	default:
+		panic(fmt.Errorf("unknown type for buffer: %v", t))
+	}
+}
+
 func NewBufferFromInterfaces(t Type, cells []interface{}) (Buffer, error) {
 	return NewBufferFromInterfacesIter(t, len(cells), func() chan interface{} {
 		cellsChan := make(chan interface{})
@@ -86,6 +112,19 @@ func NewBufferFromInterfacesIter(t Type, length int, cells chan interface{}) (Bu
 		return Buffer{Value: vv, Valid: valid}, nil
 	}
 	return Buffer{}, fmt.Errorf("bow: unhandled type number: %v", t)
+}
+
+func (b *Buffer) SetOrDrop(i int, value interface{}) {
+	switch v := b.Value.(type) {
+	case []int64:
+		v[i], b.Valid[i] = value.(int64)
+	case []float64:
+		v[i], b.Valid[i] = value.(float64)
+	case []bool:
+		v[i], b.Valid[i] = value.(bool)
+	default:
+		panic(fmt.Errorf("unsuported buffer type %T", v))
+	}
 }
 
 func seekType(cells []interface{}) (Type, error) {
