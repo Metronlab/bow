@@ -17,14 +17,14 @@ type columnAggregation struct {
 	inputIndex int
 	outputName string
 	typ        Type
-	fun        ColumnAggregationFunc
+	fn         ColumnAggregationFunc
 }
 
-func NewColumnAggregation(col string, typ Type, f ColumnAggregationFunc) ColumnAggregation {
+func NewColumnAggregation(colName string, returnedType Type, fn ColumnAggregationFunc) ColumnAggregation {
 	return columnAggregation{
-		inputName:  col,
-		typ:        typ,
-		fun:        f,
+		inputName:  colName,
+		typ:        returnedType,
+		fn:         fn,
 		inputIndex: -1,
 	}
 }
@@ -49,7 +49,7 @@ func (a columnAggregation) Type() Type {
 }
 
 func (a columnAggregation) Func() ColumnAggregationFunc {
-	return a.fun
+	return a.fn
 }
 
 func (a columnAggregation) OutputName() string {
