@@ -22,6 +22,7 @@ type Bow interface {
 	GetIndex(colName string) (int, error)
 
 	GetValue(colIndex, rowIndex int) interface{}
+	GetFloat64(colIndex, rowIndex int) (float64, bool)
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetRow(rowIndex int) map[string]interface{}
 
@@ -247,6 +248,27 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 	return nil
+}
+
+func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
+	switch b.Schema().Field(colIndex).Type.ID() {
+	case arrow.FLOAT64:
+		vd := array.NewFloat64Data(b.Column(colIndex).Data())
+		return vd.Value(rowIndex), vd.IsValid(rowIndex)
+	case arrow.INT64:
+		vd := array.NewInt64Data(b.Column(colIndex).Data())
+		return float64(vd.Value(rowIndex)), vd.IsValid(rowIndex)
+	case arrow.BOOL:
+		vd := array.NewBooleanData(b.Column(colIndex).Data())
+		booleanValue := vd.Value(rowIndex)
+		if booleanValue {
+			return 1., vd.IsValid(rowIndex)
+		}
+		return 0., vd.IsValid(rowIndex)
+	default:
+		panic(fmt.Sprintf("bow: unhandled type %s",
+			b.Schema().Field(colIndex).Type.Name()))
+	}
 }
 
 func (b *bow) GetType(colIndex int) (Type, error) {
