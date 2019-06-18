@@ -8,7 +8,7 @@ import (
 // Rolling allows to process a windowed bow to produce a bow.
 // Chain `Fill` and `Aggregate` calls to declare operations on windows.
 type Rolling interface {
-	Fill() Rolling // todo
+	Fill(interval int64, interpolations ...ColumnInterpolation) Rolling
 	Aggregate(...ColumnAggregation) Rolling
 	Bow() (Bow, error)
 }
@@ -92,14 +92,6 @@ type Window struct {
 
 func (it *intervalRollingIterator) Bow() (Bow, error) {
 	return it.bow, it.err
-}
-
-// todo
-func (it *intervalRollingIterator) Fill() Rolling {
-	if it.err != nil {
-		return it
-	}
-	return it
 }
 
 // Aggregate each column using a ColumnAggregation
@@ -198,7 +190,7 @@ func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err err
 	}
 
 	start := it.currStart
-	end := it.currStart + it.interval - 1
+	end := it.currStart + it.interval
 
 	var firstIndex int64 = -1
 	var lastIndex int64 = -1
@@ -206,16 +198,17 @@ func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err err
 	var i int64
 	for i = it.currIndex; i < it.bow.NumRows(); i++ {
 		v := it.bow.GetValue(it.column, int(i))
-		ref, ok := v.(int64)
-		if !ok {
-			return it.windowIndex, nil, fmt.Errorf("can't cast '%v' to int64 to handle value in interval", v)
-		}
-
-		if ref < start {
-			continue
-		}
-		if ref > end {
-			break
+		if v != nil {
+			ref, ok := v.(int64)
+			if !ok {
+				return it.windowIndex, nil, fmt.Errorf("can't cast '%v' to int64 to handle interval value", v)
+			}
+			if ref < start {
+				continue
+			}
+			if ref >= end {
+				break
+			}
 		}
 
 		if firstIndex == -1 {
@@ -225,7 +218,7 @@ func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err err
 	}
 
 	it.currIndex = i
-	it.currStart = end + 1
+	it.currStart = end
 	windowIndex = it.windowIndex
 	it.windowIndex++
 

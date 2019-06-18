@@ -17,12 +17,12 @@ var (
 		{
 			10,
 			15, 16,
-			25,
+			25, 29,
 		},
 		{
 			10.1,
 			15.1, 16.1,
-			25.1,
+			25.1, 29.1,
 		},
 	})
 )
@@ -117,10 +117,10 @@ func TestIntervalRolling_iterate(t *testing.T) {
 	iter := rolling.(*intervalRollingIterator)
 
 	expected := []testWindow{
-		{0, 10, 14, [][]interface{}{{10}, {10.1}}},
-		{1, 15, 19, [][]interface{}{{15, 16}, {15.1, 16.1}}},
-		{2, 20, 24, emptyCols},
-		{3, 25, 29, [][]interface{}{{25}, {25.1}}}}
+		{0, 10, 15, [][]interface{}{{10}, {10.1}}},
+		{1, 15, 20, [][]interface{}{{15, 16}, {15.1, 16.1}}},
+		{2, 20, 25, emptyCols},
+		{3, 25, 30, [][]interface{}{{25, 29}, {25.1, 29.1}}}}
 
 	for i := 0; iter.hasNext(); i++ {
 		checkTestWindow(t, iter, expected[i])
@@ -138,9 +138,10 @@ func TestIntervalRolling_iterate_withOffset(t *testing.T) {
 	iter := rolling.(*intervalRollingIterator)
 
 	expected := []testWindow{
-		{0, 13, 17, [][]interface{}{{15, 16}, {15.1, 16.1}}},
-		{1, 18, 22, emptyCols},
-		{2, 23, 27, [][]interface{}{{25}, {25.1}}}}
+		{0, 13, 18, [][]interface{}{{15, 16}, {15.1, 16.1}}},
+		{1, 18, 23, emptyCols},
+		{2, 23, 28, [][]interface{}{{25}, {25.1}}},
+		{3, 28, 33, [][]interface{}{{29}, {29.1}}}}
 
 	for i := 0; iter.hasNext(); i++ {
 		checkTestWindow(t, iter, expected[i])
@@ -197,7 +198,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			[]Type{Int64, Float64},
 			[][]interface{}{
 				{10, 20},
-				{3.0, 1.0},
+				{3.0, 2.0},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
 	}
@@ -212,7 +213,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			[]string{"value", "time"},
 			[]Type{Float64, Int64},
 			[][]interface{}{
-				{3.0, 1.0},
+				{3.0, 2.0},
 				{10, 20},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
@@ -227,7 +228,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			[]Type{Int64, Float64},
 			[][]interface{}{
 				{10, 20},
-				{3.0, 1.0},
+				{3.0, 2.0},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
 	}
@@ -254,8 +255,8 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			[]Type{Int64, Float64, Float64},
 			[][]interface{}{
 				{10, 20},
-				{6.0, 2.0},
-				{3.0, 1.0},
+				{6.0, 4.0},
+				{3.0, 2.0},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
 	}
