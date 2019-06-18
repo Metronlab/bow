@@ -1,7 +1,6 @@
 package aggregation
 
 import (
-	"fmt"
 	"git.metronlab.com/backend_libraries/go-bow/bow"
 )
 
