@@ -84,9 +84,10 @@ type intervalRollingIterator struct {
 }
 
 type Window struct {
-	Bow   Bow
-	Start int64
-	End   int64
+	Bow                 Bow
+	IntervalColumnIndex int
+	Start               int64
+	End                 int64
 }
 
 func (it *intervalRollingIterator) Bow() (Bow, error) {
@@ -235,9 +236,10 @@ func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err err
 		b = it.bow.NewSlice(firstIndex, lastIndex+1)
 	}
 	return windowIndex, &Window{
-		Bow:   b,
-		Start: start,
-		End:   end,
+		Bow:                 b,
+		IntervalColumnIndex: it.column,
+		Start:               start,
+		End:                 end,
 	}, nil
 }
 
