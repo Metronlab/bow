@@ -44,7 +44,6 @@ func WeightedAverage(col string) bow.ColumnAggregation {
 				if nextRowIndex < 0 {
 					t1 = float64(w.End)
 				}
-				fmt.Println(v0, v1, t0, t1)
 
 				sum += v0 * (t1 - t0)
 
