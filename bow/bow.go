@@ -51,6 +51,8 @@ type Bow interface {
 	// Exposed from Record:
 	Release()
 	Retain()
+	Schema() *arrow.Schema
+	Column(i int) array.Interface
 
 	NumRows() int64
 	NumCols() int64
@@ -115,6 +117,35 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 		}
 	}
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
+}
+
+func AppendBows(bows ...Bow) (Bow, error) {
+	if len(bows) == 0 {
+		return nil, nil
+	}
+	if len(bows) == 1 {
+		return bows[0], nil
+	}
+
+	// todo: compare schemas
+	refBow := bows[0]
+	var numRows int64
+	for _, b := range bows {
+		numRows += b.NumRows()
+	}
+
+	cols := make([][]interface{}, refBow.NumCols())
+	for ci := range cols {
+		cols[ci] = make([]interface{}, numRows)
+		var offset int
+		for _, b := range bows {
+			for ri := 0; ri < int(b.NumRows()); ri++ {
+				cols[ci][ri+offset] = b.GetValue(ci, ri)
+			}
+			offset += int(b.NumRows())
+		}
+	}
+	return refBow.NewColumns(cols)
 }
 
 func (b *bow) NewEmpty() Bow {
