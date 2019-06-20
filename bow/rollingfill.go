@@ -7,7 +7,7 @@ import (
 
 type ColumnInterpolationMethod string
 
-type ColumnInterpolationFunc func(colIndex int, neededPos int64, w Window) (interface{}, error)
+type ColumnInterpolationFunc func(colIndex int, neededPos float64, w Window) (interface{}, error)
 
 func NewColumnInterpolation(colName string, okTypes []Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
@@ -28,7 +28,7 @@ func FillStepPrevious(colName string) ColumnInterpolation {
 	var currIndex int
 	var previousVal interface{}
 	var fn ColumnInterpolationFunc
-	fn = func(colIndex int, neededPos int64, w Window) (interface{}, error) {
+	fn = func(colIndex int, neededPos float64, w Window) (interface{}, error) {
 		var addedValue interface{}
 		availablePos, _ := w.Bow.GetFloat64(w.IntervalColumnIndex, currIndex)
 		if availablePos < float64(neededPos) {
@@ -54,7 +54,7 @@ func FillStepPrevious(colName string) ColumnInterpolation {
 	}
 }
 
-func (it *intervalRollingIterator) Fill(interval int64, interpolations ...ColumnInterpolation) Rolling {
+func (it *intervalRollingIterator) Fill(interval float64, interpolations ...ColumnInterpolation) Rolling {
 	const logPrefix = "fill: "
 
 	if it.err != nil {
@@ -84,7 +84,7 @@ func (it *intervalRollingIterator) Fill(interval int64, interpolations ...Column
 	return newIt
 }
 
-func (it *intervalRollingIterator) indexedInterpolations(interval int64, interpolations []ColumnInterpolation) (int, []ColumnInterpolation, error) {
+func (it *intervalRollingIterator) indexedInterpolations(interval float64, interpolations []ColumnInterpolation) (int, []ColumnInterpolation, error) {
 	newIntervalColumn := -1
 	if len(interpolations) == 0 {
 		return 0, nil, fmt.Errorf("at least one column interpolation is required")
@@ -112,7 +112,7 @@ func (it *intervalRollingIterator) indexedInterpolations(interval int64, interpo
 	return newIntervalColumn, interpolations, nil
 }
 
-func (it *intervalRollingIterator) fillBowWindows(interval int64, interpolations []ColumnInterpolation) ([]Bow, error) {
+func (it *intervalRollingIterator) fillBowWindows(interval float64, interpolations []ColumnInterpolation) ([]Bow, error) {
 	it2 := *it
 	bows := make([]Bow, it2.numWindows)
 
@@ -136,7 +136,7 @@ func (it *intervalRollingIterator) fillBowWindows(interval int64, interpolations
 				actualInterval = w.End - w.Start
 			}
 
-			colSizeAtMost := int((w.End-w.Start)/actualInterval + w.Bow.NumRows())
+			colSizeAtMost := int((w.End-w.Start)/actualInterval) + w.Bow.NumRows()
 			filledCol := NewBuffer(colSizeAtMost, typ, true)
 
 			writeRowIndex = 0 // keep from outer closure
@@ -145,7 +145,7 @@ func (it *intervalRollingIterator) fillBowWindows(interval int64, interpolations
 			for neededPos := w.Start; neededPos <= w.End; neededPos += actualInterval {
 				var availablePos float64 = -1
 				var availableVal interface{}
-				if w.Bow.NumRows() > int64(currAvailableIndex) {
+				if w.Bow.NumRows() > currAvailableIndex {
 					availablePos, _ = w.Bow.GetFloat64(it.column, currAvailableIndex)
 					availableVal = w.Bow.GetValue(interp.colIndex, currAvailableIndex)
 				}
@@ -154,7 +154,7 @@ func (it *intervalRollingIterator) fillBowWindows(interval int64, interpolations
 					val := availableVal
 					if val == nil && replaceNils {
 						var err error
-						val, err = interp.fn(writeColIndex, int64(availablePos), *w)
+						val, err = interp.fn(writeColIndex, availablePos, *w)
 						if err != nil {
 							if err != nil {
 								return nil, err
@@ -175,7 +175,7 @@ func (it *intervalRollingIterator) fillBowWindows(interval int64, interpolations
 					writeRowIndex++
 
 				} else { // fill now
-					addedVal, err := interp.fn(writeColIndex, int64(neededPos), *w)
+					addedVal, err := interp.fn(writeColIndex, neededPos, *w)
 					if err != nil {
 						if err != nil {
 							return nil, err
@@ -193,7 +193,7 @@ func (it *intervalRollingIterator) fillBowWindows(interval int64, interpolations
 		if err != nil {
 			return nil, err
 		}
-		bows[winIndex] = b.NewSlice(0, int64(writeRowIndex)) // drop extra
+		bows[winIndex] = b.NewSlice(0, writeRowIndex) // drop extra
 	}
 
 	return bows, nil
