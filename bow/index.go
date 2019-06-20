@@ -23,7 +23,7 @@ func (b *bow) newIndex(colName string) {
 	}
 
 	m := make(map[interface{}][]int)
-	for i := int64(0); i < b.NumRows(); i++ {
+	for i := 0; i < b.NumRows(); i++ {
 		val := b.GetValue(colIndex, int(i))
 		if val == nil {
 			continue
@@ -50,7 +50,7 @@ func (b *bow) getIndex(name string, val interface{}) ([]int, bool) {
 	return res, ok
 }
 
-func (b *bow) getRightBowIndexesAtRow(b2 *bow, commonColumns map[string]struct{}, rowIndex int64) []int {
+func (b *bow) getRightBowIndexesAtRow(b2 *bow, commonColumns map[string]struct{}, rowIndex int) []int {
 	var possibleIndexes [][]int
 	for name := range commonColumns {
 		val := b.GetValue(b.Schema().FieldIndex(name), int(rowIndex))

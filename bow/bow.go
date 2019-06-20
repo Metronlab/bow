@@ -30,8 +30,8 @@ type Bow interface {
 	String() string
 
 	RowMapIter() chan map[string]interface{}
-	IntervalRolling(column string, interval int64, options RollingOptions) (Rolling, error)
-	IntervalRollingForIndex(column int, interval int64, options RollingOptions) (Rolling, error)
+	IntervalRolling(column string, interval float64, options RollingOptions) (Rolling, error)
+	IntervalRollingForIndex(column int, interval float64, options RollingOptions) (Rolling, error)
 
 	InnerJoin(b2 Bow) Bow
 
@@ -43,8 +43,7 @@ type Bow interface {
 	MarshalJSON() ([]byte, error)
 	UnmarshalJSON([]byte) error
 
-	// Surcharged on Record:
-	NewSlice(i, j int64) Bow
+	NewSlice(i, j int) Bow
 	NewColumns(columns [][]interface{}) (bobow Bow, err error)
 	NewEmpty() Bow
 
@@ -54,8 +53,8 @@ type Bow interface {
 	Schema() *arrow.Schema
 	Column(i int) array.Interface
 
-	NumRows() int64
-	NumCols() int64
+	NumRows() int
+	NumCols() int
 	NumSchemaCols() int
 }
 
@@ -129,7 +128,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 
 	// todo: compare schemas
 	refBow := bows[0]
-	var numRows int64
+	var numRows int
 	for _, b := range bows {
 		numRows += b.NumRows()
 	}
@@ -371,7 +370,7 @@ func (b *bow) InnerJoin(B2 Bow) Bow {
 // 1     1   2
 func (b *bow) innerJoinInColumnBaseInterfaces(b2 *bow, commonColumns map[string]struct{}, rColIndexes []int) [][]interface{} {
 	resultInterfaces := make([][]interface{}, len(b.Schema().Fields())+len(rColIndexes))
-	for rowIndex := int64(0); rowIndex < b.NumRows(); rowIndex++ {
+	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 		for _, rValIndex := range b.getRightBowIndexesAtRow(b2, commonColumns, rowIndex) {
 			for colIndex := range b.Schema().Fields() {
 				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, int(rowIndex)))
@@ -548,24 +547,24 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *bow) NewSlice(i, j int64) Bow {
+func (b *bow) NewSlice(i, j int) Bow {
 	return &bow{
-		Record: b.Record.NewSlice(i, j),
+		Record: b.Record.NewSlice(int64(i), int64(j)),
 	}
 }
 
-func (b *bow) NumRows() int64 {
+func (b *bow) NumRows() int {
 	if b.Record == nil {
 		return 0
 	}
-	return b.Record.NumRows()
+	return int(b.Record.NumRows())
 }
 
-func (b *bow) NumCols() int64 {
+func (b *bow) NumCols() int {
 	if b.Record == nil {
 		return 0
 	}
-	return b.Record.NumCols()
+	return int(b.Record.NumCols())
 }
 
 // NumSchemaCols counts columns based on schema fields,
