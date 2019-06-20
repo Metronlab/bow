@@ -8,13 +8,13 @@ import (
 // Rolling allows to process a windowed bow to produce a bow.
 // Chain `Fill` and `Aggregate` calls to declare operations on windows.
 type Rolling interface {
-	Fill(interval int64, interpolations ...ColumnInterpolation) Rolling
+	Fill(interval float64, interpolations ...ColumnInterpolation) Rolling
 	Aggregate(...ColumnAggregation) Rolling
 	Bow() (Bow, error)
 }
 
 type RollingOptions struct {
-	Offset int64
+	Offset float64
 }
 
 // IntervalRolling provides an interval-based `Rolling`.
@@ -24,7 +24,7 @@ type RollingOptions struct {
 // Todo:
 // - bound inclusion option (for now it's `[[`)
 // - handle more than int64 intervals
-func (b *bow) IntervalRolling(column string, interval int64, options RollingOptions) (Rolling, error) {
+func (b *bow) IntervalRolling(column string, interval float64, options RollingOptions) (Rolling, error) {
 	index, err := b.GetIndex(column)
 	if err != nil {
 		return nil, errors.New("intervalrolling: " + err.Error())
@@ -32,7 +32,7 @@ func (b *bow) IntervalRolling(column string, interval int64, options RollingOpti
 	return b.IntervalRollingForIndex(index, interval, options)
 }
 
-func (b *bow) IntervalRollingForIndex(column int, interval int64, options RollingOptions) (Rolling, error) {
+func (b *bow) IntervalRollingForIndex(column int, interval float64, options RollingOptions) (Rolling, error) {
 	logPrefix := "intervalrolling: "
 
 	if interval <= 0 {
@@ -47,13 +47,12 @@ func (b *bow) IntervalRollingForIndex(column int, interval int64, options Rollin
 		return nil, err
 	}
 
-	var start int64
+	var start float64
 	if b.NumRows() > 0 {
-		v := b.GetValue(column, 0)
-		var ok bool
-		start, ok = v.(int64)
-		if !ok {
-			return nil, fmt.Errorf(logPrefix+"could not cast %v to int64", v)
+		var valid bool
+		start, valid = b.GetFloat64(column, 0)
+		if !valid {
+			return nil, fmt.Errorf(logPrefix+"invalid cast for start value =%d", start)
 		}
 	}
 	start += options.Offset
@@ -73,21 +72,21 @@ type intervalRollingIterator struct {
 
 	bow        Bow
 	column     int
-	interval   int64
+	interval   float64
 	options    RollingOptions
-	numWindows int64
+	numWindows int
 
-	currStart   int64 // e.g. start time
-	currIndex   int64
-	windowIndex int64
+	currStart   float64 // e.g. start time
+	currIndex   int
+	windowIndex int
 	err         error
 }
 
 type Window struct {
 	Bow                 Bow
 	IntervalColumnIndex int
-	Start               int64
-	End                 int64
+	Start               float64
+	End                 float64
 }
 
 func (it *intervalRollingIterator) Bow() (Bow, error) {
@@ -180,11 +179,14 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 }
 
 func (it *intervalRollingIterator) hasNext() bool {
-	return it.currIndex < it.bow.NumRows() &&
-		it.currStart <= it.bow.GetValue(it.column, int(it.bow.NumRows()-1)).(int64)
+	if it.currIndex >= it.bow.NumRows() {
+		return false
+	}
+	n, _ := it.bow.GetFloat64(it.column, it.bow.NumRows()-1)
+	return it.currStart <= n
 }
 
-func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err error) {
+func (it *intervalRollingIterator) next() (windowIndex int, w *Window, err error) {
 	if !it.hasNext() {
 		return it.windowIndex, nil, nil
 	}
@@ -192,23 +194,17 @@ func (it *intervalRollingIterator) next() (windowIndex int64, w *Window, err err
 	start := it.currStart
 	end := it.currStart + it.interval
 
-	var firstIndex int64 = -1
-	var lastIndex int64 = -1
+	firstIndex := -1
+	lastIndex := -1
 
-	var i int64
+	var i int
 	for i = it.currIndex; i < it.bow.NumRows(); i++ {
-		v := it.bow.GetValue(it.column, int(i))
-		if v != nil {
-			ref, ok := v.(int64)
-			if !ok {
-				return it.windowIndex, nil, fmt.Errorf("can't cast '%v' to int64 to handle interval value", v)
-			}
-			if ref < start {
-				continue
-			}
-			if ref >= end {
-				break
-			}
+		ref, _ := it.bow.GetFloat64(it.column, int(i))
+		if ref < start {
+			continue
+		}
+		if ref >= end {
+			break
 		}
 
 		if firstIndex == -1 {
@@ -241,27 +237,19 @@ func (it *intervalRollingIterator) setError(err error) Rolling {
 	return it
 }
 
-func numWindows(b Bow, column int, interval int64, offset int64) (int64, error) {
+func numWindows(b Bow, column int, interval float64, offset float64) (int, error) {
 	nrows := b.NumRows()
 	if nrows == 0 {
 		return nrows, nil
 	}
 
-	first := b.GetValue(column, 0)
-	last := b.GetValue(column, int(nrows-1))
-
-	tfirst, ok := first.(int64)
-	if !ok {
-		return 0, fmt.Errorf("could not cast %v to int64", first)
-	}
+	tfirst, _ := b.GetFloat64(column, 0)
 	tfirst += offset
-	tlast, ok := last.(int64)
-	if !ok {
-		return 0, fmt.Errorf("could not cast %v to int64", last)
-	}
+	tlast, _ := b.GetFloat64(column, nrows-1)
+
 	if tfirst > tlast {
 		return 0, nil
 	}
 
-	return int64((tlast-tfirst)/interval) + 1, nil
+	return int((tlast-tfirst)/interval) + 1, nil
 }

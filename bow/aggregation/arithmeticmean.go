@@ -12,7 +12,7 @@ func ArithmeticMean(col string) bow.ColumnAggregation {
 			}
 
 			var sum float64
-			for i := int64(0); i < w.Bow.NumRows(); i++ {
+			for i := 0; i < w.Bow.NumRows(); i++ {
 				value, ok := w.Bow.GetFloat64(col, int(i))
 				if !ok {
 					continue
