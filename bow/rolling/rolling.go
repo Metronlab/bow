@@ -10,7 +10,7 @@ import (
 // Rolling allows to process a windowed bow to produce a bow.
 // Chain `Fill` and `Aggregate` calls to declare operations on windows.
 type Rolling interface {
-	Fill(interval float64, interpolations ...ColumnInterpolation) Rolling
+	Fill(interpolations ...ColumnInterpolation) Rolling
 	Aggregate(...ColumnAggregation) Rolling
 	Bow() (bow.Bow, error)
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func StepPrevious(colName string) rolling.ColumnInterpolation {
-	var previousIndex int = -1
+	previousIndex := -1
 
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool},
 		func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
@@ -27,8 +27,8 @@ func StepPrevious(colName string) rolling.ColumnInterpolation {
 
 			index--
 			val := fullBow.GetValue(colIndex, index)
-
 			previousIndex = index
+
 			return val, nil
 		},
 	)

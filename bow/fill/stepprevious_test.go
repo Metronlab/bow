@@ -1,7 +1,6 @@
 package fill
 
 import (
-	"fmt"
 	"testing"
 
 	"git.metronlab.com/backend_libraries/go-bow/bow"
@@ -22,13 +21,12 @@ var (
 )
 
 func TestStepPrevious(t *testing.T) {
-	rollInterval := 10.
-	fillInterval := 2.
+	rollInterval := 2.
 
 	t.Run("no options", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(sparseBow, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
-			Fill(fillInterval, IntervalPosition(timeCol), StepPrevious(valueCol)).
+			Fill(IntervalPosition(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected := newOutputTestBow([][]interface{}{
 			{10., 12., 14., 15., 16., 18., 20., 22., 24., 25., 26., 28., 29.},
@@ -41,14 +39,12 @@ func TestStepPrevious(t *testing.T) {
 	t.Run("with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(sparseBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
-			Fill(fillInterval, IntervalPosition(timeCol), StepPrevious(valueCol)).
+			Fill(IntervalPosition(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected := newOutputTestBow([][]interface{}{
-			{13., 15., 16., 17., 19., 21., 23., 25., 27., 29., 31.},
-			{.10, .15, .16, .16, .16, .16, .16, .25, .25, .29, .29},
+			{13., 15., 16., 17., 19., 21., 23., 25., 27., 29.},
+			{.10, .15, .16, .16, .16, .16, .16, .25, .25, .29},
 		})
-		fmt.Println(expected)
-		fmt.Println(filled)
 		assert.Nil(t, err)
 		assert.Equal(t, true, filled.Equal(expected))
 	})
