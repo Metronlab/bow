@@ -7,7 +7,7 @@ import (
 
 type ColumnInterpolationMethod string
 
-type ColumnInterpolationFunc func(colIndex int, neededPos float64, w Window) (interface{}, error)
+type ColumnInterpolationFunc func(colIndex int, neededPos float64, w Window, fullBow Bow) (interface{}, error)
 
 func NewColumnInterpolation(colName string, okTypes []Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
@@ -71,6 +71,7 @@ func (it *intervalRollingIterator) indexedInterpolations(interval float64, inter
 		if readIndex == it.column {
 			newIntervalColumn = i
 		}
+		// todo: validate against okTypes
 	}
 	if newIntervalColumn == -1 {
 		name, err := it.bow.GetName(it.column)
@@ -85,16 +86,17 @@ func (it *intervalRollingIterator) indexedInterpolations(interval float64, inter
 func (it *intervalRollingIterator) fillBowWindows(interval float64, interpolations []ColumnInterpolation) ([]Bow, error) {
 	it2 := *it
 	bows := make([]Bow, it2.numWindows)
+	replaceNils := true // todo: param
 
 	for it2.hasNext() {
 		winIndex, w, err := it2.next()
 		if err != nil {
+			return nil, err
 		}
 
 		winSeries := make([]Series, len(interpolations))
 		var writeRowIndex int
 		for writeColIndex, interp := range interpolations {
-			replaceNils := true // todo: option
 
 			typ, err := it2.bow.GetType(interp.colIndex)
 			if err != nil {
@@ -115,16 +117,20 @@ func (it *intervalRollingIterator) fillBowWindows(interval float64, interpolatio
 			for neededPos := w.Start; neededPos <= w.End; neededPos += actualInterval {
 				var availablePos float64 = -1
 				var availableVal interface{}
-				if w.Bow.NumRows() > currAvailableIndex {
+				if currAvailableIndex < w.Bow.NumRows() {
 					availablePos, _ = w.Bow.GetFloat64(it.column, currAvailableIndex)
 					availableVal = w.Bow.GetValue(interp.colIndex, currAvailableIndex)
 				}
-
-				if availablePos > -1 && availablePos < float64(neededPos) { // use what's available before
+				if writeColIndex == 1 && neededPos >= 31. {
+					x := 3
+					fmt.Println(x)
+				}
+				// handle value between interval steps
+				if availablePos > -1 && availablePos < float64(neededPos) {
 					val := availableVal
 					if val == nil && replaceNils {
 						var err error
-						val, err = interp.fn(writeColIndex, availablePos, *w)
+						val, err = interp.fn(writeColIndex, availablePos, *w, it.bow)
 						if err != nil {
 							if err != nil {
 								return nil, err
@@ -136,20 +142,18 @@ func (it *intervalRollingIterator) fillBowWindows(interval float64, interpolatio
 					currAvailableIndex++
 					neededPos -= actualInterval // redo position
 
-				} else if neededPos == w.End { // end included for iteration, not in window
+				} else if neededPos == w.End { // end is included for iteration, not for its value
 					break
 
-				} else if availablePos == float64(neededPos) && !(availableVal == nil && replaceNils) { // use what's available now
+				} else if availablePos == float64(neededPos) && !(availableVal == nil && replaceNils) { // use existing value at interval step
 					filledCol.SetOrDrop(writeRowIndex, availableVal)
 					currAvailableIndex++
 					writeRowIndex++
 
-				} else { // fill now
-					addedVal, err := interp.fn(writeColIndex, neededPos, *w)
+				} else { // fill at interval step
+					addedVal, err := interp.fn(writeColIndex, neededPos, *w, it.bow)
 					if err != nil {
-						if err != nil {
 							return nil, err
-						}
 					}
 					filledCol.SetOrDrop(writeRowIndex, addedVal)
 					writeRowIndex++

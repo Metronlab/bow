@@ -1,33 +1,34 @@
 package fill
 
-import "git.metronlab.com/backend_libraries/go-bow/bow"
+import (
+	"git.metronlab.com/backend_libraries/go-bow/bow"
+)
 
-func FillStepPrevious(colName string) bow.ColumnInterpolation {
-	var currIndex int
-	var previousVal interface{}
-	var fn bow.ColumnInterpolationFunc
-	fn = func(colIndex int, neededPos float64, w bow.Window) (interface{}, error) {
-		var addedValue interface{}
-		availablePos, _ := w.Bow.GetFloat64(w.IntervalColumnIndex, currIndex)
-		if availablePos < float64(neededPos) {
-			currIndex++
-			return fn(colIndex, neededPos, w)
-		}
-		if float64(neededPos) == availablePos {
-			availableVal := w.Bow.GetValue(colIndex, currIndex)
-			if availableVal != nil {
-				previousVal = availableVal
+func StepPrevious(colName string) bow.ColumnInterpolation {
+	var previousIndex int = -1
+
+	return bow.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool},
+		func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
+			if fullBow.NumRows() == 0 {
+				return nil, nil
 			}
-		}
-		if float64(neededPos) < availablePos {
-			addedValue = previousVal
-		}
-		currIndex++
-		return addedValue, nil
-	}
-	return bow.NewColumnInterpolation(
-		colName,
-		[]bow.Type{bow.Int64, bow.Float64, bow.Bool},
-		fn,
+
+			index := previousIndex
+			lastIndex := fullBow.NumRows() - 1
+			var pos float64
+			for pos < neededPos {
+				index++
+				if index > lastIndex {
+					break
+				}
+				pos, _ = fullBow.GetFloat64(w.IntervalColumnIndex, index)
+			}
+
+			index--
+			val := fullBow.GetValue(colIndex, index)
+
+			previousIndex = index
+			return val, nil
+		},
 	)
 }
