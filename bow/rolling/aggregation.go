@@ -1,8 +1,10 @@
-package bow
+package rolling
 
 import (
 	"errors"
 	"fmt"
+
+	"git.metronlab.com/backend_libraries/go-bow/bow"
 )
 
 type ColumnAggregation interface {
@@ -13,7 +15,7 @@ type ColumnAggregation interface {
 	OutputName() string
 	Rename(string) ColumnAggregation
 
-	Type() Type
+	Type() bow.Type
 	Func() ColumnAggregationFunc
 }
 
@@ -21,11 +23,11 @@ type columnAggregation struct {
 	inputName  string
 	inputIndex int
 	outputName string
-	typ        Type
+	typ        bow.Type
 	fn         ColumnAggregationFunc
 }
 
-func NewColumnAggregation(colName string, returnedType Type, fn ColumnAggregationFunc) ColumnAggregation {
+func NewColumnAggregation(colName string, returnedType bow.Type, fn ColumnAggregationFunc) ColumnAggregation {
 	return columnAggregation{
 		inputName:  colName,
 		typ:        returnedType,
@@ -34,7 +36,7 @@ func NewColumnAggregation(colName string, returnedType Type, fn ColumnAggregatio
 	}
 }
 
-type ColumnAggregationFunc func(col int, w Window) (interface{}, error)
+type ColumnAggregationFunc func(col int, w bow.Window) (interface{}, error)
 
 func (a columnAggregation) InputIndex() int {
 	return a.inputIndex
@@ -49,7 +51,7 @@ func (a columnAggregation) FromIndex(i int) ColumnAggregation {
 	return a
 }
 
-func (a columnAggregation) Type() Type {
+func (a columnAggregation) Type() bow.Type {
 	return a.typ
 }
 
@@ -97,14 +99,14 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return it2.setError(fmt.Errorf(logPrefix+"must keep column %d for intervals", it2.column))
 	}
 
-	outputSeries := make([]Series, len(aggrs))
+	outputSeries := make([]bow.Series, len(aggrs))
 	for wColIndex, aggr := range aggrs {
 		it3 := it2
 
-		var buf Buffer
+		var buf bow.Buffer
 		switch aggr.Type() {
-		case Int64, Float64, Bool:
-			buf = NewBuffer(int(it3.numWindows), aggr.Type(), true)
+		case bow.Int64, bow.Float64, bow.Bool:
+			buf = bow.NewBuffer(int(it3.numWindows), aggr.Type(), true)
 		default:
 			return it3.setError(fmt.Errorf(
 				logPrefix+"aggregation %d has invalid return type %s",
@@ -137,14 +139,14 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 			}
 		}
 
-		outputSeries[wColIndex] = NewSeries(name, aggr.Type(), buf.Value, buf.Valid)
+		outputSeries[wColIndex] = bow.NewSeries(name, aggr.Type(), buf.Value, buf.Valid)
 	}
 
-	b, err := NewBow(outputSeries...)
+	b, err := bow.NewBow(outputSeries...)
 	if err != nil {
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
-	r, err := b.IntervalRollingForIndex(newIntervalColumn, it2.interval, it2.options)
+	r, err := IntervalRollingForIndex(b, newIntervalColumn, it2.interval, it2.options)
 	if err != nil {
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}

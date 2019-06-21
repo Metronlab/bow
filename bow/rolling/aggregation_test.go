@@ -1,24 +1,25 @@
-package bow
+package rolling
 
 import (
 	"fmt"
 	"testing"
 
+	"git.metronlab.com/backend_libraries/go-bow/bow"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIntervalRolling_Aggregate(t *testing.T) {
-	r, _ := sparseBow.IntervalRolling(timeCol, 10, RollingOptions{})
-	timeAggr := NewColumnAggregation("time", Float64,
-		func(col int, w Window) (interface{}, error) {
+	r, _ := IntervalRolling(sparseBow, timeCol, 10, Options{})
+	timeAggr := NewColumnAggregation("time", bow.Float64,
+		func(col int, w bow.Window) (interface{}, error) {
 			return w.Start, nil
 		})
-	valueAggr := NewColumnAggregation("value", Int64,
-		func(col int, w Window) (interface{}, error) {
+	valueAggr := NewColumnAggregation("value", bow.Int64,
+		func(col int, w bow.Window) (interface{}, error) {
 			return int64(w.Bow.NumRows()), nil
 		})
-	doubleAggr := NewColumnAggregation("value", Int64,
-		func(col int, w Window) (interface{}, error) {
+	doubleAggr := NewColumnAggregation("value", bow.Int64,
+		func(col int, w bow.Window) (interface{}, error) {
 			return int64(w.Bow.NumRows()) * 2, nil
 		})
 
@@ -28,9 +29,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColumnBasedInterfaces(
 			[]string{"time", "value"},
-			[]Type{Float64, Int64},
+			[]bow.Type{bow.Float64, bow.Int64},
 			[][]interface{}{
 				{10., 20.},
 				{3, 2},
@@ -44,9 +45,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColumnBasedInterfaces(
 			[]string{"value", "time"},
-			[]Type{Int64, Float64},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{3, 2},
 				{10., 20.},
@@ -58,9 +59,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr.Rename("a"), valueAggr.Rename("b")).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColumnBasedInterfaces(
 			[]string{"a", "b"},
-			[]Type{Float64, Int64},
+			[]bow.Type{bow.Float64, bow.Int64},
 			[][]interface{}{
 				{10., 20.},
 				{3, 2},
@@ -72,9 +73,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColumnBasedInterfaces(
 			[]string{"time"},
-			[]Type{Float64},
+			[]bow.Type{bow.Float64},
 			[][]interface{}{
 				{10., 20.},
 			})
@@ -85,9 +86,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr, doubleAggr.Rename("double"), valueAggr).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColumnBasedInterfaces(
 			[]string{"time", "double", "value"},
-			[]Type{Float64, Int64, Int64},
+			[]bow.Type{bow.Float64, bow.Int64, bow.Int64},
 			[][]interface{}{
 				{10., 20.},
 				{6, 4},
@@ -102,8 +103,8 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 	}
 
 	{
-		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", Int64,
-			func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
+		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", bow.Int64,
+			func(col int, w bow.Window) (interface{}, error) { return nil, nil })).Bow()
 		assert.EqualError(t, err, "aggregate: no column '-'")
 	}
 }

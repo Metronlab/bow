@@ -250,4 +250,5 @@ func TestBow_AppendBows(t *testing.T) {
 	actual, err := AppendBows(b1, b2, b3)
 	assert.Nil(t, err)
 	assert.True(t, actual.Equal(expected))
+	// todo: corner cases
 }
