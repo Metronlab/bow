@@ -24,36 +24,6 @@ type ColumnInterpolation struct {
 	fn       ColumnInterpolationFunc
 }
 
-func FillStepPrevious(colName string) ColumnInterpolation {
-	var currIndex int
-	var previousVal interface{}
-	var fn ColumnInterpolationFunc
-	fn = func(colIndex int, neededPos float64, w Window) (interface{}, error) {
-		var addedValue interface{}
-		availablePos, _ := w.Bow.GetFloat64(w.IntervalColumnIndex, currIndex)
-		if availablePos < float64(neededPos) {
-			currIndex++
-			return fn(colIndex, neededPos, w)
-		}
-		if float64(neededPos) == availablePos {
-			availableVal := w.Bow.GetValue(colIndex, currIndex)
-			if availableVal != nil {
-				previousVal = availableVal
-			}
-		}
-		if float64(neededPos) < availablePos {
-			addedValue = previousVal
-		}
-		currIndex++
-		return addedValue, nil
-	}
-	return ColumnInterpolation{
-		colName: colName,
-		okTypes: []Type{Int64, Float64, Bool},
-		fn:      fn,
-	}
-}
-
 func (it *intervalRollingIterator) Fill(interval float64, interpolations ...ColumnInterpolation) Rolling {
 	const logPrefix = "fill: "
 
