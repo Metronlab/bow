@@ -1,9 +1,10 @@
-package bow
+package rolling
 
 import (
 	"fmt"
 	"testing"
 
+	"git.metronlab.com/backend_libraries/go-bow/bow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,27 +71,27 @@ func TestIntervalRolling_numWindows(t *testing.T) {
 func TestIntervalRolling_init(t *testing.T) {
 	t.Run("one liner", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0.}, {1}})
-		rolling, err := b.IntervalRolling(timeCol, 0, RollingOptions{})
+		rolling, err := IntervalRolling(b, timeCol, 0, Options{})
 		assert.EqualError(t, err, "intervalrolling: strictly positive interval required")
 		assert.Nil(t, rolling)
 	})
 
 	t.Run("one line with offset", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0.}, {1}})
-		rolling, err := b.IntervalRolling(timeCol, 1, RollingOptions{Offset: -1})
+		rolling, err := IntervalRolling(b, timeCol, 1, Options{Offset: -1})
 		assert.EqualError(t, err, "intervalrolling: positive offset required")
 		assert.Nil(t, rolling)
 	})
 
 	t.Run("non existing index", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0.}, {1}})
-		_, err := b.IntervalRolling(badCol, 1, RollingOptions{})
+		_, err := IntervalRolling(b, badCol, 1, Options{})
 		assert.EqualError(t, err, fmt.Sprintf("intervalrolling: no column '%s'", badCol))
 	})
 
 	t.Run("offset too big gives valid finished iterator", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0.}, {1}})
-		rolling, err := b.IntervalRolling(timeCol, 1, RollingOptions{Offset: 9999.})
+		rolling, err := IntervalRolling(b, timeCol, 1, Options{Offset: 9999.})
 		iter := rolling.(*intervalRollingIterator)
 		assert.Nil(t, err)
 		_, w, err := iter.next()
@@ -100,7 +101,7 @@ func TestIntervalRolling_init(t *testing.T) {
 
 	t.Run("empty bow gives valid finished iterator", func(t *testing.T) {
 		b := newIntervalRollingTestBow(emptyCols)
-		rolling, err := b.IntervalRolling(timeCol, 1, RollingOptions{})
+		rolling, err := IntervalRolling(b, timeCol, 1, Options{})
 		iter := rolling.(*intervalRollingIterator)
 		assert.Nil(t, err)
 		_, w, err := iter.next()
@@ -110,7 +111,7 @@ func TestIntervalRolling_init(t *testing.T) {
 }
 
 func TestIntervalRolling_iterate(t *testing.T) {
-	rolling, err := sparseBow.IntervalRolling(timeCol, 5, RollingOptions{})
+	rolling, err := IntervalRolling(sparseBow, timeCol, 5, Options{})
 	assert.Nil(t, err)
 	assert.NotNil(t, rolling)
 	iter := rolling.(*intervalRollingIterator)
@@ -131,7 +132,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 }
 
 func TestIntervalRolling_iterate_withOffset(t *testing.T) {
-	rolling, err := sparseBow.IntervalRolling(timeCol, 5, RollingOptions{Offset: 3})
+	rolling, err := IntervalRolling(sparseBow, timeCol, 5, Options{Offset: 3})
 	assert.Nil(t, err)
 	assert.NotNil(t, rolling)
 	iter := rolling.(*intervalRollingIterator)
@@ -171,10 +172,10 @@ func checkTestWindow(t *testing.T, iter *intervalRollingIterator, expected testW
 	assert.Equal(t, true, w.Bow.Equal(b))
 }
 
-func newIntervalRollingTestBow(cols [][]interface{}) Bow {
+func newIntervalRollingTestBow(cols [][]interface{}) bow.Bow {
 	colNames := []string{timeCol, valueCol}
-	types := []Type{Float64, Int64}
-	b, err := NewBowFromColumnBasedInterfaces(colNames, types, cols)
+	types := []bow.Type{bow.Float64, bow.Int64}
+	b, err := bow.NewBowFromColumnBasedInterfaces(colNames, types, cols)
 	if err != nil {
 		panic(err)
 	}

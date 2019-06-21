@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"git.metronlab.com/backend_libraries/go-bow/bow"
+	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +26,7 @@ var (
 )
 
 func TestArithmeticMean(t *testing.T) {
-	r, _ := sparseBow.IntervalRolling(timeCol, 10, bow.RollingOptions{})
+	r, _ := rolling.IntervalRolling(sparseBow, timeCol, 10, rolling.Options{})
 	aggregated, err := r.
 		Aggregate(
 			WindowStart(timeCol),

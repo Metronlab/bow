@@ -1,8 +1,10 @@
-package bow
+package rolling
 
 import (
 	"errors"
 	"fmt"
+
+	"git.metronlab.com/backend_libraries/go-bow/bow"
 )
 
 // Rolling allows to process a windowed bow to produce a bow.
@@ -10,10 +12,10 @@ import (
 type Rolling interface {
 	Fill(interval float64, interpolations ...ColumnInterpolation) Rolling
 	Aggregate(...ColumnAggregation) Rolling
-	Bow() (Bow, error)
+	Bow() (bow.Bow, error)
 }
 
-type RollingOptions struct {
+type Options struct {
 	Offset float64
 }
 
@@ -24,15 +26,15 @@ type RollingOptions struct {
 // Todo:
 // - bound inclusion option (for now it's `[[`)
 // - handle more than int64 intervals
-func (b *bow) IntervalRolling(column string, interval float64, options RollingOptions) (Rolling, error) {
+func IntervalRolling(b bow.Bow, column string, interval float64, options Options) (Rolling, error) {
 	index, err := b.GetIndex(column)
 	if err != nil {
 		return nil, errors.New("intervalrolling: " + err.Error())
 	}
-	return b.IntervalRollingForIndex(index, interval, options)
+	return IntervalRollingForIndex(b, index, interval, options)
 }
 
-func (b *bow) IntervalRollingForIndex(column int, interval float64, options RollingOptions) (Rolling, error) {
+func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Options) (Rolling, error) {
 	logPrefix := "intervalrolling: "
 
 	if interval <= 0 {
@@ -70,10 +72,10 @@ func (b *bow) IntervalRollingForIndex(column int, interval float64, options Roll
 type intervalRollingIterator struct {
 	// todo: sync.Mutex
 
-	bow        Bow
+	bow        bow.Bow
 	column     int
 	interval   float64
-	options    RollingOptions
+	options    Options
 	numWindows int
 
 	currStart   float64 // e.g. start time
@@ -82,14 +84,7 @@ type intervalRollingIterator struct {
 	err         error
 }
 
-type Window struct {
-	Bow                 Bow
-	IntervalColumnIndex int
-	Start               float64
-	End                 float64
-}
-
-func (it *intervalRollingIterator) Bow() (Bow, error) {
+func (it *intervalRollingIterator) Bow() (bow.Bow, error) {
 	return it.bow, it.err
 }
 
@@ -101,7 +96,7 @@ func (it *intervalRollingIterator) hasNext() bool {
 	return it.currStart <= n
 }
 
-func (it *intervalRollingIterator) next() (windowIndex int, w *Window, err error) {
+func (it *intervalRollingIterator) next() (windowIndex int, w *bow.Window, err error) {
 	if !it.hasNext() {
 		return it.windowIndex, nil, nil
 	}
@@ -133,13 +128,13 @@ func (it *intervalRollingIterator) next() (windowIndex int, w *Window, err error
 	windowIndex = it.windowIndex
 	it.windowIndex++
 
-	var b Bow
+	var b bow.Bow
 	if firstIndex == -1 {
 		b = it.bow.NewSlice(0, 0) // empty
 	} else {
 		b = it.bow.NewSlice(firstIndex, lastIndex+1)
 	}
-	return windowIndex, &Window{
+	return windowIndex, &bow.Window{
 		Bow:                 b,
 		IntervalColumnIndex: it.column,
 		Start:               start,
@@ -152,7 +147,7 @@ func (it *intervalRollingIterator) setError(err error) Rolling {
 	return it
 }
 
-func numWindows(b Bow, column int, interval float64, offset float64) (int, error) {
+func numWindows(b bow.Bow, column int, interval float64, offset float64) (int, error) {
 	nrows := b.NumRows()
 	if nrows == 0 {
 		return nrows, nil
