@@ -2,12 +2,13 @@ package fill
 
 import (
 	"git.metronlab.com/backend_libraries/go-bow/bow"
+	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
 )
 
-func StepPrevious(colName string) bow.ColumnInterpolation {
+func StepPrevious(colName string) rolling.ColumnInterpolation {
 	var previousIndex int = -1
 
-	return bow.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool},
+	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool},
 		func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
 			if fullBow.NumRows() == 0 {
 				return nil, nil

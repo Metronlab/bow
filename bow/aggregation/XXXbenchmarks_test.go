@@ -2,9 +2,11 @@ package aggregation
 
 import (
 	"fmt"
-	"git.metronlab.com/backend_libraries/go-bow/bow"
 	"math/rand"
 	"testing"
+
+	"git.metronlab.com/backend_libraries/go-bow/bow"
+	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
 )
 
 // BenchSize of 1e8 triggers out of memory on a 16Go mem computer
@@ -161,10 +163,10 @@ func benchmarkBow(b *testing.B) {
 	}
 
 	{
-		var r bow.Rolling
+		var r rolling.Rolling
 		b.Run("create rolling", func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				r, err = benchBow.IntervalRolling("time", 10, bow.RollingOptions{})
+				r, err = rolling.IntervalRolling(benchBow, "time", 10, rolling.Options{})
 				if err != nil {
 					panic(err)
 				}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"git.metronlab.com/backend_libraries/go-bow/bow"
+	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +26,7 @@ func TestStepPrevious(t *testing.T) {
 	fillInterval := 2.
 
 	t.Run("no options", func(t *testing.T) {
-		r, _ := sparseBow.IntervalRolling(timeCol, rollInterval, bow.RollingOptions{})
+		r, _ := rolling.IntervalRolling(sparseBow, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
 			Fill(fillInterval, IntervalPosition(timeCol), StepPrevious(valueCol)).
 			Bow()
@@ -38,7 +39,7 @@ func TestStepPrevious(t *testing.T) {
 	})
 
 	t.Run("with offset", func(t *testing.T) {
-		r, _ := sparseBow.IntervalRolling(timeCol, rollInterval, bow.RollingOptions{Offset: 3.})
+		r, _ := rolling.IntervalRolling(sparseBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
 			Fill(fillInterval, IntervalPosition(timeCol), StepPrevious(valueCol)).
 			Bow()
