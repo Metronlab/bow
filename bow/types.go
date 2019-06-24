@@ -2,10 +2,12 @@ package bow
 
 import (
 	"fmt"
+
 	"github.com/apache/arrow/go/arrow"
 )
 
 type Type int
+
 const (
 	//Unknown is placed first to be by default
 	// when allocating Type or []Type
@@ -15,6 +17,21 @@ const (
 	Bool
 	//string not handled yet
 )
+
+func (t Type) String() string {
+	switch t {
+	case Unknown:
+		return "Unknown"
+	case Float64:
+		return "Float64"
+	case Int64:
+		return "Int64"
+	case Bool:
+		return "Bool"
+	default:
+		return ""
+	}
+}
 
 func getTypeFromArrowType(arrowType string) (Type, error) {
 	switch arrowType {

@@ -17,11 +17,21 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
+	GetType(colIndex int) (Type, error)
+	GetName(colIndex int) (string, error)
+	GetIndex(colName string) (int, error)
+
 	GetValue(colIndex, rowIndex int) interface{}
+	GetFloat64(colIndex, rowIndex int) (float64, bool)
+	GetValueByName(colName string, rowIndex int) interface{}
+	GetRow(rowIndex int) map[string]interface{}
+
 	// stringer interface for printing rows
 	String() string
 
 	RowMapIter() chan map[string]interface{}
+	IntervalRolling(column string, interval int64, options RollingOptions) (Rolling, error)
+	IntervalRollingForIndex(column int, interval int64, options RollingOptions) (Rolling, error)
 
 	InnerJoin(b2 Bow) Bow
 
@@ -35,6 +45,8 @@ type Bow interface {
 
 	// Surcharged on Record:
 	NewSlice(i, j int64) Bow
+	NewColumns(columns [][]interface{}) (bobow Bow, err error)
+	NewEmpty() Bow
 
 	// Exposed from Record:
 	Release()
@@ -42,6 +54,7 @@ type Bow interface {
 
 	NumRows() int64
 	NumCols() int64
+	NumSchemaCols() int
 }
 
 type bow struct {
@@ -104,6 +117,33 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
 }
 
+func (b *bow) NewEmpty() Bow {
+	return b.NewSlice(0, 0)
+}
+
+func (b *bow) NewColumns(columns [][]interface{}) (Bow, error) {
+	if len(columns) != b.NumSchemaCols() {
+		return nil, errors.New("bow: mismatch between schema and data")
+	}
+	seriess := make([]Series, len(columns))
+	for i, c := range columns {
+		typ, err := getTypeFromArrowType(b.Schema().Field(i).Type.Name())
+		if err != nil {
+			return nil, err
+		}
+		buf, err := NewBufferFromInterfaces(typ, c)
+		if err != nil {
+			return nil, err
+		}
+		seriess[i] = Series{
+			Name: b.Schema().Field(i).Name,
+			Type: typ,
+			Data: buf,
+		}
+	}
+	return NewBow(seriess...)
+}
+
 func (b *bow) String() string {
 	if b.Record == nil {
 		return ""
@@ -160,16 +200,30 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 	}
 
 	for rowIndex := 0; rowIndex < int(b.NumRows()); rowIndex++ {
-		m := map[string]interface{}{}
-		for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
-			val := b.GetValue(colIndex, rowIndex)
-			if val == nil {
-				continue
-			}
-			m[b.Schema().Field(colIndex).Name] = val
-		}
-		mapChan <- m
+		mapChan <- b.GetRow(rowIndex)
 	}
+}
+
+func (b *bow) GetRow(rowIndex int) map[string]interface{} {
+	m := map[string]interface{}{}
+	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
+		val := b.GetValue(colIndex, rowIndex)
+		if val == nil {
+			continue
+		}
+		m[b.Schema().Field(colIndex).Name] = val
+	}
+	return m
+}
+
+func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
+	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
+		name := b.Schema().Field(colIndex).Name
+		if colName == name {
+			return b.GetValue(colIndex, rowIndex)
+		}
+	}
+	return nil
 }
 
 func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
@@ -194,6 +248,47 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 	return nil
+}
+
+func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
+	switch b.Schema().Field(colIndex).Type.ID() {
+	case arrow.FLOAT64:
+		vd := array.NewFloat64Data(b.Column(colIndex).Data())
+		return vd.Value(rowIndex), vd.IsValid(rowIndex)
+	case arrow.INT64:
+		vd := array.NewInt64Data(b.Column(colIndex).Data())
+		return float64(vd.Value(rowIndex)), vd.IsValid(rowIndex)
+	case arrow.BOOL:
+		vd := array.NewBooleanData(b.Column(colIndex).Data())
+		booleanValue := vd.Value(rowIndex)
+		if booleanValue {
+			return 1., vd.IsValid(rowIndex)
+		}
+		return 0., vd.IsValid(rowIndex)
+	default:
+		panic(fmt.Sprintf("bow: unhandled type %s",
+			b.Schema().Field(colIndex).Type.Name()))
+	}
+}
+
+func (b *bow) GetType(colIndex int) (Type, error) {
+	return getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
+}
+
+func (b *bow) GetName(colIndex int) (string, error) {
+	if colIndex > len(b.Schema().Fields()) {
+		return "", fmt.Errorf("no index %d", colIndex)
+	}
+	return b.Schema().Field(colIndex).Name, nil
+}
+
+func (b *bow) GetIndex(colName string) (int, error) {
+	for i, field := range b.Schema().Fields() {
+		if field.Name == colName {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("no column '%s'", colName)
 }
 
 func (b *bow) InnerJoin(B2 Bow) Bow {
@@ -275,15 +370,6 @@ func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 	return commonColumns, nil
 }
 
-func keysEquals(l, r map[string]interface{}, columnNames map[string]struct{}) bool {
-	for name := range columnNames {
-		if !reflect.DeepEqual(l[name], r[name]) {
-			return false
-		}
-	}
-	return true
-}
-
 func (b *bow) makeColNamesAndTypesOnJoin(
 	b2 *bow, commonColumns map[string]struct{}, rColNotInLIndexes []int) ([]string, []Type) {
 	var err error
@@ -329,10 +415,10 @@ func (b *bow) Equal(B2 Bow) bool {
 	for {
 		i1, ok1 := <-b1Chan
 		i2, ok2 := <-b2Chan
-		for (i1 == nil || len(i1) == 0) && ok1 {
+		for len(i1) == 0 && ok1 {
 			i1, ok1 = <-b1Chan
 		}
-		for (i2 == nil || len(i2) == 0) && ok2 {
+		for len(i2) == 0 && ok2 {
 			i2, ok2 = <-b2Chan
 		}
 		if ok1 != ok2 {
@@ -435,4 +521,24 @@ func (b *bow) NewSlice(i, j int64) Bow {
 	return &bow{
 		Record: b.Record.NewSlice(i, j),
 	}
+}
+
+func (b *bow) NumRows() int64 {
+	if b.Record == nil {
+		return 0
+	}
+	return b.Record.NumRows()
+}
+
+func (b *bow) NumCols() int64 {
+	if b.Record == nil {
+		return 0
+	}
+	return b.Record.NumCols()
+}
+
+// NumSchemaCols counts columns based on schema fields,
+// independently of data written.
+func (b *bow) NumSchemaCols() int {
+	return len(b.Schema().Fields())
 }

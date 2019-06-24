@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleNewBow() {
-	bow, err := NewBow(
+	b, err := NewBow(
 		NewSeries("col1", Int64, []int64{1, 2, 3, 4}, nil),
 		NewSeries("col2", Float64, []float64{1.1, 2.2, 3.3, 4}, []bool{true, false, true, true}),
 		NewSeries("col3", Bool, []bool{true, false, true, false}, []bool{true, false, true, true}),
@@ -16,7 +16,7 @@ func ExampleNewBow() {
 		panic(err)
 	}
 
-	fmt.Print(bow)
+	fmt.Print(b)
 	// output:
 	// col1  col2   col3
 	// 1     1.1    true
@@ -37,15 +37,6 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 
 	b, err := NewBowFromColumnBasedInterfaces(columns, ts, rows)
 	if err != nil {
-		t.Error(err)
-	}
-	fmt.Print(b)
-	b.Release()
-
-	b.SetMarshalJSONRowBased(true)
-	js, err := b.MarshalJSON()
-	if err != nil {
-		t.Error(err)
 		panic(err)
 	}
 	fmt.Print(b)
@@ -56,43 +47,6 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 	//1      1      1.1
 	//<nil>  <nil>  <nil>
 	//3      3      1.3
-	//
-	//time   value  valueFromJson
-	//1      1      1.1
-	//<nil>  <nil>  <nil>
-	//3      3      1.3
-}
-
-func ExampleNewBowFromRowBasedInterfaces() {
-	columns := []string{"time", "value", "valueFromJson"}
-	ts := make([]Type, len(columns))
-	ts[0] = Int64
-	rows := [][]interface{}{
-		{1, 1, json.Number("1.1")},
-		{1.2, json.Number("1.2"), 2},
-		{json.Number("3"), 3, 1.3},
-		{1, 1.2, json.Number("3")},
-		{1, json.Number("1.2"), 3},
-		{json.Number("1.1"), 2, 1.3},
-	}
-
-	b2test, err := NewBow()
-	if err != nil {
-		t.Fatal(err)
-	}
-	b.Release()
-
-	if err = json.Unmarshal(js, &b2test); err != nil {
-		t.Error(err)
-	}
-
-	if !b.Equal(b2test) {
-		fmt.Println("got:")
-		fmt.Println(b2test)
-		fmt.Println("want:")
-		fmt.Println(b)
-		t.Fail()
-	}
 }
 
 func ExampleBow_MarshalJSON() {
@@ -120,7 +74,7 @@ func ExampleBow_MarshalJSON() {
 	if err := json.Indent(&out, js, "", "\t"); err != nil {
 		panic(err)
 	}
-	fmt.Println(string(out.Bytes()))
+	fmt.Println(out.String())
 	//output:
 	//	{
 	//	"columnsTypes": {
