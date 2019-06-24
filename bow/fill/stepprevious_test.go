@@ -11,9 +11,9 @@ import (
 var (
 	timeCol  = "time"
 	valueCol = "value"
-	badCol   = "badcol"
+	//badCol   = "badcol"
 
-	emptyCols = [][]interface{}{{}, {}}
+	//emptyCols = [][]interface{}{{}, {}}
 	sparseBow = newInputTestBow([][]interface{}{
 		{10., 15., 16., 25., 29.},
 		{.10, .15, .16, .25, .29},
