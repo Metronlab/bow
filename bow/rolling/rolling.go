@@ -7,11 +7,18 @@ import (
 	"git.metronlab.com/backend_libraries/go-bow/bow"
 )
 
-// Rolling allows to process a windowed bow to produce a bow.
-// Chain `Fill` and `Aggregate` calls to declare operations on windows.
+// Rolling allows to process a bow via windows.
+// Use `Fill` and/or `Aggregate` to transform windows.
+// Use `HasNext` and `Next` to iterate over windows.
+// Use `Bow` to join windows into a new bow.
 type Rolling interface {
 	Fill(interpolations ...ColumnInterpolation) Rolling
 	Aggregate(...ColumnAggregation) Rolling
+
+	NumWindows() (int, error)
+	HasNext() bool
+	Next() (windowIndex int, w *bow.Window, err error)
+
 	Bow() (bow.Bow, error)
 }
 
@@ -20,12 +27,13 @@ type Options struct {
 }
 
 // IntervalRolling provides an interval-based `Rolling`.
-// `column`: dimension of interval
-// `interval`: length of interval
+// Intervals rely on numerical values regardless of a unit.
+// All windows except the last one may be empty.
+// `column`: column used to make intervals
+// `interval`: length of an interval
 //
 // Todo:
 // - bound inclusion option (for now it's `[[`)
-// - handle more than int64 intervals
 func IntervalRolling(b bow.Bow, column string, interval float64, options Options) (Rolling, error) {
 	index, err := b.GetIndex(column)
 	if err != nil {
@@ -88,7 +96,10 @@ func (it *intervalRollingIterator) Bow() (bow.Bow, error) {
 	return it.bow, it.err
 }
 
-func (it *intervalRollingIterator) hasNext() bool {
+// HasNext checks if `Next` will provide a window.
+//
+// todo: concurrent-safe
+func (it *intervalRollingIterator) HasNext() bool {
 	if it.currIndex >= it.bow.NumRows() {
 		return false
 	}
@@ -96,8 +107,12 @@ func (it *intervalRollingIterator) hasNext() bool {
 	return it.currStart <= n
 }
 
-func (it *intervalRollingIterator) next() (windowIndex int, w *bow.Window, err error) {
-	if !it.hasNext() {
+// Next window if any.
+// This mutates the iterator.
+//
+// todo: concurrent-safe
+func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err error) {
+	if !it.HasNext() {
 		return it.windowIndex, nil, nil
 	}
 
@@ -145,6 +160,11 @@ func (it *intervalRollingIterator) next() (windowIndex int, w *bow.Window, err e
 func (it *intervalRollingIterator) setError(err error) Rolling {
 	it.err = err
 	return it
+}
+
+// NumWindows gives the total of windows across the entire bow this iterator was built from.
+func (it *intervalRollingIterator) NumWindows() (int, error) {
+	return it.numWindows, it.err
 }
 
 func numWindows(b bow.Bow, column int, interval float64, offset float64) (int, error) {
