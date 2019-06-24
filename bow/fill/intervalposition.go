@@ -1,7 +1,7 @@
 package fill
 
-import "git.metronlab.com/backend_libraries/go-bow/bow"
-import "git.metronlab.com/backend_libraries/go-bow/bow/rolling"
+import "git.prod.metronlab.io/backend_libraries/go-bow/bow"
+import "git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
 
 func IntervalPosition(colName string) rolling.ColumnInterpolation {
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64},

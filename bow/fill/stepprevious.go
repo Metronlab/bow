@@ -1,8 +1,8 @@
 package fill
 
 import (
-	"git.metronlab.com/backend_libraries/go-bow/bow"
-	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
 )
 
 func StepPrevious(colName string) rolling.ColumnInterpolation {
