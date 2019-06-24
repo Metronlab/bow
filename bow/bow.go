@@ -56,7 +56,7 @@ type Bow interface {
 	UnmarshalJSON([]byte) error
 
 	NewSlice(i, j int) Bow
-	NewColumns(columns [][]interface{}) (bobow Bow, err error)
+	NewValues(columns [][]interface{}) (bobow Bow, err error)
 	NewEmpty() Bow
 
 	// Exposed from Record:
@@ -150,20 +150,20 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		cols[ci] = make([]interface{}, numRows)
 		var offset int
 		for _, b := range bows {
-			for ri := 0; ri < int(b.NumRows()); ri++ {
+			for ri := 0; ri < b.NumRows(); ri++ {
 				cols[ci][ri+offset] = b.GetValue(ci, ri)
 			}
-			offset += int(b.NumRows())
+			offset += b.NumRows()
 		}
 	}
-	return refBow.NewColumns(cols)
+	return refBow.NewValues(cols)
 }
 
 func (b *bow) NewEmpty() Bow {
 	return b.NewSlice(0, 0)
 }
 
-func (b *bow) NewColumns(columns [][]interface{}) (Bow, error) {
+func (b *bow) NewValues(columns [][]interface{}) (Bow, error) {
 	if len(columns) != b.NumSchemaCols() {
 		return nil, errors.New("bow: mismatch between schema and data")
 	}
@@ -238,7 +238,7 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 		return
 	}
 
-	for rowIndex := 0; rowIndex < int(b.NumRows()); rowIndex++ {
+	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 		mapChan <- b.GetRow(rowIndex)
 	}
 }
