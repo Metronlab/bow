@@ -15,10 +15,36 @@ type Buffer struct {
 	Valid []bool
 }
 
+func NewBuffer(size int, t Type, nullable bool) Buffer {
+	var valid []bool
+	if nullable {
+		valid = make([]bool, size)
+	}
+	switch t {
+	case Float64:
+		return Buffer{
+			Value: make([]float64, size),
+			Valid: valid,
+		}
+	case Int64:
+		return Buffer{
+			Value: make([]int64, size),
+			Valid: valid,
+		}
+	case Bool:
+		return Buffer{
+			Value: make([]bool, size),
+			Valid: valid,
+		}
+	default:
+		panic(fmt.Errorf("unknown type for buffer: %v", t))
+	}
+}
+
 func NewBufferFromInterfaces(t Type, cells []interface{}) (Buffer, error) {
-	return NewBufferFromInterfacesIter(t, len(cells), func() chan interface{}{
+	return NewBufferFromInterfacesIter(t, len(cells), func() chan interface{} {
 		cellsChan := make(chan interface{})
-		go func () {
+		go func() {
 			for _, c := range cells {
 				cellsChan <- c
 			}
@@ -40,59 +66,65 @@ func NewBufferFromInterfacesIter(t Type, length int, cells chan interface{}) (Bu
 			if i >= length {
 				return Buffer{}, errors.New(ErrBufferOverload)
 			}
-			if c != nil {
-				switch c.(type) {
-				case float64:
-					vv[i], valid[i] = c.(float64)
-				case json.Number:
-					f, err := c.(json.Number).Float64()
-					if err != nil {
-						break
-					}
-					vv[i], valid[i] = f, true
+			switch c := c.(type) {
+			case float64:
+				vv[i], valid[i] = c, true
+			case json.Number:
+				f, err := c.Float64()
+				if err != nil {
+					break
 				}
+				vv[i], valid[i] = f, true
 			}
 			i++
 		}
-		return Buffer{Value:vv, Valid:valid}, nil
+		return Buffer{Value: vv, Valid: valid}, nil
 	case Int64:
 		vv := make([]int64, length)
 		for c := range cells {
 			if i >= length {
 				return Buffer{}, errors.New(ErrBufferOverload)
 			}
-			if c != nil {
-				switch c.(type) {
-				case int:
-					tmp, ok := c.(int)
-					vv[i], valid[i] = int64(tmp), ok
-				case json.Number:
-					f, err := c.(json.Number).Int64()
-					if err != nil {
-						break
-					}
-					vv[i], valid[i] = f, true
-				case int64:
-					vv[i], valid[i] = c.(int64)
+			switch c := c.(type) {
+			case int:
+				vv[i], valid[i] = int64(c), true
+			case json.Number:
+				f, err := c.Int64()
+				if err != nil {
+					break
 				}
+				vv[i], valid[i] = f, true
+			case int64:
+				vv[i], valid[i] = c, true
 			}
 			i++
 		}
-		return Buffer{Value:vv, Valid:valid}, nil
+		return Buffer{Value: vv, Valid: valid}, nil
 	case Bool:
 		vv := make([]bool, length)
 		for c := range cells {
 			if i >= length {
 				return Buffer{}, errors.New(ErrBufferOverload)
 			}
-			if c != nil {
-				vv[i], valid[i] = c.(bool)
-			}
+			vv[i], valid[i] = c.(bool)
 			i++
 		}
-		return Buffer{Value:vv, Valid:valid}, nil
+		return Buffer{Value: vv, Valid: valid}, nil
 	}
 	return Buffer{}, fmt.Errorf("bow: unhandled type number: %v", t)
+}
+
+func (b *Buffer) SetOrDrop(i int, value interface{}) {
+	switch v := b.Value.(type) {
+	case []int64:
+		v[i], b.Valid[i] = value.(int64)
+	case []float64:
+		v[i], b.Valid[i] = value.(float64)
+	case []bool:
+		v[i], b.Valid[i] = value.(bool)
+	default:
+		panic(fmt.Errorf("unsuported buffer type %T", v))
+	}
 }
 
 func seekType(cells []interface{}) (Type, error) {
