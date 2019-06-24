@@ -8,7 +8,7 @@ import (
 )
 
 func TestIntervalRolling_Fill(t *testing.T) {
-	rollInterval := 2.
+	interval := 2.
 	timeInterp := NewColumnInterpolation(timeCol, []bow.Type{bow.Int64, bow.Float64},
 		func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
 			return neededPos, nil
@@ -17,9 +17,22 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
 			return int64(99), nil
 		})
+	interpFloatBool := NewColumnInterpolation(valueCol, []bow.Type{bow.Float64, bow.Bool},
+		func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
+			return true, nil
+		})
+
+	t.Run("invalid input type", func(t *testing.T) {
+		r, _ := IntervalRolling(sparseBow, timeCol, interval, Options{})
+
+		_, err := r.
+			Fill(timeInterp, interpFloatBool).
+			Bow()
+		assert.EqualError(t, err, "fill: invalid input type Int64, must be one of [Float64 Bool]")
+	})
 
 	t.Run("no options", func(t *testing.T) {
-		r, _ := IntervalRolling(sparseBow, timeCol, rollInterval, Options{})
+		r, _ := IntervalRolling(sparseBow, timeCol, interval, Options{})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).
@@ -37,7 +50,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 	})
 
 	t.Run("with offset", func(t *testing.T) {
-		r, _ := IntervalRolling(sparseBow, timeCol, rollInterval, Options{Offset: 3})
+		r, _ := IntervalRolling(sparseBow, timeCol, interval, Options{Offset: 3})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).
