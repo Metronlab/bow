@@ -2,7 +2,10 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBow_UnmarshalJSON(t *testing.T) {
@@ -234,4 +237,21 @@ func TestBow_Empty(t *testing.T) {
 		emptyBow.Release()
 		t.Errorf("Empty Bow should not have any rows or cols")
 	}
+}
+
+func TestBow_Append(t *testing.T) {
+	colNames := []string{"time", "value"}
+	types := []Type{Int64, Float64}
+	b1, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{1, 2}, {.1, .2}})
+	b2, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{3, 4}, {.3, .4}})
+	b3, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{5, 6}, {.5, .6}})
+
+	expected, err := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{
+		{1, 2, 3, 4, 5, 6}, {.1, .2, .3, .4, .5, .6}})
+	assert.NoError(t, err)
+	actual, err := AppendBows(b1, b2, b3)
+	assert.NoError(t, err)
+	assert.True(t, actual.Equal(expected), fmt.Sprintf(
+		"want:\n%v\nhave:\n%v", expected, actual))
+	// todo: corner cases
 }

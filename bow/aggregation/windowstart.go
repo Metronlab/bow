@@ -1,9 +1,12 @@
 package aggregation
 
-import "git.metronlab.com/backend_libraries/go-bow/bow"
+import (
+	"git.metronlab.com/backend_libraries/go-bow/bow"
+	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
+)
 
-func WindowStart(col string) bow.ColumnAggregation {
-	return bow.NewColumnAggregation(col, bow.Int64,
+func WindowStart(col string) rolling.ColumnAggregation {
+	return rolling.NewColumnAggregation(col, bow.Float64,
 		func(col int, w bow.Window) (interface{}, error) {
 			return w.Start, nil
 		})
