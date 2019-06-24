@@ -40,6 +40,43 @@ func TestBow_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestBow_GetValue(t *testing.T) {
+	colNames := []string{"time", "value"}
+	types := []Type{Int64, Float64}
+	cols := [][]interface{}{
+		{1, 2, 3},
+		{1.1, 2.2, 3.3},
+	}
+
+	b, err := NewBowFromColumnBasedInterfaces(colNames, types, cols)
+	if err != nil {
+		t.Error(err)
+	}
+
+	{
+		v := b.GetValue(1, 2)
+		expected := 3.3
+		if v != expected {
+			t.Error(expected, v)
+		}
+	}
+	{
+		v := b.GetValueByName("value", 2)
+		expected := 3.3
+		if v != expected {
+			t.Error(expected, v)
+		}
+	}
+	{
+		r := b.GetRow(1)
+		v := r["value"].(float64)
+		expected := 2.2
+		if v != expected {
+			t.Error(expected, v)
+		}
+	}
+}
+
 func TestBow_InnerJoin(t *testing.T) {
 	bow1, err := NewBow(
 		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
@@ -85,6 +122,7 @@ func TestBow_InnerJoin(t *testing.T) {
 		t.Error(expectedBow, bow3)
 	}
 }
+
 func TestBow_InnerJoin_noResultingRow(t *testing.T) {
 	bow1, err := NewBow(
 		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
@@ -143,7 +181,7 @@ func TestBow_InnerJoin_NonComplyingType(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil ||
 			r.(error).Error() != "bow: left and right bow on join columns are of incompatible types: index1" {
-			t.Errorf("indexes of bow1 and uncomplyingBow are uncompatible and should panic. Have %v, expect %v",
+			t.Errorf("indexes of bow1 and uncomplyingBow are incompatible and should panic. Have %v, expect %v",
 				r, "bow: left and right bow on join columns are of incompatible types: index1")
 		}
 	}()
@@ -182,5 +220,18 @@ func TestBow_InnerJoin_NoCommonColumn(t *testing.T) {
 	res := bow1.InnerJoin(uncomplyingBow)
 	if !res.Equal(expectedBow) {
 		t.Errorf("Have:\n%v,\nExpect:\n%v", res, expectedBow)
+	}
+}
+
+func TestBow_Empty(t *testing.T) {
+	emptyBow, err := NewBow()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if emptyBow.NumRows() != 0 || emptyBow.NumCols() != 0 {
+		emptyBow.Release()
+		t.Errorf("Empty Bow should not have any rows or cols")
 	}
 }

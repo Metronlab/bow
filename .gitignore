@@ -20,6 +20,7 @@ mocks
 
 # ide
 .idea/*
+.vscode
 
 # mac files generate
 .DS_Store
