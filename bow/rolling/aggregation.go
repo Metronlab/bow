@@ -113,8 +113,8 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				wColIndex, aggr.Type()))
 		}
 
-		for it3.hasNext() {
-			winIndex, w, err := it3.next()
+		for it3.HasNext() {
+			winIndex, w, err := it3.Next()
 			if err != nil {
 				return it3.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 			}
