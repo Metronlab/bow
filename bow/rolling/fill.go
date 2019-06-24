@@ -9,19 +9,19 @@ import (
 
 type ColumnInterpolationFunc func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error)
 
-func NewColumnInterpolation(colName string, okTypes []bow.Type, fn ColumnInterpolationFunc) ColumnInterpolation {
+func NewColumnInterpolation(colName string, inputTypes []bow.Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
-		colName: colName,
-		okTypes: okTypes,
-		fn:      fn,
+		colName:    colName,
+		inputTypes: inputTypes,
+		fn:         fn,
 	}
 }
 
 type ColumnInterpolation struct {
-	colName  string
-	colIndex int
-	okTypes  []bow.Type
-	fn       ColumnInterpolationFunc
+	colName    string
+	colIndex   int
+	inputTypes []bow.Type
+	fn         ColumnInterpolationFunc
 }
 
 func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) Rolling {
@@ -59,6 +59,7 @@ func (it *intervalRollingIterator) indexedInterpolations(interpolations []Column
 	if len(interpolations) == 0 {
 		return 0, nil, fmt.Errorf("at least one column interpolation is required")
 	}
+
 	for i, interp := range interpolations {
 		if interp.colName == "" {
 			return 0, nil, fmt.Errorf("interpolation %d has no column name", i)
@@ -71,8 +72,20 @@ func (it *intervalRollingIterator) indexedInterpolations(interpolations []Column
 		if readIndex == it.column {
 			newIntervalColumn = i
 		}
-		// todo: validate against okTypes
+
+		var typeOk bool
+		t, err := it.bow.GetType(readIndex)
+		for _, t2 := range interp.inputTypes {
+			if err != nil {
+				return 0, nil, err
+			}
+			typeOk = typeOk || t == t2
+		}
+		if !typeOk {
+			return 0, nil, fmt.Errorf("invalid input type %s, must be one of %v", t.String(), interp.inputTypes)
+		}
 	}
+
 	if newIntervalColumn == -1 {
 		name, err := it.bow.GetName(it.column)
 		if err != nil {
@@ -80,6 +93,7 @@ func (it *intervalRollingIterator) indexedInterpolations(interpolations []Column
 		}
 		return 0, nil, fmt.Errorf("must keep interval column '%s'", name)
 	}
+
 	return newIntervalColumn, interpolations, nil
 }
 
