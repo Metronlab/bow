@@ -2,10 +2,10 @@ package aggregation
 
 import (
 	"fmt"
-	"git.metronlab.com/backend_libraries/go-bow/bow/intepolation"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow/intepolation"
 	"testing"
 
-	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
 	"github.com/stretchr/testify/assert"
 )
 

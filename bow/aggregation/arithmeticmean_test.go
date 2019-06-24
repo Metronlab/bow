@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"git.metronlab.com/backend_libraries/go-bow/bow"
-	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
 
 	"github.com/stretchr/testify/assert"
 )

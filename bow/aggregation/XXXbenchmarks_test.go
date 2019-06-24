@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"git.metronlab.com/backend_libraries/go-bow/bow"
-	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
 )
 
 // BenchSize of 1e8 triggers out of memory on a 16Go mem computer
