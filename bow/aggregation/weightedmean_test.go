@@ -2,6 +2,7 @@ package aggregation
 
 import (
 	"fmt"
+	"git.metronlab.com/backend_libraries/go-bow/bow/intepolation"
 	"testing"
 
 	"git.metronlab.com/backend_libraries/go-bow/bow/rolling"
@@ -13,7 +14,7 @@ func TestWeightedMean(t *testing.T) {
 	aggregated, err := r.
 		Aggregate(
 			WindowStart(timeCol),
-			WeightedMean(valueCol)).
+			WeightedMean(valueCol, intepolation.StepPrevious)).
 		Bow()
 	assert.Nil(t, err)
 	assert.NotNil(t, aggregated)
