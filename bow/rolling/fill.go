@@ -88,8 +88,8 @@ func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolat
 
 	var bows []bow.Bow
 
-	for it2.hasNext() {
-		_, w, err := it2.next()
+	for it2.HasNext() {
+		_, w, err := it2.Next()
 		if err != nil {
 			return nil, err
 		}

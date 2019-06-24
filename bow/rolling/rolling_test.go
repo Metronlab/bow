@@ -94,7 +94,7 @@ func TestIntervalRolling_init(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, 1, Options{Offset: 9999.})
 		iter := rolling.(*intervalRollingIterator)
 		assert.Nil(t, err)
-		_, w, err := iter.next()
+		_, w, err := iter.Next()
 		assert.Nil(t, w)
 		assert.Nil(t, err)
 	})
@@ -104,7 +104,7 @@ func TestIntervalRolling_init(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, 1, Options{})
 		iter := rolling.(*intervalRollingIterator)
 		assert.Nil(t, err)
-		_, w, err := iter.next()
+		_, w, err := iter.Next()
 		assert.Nil(t, w)
 		assert.Nil(t, err)
 	})
@@ -122,11 +122,11 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		{2, 20, 25, emptyCols},
 		{3, 25, 30, [][]interface{}{{25., 29.}, {25, 29}}}}
 
-	for i := 0; iter.hasNext(); i++ {
+	for i := 0; iter.HasNext(); i++ {
 		checkTestWindow(t, iter, expected[i])
 	}
 
-	_, w, err := iter.next()
+	_, w, err := iter.Next()
 	assert.Nil(t, w)
 	assert.Nil(t, err)
 }
@@ -143,11 +143,11 @@ func TestIntervalRolling_iterate_withOffset(t *testing.T) {
 		{2, 23, 28, [][]interface{}{{25.}, {25}}},
 		{3, 28, 33, [][]interface{}{{29.}, {29}}}}
 
-	for i := 0; iter.hasNext(); i++ {
+	for i := 0; iter.HasNext(); i++ {
 		checkTestWindow(t, iter, expected[i])
 	}
 
-	_, w, err := iter.next()
+	_, w, err := iter.Next()
 	assert.Nil(t, w)
 	assert.Nil(t, err)
 }
@@ -160,7 +160,7 @@ type testWindow struct {
 }
 
 func checkTestWindow(t *testing.T, iter *intervalRollingIterator, expected testWindow) {
-	wi, w, err := iter.next()
+	wi, w, err := iter.Next()
 	assert.Equal(t, expected.windowIndex, wi)
 	assert.NotNil(t, w)
 	assert.Nil(t, err)
