@@ -14,6 +14,10 @@ var (
 	timeCol  = "time"
 	valueCol = "value"
 
+	empty, _ = bow.NewBow(
+		bow.NewSeries("time", bow.Int64, []int64{}, nil),
+		bow.NewSeries("value", bow.Float64, []float64{}, nil),
+	)
 	sparseBow, _ = bow.NewBow(
 		bow.NewSeries("time", bow.Int64, []int64{10, 30, 31}, nil),
 		bow.NewSeries("value", bow.Float64, []float64{100, 100, 200}, nil),
