@@ -60,7 +60,7 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 		case Bool:
 			field.Type = arrow.FixedWidthTypes.Boolean
 		default:
-			return nil, fmt.Errorf("bow: unknown type")
+			return nil, fmt.Errorf("bow: unhandled type: %s", s.Type)
 		}
 
 		fields = append(fields, field)

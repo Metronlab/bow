@@ -117,11 +117,11 @@ func NewBufferFromInterfacesIter(t Type, length int, cells chan interface{}) (Bu
 func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	switch v := b.Value.(type) {
 	case []int64:
-		v[i], b.Valid[i] = value.(int64)
+		v[i], b.Valid[i] = Int64.Convert(value).(int64)
 	case []float64:
-		v[i], b.Valid[i] = value.(float64)
+		v[i], b.Valid[i] = Float64.Convert(value).(float64)
 	case []bool:
-		v[i], b.Valid[i] = value.(bool)
+		v[i], b.Valid[i] = Bool.Convert(value).(bool)
 	default:
 		panic(fmt.Errorf("unsuported buffer type %T", v))
 	}

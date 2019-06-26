@@ -39,9 +39,9 @@ func TestArithmeticMean(t *testing.T) {
 	assert.NotNil(t, aggregated)
 	expected := newOutputTestBow([][]interface{}{
 		{
-			10.,
-			20.,
-			30.,
+			10,
+			20,
+			30,
 		},
 		{
 			100.,
@@ -55,7 +55,7 @@ func TestArithmeticMean(t *testing.T) {
 
 func newOutputTestBow(cols [][]interface{}) bow.Bow {
 	colNames := []string{timeCol, valueCol}
-	types := []bow.Type{bow.Float64, bow.Float64}
+	types := []bow.Type{bow.Int64, bow.Float64}
 	b, err := bow.NewBowFromColumnBasedInterfaces(colNames, types, cols)
 	if err != nil {
 		panic(err)

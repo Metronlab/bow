@@ -115,12 +115,21 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 
 	outputSeries := make([]bow.Series, len(aggrs))
 	for wColIndex, aggr := range aggrs {
+		var outputType bow.Type
 		it3 := it2
 
 		var buf bow.Buffer
 		switch aggr.Type() {
 		case bow.Int64, bow.Float64, bow.Bool:
 			buf = bow.NewBuffer(int(it3.numWindows), aggr.Type(), true)
+			outputType = aggr.Type()
+		case bow.InputDependent:
+			cType, _ := it.bow.GetType(it.column)
+			buf = bow.NewBuffer(int(it3.numWindows), cType, true)
+			outputType = cType
+		case bow.IteratorDependent:
+			buf = bow.NewBuffer(int(it3.numWindows), it.iType, true)
+			outputType = it.iType
 		default:
 			return it3.setError(fmt.Errorf(
 				logPrefix+"aggregation %d has invalid return type %s",
@@ -158,7 +167,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 			}
 		}
 
-		outputSeries[wColIndex] = bow.NewSeries(name, aggr.Type(), buf.Value, buf.Valid)
+		outputSeries[wColIndex] = bow.NewSeries(name, outputType, buf.Value, buf.Valid)
 	}
 
 	b, err := bow.NewBow(outputSeries...)
