@@ -18,6 +18,18 @@ type bowTest struct {
 func TestWeightedMean(t *testing.T) {
 	testCases := []bowTest{
 		{
+			Name:      "empty",
+			TestedBow: empty,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBow(
+					bow.NewSeries("time", bow.Float64, []float64{}, nil),
+					bow.NewSeries("value", bow.Float64, []float64{}, nil),
+				)
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
 			Name:      "sparse",
 			TestedBow: sparseBow,
 			ExpectedBow: func() bow.Bow {
@@ -37,7 +49,8 @@ func TestWeightedMean(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			r, _ := rolling.IntervalRolling(sparseBow, timeCol, 10, rolling.Options{})
+			r, err := rolling.IntervalRolling(test.TestedBow, timeCol, 10, rolling.Options{})
+			assert.NoError(t, err)
 			aggregated, err := r.
 				Aggregate(
 					WindowStart(timeCol),
