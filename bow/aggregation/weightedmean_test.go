@@ -22,7 +22,7 @@ func TestWeightedMean(t *testing.T) {
 			TestedBow: empty,
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries("time", bow.Float64, []float64{}, nil),
+					bow.NewSeries("time", bow.Int64, []int64{}, nil),
 					bow.NewSeries("value", bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
@@ -35,11 +35,11 @@ func TestWeightedMean(t *testing.T) {
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
-					[]bow.Type{bow.Float64, bow.Float64},
+					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
-						{10., 100.},
-						{20., nil},
-						{30., 100.*0.1 + 200.*0.9},
+						{10, 100.},
+						{20, nil},
+						{30, 100.*0.1 + 200.*0.9},
 					})
 				assert.NoError(t, err)
 				return b

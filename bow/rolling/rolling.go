@@ -3,8 +3,8 @@ package rolling
 import (
 	"errors"
 	"fmt"
-
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"math"
 )
 
 // Rolling allows to process a bow via windows.
@@ -58,17 +58,35 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 		return nil, err
 	}
 
+	iType, err := b.GetType(column)
+	if err != nil {
+		return nil, fmt.Errorf(logPrefix+"impossible to roll over unhandled type: %v", err)
+	}
+	switch iType {
+	case bow.Float64:
+	case bow.Int64:
+		// If iterator interval and offset are not integer, output column will become float
+		if interval != math.Trunc(interval) ||
+			options.Offset != math.Trunc(options.Offset) {
+			iType = bow.Float64
+		}
+	default:
+		return nil, fmt.Errorf(logPrefix+"impossible to roll over type: %v", iType)
+	}
+
 	var start float64
 	if b.NumRows() > 0 {
 		var valid bool
 		start, valid = b.GetFloat64(column, 0)
 		if !valid {
-			return nil, fmt.Errorf(logPrefix+"invalid cast for start value =%d", start)
+			v := b.GetValue(column, 0)
+			return nil, fmt.Errorf(logPrefix+"invalid cast for start value float64(%v)", v)
 		}
 	}
 	start += options.Offset
 
 	return &intervalRollingIterator{
+		iType:      iType,
 		bow:        b,
 		column:     column,
 		interval:   interval,
@@ -80,6 +98,7 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 
 type intervalRollingIterator struct {
 	// todo: sync.Mutex
+	iType bow.Type
 
 	bow        bow.Bow
 	column     int
@@ -187,8 +206,10 @@ func numWindows(b bow.Bow, column int, interval float64, offset float64) (int, e
 		return nrows, nil
 	}
 
+	// TODO: use a getNextFloat and infer column order
 	tfirst, _ := b.GetFloat64(column, 0)
 	tfirst += offset
+	// TODO: use getPreviousFloat
 	tlast, _ := b.GetFloat64(column, nrows-1)
 
 	if tfirst > tlast {
