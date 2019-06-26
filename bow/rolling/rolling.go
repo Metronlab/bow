@@ -23,7 +23,8 @@ type Rolling interface {
 }
 
 type Options struct {
-	Offset float64
+	Offset    float64
+	Inclusive bool
 }
 
 // IntervalRolling provides an interval-based `Rolling`.
@@ -123,13 +124,21 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 	lastIndex := -1
 
 	var i int
+	var isInclusive bool
 	for i = it.currIndex; i < it.bow.NumRows(); i++ {
 		ref, _ := it.bow.GetFloat64(it.column, int(i))
 		if ref < start {
 			continue
 		}
-		if ref >= end {
+		if ref > end {
 			break
+		}
+
+		if ref == end {
+			if !it.options.Inclusive {
+				break
+			}
+			isInclusive = true
 		}
 
 		if firstIndex == -1 {
@@ -138,7 +147,11 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 		lastIndex = i
 	}
 
-	it.currIndex = i
+	if !isInclusive {
+		it.currIndex = i
+	} else {
+		it.currIndex = i - 1
+	}
 	it.currStart = end
 	windowIndex = it.windowIndex
 	it.windowIndex++
@@ -154,6 +167,7 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 		IntervalColumnIndex: it.column,
 		Start:               start,
 		End:                 end,
+		IsInclusive:         isInclusive,
 	}, nil
 }
 
