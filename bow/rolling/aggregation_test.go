@@ -10,15 +10,15 @@ import (
 
 func TestIntervalRolling_Aggregate(t *testing.T) {
 	r, _ := IntervalRolling(sparseBow, timeCol, 10, Options{})
-	timeAggr := NewColumnAggregation("time", bow.Float64,
+	timeAggr := NewColumnAggregation("time", false, bow.Float64,
 		func(col int, w bow.Window) (interface{}, error) {
 			return w.Start, nil
 		})
-	valueAggr := NewColumnAggregation("value", bow.Int64,
+	valueAggr := NewColumnAggregation("value", false, bow.Int64,
 		func(col int, w bow.Window) (interface{}, error) {
 			return int64(w.Bow.NumRows()), nil
 		})
-	doubleAggr := NewColumnAggregation("value", bow.Int64,
+	doubleAggr := NewColumnAggregation("value", false, bow.Int64,
 		func(col int, w bow.Window) (interface{}, error) {
 			return int64(w.Bow.NumRows()) * 2, nil
 		})
@@ -103,7 +103,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 	}
 
 	{
-		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", bow.Int64,
+		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", false, bow.Int64,
 			func(col int, w bow.Window) (interface{}, error) { return nil, nil })).Bow()
 		assert.EqualError(t, err, "aggregate: no column '-'")
 	}

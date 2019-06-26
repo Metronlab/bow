@@ -14,25 +14,30 @@ type ColumnAggregation interface {
 
 	OutputName() string
 	Rename(string) ColumnAggregation
+	NeedInclusive() bool
 
 	Type() bow.Type
 	Func() ColumnAggregationFunc
 }
 
 type columnAggregation struct {
-	inputName  string
-	inputIndex int
+	inputName       string
+	inputIndex      int
+	inclusiveWindow bool
+
+	fn ColumnAggregationFunc
+
 	outputName string
 	typ        bow.Type
-	fn         ColumnAggregationFunc
 }
 
-func NewColumnAggregation(colName string, returnedType bow.Type, fn ColumnAggregationFunc) ColumnAggregation {
+func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow.Type, fn ColumnAggregationFunc) ColumnAggregation {
 	return columnAggregation{
-		inputName:  colName,
-		typ:        returnedType,
-		fn:         fn,
-		inputIndex: -1,
+		inputName:       colName,
+		inputIndex:      -1,
+		inclusiveWindow: inclusiveWindow,
+		fn:              fn,
+		typ:             returnedType,
 	}
 }
 
@@ -68,6 +73,10 @@ func (a columnAggregation) Rename(name string) ColumnAggregation {
 	return a
 }
 
+func (a columnAggregation) NeedInclusive() bool {
+	return a.inclusiveWindow
+}
+
 // Aggregate each column using a ColumnAggregation
 func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling {
 	const logPrefix = "aggregate: "
@@ -82,6 +91,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 	if len(aggrs) == 0 {
 		return it2.setError(fmt.Errorf("at least one column aggregation is required"))
 	}
+
 	for i, aggr := range aggrs {
 		if aggr.InputName() == "" {
 			return it2.setError(fmt.Errorf(logPrefix+"aggregation %d has no column name", i))
@@ -93,6 +103,10 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		aggrs[i] = aggr.FromIndex(readIndex)
 		if readIndex == it2.column {
 			newIntervalColumn = i
+		}
+
+		if aggr.NeedInclusive() {
+			it2.options.Inclusive = true
 		}
 	}
 	if newIntervalColumn == -1 {
@@ -119,7 +133,12 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				return it3.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 			}
 
-			val, err := aggr.Func()(aggr.InputIndex(), *w)
+			var val interface{}
+			if !aggr.NeedInclusive() && w.IsInclusive {
+				val, err = aggr.Func()(aggr.InputIndex(), (*w).UnsetInclusive())
+			} else {
+				val, err = aggr.Func()(aggr.InputIndex(), *w)
+			}
 			if err != nil {
 				return it3.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
 			}
