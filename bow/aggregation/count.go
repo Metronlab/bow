@@ -14,7 +14,7 @@ func Count(col string) rolling.ColumnAggregation {
 
 			var count int64
 			for i := 0; i < w.Bow.NumRows(); i++ {
-				v := w.Bow.GetValue(col, 0)
+				v := w.Bow.GetValue(col, i)
 				if v != nil {
 					count++
 				}
