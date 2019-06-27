@@ -1,64 +1,44 @@
 package aggregation
 
 import (
-	"fmt"
 	"testing"
 
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
-
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	timeCol  = "time"
-	valueCol = "value"
-
-	empty, _ = bow.NewBow(
-		bow.NewSeries("time", bow.Int64, []int64{}, nil),
-		bow.NewSeries("value", bow.Float64, []float64{}, nil),
-	)
-	sparseBow, _ = bow.NewBow(
-		bow.NewSeries("time", bow.Int64, []int64{10, 30, 31}, nil),
-		bow.NewSeries("value", bow.Float64, []float64{100, 100, 200}, nil),
-	)
-	//regularBow, _ = bow.NewBow(
-	//	bow.NewSeries("time", bow.Int64, []int64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, nil),
-	//	bow.NewSeries("value", bow.Float64, []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, nil),
-	//)
-)
-
 func TestArithmeticMean(t *testing.T) {
-	r, _ := rolling.IntervalRolling(sparseBow, timeCol, 10, rolling.Options{})
-	aggregated, err := r.
-		Aggregate(
-			WindowStart(timeCol),
-			ArithmeticMean(valueCol)).
-		Bow()
-	assert.Nil(t, err)
-	assert.NotNil(t, aggregated)
-	expected := newOutputTestBow([][]interface{}{
+	runTestCases(t, ArithmeticMean, []bowTest{
 		{
-			10,
-			20,
-			30,
+			Name:      "empty",
+			TestedBow: empty,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBow(
+					bow.NewSeries("time", bow.Int64, []int64{}, nil),
+					bow.NewSeries("value", bow.Float64, []float64{}, nil),
+				)
+				assert.NoError(t, err)
+				return b
+			}(),
 		},
 		{
-			100.,
-			nil,
-			150.,
+			Name:      "sparse",
+			TestedBow: sparseFloatBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Float64},
+					[][]interface{}{
+						{10, 10.},
+						{20, nil},
+						{30, nil},
+						{40, 10.},
+						{50, 15.},
+						{60, 15.},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
 		},
 	})
-	assert.Equal(t, true, aggregated.Equal(expected),
-		fmt.Sprintf("expect:\n%v\nhave:\n%v", expected, aggregated))
-}
-
-func newOutputTestBow(cols [][]interface{}) bow.Bow {
-	colNames := []string{timeCol, valueCol}
-	types := []bow.Type{bow.Int64, bow.Float64}
-	b, err := bow.NewBowFromColumnBasedInterfaces(colNames, types, cols)
-	if err != nil {
-		panic(err)
-	}
-	return b
 }
