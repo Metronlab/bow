@@ -13,8 +13,8 @@ func First(col string) rolling.ColumnAggregation {
 			}
 
 			// TODO: use a getNextVal
-			value, row := getNextFloat64(w.Bow, col, 0)
-			if row >= 0 {
+			value, valid := w.Bow.GetFloat64(col, 0)
+			if valid {
 				return value, nil
 			}
 			return nil, nil
@@ -29,8 +29,8 @@ func Last(col string) rolling.ColumnAggregation {
 			}
 
 			// TODO: use a getPreviousVal
-			value, row := getNextFloat64(w.Bow, col, 0)
-			if row >= 0 {
+			value, valid := w.Bow.GetFloat64(col, w.Bow.NumRows() - 1)
+			if valid {
 				return value, nil
 			}
 			return nil, nil
