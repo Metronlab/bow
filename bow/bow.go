@@ -195,7 +195,7 @@ func (b *bow) String() string {
 	// format any line (header or row)
 	formatRow := func(getCellStr func(colIndex int) string) {
 		var cells []string
-		for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
+		for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
 			cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
 		}
 		_, err := fmt.Fprintln(w, strings.Join(cells, "\t"))
@@ -295,7 +295,7 @@ func (b *bow) innerJoinInColumnBaseInterfaces(b2 *bow, commonColumns map[string]
 	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 		for _, rValIndex := range b.getRightBowIndexesAtRow(b2, commonColumns, rowIndex) {
 			for colIndex := range b.Schema().Fields() {
-				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, int(rowIndex)))
+				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, rowIndex))
 			}
 			for i, rColIndex := range rColIndexes {
 				resultInterfaces[len(b.Schema().Fields())+i] =

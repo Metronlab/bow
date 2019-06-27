@@ -15,7 +15,7 @@ func ArithmeticMean(col string) rolling.ColumnAggregation {
 			var sum float64
 			var count int
 			for i := 0; i < w.Bow.NumRows(); i++ {
-				value, ok := w.Bow.GetFloat64(col, int(i))
+				value, ok := w.Bow.GetFloat64(col, i)
 				if !ok {
 					continue
 				}

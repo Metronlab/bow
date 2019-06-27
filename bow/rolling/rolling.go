@@ -142,7 +142,7 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 	var i int
 	var isInclusive bool
 	for i = it.currIndex; i < it.bow.NumRows(); i++ {
-		ref, _ := it.bow.GetFloat64(it.column, int(i))
+		ref, _ := it.bow.GetFloat64(it.column, i)
 		if ref < start {
 			continue
 		}

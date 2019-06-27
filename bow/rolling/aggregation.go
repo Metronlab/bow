@@ -120,14 +120,14 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		var buf bow.Buffer
 		switch aggr.Type() {
 		case bow.Int64, bow.Float64, bow.Bool:
-			buf = bow.NewBuffer(int(it3.numWindows), aggr.Type(), true)
+			buf = bow.NewBuffer(it3.numWindows, aggr.Type(), true)
 			outputType = aggr.Type()
 		case bow.InputDependent:
 			cType := it.bow.GetType(aggr.InputIndex())
-			buf = bow.NewBuffer(int(it3.numWindows), cType, true)
+			buf = bow.NewBuffer(it3.numWindows, cType, true)
 			outputType = cType
 		case bow.IteratorDependent:
-			buf = bow.NewBuffer(int(it3.numWindows), it.iType, true)
+			buf = bow.NewBuffer(it3.numWindows, it.iType, true)
 			outputType = it.iType
 		default:
 			return it3.setError(fmt.Errorf(
@@ -154,7 +154,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				continue
 			}
 
-			buf.SetOrDrop(int(winIndex), val)
+			buf.SetOrDrop(winIndex, val)
 		}
 
 		name := aggr.OutputName()

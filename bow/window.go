@@ -2,7 +2,7 @@ package bow
 
 type Window struct {
 	Bow                 Bow
-	FirstIndex          int // index across all windows of first row in this window (-1 if none)
+	FirstIndex          int // index (across all windows) of first row in this window (-1 if none)
 	IntervalColumnIndex int
 	Start               float64
 	End                 float64
