@@ -13,13 +13,18 @@ func ArithmeticMean(col string) rolling.ColumnAggregation {
 			}
 
 			var sum float64
+			var count int
 			for i := 0; i < w.Bow.NumRows(); i++ {
 				value, ok := w.Bow.GetFloat64(col, int(i))
 				if !ok {
 					continue
 				}
 				sum += value
+				count++
 			}
-			return sum / float64(w.Bow.NumRows()), nil
+			if count == 0 {
+				return nil, nil
+			}
+			return sum / float64(count), nil
 		})
 }

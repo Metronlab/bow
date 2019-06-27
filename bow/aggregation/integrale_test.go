@@ -2,13 +2,12 @@ package aggregation
 
 import (
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func TestWeightedAverageStep(t *testing.T) {
-	runTestCases(t, WeightedAverageStep, []bowTest{
+func TestIntegralStep(t *testing.T) {
+	runTestCases(t, IntegralStep, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,
@@ -29,12 +28,12 @@ func TestWeightedAverageStep(t *testing.T) {
 					[]string{"time", "value"},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
-						{10, 10.},
+						{10, 100.},
 						{20, nil},
 						{30, nil},
-						{40, 10 * 0.9},
-						{50, 10*0.1 + 20*0.9},
-						{60, 10*0.8 + 20*0.1},
+						{40, 100 * 0.9},
+						{50, 100*0.1 + 200*0.9},
+						{60, 100*0.8 + 200*0.1},
 					})
 				assert.NoError(t, err)
 				return b
