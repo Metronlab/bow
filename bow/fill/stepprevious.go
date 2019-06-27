@@ -9,7 +9,7 @@ func StepPrevious(colName string) rolling.ColumnInterpolation {
 	previousIndex := -1
 
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool},
-		func(inputCol int, outputType bow.Type, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
+		func(inputCol int, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
 			if full.NumRows() == 0 {
 				return nil, nil
 			}

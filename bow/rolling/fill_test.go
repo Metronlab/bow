@@ -10,15 +10,15 @@ import (
 func TestIntervalRolling_Fill(t *testing.T) {
 	interval := 2.
 	timeInterp := NewColumnInterpolation(timeCol, []bow.Type{bow.Int64, bow.Float64},
-		func(colIndex int, outType bow.Type, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
+		func(colIndex int, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
 			return neededPos, nil
 		})
 	valueInterp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
-		func(colIndex int, outType bow.Type, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
+		func(colIndex int, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
 			return int64(99), nil
 		})
 	interpFloatBool := NewColumnInterpolation(valueCol, []bow.Type{bow.Float64, bow.Bool},
-		func(colIndex int, outType bow.Type, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
+		func(colIndex int, neededPos float64, w bow.Window, full bow.Bow) (interface{}, error) {
 			return true, nil
 		})
 
