@@ -1,7 +1,6 @@
 package aggregation
 
 import (
-	"fmt"
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
 )
@@ -9,7 +8,6 @@ import (
 func IntegralTrapezoid(col string) rolling.ColumnAggregation {
 	return rolling.NewColumnAggregation(col, true, bow.Float64,
 		func(col int, w bow.Window) (interface{}, error) {
-			fmt.Println(w.Bow)
 			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}
