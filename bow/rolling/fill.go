@@ -7,7 +7,7 @@ import (
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 )
 
-type ColumnInterpolationFunc func(inputCol int, outputType bow.Type, neededPos float64, window bow.Window, fullBow bow.Bow) (interface{}, error)
+type ColumnInterpolationFunc func(inputCol int, neededPos float64, window bow.Window, fullBow bow.Bow) (interface{}, error)
 
 func NewColumnInterpolation(inputName string, inputTypes []bow.Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
@@ -163,7 +163,7 @@ func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInte
 
 		rowIndex := 0
 		if startIsMissing {
-			start, err := interp.fn(interp.inputCol, interp.outputType, neededPos, *w, it.bow)
+			start, err := interp.fn(interp.inputCol, neededPos, *w, it.bow)
 			if err != nil {
 				return nil, err
 			}

@@ -152,27 +152,6 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		assert.Nil(t, w)
 		assert.Nil(t, err)
 	})
-
-	t.Run("last window index is last bow index", func(t *testing.T) {
-		b := newIntervalRollingTestBow([][]interface{}{
-			{35., 36., 37., 38., 39.},
-			{160, 170, 180, 190, 200}})
-		rolling, err := IntervalRolling(b, timeCol, 5, Options{})
-		assert.Nil(t, err)
-		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
-
-		expected := []testWindow{
-			{0, 35, 40, 0, [][]interface{}{{35., 36., 37., 38., 39.}, {160, 170, 180, 190, 200}}},
-		}
-
-		for i := 0; iter.HasNext(); i++ {
-			checkTestWindow(t, iter, expected[i])
-		}
-		_, w, err := iter.Next()
-		assert.Nil(t, w)
-		assert.Nil(t, err)
-	})
 }
 
 type testWindow struct {

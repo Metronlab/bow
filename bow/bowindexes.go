@@ -20,14 +20,14 @@ func (b *bow) newIndex(colName string) {
 	dType := getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
 	m := make(map[interface{}][]int)
 	for i := 0; i < b.NumRows(); i++ {
-		val := b.GetValue(colIndex, int(i))
+		val := b.GetValue(colIndex, i)
 		if val == nil {
 			continue
 		}
 		if _, ok := m[val]; !ok {
-			m[val] = []int{int(i)}
+			m[val] = []int{i}
 		} else {
-			m[val] = append(m[val], int(i))
+			m[val] = append(m[val], i)
 		}
 	}
 
@@ -49,7 +49,7 @@ func (b *bow) getIndex(name string, val interface{}) ([]int, bool) {
 func (b *bow) getRightBowIndexesAtRow(b2 *bow, commonColumns map[string]struct{}, rowIndex int) []int {
 	var possibleIndexes [][]int
 	for name := range commonColumns {
-		val := b.GetValue(b.Schema().FieldIndex(name), int(rowIndex))
+		val := b.GetValue(b.Schema().FieldIndex(name), rowIndex)
 		if val == nil {
 			return []int{}
 		}
