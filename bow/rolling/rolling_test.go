@@ -28,47 +28,70 @@ var (
 	})
 )
 
-func TestIntervalRolling_numWindows(t *testing.T) {
+func TestIntervalRolling_NumWindows(t *testing.T) {
 	t.Run("empty bow", func(t *testing.T) {
-		n, err := numWindows(newIntervalRollingTestBow(emptyCols), timeColIdx, 1, 0)
+		r, _ := IntervalRolling(newIntervalRollingTestBow(emptyCols), timeCol, 1, Options{})
+		n, err := r.NumWindows()
 		assert.Nil(t, err)
 		assert.Equal(t, 0, n)
 	})
 
 	t.Run("one liner bow", func(t *testing.T) {
-		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
-			{0.}, {1}}),
-			timeColIdx, 1, 0)
+		r, _ := IntervalRolling(newIntervalRollingTestBow([][]interface{}{
+			{0.}, {1}}), timeCol, 1, Options{})
+		n, err := r.NumWindows()
 		assert.Nil(t, err)
 		assert.Equal(t, 1, n)
 	})
 
 	t.Run("included last value", func(t *testing.T) {
-		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
-			{0., 9.}, {1, 1}}),
-			timeColIdx, 10, 0)
+		r, _ := IntervalRolling(newIntervalRollingTestBow([][]interface{}{
+			{0., 9.}, {1, 1}}), timeCol, 10, Options{})
+		n, err := r.NumWindows()
 		assert.Nil(t, err)
 		assert.Equal(t, 1, n)
 	})
 
 	t.Run("excluded last value", func(t *testing.T) {
-		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
-			{0., 10.}, {1, 1}}),
-			timeColIdx, 10, 0)
+		r, _ := IntervalRolling(newIntervalRollingTestBow([][]interface{}{
+			{0., 10.}, {1, 1}}), timeCol, 10, Options{})
+		n, err := r.NumWindows()
 		assert.Nil(t, err)
 		assert.Equal(t, 2, n)
 	})
 
 	t.Run("excluded first value (offset)", func(t *testing.T) {
-		n, err := numWindows(newIntervalRollingTestBow([][]interface{}{
-			{0., 10.}, {1, 1}}),
-			timeColIdx, 10, 1)
+		r, _ := IntervalRolling(newIntervalRollingTestBow([][]interface{}{
+			{0., 10.}, {1, 1}}), timeCol, 10, Options{Offset: 1})
+		n, err := r.NumWindows()
+		assert.Nil(t, err)
+		assert.Equal(t, 1, n)
+	})
+
+	t.Run("window start before first point", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Int64},
+			[][]interface{}{
+				{2, 3, 4},
+				{1, 1, 1}})
+		r, _ := IntervalRolling(b, timeCol, 2, Options{}) // [2 3[ [4[
+		n, err := r.NumWindows()
+		assert.Nil(t, err)
+		assert.Equal(t, 2, n)
+	})
+
+	t.Run("window start before first point (with offset)", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Int64},
+			[][]interface{}{
+				{2, 3, 4},
+				{1, 1, 1}})
+		r, _ := IntervalRolling(b, timeCol, 2, Options{Offset: 1}) // [3 4[
+		n, err := r.NumWindows()
 		assert.Nil(t, err)
 		assert.Equal(t, 1, n)
 	})
 }
 
-func TestIntervalRolling_init(t *testing.T) {
+func TestIntervalRolling_iterator_init(t *testing.T) {
 	t.Run("one liner", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0.}, {1}})
 		rolling, err := IntervalRolling(b, timeCol, 0, Options{})
