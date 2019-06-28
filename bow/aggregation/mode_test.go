@@ -40,5 +40,46 @@ func TestMode(t *testing.T) {
 				return b
 			}(),
 		},
+		{
+			Name: "sparse bool",
+			TestedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Bool},
+					[][]interface{}{
+						{10, true}, // partially valid window
+						{11, nil},
+						{20, nil}, // only invalid window
+
+						// empty window
+
+						{40, nil}, // partially valid with start of window invalid
+						{41, true},
+						{50, true}, // valid with two values on start of window
+						{51, false},
+						{61, false}, // valid with three values NOT on start of window
+						{62, false}, // valid with three values NOT on start of window
+						{69, true},
+					})
+
+				assert.NoError(t, err)
+				return b
+			}(),
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Bool},
+					[][]interface{}{
+						{10, true},
+						{20, nil},
+						{30, nil},
+						{40, true},
+						{50, true},
+						{60, false},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
 	})
 }
