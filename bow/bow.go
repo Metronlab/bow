@@ -17,21 +17,31 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
+	// meet Stringer interface
+	String() string
+
+	// Getters
+
 	GetType(colIndex int) Type
 	GetName(colIndex int) (string, error)
 	GetIndex(colName string) (int, error)
 
 	GetRow(rowIndex int) map[string]interface{}
+
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetValue(colIndex, rowIndex int) interface{}
-	GetFloat64(colIndex, rowIndex int) (float64, bool)
-	GetNextFloat64s(col1, col2, row int) (v1 float64, v2 float64, resultsRow int)
-	GetNextFloat64(col, row int) (v float64, resultsRow int)
-	GetPreviousFloat64s(col1, col2, row int) (v1 float64, v2 float64, resultsRow int)
-	GetPreviousFloat64(col, row int) (v float64, resultsRow int)
+	GetNextValue(col, row int) (v interface{}, resultsRow int)
+	GetNextValues(col1, col2, row int) (v1, v2 interface{}, resultsRow int)
+	GetPreviousValue(col, row int) (v interface{}, resultsRow int)
+	GetPreviousValues(col1, col2, row int) (v1, v2 interface{}, resultsRow int)
 
-	// stringer interface for printing rows
-	String() string
+	GetFloat64(colIndex, rowIndex int) (float64, bool)
+	GetNextFloat64(col, row int) (v float64, resultsRow int)
+	GetNextFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
+	GetPreviousFloat64(col, row int) (v float64, resultsRow int)
+	GetPreviousFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
+
+	// Iterators
 
 	RowMapIter() chan map[string]interface{}
 
@@ -279,6 +289,73 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 	return nil
 }
 
+func (b *bow) GetNextValues(col1, col2, row int) (interface{}, interface{}, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return nil, nil, -1
+	}
+
+	for row >= 0 && row < int(b.NumRows()) {
+		var v1 interface{}
+		v1, row = b.GetNextValue(col1, row)
+		v2, row2 := b.GetNextValue(col2, row)
+		if row == row2 {
+			return v1, v2, row
+		}
+
+		row++
+	}
+
+	return nil, nil, -1
+}
+
+func (b *bow) GetNextValue(col, row int) (interface{}, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return nil, -1
+	}
+
+	for row < int(b.NumRows()) {
+		value := b.GetValue(col, row)
+		if value != nil {
+			return value, row
+		}
+		row++
+	}
+	return nil, -1
+}
+
+func (b *bow) GetPreviousValues(col1, col2, row int) (interface{}, interface{}, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return nil, nil, -1
+	}
+
+	for row >= 0 && row < int(b.NumRows()) {
+		var v1 interface{}
+		v1, row = b.GetPreviousFloat64(col1, row)
+		v2, row2 := b.GetPreviousFloat64(col2, row)
+		if row == row2 {
+			return v1, v2, row
+		}
+		row--
+	}
+
+	return nil, nil, -1
+}
+
+func (b *bow) GetPreviousValue(col, row int) (interface{}, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return nil, -1
+	}
+
+	for row >= 0 {
+		value := b.GetValue(col, row)
+		if value != nil {
+			return value, row
+		}
+		row--
+	}
+	return nil, -1
+}
+
 func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 	switch b.Schema().Field(colIndex).Type.ID() {
 	case arrow.FLOAT64:
@@ -305,11 +382,10 @@ func (b *bow) GetNextFloat64s(col1, col2, row int) (float64, float64, int) {
 		return 0., 0., -1
 	}
 
-	var v1, v2 float64
-	var row2 int
 	for row >= 0 && row < int(b.NumRows()) {
+		var v1 float64
 		v1, row = b.GetNextFloat64(col1, row)
-		v2, row2 = b.GetNextFloat64(col2, row)
+		v2, row2 := b.GetNextFloat64(col2, row)
 		if row == row2 {
 			return v1, v2, row
 		}
@@ -325,10 +401,8 @@ func (b *bow) GetNextFloat64(col, row int) (float64, int) {
 		return 0., -1
 	}
 
-	var value float64
-	var ok bool
 	for row < int(b.NumRows()) {
-		value, ok = b.GetFloat64(col, row)
+		value, ok := b.GetFloat64(col, row)
 		if ok {
 			return value, row
 		}
@@ -342,11 +416,10 @@ func (b *bow) GetPreviousFloat64s(col1, col2, row int) (float64, float64, int) {
 		return 0., 0., -1
 	}
 
-	var v1, v2 float64
-	var row2 int
 	for row >= 0 && row < int(b.NumRows()) {
+		var v1 float64
 		v1, row = b.GetPreviousFloat64(col1, row)
-		v2, row2 = b.GetPreviousFloat64(col2, row)
+		v2, row2 := b.GetPreviousFloat64(col2, row)
 		if row == row2 {
 			return v1, v2, row
 		}
@@ -362,10 +435,8 @@ func (b *bow) GetPreviousFloat64(col, row int) (float64, int) {
 		return 0., -1
 	}
 
-	var value float64
-	var ok bool
 	for row >= 0 {
-		value, ok = b.GetFloat64(col, row)
+		value, ok := b.GetFloat64(col, row)
 		if ok {
 			return value, row
 		}
