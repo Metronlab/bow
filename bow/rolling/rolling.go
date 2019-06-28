@@ -58,10 +58,7 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 		return nil, err
 	}
 
-	iType, err := b.GetType(column)
-	if err != nil {
-		return nil, fmt.Errorf(logPrefix+"impossible to roll over unhandled type: %v", err)
-	}
+	iType := b.GetType(column)
 	switch iType {
 	case bow.Float64:
 	case bow.Int64:

@@ -16,7 +16,7 @@ func Mode(col string) rolling.ColumnAggregation {
 			max := 0
 			var res interface{}
 			for i := 0; i < w.Bow.NumRows(); i++ {
-				v := w.Bow.GetValue(col, 0)
+				v := w.Bow.GetValue(col, i)
 				if v != nil {
 					nb := occurrences[v]
 					nb++
