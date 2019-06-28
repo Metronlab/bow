@@ -1,8 +1,6 @@
 package bow
 
 import (
-	"fmt"
-
 	"github.com/apache/arrow/go/arrow"
 )
 
@@ -59,15 +57,15 @@ func (t Type) String() string {
 	}
 }
 
-func getTypeFromArrowType(arrowType string) (Type, error) {
+func getTypeFromArrowType(arrowType string) Type {
 	switch arrowType {
 	case arrow.PrimitiveTypes.Float64.Name():
-		return Float64, nil
+		return Float64
 	case arrow.PrimitiveTypes.Int64.Name():
-		return Int64, nil
+		return Int64
 	case arrow.FixedWidthTypes.Boolean.Name():
-		return Bool, nil
+		return Bool
 	default:
-		return Unknown, fmt.Errorf("bow: unknown type %s", arrowType)
+		return Unknown
 	}
 }

@@ -17,7 +17,7 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
-	GetType(colIndex int) (Type, error)
+	GetType(colIndex int) Type
 	GetName(colIndex int) (string, error)
 	GetIndex(colName string) (int, error)
 
@@ -159,10 +159,7 @@ func (b *bow) NewColumns(columns [][]interface{}) (Bow, error) {
 	}
 	seriess := make([]Series, len(columns))
 	for i, c := range columns {
-		typ, err := getTypeFromArrowType(b.Schema().Field(i).Type.Name())
-		if err != nil {
-			return nil, err
-		}
+		typ := getTypeFromArrowType(b.Schema().Field(i).Type.Name())
 		buf, err := NewBufferFromInterfaces(typ, c)
 		if err != nil {
 			return nil, err
@@ -199,7 +196,7 @@ func (b *bow) String() string {
 
 	// Print col names on buffer
 	formatRow(func(colIndex int) string {
-		return b.Schema().Field(colIndex).Name
+		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
 	})
 
 	// Print each row on buffer
@@ -377,7 +374,7 @@ func (b *bow) GetPreviousFloat64(col, row int) (float64, int) {
 	return 0., -1
 }
 
-func (b *bow) GetType(colIndex int) (Type, error) {
+func (b *bow) GetType(colIndex int) Type {
 	return getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
 }
 
@@ -478,20 +475,15 @@ func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 
 func (b *bow) makeColNamesAndTypesOnJoin(
 	b2 *bow, commonColumns map[string]struct{}, rColNotInLIndexes []int) ([]string, []Type) {
-	var err error
 	colNames := make([]string, len(b.Schema().Fields())+len(rColNotInLIndexes))
 	colType := make([]Type, len(b.Schema().Fields())+len(rColNotInLIndexes))
 	for i, f := range b.Schema().Fields() {
 		colNames[i] = f.Name
-		if colType[i], err = getTypeFromArrowType(f.Type.Name()); err != nil {
-			panic(err)
-		}
+		colType[i] = getTypeFromArrowType(f.Type.Name())
 	}
 	for i, index := range rColNotInLIndexes {
 		colNames[len(b.Schema().Fields())+i] = b2.Schema().Field(index).Name
-		if colType[len(b.Schema().Fields())+i], err = getTypeFromArrowType(b2.Schema().Field(index).Type.Name()); err != nil {
-			panic(err)
-		}
+		colType[len(b.Schema().Fields())+i] = getTypeFromArrowType(b2.Schema().Field(index).Type.Name())
 	}
 	return colNames, colType
 }
@@ -584,10 +576,7 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 		series := make([]Series, len(jsonBow.ColumnsTypes))
 		i := 0
 		for colName, ArrowTypeName := range jsonBow.ColumnsTypes {
-			t, err := getTypeFromArrowType(ArrowTypeName)
-			if err != nil {
-				return err
-			}
+			t := getTypeFromArrowType(ArrowTypeName)
 			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Rows), func() chan interface{} {
 				cellsChan := make(chan interface{})
 				go func(cellsChan chan interface{}, colName string) {

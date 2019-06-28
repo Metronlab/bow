@@ -124,7 +124,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 			buf = bow.NewBuffer(int(it3.numWindows), aggr.Type(), true)
 			outputType = aggr.Type()
 		case bow.InputDependent:
-			cType, _ := it.bow.GetType(it.column)
+			cType := it.bow.GetType(aggr.InputIndex())
 			buf = bow.NewBuffer(int(it3.numWindows), cType, true)
 			outputType = cType
 		case bow.IteratorDependent:
