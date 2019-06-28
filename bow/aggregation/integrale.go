@@ -14,13 +14,13 @@ func IntegralTrapezoid(col string) rolling.ColumnAggregation {
 
 			var sum float64
 			var ok bool
-			t0, v0, rowIndex := getNextFloat64s(w.Bow, w.IntervalColumnIndex, col, 0)
+			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, 0)
 			if rowIndex < 0 {
 				return nil, nil
 			}
 
 			for rowIndex >= 0 {
-				t1, v1, nextRowIndex := getNextFloat64s(w.Bow, w.IntervalColumnIndex, col, rowIndex+1)
+				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, rowIndex+1)
 				if nextRowIndex < 0 {
 					break
 				}
@@ -45,9 +45,9 @@ func IntegralStep(col string) rolling.ColumnAggregation {
 			}
 			var sum float64
 			var ok bool
-			t0, v0, rowIndex := getNextFloat64s(w.Bow, w.IntervalColumnIndex, col, 0)
+			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, 0)
 			for rowIndex >= 0 {
-				t1, v1, nextRowIndex := getNextFloat64s(w.Bow, w.IntervalColumnIndex, col, rowIndex+1)
+				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, rowIndex+1)
 				if nextRowIndex < 0 {
 					t1 = float64(w.End)
 				}
@@ -67,75 +67,3 @@ func IntegralStep(col string) rolling.ColumnAggregation {
 			return sum, nil
 		})
 }
-
-func getNextFloat64s(b bow.Bow, col1, col2, row int) (float64, float64, int) {
-	if row < 0 || row >= int(b.NumRows()) {
-		return 0., 0., -1
-	}
-
-	var v1, v2 float64
-	var row2 int
-	v1, row = getNextFloat64(b, col1, row)
-	for row >= 0 && row < int(b.NumRows()) {
-		v2, row2 = getNextFloat64(b, col2, row)
-		if row == row2 {
-			return v1, v2, row
-		}
-
-		row++
-		v1, row = getNextFloat64(b, col1, row)
-	}
-
-	return 0., 0., -1
-}
-
-func getNextFloat64(b bow.Bow, col, row int) (float64, int) {
-	if row < 0 || row >= int(b.NumRows()) {
-		return 0., -1
-	}
-
-	var value float64
-	var ok bool
-	for value, ok = b.GetFloat64(col, row); row < int(b.NumRows()); {
-		if ok {
-			return value, row
-		}
-		row++
-	}
-	return 0., -1
-}
-
-//
-//func getPreviousFloat64s(b bow.Bow, col1, col2, row int) (float64, float64, int) {
-//	if row < 0 || row >= int(b.NumRows()) {
-//		return 0., 0., -1
-//	}
-//
-//	var v1, v2 float64
-//	var row2 int
-//	for v1, row = getPreviousFloat64(b, col1, row); row >= 0 && row < int(b.NumRows()); {
-//		if v2, row2 = getPreviousFloat64(b, col2, row); row == row2 {
-//			return v1, v2, row
-//		}
-//
-//		row--
-//	}
-//
-//	return 0., 0., -1
-//}
-//
-//func getPreviousFloat64(b bow.Bow, col, row int) (float64, int) {
-//	if row < 0 || row >= int(b.NumRows()) {
-//		return 0., -1
-//	}
-//
-//	var value float64
-//	var ok bool
-//	for value, ok = b.GetFloat64(col, row); row >= 0; {
-//		if ok {
-//			return value, row
-//		}
-//		row--
-//	}
-//	return 0., -1
-//}

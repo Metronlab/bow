@@ -21,10 +21,14 @@ type Bow interface {
 	GetName(colIndex int) (string, error)
 	GetIndex(colName string) (int, error)
 
+	GetRow(rowIndex int) map[string]interface{}
+	GetValueByName(colName string, rowIndex int) interface{}
 	GetValue(colIndex, rowIndex int) interface{}
 	GetFloat64(colIndex, rowIndex int) (float64, bool)
-	GetValueByName(colName string, rowIndex int) interface{}
-	GetRow(rowIndex int) map[string]interface{}
+	GetNextFloat64s(col1, col2, row int) (v1 float64, v2 float64, resultsRow int)
+	GetNextFloat64(col, row int) (v float64, resultsRow int)
+	GetPreviousFloat64s(col1, col2, row int) (v1 float64, v2 float64, resultsRow int)
+	GetPreviousFloat64(col, row int) (v float64, resultsRow int)
 
 	// stringer interface for printing rows
 	String() string
@@ -297,6 +301,80 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 		panic(fmt.Sprintf("bow: unhandled type %s",
 			b.Schema().Field(colIndex).Type.Name()))
 	}
+}
+
+func (b *bow) GetNextFloat64s(col1, col2, row int) (float64, float64, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return 0., 0., -1
+	}
+
+	var v1, v2 float64
+	var row2 int
+	for row >= 0 && row < int(b.NumRows()) {
+		v1, row = b.GetNextFloat64(col1, row)
+		v2, row2 = b.GetNextFloat64(col2, row)
+		if row == row2 {
+			return v1, v2, row
+		}
+
+		row++
+	}
+
+	return 0., 0., -1
+}
+
+func (b *bow) GetNextFloat64(col, row int) (float64, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return 0., -1
+	}
+
+	var value float64
+	var ok bool
+	for row < int(b.NumRows()) {
+		value, ok = b.GetFloat64(col, row)
+		if ok {
+			return value, row
+		}
+		row++
+	}
+	return 0., -1
+}
+
+func (b *bow) GetPreviousFloat64s(col1, col2, row int) (float64, float64, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return 0., 0., -1
+	}
+
+	var v1, v2 float64
+	var row2 int
+	for row >= 0 && row < int(b.NumRows()) {
+		v1, row = b.GetPreviousFloat64(col1, row)
+		v2, row2 = b.GetPreviousFloat64(col2, row)
+		if row == row2 {
+			return v1, v2, row
+		}
+
+		row--
+	}
+
+	return 0., 0., -1
+}
+
+func (b *bow) GetPreviousFloat64(col, row int) (float64, int) {
+	if row < 0 || row >= int(b.NumRows()) {
+		return 0., -1
+	}
+
+	var value float64
+	var ok bool
+	for row >= 0 {
+		value, ok = b.GetFloat64(col, row)
+		if ok {
+			return value, row
+		}
+		row--
+	}
+	return 0., -1
 }
 
 func (b *bow) GetType(colIndex int) (Type, error) {
