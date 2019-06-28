@@ -50,7 +50,7 @@ func TestMode(t *testing.T) {
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{tc, vc},
-						[]bow.Type{bow.Int64, bow.Float64},
+					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 10.},
 						{20, 42.},
