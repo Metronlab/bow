@@ -32,7 +32,7 @@ func TestFirst(t *testing.T) {
 						{10, 10.},
 						{20, nil},
 						{30, nil},
-						{40, nil},
+						{40, 10.},
 						{50, 10.},
 						{60, 10.},
 					})
@@ -65,7 +65,7 @@ func TestLast(t *testing.T) {
 					[]string{"time", "value"},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
-						{10, nil},
+						{10, 10.},
 						{20, nil},
 						{30, nil},
 						{40, 10.},
