@@ -22,8 +22,7 @@ type ColumnInterpolation struct {
 	inputTypes []bow.Type
 	fn         ColumnInterpolationFunc
 
-	inputCol   int
-	outputType bow.Type
+	inputCol int
 }
 
 func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) Rolling {
@@ -105,7 +104,6 @@ func (it *intervalRollingIterator) validateInterpolation(interp *ColumnInterpola
 		return false, fmt.Errorf("invalid input type %s, must be one of %v",
 			typ.String(), interp.inputTypes)
 	}
-	interp.outputType = typ
 
 	return readIndex == it.column, nil
 }
