@@ -17,17 +17,31 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
-	GetType(colIndex int) (Type, error)
+	// meet Stringer interface
+	String() string
+
+	// Getters
+
+	GetType(colIndex int) Type
 	GetName(colIndex int) (string, error)
 	GetIndex(colName string) (int, error)
 
-	GetValue(colIndex, rowIndex int) interface{}
-	GetFloat64(colIndex, rowIndex int) (float64, bool)
-	GetValueByName(colName string, rowIndex int) interface{}
 	GetRow(rowIndex int) map[string]interface{}
 
-	// stringer interface for printing rows
-	String() string
+	GetValueByName(colName string, rowIndex int) interface{}
+	GetValue(colIndex, rowIndex int) interface{}
+	GetNextValue(col, row int) (v interface{}, resultsRow int)
+	GetNextValues(col1, col2, row int) (v1, v2 interface{}, resultsRow int)
+	GetPreviousValue(col, row int) (v interface{}, resultsRow int)
+	GetPreviousValues(col1, col2, row int) (v1, v2 interface{}, resultsRow int)
+
+	GetFloat64(colIndex, rowIndex int) (float64, bool)
+	GetNextFloat64(col, row int) (v float64, resultsRow int)
+	GetNextFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
+	GetPreviousFloat64(col, row int) (v float64, resultsRow int)
+	GetPreviousFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
+
+	// Iterators
 
 	RowMapIter() chan map[string]interface{}
 
@@ -155,10 +169,7 @@ func (b *bow) NewColumns(columns [][]interface{}) (Bow, error) {
 	}
 	seriess := make([]Series, len(columns))
 	for i, c := range columns {
-		typ, err := getTypeFromArrowType(b.Schema().Field(i).Type.Name())
-		if err != nil {
-			return nil, err
-		}
+		typ := getTypeFromArrowType(b.Schema().Field(i).Type.Name())
 		buf, err := NewBufferFromInterfaces(typ, c)
 		if err != nil {
 			return nil, err
@@ -195,7 +206,7 @@ func (b *bow) String() string {
 
 	// Print col names on buffer
 	formatRow(func(colIndex int) string {
-		return b.Schema().Field(colIndex).Name
+		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
 	})
 
 	// Print each row on buffer
@@ -230,93 +241,6 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 	for rowIndex := 0; rowIndex < int(b.NumRows()); rowIndex++ {
 		mapChan <- b.GetRow(rowIndex)
 	}
-}
-
-func (b *bow) GetRow(rowIndex int) map[string]interface{} {
-	m := map[string]interface{}{}
-	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
-		val := b.GetValue(colIndex, rowIndex)
-		if val == nil {
-			continue
-		}
-		m[b.Schema().Field(colIndex).Name] = val
-	}
-	return m
-}
-
-func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
-	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
-		name := b.Schema().Field(colIndex).Name
-		if colName == name {
-			return b.GetValue(colIndex, rowIndex)
-		}
-	}
-	return nil
-}
-
-func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
-	switch b.Schema().Field(colIndex).Type.ID() {
-	case arrow.FLOAT64:
-		vd := array.NewFloat64Data(b.Column(colIndex).Data())
-		if vd.IsValid(rowIndex) {
-			return vd.Value(rowIndex)
-		}
-	case arrow.INT64:
-		vd := array.NewInt64Data(b.Column(colIndex).Data())
-		if vd.IsValid(rowIndex) {
-			return vd.Value(rowIndex)
-		}
-	case arrow.BOOL:
-		vd := array.NewBooleanData(b.Column(colIndex).Data())
-		if vd.IsValid(rowIndex) {
-			return vd.Value(rowIndex)
-		}
-	default:
-		panic(fmt.Sprintf("bow: unhandled type %s",
-			b.Schema().Field(colIndex).Type.Name()))
-	}
-	return nil
-}
-
-func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
-	switch b.Schema().Field(colIndex).Type.ID() {
-	case arrow.FLOAT64:
-		vd := array.NewFloat64Data(b.Column(colIndex).Data())
-		return vd.Value(rowIndex), vd.IsValid(rowIndex)
-	case arrow.INT64:
-		vd := array.NewInt64Data(b.Column(colIndex).Data())
-		return float64(vd.Value(rowIndex)), vd.IsValid(rowIndex)
-	case arrow.BOOL:
-		vd := array.NewBooleanData(b.Column(colIndex).Data())
-		booleanValue := vd.Value(rowIndex)
-		if booleanValue {
-			return 1., vd.IsValid(rowIndex)
-		}
-		return 0., vd.IsValid(rowIndex)
-	default:
-		panic(fmt.Sprintf("bow: unhandled type %s",
-			b.Schema().Field(colIndex).Type.Name()))
-	}
-}
-
-func (b *bow) GetType(colIndex int) (Type, error) {
-	return getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
-}
-
-func (b *bow) GetName(colIndex int) (string, error) {
-	if colIndex > len(b.Schema().Fields()) {
-		return "", fmt.Errorf("no index %d", colIndex)
-	}
-	return b.Schema().Field(colIndex).Name, nil
-}
-
-func (b *bow) GetIndex(colName string) (int, error) {
-	for i, field := range b.Schema().Fields() {
-		if field.Name == colName {
-			return i, nil
-		}
-	}
-	return 0, fmt.Errorf("no column '%s'", colName)
 }
 
 func (b *bow) InnerJoin(B2 Bow) Bow {
@@ -400,20 +324,15 @@ func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
 
 func (b *bow) makeColNamesAndTypesOnJoin(
 	b2 *bow, commonColumns map[string]struct{}, rColNotInLIndexes []int) ([]string, []Type) {
-	var err error
 	colNames := make([]string, len(b.Schema().Fields())+len(rColNotInLIndexes))
 	colType := make([]Type, len(b.Schema().Fields())+len(rColNotInLIndexes))
 	for i, f := range b.Schema().Fields() {
 		colNames[i] = f.Name
-		if colType[i], err = getTypeFromArrowType(f.Type.Name()); err != nil {
-			panic(err)
-		}
+		colType[i] = getTypeFromArrowType(f.Type.Name())
 	}
 	for i, index := range rColNotInLIndexes {
 		colNames[len(b.Schema().Fields())+i] = b2.Schema().Field(index).Name
-		if colType[len(b.Schema().Fields())+i], err = getTypeFromArrowType(b2.Schema().Field(index).Type.Name()); err != nil {
-			panic(err)
-		}
+		colType[len(b.Schema().Fields())+i] = getTypeFromArrowType(b2.Schema().Field(index).Type.Name())
 	}
 	return colNames, colType
 }
@@ -506,10 +425,7 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 		series := make([]Series, len(jsonBow.ColumnsTypes))
 		i := 0
 		for colName, ArrowTypeName := range jsonBow.ColumnsTypes {
-			t, err := getTypeFromArrowType(ArrowTypeName)
-			if err != nil {
-				return err
-			}
+			t := getTypeFromArrowType(ArrowTypeName)
 			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Rows), func() chan interface{} {
 				cellsChan := make(chan interface{})
 				go func(cellsChan chan interface{}, colName string) {
