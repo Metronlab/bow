@@ -6,33 +6,25 @@ import (
 )
 
 func First(col string) rolling.ColumnAggregation {
-	return rolling.NewColumnAggregation(col, false, bow.Float64,
+	return rolling.NewColumnAggregation(col, false, bow.InputDependent,
 		func(col int, w bow.Window) (interface{}, error) {
 			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}
 
-			// TODO: use a getNextVal
-			value, valid := w.Bow.GetFloat64(col, 0)
-			if valid {
-				return value, nil
-			}
-			return nil, nil
+			value, _ := w.Bow.GetNextValue(col, 0)
+			return value, nil
 		})
 }
 
 func Last(col string) rolling.ColumnAggregation {
-	return rolling.NewColumnAggregation(col, false, bow.Float64,
+	return rolling.NewColumnAggregation(col, false, bow.InputDependent,
 		func(col int, w bow.Window) (interface{}, error) {
 			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}
 
-			// TODO: use a getPreviousVal
-			value, valid := w.Bow.GetFloat64(col, w.Bow.NumRows() - 1)
-			if valid {
-				return value, nil
-			}
-			return nil, nil
+			value, _ := w.Bow.GetPreviousValue(col, w.Bow.NumRows()-1)
+			return value, nil
 		})
 }

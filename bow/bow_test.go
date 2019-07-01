@@ -255,3 +255,29 @@ func TestBow_Append(t *testing.T) {
 		"want:\n%v\nhave:\n%v", expected, actual))
 	// todo: corner cases
 }
+
+func TestBow_NewSlice(t *testing.T) {
+	colNames := []string{"time", "value"}
+	types := []Type{Int64, Float64}
+
+	origin, err := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{1, 2, 3}, {.1, .2, .3}})
+	assert.NoError(t, err)
+
+	// begin
+	expected, err := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{1}, {.1}})
+	assert.NoError(t, err)
+	slice := origin.NewSlice(0, 1)
+	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
+
+	// end
+	expected, err = NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{2, 3}, {.2, .3}})
+	assert.NoError(t, err)
+	slice = origin.NewSlice(1, 3)
+	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
+
+	// empty on already sliced bow (recursive test)
+	expected, err = NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{}, {}})
+	assert.NoError(t, err)
+	slice = slice.NewSlice(1, 1)
+	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
+}
