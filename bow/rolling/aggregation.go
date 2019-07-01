@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
-	"log"
 )
 
 type ColumnAggregation interface {
@@ -135,8 +134,6 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 				logPrefix+"aggregation %d has invalid return type %s",
 				wColIndex, aggr.Type()))
 		}
-
-		log.Println(buf, outputType)
 
 		for it3.HasNext() {
 			winIndex, w, err := it3.Next()
