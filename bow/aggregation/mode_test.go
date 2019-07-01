@@ -12,16 +12,21 @@ var (
 		[]string{tc, vc},
 		[]bow.Type{bow.Int64, bow.Float64},
 		[][]interface{}{
-			{10, 10.1}, // same value window
-			{11, 10.1},
+			{10, 10.}, // same value window
+			{11, 10.},
 
-			{20, 42.1}, // most occurrences to 42
-			{21, 42.1},
-			{22, 10.1},
+			{20, 42.}, // most occurrences to 42
+			{21, 42.},
+			{22, 10.},
 
-			{30, nil},
-			{31, nil}, // most occurrences to nil
-			{32, 10.1},
+			{30, nil}, // most occurrences to 10
+			{31, nil},
+			{32, 10.},
+
+			// Empty window
+
+			{50, nil}, // only nil values to nil
+			{51, nil},
 		})
 )
 
@@ -47,9 +52,11 @@ func TestMode(t *testing.T) {
 					[]string{tc, vc},
 						[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
-						{10, 10.1},
-						{20, 42.1},
-						{30, 10.1},
+						{10, 10.},
+						{20, 42.},
+						{30, 10.},
+						{40, nil},
+						{50, nil},
 					})
 				assert.NoError(t, err)
 				return b
