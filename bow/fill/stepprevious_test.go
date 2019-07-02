@@ -11,62 +11,38 @@ import (
 var (
 	timeCol  = "time"
 	valueCol = "value"
-	//badCol   = "badcol"
-
-	//emptyCols = [][]interface{}{{}, {}}
-	sparseBow = newInputTestBow([][]interface{}{
-		{10., 15., 16., 25., 29.},
-		{.10, .15, .16, .25, .29},
-	})
 )
 
 func TestStepPrevious(t *testing.T) {
-	rollInterval := 2.
+	interval := 2.
+	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Float64, bow.Int64}, [][]interface{}{
+		{10., 13.},
+		{100, 130},
+	})
 
 	t.Run("no options", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(sparseBow, timeCol, rollInterval, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{})
 		filled, err := r.
 			Fill(IntervalPosition(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected := newOutputTestBow([][]interface{}{
-			{10., 12., 14., 15., 16., 18., 20., 22., 24., 25., 26., 28., 29.},
-			{.10, .10, .10, .15, .16, .16, .16, .16, .16, .25, .25, .25, .29},
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Float64, bow.Int64}, [][]interface{}{
+			{10., 12., 13.},
+			{100, 100, 130},
 		})
 		assert.Nil(t, err)
 		assert.Equal(t, true, filled.Equal(expected))
 	})
 
 	t.Run("with offset", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(sparseBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
+		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{Offset: 1.})
 		filled, err := r.
 			Fill(IntervalPosition(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected := newOutputTestBow([][]interface{}{
-			{13., 15., 16., 17., 19., 21., 23., 25., 27., 29.},
-			{.10, .15, .16, .16, .16, .16, .16, .25, .25, .29},
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Float64, bow.Int64}, [][]interface{}{
+			{9., 10., 11., 13.},
+			{nil, 100, 100, 130},
 		})
 		assert.Nil(t, err)
 		assert.Equal(t, true, filled.Equal(expected))
 	})
-
-}
-
-func newInputTestBow(cols [][]interface{}) bow.Bow {
-	colNames := []string{timeCol, valueCol}
-	types := []bow.Type{bow.Float64, bow.Float64}
-	b, err := bow.NewBowFromColumnBasedInterfaces(colNames, types, cols)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func newOutputTestBow(cols [][]interface{}) bow.Bow {
-	colNames := []string{timeCol, valueCol}
-	types := []bow.Type{bow.Float64, bow.Float64}
-	b, err := bow.NewBowFromColumnBasedInterfaces(colNames, types, cols)
-	if err != nil {
-		panic(err)
-	}
-	return b
 }

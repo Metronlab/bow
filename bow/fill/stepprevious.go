@@ -26,9 +26,12 @@ func StepPrevious(colName string) rolling.ColumnInterpolation {
 			}
 
 			index--
+			if index < 0 {
+				return nil, nil
+			}
+
 			val := full.GetValue(inputCol, index)
 			previousIndex = index
-
 			return val, nil
 		},
 	)
