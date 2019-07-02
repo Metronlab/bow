@@ -24,6 +24,8 @@ type Rolling interface {
 }
 
 type Options struct {
+	// 0 <= offset < interval;
+	// offsets windows' start, starting earlier if necessary to preserve first points
 	Offset    float64
 	Inclusive bool
 }
@@ -53,6 +55,9 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 	if options.Offset < 0 {
 		return nil, errors.New(logPrefix + "positive offset required")
 	}
+	if options.Offset >= interval {
+		return nil, errors.New(logPrefix + "offset must be lower than interval")
+	}
 
 	iType := b.GetType(column)
 	switch iType {
@@ -69,16 +74,17 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 
 	var start float64
 	if b.NumRows() > 0 {
-		var valid bool
-		start, valid = b.GetFloat64(column, 0)
+		first, valid := b.GetFloat64(column, 0)
 		if !valid {
 			v := b.GetValue(column, 0)
 			return nil, fmt.Errorf(logPrefix+"expected float64 start value, got %v", v)
 		}
 		// align first window start on interval
-		start = math.Floor(start/interval) * interval
+		start = math.Floor(first/interval)*interval + options.Offset
+		if start > first {
+			start -= interval
+		}
 	}
-	start += options.Offset
 
 	numWins, err := numWindows(b, column, start, interval, options.Offset)
 	if err != nil {
