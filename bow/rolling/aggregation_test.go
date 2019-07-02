@@ -9,7 +9,12 @@ import (
 )
 
 func TestIntervalRolling_Aggregate(t *testing.T) {
-	r, _ := IntervalRolling(sparseBow, timeCol, 10, Options{})
+	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Float64, bow.Int64}, [][]interface{}{
+		{10., 15., 16., 25., 29.},
+		{10, 15, 16, 25, 29},
+	})
+	r, _ := IntervalRolling(b, timeCol, 10, Options{})
+
 	timeAggr := NewColumnAggregation("time", false, bow.Float64,
 		func(col int, w bow.Window) (interface{}, error) {
 			return w.Start, nil
@@ -23,7 +28,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			return int64(w.Bow.NumRows()) * 2, nil
 		})
 
-	{ // keep columns
+	t.Run("keep columns", func(t *testing.T) {
 		aggregated, err := r.
 			Aggregate(timeAggr, valueAggr).
 			Bow()
@@ -37,9 +42,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 				{3, 2},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
-	}
+	})
 
-	{ // swap columns
+	t.Run("swap columns", func(t *testing.T) {
 		aggregated, err := r.
 			Aggregate(valueAggr, timeAggr).
 			Bow()
@@ -53,9 +58,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 				{10., 20.},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
-	}
+	})
 
-	{ // rename
+	t.Run("rename columns", func(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr.Rename("a"), valueAggr.Rename("b")).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
@@ -67,9 +72,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 				{3, 2},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
-	}
+	})
 
-	{ // less than in original
+	t.Run("less than in original", func(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
@@ -80,9 +85,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 				{10., 20.},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
-	}
+	})
 
-	{ // more than in original
+	t.Run("more than in original", func(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr, doubleAggr.Rename("double"), valueAggr).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
@@ -95,16 +100,16 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 				{3, 2},
 			})
 		assert.Equal(t, true, aggregated.Equal(expected))
-	}
+	})
 
-	{
+	t.Run("missing interval column", func(t *testing.T) {
 		_, err := r.Aggregate(valueAggr).Bow()
 		assert.EqualError(t, err, fmt.Sprintf("aggregate: must keep column %d for intervals", timeColIdx))
-	}
+	})
 
-	{
+	t.Run("invalid column", func(t *testing.T) {
 		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", false, bow.Int64,
 			func(col int, w bow.Window) (interface{}, error) { return nil, nil })).Bow()
 		assert.EqualError(t, err, "aggregate: no column '-'")
-	}
+	})
 }
