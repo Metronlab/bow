@@ -132,8 +132,9 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 			buf = bow.NewBuffer(it3.numWindows, cType, true)
 			outputType = cType
 		case bow.IteratorDependent:
-			buf = bow.NewBuffer(it3.numWindows, it.iType, true)
-			outputType = it.iType
+			iType := it.bow.GetType(it.column)
+			buf = bow.NewBuffer(it3.numWindows, iType, true)
+			outputType = iType
 		default:
 			return it3.setError(fmt.Errorf(
 				logPrefix+"aggregation %d has invalid return type %s",

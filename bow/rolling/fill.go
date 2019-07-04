@@ -7,7 +7,7 @@ import (
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 )
 
-type ColumnInterpolationFunc func(inputCol int, neededPos float64, window bow.Window, fullBow bow.Bow) (interface{}, error)
+type ColumnInterpolationFunc func(inputCol int, neededPos int64, window bow.Window, fullBow bow.Bow) (interface{}, error)
 
 func NewColumnInterpolation(inputName string, inputTypes []bow.Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
@@ -101,8 +101,8 @@ func (it *intervalRollingIterator) validateInterpolation(interp *ColumnInterpola
 		}
 	}
 	if !typeOk {
-		return false, fmt.Errorf("invalid input type %s, must be one of %v",
-			typ.String(), interp.inputTypes)
+		return false, fmt.Errorf("interpolation accepts types %v, got type %s",
+			interp.inputTypes, typ.String())
 	}
 
 	return readIndex == it.column, nil
@@ -133,12 +133,12 @@ func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolat
 	return bows, nil
 }
 
-func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInterpolation, w *bow.Window, neededPos float64) ([]bow.Series, error) {
+func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInterpolation, w *bow.Window, neededPos int64) ([]bow.Series, error) {
 	seriess := make([]bow.Series, len(interpolations))
 
-	first := -1.
+	var first int64 = -1
 	if w.Bow.NumRows() > 0 {
-		value, valid := w.Bow.GetFloat64(it.column, 0)
+		value, valid := w.Bow.GetInt64(it.column, 0)
 		if valid {
 			first = value
 		}

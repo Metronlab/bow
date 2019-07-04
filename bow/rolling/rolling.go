@@ -3,7 +3,6 @@ package rolling
 import (
 	"errors"
 	"fmt"
-	"math"
 
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 )
@@ -26,7 +25,7 @@ type Rolling interface {
 type Options struct {
 	// 0 <= offset < interval;
 	// offsets windows' start, starting earlier if necessary to preserve first points
-	Offset    float64
+	Offset    int64
 	Inclusive bool
 }
 
@@ -38,7 +37,7 @@ type Options struct {
 //
 // Todo:
 // - bound inclusion option (for now it's `[[`)
-func IntervalRolling(b bow.Bow, column string, interval float64, options Options) (Rolling, error) {
+func IntervalRolling(b bow.Bow, column string, interval int64, options Options) (Rolling, error) {
 	index, err := b.GetIndex(column)
 	if err != nil {
 		return nil, errors.New("intervalrolling: " + err.Error())
@@ -46,7 +45,7 @@ func IntervalRolling(b bow.Bow, column string, interval float64, options Options
 	return IntervalRollingForIndex(b, index, interval, options)
 }
 
-func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Options) (Rolling, error) {
+func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Options) (Rolling, error) {
 	logPrefix := "intervalrolling: "
 
 	if interval <= 0 {
@@ -60,27 +59,19 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 	}
 
 	iType := b.GetType(column)
-	switch iType {
-	case bow.Float64:
-	case bow.Int64:
-		// If iterator interval and offset are not integer, output column will become float
-		if interval != math.Trunc(interval) ||
-			options.Offset != math.Trunc(options.Offset) {
-			iType = bow.Float64
-		}
-	default:
-		return nil, fmt.Errorf(logPrefix+"impossible to roll over type: %v", iType)
+	if iType != bow.Int64 {
+		return nil, fmt.Errorf(logPrefix+"impossible to roll over type %v", iType)
 	}
 
-	var start float64
+	var start int64
 	if b.NumRows() > 0 {
-		first, valid := b.GetFloat64(column, 0)
+		first, valid := b.GetInt64(column, 0)
 		if !valid {
 			v := b.GetValue(column, 0)
-			return nil, fmt.Errorf(logPrefix+"expected float64 start value, got %v", v)
+			return nil, fmt.Errorf(logPrefix+"expected int64 start value, got %v", v)
 		}
 		// align first window start on interval
-		start = math.Floor(first/interval)*interval + options.Offset
+		start = (first/interval)*interval + options.Offset
 		if start > first {
 			start -= interval
 		}
@@ -92,7 +83,6 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 	}
 
 	return &intervalRollingIterator{
-		iType:      iType,
 		bow:        b,
 		column:     column,
 		interval:   interval,
@@ -104,15 +94,14 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval float64, options Op
 
 type intervalRollingIterator struct {
 	// todo: sync.Mutex
-	iType bow.Type
 
 	bow        bow.Bow
 	column     int
-	interval   float64
+	interval   int64
 	options    Options
 	numWindows int
 
-	currStart   float64 // e.g. start time
+	currStart   int64 // e.g. start time
 	currIndex   int
 	windowIndex int
 	err         error
@@ -129,8 +118,8 @@ func (it *intervalRollingIterator) HasNext() bool {
 	if it.currIndex >= it.bow.NumRows() {
 		return false
 	}
-	n, _ := it.bow.GetFloat64(it.column, it.bow.NumRows()-1)
-	return it.currStart <= n
+	n, valid := it.bow.GetInt64(it.column, it.bow.NumRows()-1)
+	return valid && it.currStart <= n
 }
 
 // Next window if any.
@@ -151,7 +140,10 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 	var i int
 	var isInclusive bool
 	for i = it.currIndex; i < it.bow.NumRows(); i++ {
-		ref, _ := it.bow.GetFloat64(it.column, i)
+		ref, ok := it.bow.GetInt64(it.column, i)
+		if !ok {
+			continue
+		}
 		if ref < start {
 			continue
 		}
@@ -207,18 +199,17 @@ func (it *intervalRollingIterator) NumWindows() (int, error) {
 	return it.numWindows, it.err
 }
 
-func numWindows(b bow.Bow, column int, start, interval, offset float64) (int, error) {
+func numWindows(b bow.Bow, column int, start, interval, offset int64) (int, error) {
 	nrows := b.NumRows()
 	if nrows == 0 {
 		return nrows, nil
 	}
 
-	// TODO: use getPreviousFloat
-	last, _ := b.GetFloat64(column, nrows-1)
+	last, irow := b.GetPreviousInt64(column, nrows-1)
 
-	if start > last {
+	if irow == -1 || start > last {
 		return 0, nil
 	}
 
-	return int((last-start)/interval) + 1, nil
+	return int((last-start)/interval + 1), nil
 }

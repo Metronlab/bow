@@ -35,6 +35,9 @@ type Bow interface {
 	GetPreviousValue(col, row int) (v interface{}, resultsRow int)
 	GetPreviousValues(col1, col2, row int) (v1, v2 interface{}, resultsRow int)
 
+	GetInt64(colIndex, rowIndex int) (int64, bool)
+	GetPreviousInt64(col, row int) (v int64, resultsRow int)
+
 	GetFloat64(colIndex, rowIndex int) (float64, bool)
 	GetNextFloat64(col, row int) (v float64, resultsRow int)
 	GetNextFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
