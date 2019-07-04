@@ -57,14 +57,14 @@ func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) R
 
 func (it *intervalRollingIterator) indexedInterpolations(interpolations []ColumnInterpolation) (int, []ColumnInterpolation, error) {
 	if len(interpolations) == 0 {
-		return 0, nil, fmt.Errorf("at least one column interpolation is required")
+		return -1, nil, fmt.Errorf("at least one column interpolation is required")
 	}
 
 	newIntervalCol := -1
 	for i := range interpolations {
 		isInterval, err := it.validateInterpolation(&interpolations[i], i)
 		if err != nil {
-			return 0, nil, err
+			return -1, nil, err
 		}
 		if isInterval {
 			newIntervalCol = i
@@ -74,9 +74,9 @@ func (it *intervalRollingIterator) indexedInterpolations(interpolations []Column
 	if newIntervalCol == -1 {
 		name, err := it.bow.GetName(it.column)
 		if err != nil {
-			return 0, nil, err
+			return -1, nil, err
 		}
-		return 0, nil, fmt.Errorf("must keep interval column '%s'", name)
+		return -1, nil, fmt.Errorf("must keep interval column '%s'", name)
 	}
 
 	return newIntervalCol, interpolations, nil
@@ -146,7 +146,7 @@ func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInte
 
 	startIsMissing := first != w.Start
 
-	for writeIndex, interp := range interpolations {
+	for writeColIndex, interp := range interpolations {
 		typ := w.Bow.GetType(interp.inputCol)
 		name, err := w.Bow.GetName(interp.inputCol)
 		if err != nil {
@@ -172,7 +172,7 @@ func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInte
 			buf.SetOrDrop(exRowIndex+rowIndex, w.Bow.GetValue(interp.inputCol, exRowIndex))
 		}
 
-		seriess[writeIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
+		seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 	}
 
 	return seriess, nil
