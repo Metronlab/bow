@@ -10,7 +10,7 @@ import (
 type ColumnAggregation interface {
 	InputName() string
 	InputIndex() int
-	FromIndex(int) ColumnAggregation
+	MutateIndex(int)
 
 	OutputName() string
 	Rename(string) ColumnAggregation
@@ -32,7 +32,7 @@ type columnAggregation struct {
 }
 
 func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow.Type, fn ColumnAggregationFunc) ColumnAggregation {
-	return columnAggregation{
+	return &columnAggregation{
 		inputName:       colName,
 		inputIndex:      -1,
 		inclusiveWindow: inclusiveWindow,
@@ -43,37 +43,37 @@ func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow
 
 type ColumnAggregationFunc func(col int, w bow.Window) (interface{}, error)
 
-func (a columnAggregation) InputIndex() int {
+func (a *columnAggregation) InputIndex() int {
 	return a.inputIndex
 }
 
-func (a columnAggregation) InputName() string {
+func (a *columnAggregation) InputName() string {
 	return a.inputName
 }
 
-func (a columnAggregation) FromIndex(i int) ColumnAggregation {
+func (a *columnAggregation) MutateIndex(i int) {
 	a.inputIndex = i
-	return a
 }
 
-func (a columnAggregation) Type() bow.Type {
+func (a *columnAggregation) Type() bow.Type {
 	return a.typ
 }
 
-func (a columnAggregation) Func() ColumnAggregationFunc {
+func (a *columnAggregation) Func() ColumnAggregationFunc {
 	return a.fn
 }
 
-func (a columnAggregation) OutputName() string {
+func (a *columnAggregation) OutputName() string {
 	return a.outputName
 }
 
-func (a columnAggregation) Rename(name string) ColumnAggregation {
-	a.outputName = name
-	return a
+func (a *columnAggregation) Rename(name string) ColumnAggregation {
+	a2 := *a
+	a2.outputName = name
+	return &a2
 }
 
-func (a columnAggregation) NeedInclusive() bool {
+func (a *columnAggregation) NeedInclusive() bool {
 	return a.inclusiveWindow
 }
 
@@ -81,107 +81,144 @@ func (a columnAggregation) NeedInclusive() bool {
 func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling {
 	const logPrefix = "aggregate: "
 
-	it2 := *it // preserve previous states still referenced
+	if it.err != nil {
+		return it
+	}
+	it2 := *it
 
-	if it2.err != nil {
-		return &it2
+	newIntervalCol, aggrs, err := it2.indexedAggrs(aggrs)
+	if err != nil {
+		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
 
-	newIntervalColumn := -1
+	seriess, err := it2.aggrWindows(aggrs)
+	if err != nil {
+		return it2.setError(errors.New(logPrefix + err.Error()))
+	}
+
+	b, err := bow.NewBow(seriess...)
+	if err != nil {
+		return it2.setError(errors.New(logPrefix + err.Error()))
+	}
+
+	newIt, err := IntervalRollingForIndex(b, newIntervalCol, it2.interval, it2.options)
+	if err != nil {
+		return it2.setError(errors.New(logPrefix + err.Error()))
+	}
+	return newIt
+}
+
+func (it *intervalRollingIterator) indexedAggrs(aggrs []ColumnAggregation) (int, []ColumnAggregation, error) {
 	if len(aggrs) == 0 {
-		return it2.setError(fmt.Errorf("at least one column aggregation is required"))
+		return -1, nil, fmt.Errorf("at least one column aggregation is required")
 	}
 
-	for i, aggr := range aggrs {
-		if aggr.InputName() == "" {
-			return it2.setError(fmt.Errorf(logPrefix+"aggregation %d has no column name", i))
-		}
-		readIndex, err := it2.bow.GetIndex(aggr.InputName())
+	newIntervalCol := -1
+	for i := range aggrs {
+		isInterval, err := it.validateAggr(aggrs[i], i)
 		if err != nil {
-			return it2.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
+			return -1, nil, err
 		}
-		aggrs[i] = aggr.FromIndex(readIndex)
-		if readIndex == it2.column {
-			newIntervalColumn = i
-		}
-
-		if aggr.NeedInclusive() {
-			it2.options.Inclusive = true
+		if isInterval {
+			newIntervalCol = i
 		}
 	}
-	if newIntervalColumn == -1 {
+
+	if newIntervalCol == -1 {
 		name, err := it.bow.GetName(it.column)
 		if err != nil {
-			return it2.setError(fmt.Errorf(logPrefix + err.Error()))
+			return -1, nil, err
 		}
-		return it2.setError(fmt.Errorf(logPrefix+"must keep interval column '%s'", name))
+		return -1, nil, fmt.Errorf("must keep interval column '%s'", name)
 	}
 
-	outputSeries := make([]bow.Series, len(aggrs))
-	for wColIndex, aggr := range aggrs {
-		var outputType bow.Type
-		it3 := it2
+	return newIntervalCol, aggrs, nil
+}
 
-		var buf bow.Buffer
-		switch aggr.Type() {
-		case bow.Int64, bow.Float64, bow.Bool:
-			buf = bow.NewBuffer(it3.numWindows, aggr.Type(), true)
-			outputType = aggr.Type()
-		case bow.InputDependent:
-			cType := it.bow.GetType(aggr.InputIndex())
-			buf = bow.NewBuffer(it3.numWindows, cType, true)
-			outputType = cType
-		case bow.IteratorDependent:
-			iType := it.bow.GetType(it.column)
-			buf = bow.NewBuffer(it3.numWindows, iType, true)
-			outputType = iType
-		default:
-			return it3.setError(fmt.Errorf(
-				logPrefix+"aggregation %d has invalid return type %s",
-				wColIndex, aggr.Type()))
-		}
+func (it *intervalRollingIterator) validateAggr(aggr ColumnAggregation, newIndex int) (isInterval bool, err error) {
+	if aggr.InputName() == "" {
+		return false, fmt.Errorf("aggregation %d has no column name", newIndex)
+	}
+	readIndex, err := it.bow.GetIndex(aggr.InputName())
+	if err != nil {
+		return false, err
+	}
+	aggr.MutateIndex(readIndex)
 
-		for it3.HasNext() {
-			winIndex, w, err := it3.Next()
-			if err != nil {
-				return it3.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
-			}
+	if aggr.NeedInclusive() {
+		it.options.Inclusive = true
+	}
 
-			var val interface{}
-			if !aggr.NeedInclusive() && w.IsInclusive {
-				val, err = aggr.Func()(aggr.InputIndex(), (*w).UnsetInclusive())
-			} else {
-				val, err = aggr.Func()(aggr.InputIndex(), *w)
-			}
-			if err != nil {
-				return it3.setError(fmt.Errorf(logPrefix+"%s", err.Error()))
-			}
-			if val == nil {
-				continue
-			}
+	return readIndex == it.column, nil
+}
 
-			buf.SetOrDrop(winIndex, val)
+// For each column aggregation, gives a series with each point resulting from a window aggregation.
+func (it *intervalRollingIterator) aggrWindows(aggrs []ColumnAggregation) ([]bow.Series, error) {
+	seriess := make([]bow.Series, len(aggrs))
+	for writeColIndex, aggr := range aggrs {
+		it2 := *it
+
+		buf, outputType, err := it2.windowsAggrBuffer(writeColIndex, aggr)
+		if err != nil {
+			return nil, err
 		}
 
 		name := aggr.OutputName()
 		if name == "" {
 			var err error
-			name, err = it3.bow.GetName(aggr.InputIndex())
+			name, err = it2.bow.GetName(aggr.InputIndex())
 			if err != nil {
-				return it3.setError(errors.New(logPrefix + err.Error()))
+				return nil, err
 			}
 		}
 
-		outputSeries[wColIndex] = bow.NewSeries(name, outputType, buf.Value, buf.Valid)
+		seriess[writeColIndex] = bow.NewSeries(name, outputType, buf.Value, buf.Valid)
 	}
 
-	b, err := bow.NewBow(outputSeries...)
-	if err != nil {
-		return it2.setError(errors.New(logPrefix + err.Error()))
+	return seriess, nil
+}
+
+func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAggregation) (*bow.Buffer, bow.Type, error) {
+	var buf bow.Buffer
+	var typ bow.Type
+
+	switch aggr.Type() {
+	case bow.Int64, bow.Float64, bow.Bool:
+		buf = bow.NewBuffer(it.numWindows, aggr.Type(), true)
+		typ = aggr.Type()
+	case bow.InputDependent:
+		cType := it.bow.GetType(aggr.InputIndex())
+		buf = bow.NewBuffer(it.numWindows, cType, true)
+		typ = cType
+	case bow.IteratorDependent:
+		iType := it.bow.GetType(it.column)
+		buf = bow.NewBuffer(it.numWindows, iType, true)
+		typ = iType
+	default:
+		return nil, bow.Unknown, fmt.Errorf("aggregation %d has invalid return type %s", colIndex, aggr.Type())
 	}
-	r, err := IntervalRollingForIndex(b, newIntervalColumn, it2.interval, it2.options)
-	if err != nil {
-		return it2.setError(errors.New(logPrefix + err.Error()))
+
+	for it.HasNext() {
+		winIndex, w, err := it.Next()
+		if err != nil {
+			return nil, bow.Unknown, err
+		}
+
+		var val interface{}
+		if !aggr.NeedInclusive() && w.IsInclusive {
+			val, err = aggr.Func()(aggr.InputIndex(), (*w).UnsetInclusive())
+		} else {
+			val, err = aggr.Func()(aggr.InputIndex(), *w)
+		}
+		if err != nil {
+			return nil, bow.Unknown, err
+		}
+		if val == nil {
+			continue
+		}
+
+		buf.SetOrDrop(winIndex, val)
 	}
-	return r
+
+	return &buf, typ, nil
 }
