@@ -1,6 +1,7 @@
 package rolling
 
 import (
+	"fmt"
 	"testing"
 
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
@@ -33,6 +34,14 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			Fill(timeInterp, interpFloatBool).
 			Bow()
 		assert.EqualError(t, err, "fill: invalid input type Int64, must be one of [Float64 Bool]")
+	})
+
+	t.Run("missing interval column", func(t *testing.T) {
+		r, _ := IntervalRolling(b, timeCol, interval, Options{})
+		_, err := r.
+			Fill(valueInterp).
+			Bow()
+		assert.EqualError(t, err, fmt.Sprintf("fill: must keep interval column '%s'", timeCol))
 	})
 
 	t.Run("no options", func(t *testing.T) {
