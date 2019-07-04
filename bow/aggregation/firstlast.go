@@ -12,7 +12,10 @@ func First(col string) rolling.ColumnAggregation {
 				return nil, nil
 			}
 
-			value, _ := w.Bow.GetNextValue(col, 0)
+			value, irow := w.Bow.GetNextValue(col, 0)
+			if irow == -1 {
+				return nil, nil
+			}
 			return value, nil
 		})
 }
@@ -24,7 +27,10 @@ func Last(col string) rolling.ColumnAggregation {
 				return nil, nil
 			}
 
-			value, _ := w.Bow.GetPreviousValue(col, w.Bow.NumRows()-1)
+			value, irow := w.Bow.GetPreviousValue(col, w.Bow.NumRows()-1)
+			if irow == -1 {
+				return nil, nil
+			}
 			return value, nil
 		})
 }
