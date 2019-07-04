@@ -9,35 +9,32 @@ import (
 )
 
 func TestIntervalPosition(t *testing.T) {
-	interval := 2.
+	var interval int64 = 2
+	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
+		{10, 13},
+	})
 
 	t.Run("no options", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(sparseBow, timeCol, interval, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{})
 		filled, err := r.
 			Fill(IntervalPosition(timeCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces(
-			[]string{timeCol},
-			[]bow.Type{bow.Float64},
-			[][]interface{}{
-				{10., 12., 14., 15., 16., 18., 20., 22., 24., 25., 26., 28., 29.},
-			})
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
+			{10, 12, 13},
+		})
 		assert.Nil(t, err)
-		assert.Equal(t, true, filled.Equal(expected))
+		assert.True(t, filled.Equal(expected))
 	})
 
 	t.Run("with offset", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(sparseBow, timeCol, interval, rolling.Options{Offset: 3.})
+		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{Offset: 1.})
 		filled, err := r.
 			Fill(IntervalPosition(timeCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces(
-			[]string{timeCol},
-			[]bow.Type{bow.Float64},
-			[][]interface{}{
-				{13., 15., 16., 17., 19., 21., 23., 25., 27., 29.},
-			})
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
+			{9, 10, 11, 13},
+		})
 		assert.Nil(t, err)
-		assert.Equal(t, true, filled.Equal(expected))
+		assert.True(t, filled.Equal(expected))
 	})
 }
