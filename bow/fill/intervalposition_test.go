@@ -9,7 +9,7 @@ import (
 )
 
 func TestIntervalPosition(t *testing.T) {
-	interval := 2.
+	var interval int64 = 2
 	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
 		{10, 13},
 	})
