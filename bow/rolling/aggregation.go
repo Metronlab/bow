@@ -3,6 +3,7 @@ package rolling
 import (
 	"errors"
 	"fmt"
+
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 )
 
@@ -109,7 +110,11 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		}
 	}
 	if newIntervalColumn == -1 {
-		return it2.setError(fmt.Errorf(logPrefix+"must keep column %d for intervals", it2.column))
+		name, err := it.bow.GetName(it.column)
+		if err != nil {
+			return it2.setError(fmt.Errorf(logPrefix + err.Error()))
+		}
+		return it2.setError(fmt.Errorf(logPrefix+"must keep interval column '%s'", name))
 	}
 
 	outputSeries := make([]bow.Series, len(aggrs))
@@ -127,8 +132,9 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 			buf = bow.NewBuffer(it3.numWindows, cType, true)
 			outputType = cType
 		case bow.IteratorDependent:
-			buf = bow.NewBuffer(it3.numWindows, it.iType, true)
-			outputType = it.iType
+			iType := it.bow.GetType(it.column)
+			buf = bow.NewBuffer(it3.numWindows, iType, true)
+			outputType = iType
 		default:
 			return it3.setError(fmt.Errorf(
 				logPrefix+"aggregation %d has invalid return type %s",
