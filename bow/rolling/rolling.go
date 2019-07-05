@@ -51,11 +51,11 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Opti
 	if interval <= 0 {
 		return nil, errors.New(logPrefix + "strictly positive interval required")
 	}
-	if options.Offset < 0 {
-		return nil, errors.New(logPrefix + "positive offset required")
+	if options.Offset >= interval || options.Offset <= -interval {
+		options.Offset = options.Offset % interval
 	}
-	if options.Offset >= interval {
-		return nil, errors.New(logPrefix + "offset must be lower than interval")
+	if options.Offset < 0 {
+		options.Offset += interval
 	}
 
 	iType := b.GetType(column)
