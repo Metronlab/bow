@@ -76,27 +76,6 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 		assert.Nil(t, rolling)
 	})
 
-	t.Run("offset < 0", func(t *testing.T) {
-		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
-		rolling, err := IntervalRolling(b, timeCol, 1, Options{Offset: -1})
-		assert.EqualError(t, err, "intervalrolling: positive offset required")
-		assert.Nil(t, rolling)
-	})
-
-	t.Run("offset == interval", func(t *testing.T) {
-		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
-		rolling, err := IntervalRolling(b, timeCol, 1, Options{Offset: 1})
-		assert.EqualError(t, err, "intervalrolling: offset must be lower than interval")
-		assert.Nil(t, rolling)
-	})
-
-	t.Run("offset > interval", func(t *testing.T) {
-		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
-		rolling, err := IntervalRolling(b, timeCol, 1, Options{Offset: 2})
-		assert.EqualError(t, err, "intervalrolling: offset must be lower than interval")
-		assert.Nil(t, rolling)
-	})
-
 	t.Run("non existing index", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
 		_, err := IntervalRolling(b, badCol, 1, Options{})
@@ -226,6 +205,74 @@ func TestIntervalRolling_iterate(t *testing.T) {
 
 	t.Run("with offset falling after first point", func(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 3})
+		assert.Nil(t, err)
+		assert.NotNil(t, rolling)
+		iter := rolling.(*intervalRollingIterator)
+
+		expected := []testWindow{
+			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
+			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
+			{2, 18, 23, -1, emptyCols},
+			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
+			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
+		}
+
+		for i := 0; iter.HasNext(); i++ {
+			checkTestWindow(t, iter, expected[i])
+		}
+
+		_, w, err := iter.Next()
+		assert.Nil(t, w)
+		assert.Nil(t, err)
+	})
+
+	t.Run("offset > interval", func(t *testing.T) {
+		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 8})
+		assert.Nil(t, err)
+		assert.NotNil(t, rolling)
+		iter := rolling.(*intervalRollingIterator)
+
+		expected := []testWindow{
+			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
+			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
+			{2, 18, 23, -1, emptyCols},
+			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
+			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
+		}
+
+		for i := 0; iter.HasNext(); i++ {
+			checkTestWindow(t, iter, expected[i])
+		}
+
+		_, w, err := iter.Next()
+		assert.Nil(t, w)
+		assert.Nil(t, err)
+	})
+
+	t.Run("offset == interval", func(t *testing.T) {
+		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 5})
+		assert.Nil(t, err)
+		assert.NotNil(t, rolling)
+		iter := rolling.(*intervalRollingIterator)
+
+		expected := []testWindow{
+			{0, 10, 15, 0, [][]interface{}{{12}, {1.2}}},
+			{1, 15, 20, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
+			{2, 20, 25, -1, emptyCols},
+			{3, 25, 30, 3, [][]interface{}{{25, 29}, {2.5, 2.9}}},
+		}
+
+		for i := 0; iter.HasNext(); i++ {
+			checkTestWindow(t, iter, expected[i])
+		}
+
+		_, w, err := iter.Next()
+		assert.Nil(t, w)
+		assert.Nil(t, err)
+	})
+
+	t.Run("offset < 0", func(t *testing.T) {
+		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: -2})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
 		iter := rolling.(*intervalRollingIterator)
