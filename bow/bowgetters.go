@@ -7,6 +7,15 @@ import (
 	"github.com/apache/arrow/go/arrow/array"
 )
 
+func (b *bow) GetColNameIndex(s string) int {
+	for i, f := range b.Schema().Fields() {
+		if f.Name == s {
+			return i
+		}
+	}
+	return -1
+}
+
 func (b *bow) GetRow(rowIndex int) map[string]interface{} {
 	m := map[string]interface{}{}
 	for colIndex := 0; colIndex < int(b.NumCols()); colIndex++ {
