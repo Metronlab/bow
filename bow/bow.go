@@ -21,6 +21,7 @@ type Bow interface {
 	String() string
 
 	// Getters
+	GetColNameIndex(string) int
 
 	GetType(colIndex int) Type
 	GetName(colIndex int) (string, error)
