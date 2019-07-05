@@ -29,6 +29,24 @@ type Options struct {
 	Inclusive bool
 }
 
+func NbWindowsInRange(firstVal, lastVal, interval, offset int64) (int, error) {
+	if firstVal > lastVal {
+		return -1, errors.New("firstVal must be <= lastVal")
+	}
+	var err error
+	offset, err = validateIntervalOffset(interval, offset)
+	if err != nil {
+		return -1, err
+	}
+
+	start := (firstVal/interval)*interval + offset
+	if start > firstVal {
+		start -= interval
+	}
+
+	return int((lastVal-start)/interval + 1), nil
+}
+
 // IntervalRolling provides an interval-based `Rolling`.
 // Intervals rely on numerical values regardless of a unit.
 // All windows except the last one may be empty.
@@ -48,14 +66,10 @@ func IntervalRolling(b bow.Bow, column string, interval int64, options Options) 
 func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Options) (Rolling, error) {
 	logPrefix := "intervalrolling: "
 
-	if interval <= 0 {
-		return nil, errors.New(logPrefix + "strictly positive interval required")
-	}
-	if options.Offset >= interval || options.Offset <= -interval {
-		options.Offset = options.Offset % interval
-	}
-	if options.Offset < 0 {
-		options.Offset += interval
+	var err error
+	options.Offset, err = validateIntervalOffset(interval, options.Offset)
+	if err != nil {
+		return nil, err
 	}
 
 	iType := b.GetType(column)
@@ -90,6 +104,19 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Opti
 		numWindows: numWins,
 		currStart:  start,
 	}, nil
+}
+
+func validateIntervalOffset(interval, offset int64) (int64, error) {
+	if interval <= 0 {
+		return -1, errors.New("intervalrolling: strictly positive interval required")
+	}
+	if offset >= interval || offset <= -interval {
+		offset = offset % interval
+	}
+	if offset < 0 {
+		offset += interval
+	}
+	return offset, nil
 }
 
 type intervalRollingIterator struct {
