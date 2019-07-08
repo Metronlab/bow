@@ -62,6 +62,7 @@ type Bow interface {
 	NewSlice(i, j int) Bow
 	NewValues(columns [][]interface{}) (bobow Bow, err error)
 	NewEmpty() Bow
+	DropNil(nilCols ...string) (Bow, error)
 
 	// Exposed from Record:
 	Release()
@@ -185,6 +186,78 @@ func (b *bow) NewValues(columns [][]interface{}) (Bow, error) {
 		}
 	}
 	return NewBow(seriess...)
+}
+
+// DropNil drops any row that contains a nil for any of `nilCols`.
+// `nilCols` defaults to all columns.
+func (b *bow) DropNil(nilCols ...string) (Bow, error) {
+	// default = all columns
+	if len(nilCols) == 0 {
+		for _, field := range b.Schema().Fields() {
+			nilCols = append(nilCols, field.Name)
+		}
+	}
+	nilColIndexes := make([]int, len(nilCols))
+	for i := 0; i < len(nilCols); i++ {
+		var err error
+		nilColIndexes[i], err = b.GetIndex(nilCols[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	seriess := make([]Series, b.NumCols())
+	bufs := make([]Buffer, b.NumCols())
+	for ci := 0; ci < b.NumCols(); ci++ {
+		bufs[ci] = NewBuffer(b.NumRows(), b.GetType(ci), true)
+	}
+
+	writeRowIndex := 0
+	for ri := 0; ri < b.NumRows(); ri++ {
+		var skipRow bool
+		row := make([]interface{}, b.NumCols())
+		for ci := 0; ci < b.NumCols(); ci++ {
+			needsCheck := hasNum(nilColIndexes, ci)
+			v := b.GetValue(ci, ri)
+			skipRow = needsCheck && v == nil
+			if skipRow {
+				break
+			}
+			row[ci] = v
+		}
+		if skipRow {
+			continue
+		}
+		for ci := 0; ci < b.NumCols(); ci++ {
+			bufs[ci].SetOrDrop(writeRowIndex, row[ci])
+		}
+		writeRowIndex++
+	}
+
+	for ci := 0; ci < b.NumCols(); ci++ {
+		typ := b.GetType(ci)
+		name, err := b.GetName(ci)
+		if err != nil {
+			return nil, err
+		}
+		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
+	}
+
+	b2, err := NewBow(seriess...)
+	b2 = b2.NewSlice(0, writeRowIndex)
+	if err != nil {
+		return nil, err
+	}
+	return b2, nil
+}
+
+func hasNum(nums []int, n int) bool {
+	for _, i := range nums {
+		if i == n {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *bow) String() string {
@@ -358,6 +431,10 @@ func (b *bow) Equal(B2 Bow) bool {
 	}
 
 	if !b.Schema().Equal(b2.Schema()) {
+		return false
+	}
+
+	if b.NumRows() != b2.NumRows() {
 		return false
 	}
 
