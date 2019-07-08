@@ -23,15 +23,14 @@ type Rolling interface {
 }
 
 type Options struct {
-	// 0 <= offset < interval;
 	// offsets windows' start, starting earlier if necessary to preserve first points
 	Offset    int64
 	Inclusive bool
 }
 
-func NbWindowsInRange(firstVal, lastVal, interval, offset int64) (int, error) {
-	if firstVal > lastVal {
-		return -1, errors.New("firstVal must be <= lastVal")
+func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
+	if first > last {
+		return -1, errors.New("first must be <= last")
 	}
 	var err error
 	offset, err = validateIntervalOffset(interval, offset)
@@ -39,12 +38,12 @@ func NbWindowsInRange(firstVal, lastVal, interval, offset int64) (int, error) {
 		return -1, err
 	}
 
-	start := (firstVal/interval)*interval + offset
-	if start > firstVal {
+	start := (first/interval)*interval + offset
+	if start > first {
 		start -= interval
 	}
 
-	return int((lastVal-start)/interval + 1), nil
+	return int((last-start)/interval + 1), nil
 }
 
 // IntervalRolling provides an interval-based `Rolling`.
@@ -52,9 +51,6 @@ func NbWindowsInRange(firstVal, lastVal, interval, offset int64) (int, error) {
 // All windows except the last one may be empty.
 // `column`: column used to make intervals
 // `interval`: length of an interval
-//
-// Todo:
-// - bound inclusion option (for now it's `[[`)
 func IntervalRolling(b bow.Bow, column string, interval int64, options Options) (Rolling, error) {
 	index, err := b.GetIndex(column)
 	if err != nil {

@@ -16,51 +16,51 @@ var (
 	emptyCols = [][]interface{}{{}, {}}
 )
 
-func TestNbWindowsInRange(t *testing.T) {
+func TestNumWindowsInRange(t *testing.T) {
 	t.Run("firstVal == lastVal", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(0, 0, 1, 0)
+		nbWindows, err := NumWindowsInRange(0, 0, 1, 0)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, nbWindows)
 	})
 
 	t.Run("firstVal == lastVal with offset", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(0, 0, 1, 1)
+		nbWindows, err := NumWindowsInRange(0, 0, 1, 1)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, nbWindows)
 	})
 
 	t.Run("firstVal > lastVal", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(1, 0, 1, 0)
+		nbWindows, err := NumWindowsInRange(1, 0, 1, 0)
 		assert.Error(t, err)
 		assert.Equal(t, -1, nbWindows)
 	})
 
 	t.Run("interval < 0", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(0, 0, -1, 0)
+		nbWindows, err := NumWindowsInRange(0, 0, -1, 0)
 		assert.Error(t, err)
 		assert.Equal(t, -1, nbWindows)
 	})
 
 	t.Run("without offset one window", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(0, 1, 2, 0)
+		nbWindows, err := NumWindowsInRange(0, 1, 2, 0)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, nbWindows)
 	})
 
 	t.Run("without offset two window", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(0, 2, 2, 0)
+		nbWindows, err := NumWindowsInRange(0, 2, 2, 0)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, nbWindows)
 	})
 
 	t.Run("with offset one window", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(0, 1, 2, 1)
+		nbWindows, err := NumWindowsInRange(0, 1, 2, 1)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, nbWindows)
 	})
 
 	t.Run("with offset two window", func(t *testing.T) {
-		nbWindows, err := NbWindowsInRange(0, 2, 2, 1)
+		nbWindows, err := NumWindowsInRange(0, 2, 2, 1)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, nbWindows)
 	})
