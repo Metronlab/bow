@@ -281,3 +281,52 @@ func TestBow_NewSlice(t *testing.T) {
 	slice = slice.NewSlice(1, 1)
 	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
 }
+
+func TestBow_DropNil(t *testing.T) {
+	filledBow, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+		{100, 200, 300, 400},
+		{110, 220, 330, 440},
+		{111, 222, 333, 444},
+	})
+	holedBow, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+		{nil, 200, 300, 400},
+		{110, nil, 330, 440},
+		{111, nil, 333, nil},
+	})
+
+	t.Run("unchanged without nil", func(t *testing.T) {
+		compacted, err := filledBow.DropNil()
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(filledBow))
+	})
+
+	t.Run("drop default", func(t *testing.T) {
+		compactedDefault, err := holedBow.DropNil()
+		assert.Nil(t, err)
+		compactedAll, err := holedBow.DropNil("b", "c", "a")
+		assert.Nil(t, err)
+		assert.True(t, compactedDefault.Equal(compactedAll))
+	})
+
+	t.Run("drop on all columns", func(t *testing.T) {
+		compacted, err := holedBow.DropNil()
+		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+			{300},
+			{330},
+			{333},
+		})
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(expected))
+	})
+
+	t.Run("drop on one column", func(t *testing.T) {
+		compacted, err := holedBow.DropNil("b")
+		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+			{nil, 300, 400},
+			{110, 330, 440},
+			{111, 333, nil},
+		})
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(expected))
+	})
+}
