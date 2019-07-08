@@ -297,7 +297,7 @@ func TestBow_DropNil(t *testing.T) {
 	t.Run("unchanged without nil", func(t *testing.T) {
 		compacted, err := filledBow.DropNil()
 		assert.Nil(t, err)
-		assert.True(t, compacted.Equal(filledBow))
+		assert.True(t, compacted.StrictEqual(filledBow))
 	})
 
 	t.Run("drop default", func(t *testing.T) {
@@ -305,7 +305,7 @@ func TestBow_DropNil(t *testing.T) {
 		assert.Nil(t, err)
 		compactedAll, err := holedBow.DropNil("b", "c", "a")
 		assert.Nil(t, err)
-		assert.True(t, compactedDefault.Equal(compactedAll))
+		assert.True(t, compactedDefault.StrictEqual(compactedAll))
 	})
 
 	t.Run("drop on all columns", func(t *testing.T) {
@@ -316,7 +316,7 @@ func TestBow_DropNil(t *testing.T) {
 			{333},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.Equal(expected))
+		assert.True(t, compacted.StrictEqual(expected))
 	})
 
 	t.Run("drop on one column", func(t *testing.T) {
@@ -327,6 +327,6 @@ func TestBow_DropNil(t *testing.T) {
 			{111, 333, nil},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.Equal(expected))
+		assert.True(t, compacted.StrictEqual(expected))
 	})
 }
