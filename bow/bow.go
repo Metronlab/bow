@@ -144,25 +144,44 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		return bows[0], nil
 	}
 
-	// todo: compare schemas
 	refBow := bows[0]
+	refSchema := refBow.Schema()
 	var numRows int
 	for _, b := range bows {
+		schema := b.Schema()
+		if !schema.Equal(refSchema) {
+			return nil, fmt.Errorf("schema mismatch: got both\n%v\nand\n%v", refSchema, schema)
+		}
 		numRows += b.NumRows()
 	}
 
-	cols := make([][]interface{}, refBow.NumCols())
-	for ci := range cols {
-		cols[ci] = make([]interface{}, numRows)
-		var offset int
+	seriess := make([]Series, refBow.NumCols())
+	bufs := make([]Buffer, refBow.NumCols())
+	for ci := 0; ci < refBow.NumCols(); ci++ {
+		typ := refBow.GetType(ci)
+		bufs[ci] = NewBuffer(numRows, typ, true)
+	}
+
+	for ci := 0; ci < refBow.NumCols(); ci++ {
+		var rowOffset int
 		for _, b := range bows {
 			for ri := 0; ri < b.NumRows(); ri++ {
-				cols[ci][ri+offset] = b.GetValue(ci, ri)
+				bufs[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
 			}
-			offset += b.NumRows()
+			rowOffset += b.NumRows()
 		}
 	}
-	return refBow.NewValues(cols)
+
+	for ci := 0; ci < refBow.NumCols(); ci++ {
+		typ := refBow.GetType(ci)
+		name, err := refBow.GetName(ci)
+		if err != nil {
+			return nil, err
+		}
+		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
+	}
+
+	return NewBow(seriess...)
 }
 
 func (b *bow) NewEmpty() Bow {
@@ -197,7 +216,10 @@ func (b *bow) DropNil(nilCols ...string) (Bow, error) {
 		for _, field := range b.Schema().Fields() {
 			nilCols = append(nilCols, field.Name)
 		}
+	} else {
+		nilCols = dedupStrings(nilCols)
 	}
+
 	nilColIndexes := make([]int, len(nilCols))
 	for i := 0; i < len(nilCols); i++ {
 		var err error
@@ -207,58 +229,43 @@ func (b *bow) DropNil(nilCols ...string) (Bow, error) {
 		}
 	}
 
-	seriess := make([]Series, b.NumCols())
-	bufs := make([]Buffer, b.NumCols())
-	for ci := 0; ci < b.NumCols(); ci++ {
-		bufs[ci] = NewBuffer(b.NumRows(), b.GetType(ci), true)
-	}
-
-	writeRowIndex := 0
+	var dropped []int
 	for ri := 0; ri < b.NumRows(); ri++ {
-		var skipRow bool
-		row := make([]interface{}, b.NumCols())
-		for ci := 0; ci < b.NumCols(); ci++ {
-			needsCheck := hasNum(nilColIndexes, ci)
-			v := b.GetValue(ci, ri)
-			skipRow = needsCheck && v == nil
-			if skipRow {
+		for _, ci := range nilColIndexes {
+			if b.GetValue(ci, ri) == nil {
+				dropped = append(dropped, ri)
 				break
 			}
-			row[ci] = v
 		}
-		if skipRow {
-			continue
-		}
-		for ci := 0; ci < b.NumCols(); ci++ {
-			bufs[ci].SetOrDrop(writeRowIndex, row[ci])
-		}
-		writeRowIndex++
 	}
 
-	for ci := 0; ci < b.NumCols(); ci++ {
-		typ := b.GetType(ci)
-		name, err := b.GetName(ci)
-		if err != nil {
-			return nil, err
-		}
-		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
+	if len(dropped) == 0 {
+		return b, nil
 	}
 
-	b2, err := NewBow(seriess...)
-	b2 = b2.NewSlice(0, writeRowIndex)
-	if err != nil {
-		return nil, err
+	slices := make([]Bow, len(dropped)+1)
+	var curr int
+	for i, di := range dropped {
+		slices[i] = b.NewSlice(curr, di)
+		curr = di + 1
 	}
-	return b2, nil
+	slices[len(dropped)] = b.NewSlice(curr, b.NumRows())
+
+	return AppendBows(slices...)
 }
 
-func hasNum(nums []int, n int) bool {
-	for _, i := range nums {
-		if i == n {
-			return true
+func dedupStrings(s []string) []string {
+	seen := make(map[string]struct{}, len(s))
+	writeIndex := 0
+	for _, v := range s {
+		if _, ok := seen[v]; ok {
+			continue
 		}
+		seen[v] = struct{}{}
+		s[writeIndex] = v
+		writeIndex++
 	}
-	return false
+	return s[:writeIndex]
 }
 
 func (b *bow) String() string {
