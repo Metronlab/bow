@@ -29,7 +29,7 @@ func Linear(colName string) rolling.ColumnInterpolation {
 				return nil, nil
 			}
 
-			prevPos, prevVal, prevIndex := fullBow.GetPreviousFloat64s(w.IntervalColumnIndex, colIndex, index - 1)
+			prevPos, prevVal, prevIndex := fullBow.GetPreviousFloat64s(w.IntervalColumnIndex, colIndex, index-1)
 			if prevIndex < 0 {
 				return nil, nil
 			}
@@ -45,4 +45,3 @@ func Linear(colName string) rolling.ColumnInterpolation {
 		},
 	)
 }
-
