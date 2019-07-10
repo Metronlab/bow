@@ -39,9 +39,9 @@ func Linear(colName string) rolling.ColumnInterpolation {
 				return nil, nil
 			}
 
-			percentage := (neededPos - prevPos) / (nextPos - prevPos)
+			coefficient := (neededPos - prevPos) / (nextPos - prevPos)
 
-			return ((nextVal - prevVal) * percentage) + prevVal, nil
+			return ((nextVal - prevVal) * coefficient) + prevVal, nil
 		},
 	)
 }
