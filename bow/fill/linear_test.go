@@ -8,7 +8,6 @@ import (
 )
 
 var (
-	//emptyCols = [][]interface{}{{}, {}}
 	ascendantLinearTestBow = newInputTestBow([][]interface{}{
 		{10., 15., 16., 25., 29.},
 		{.10, .15, .16, .25, .29},
