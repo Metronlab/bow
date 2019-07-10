@@ -25,8 +25,6 @@ func Linear(colName string) rolling.ColumnInterpolation {
 				nextPos, _ = fullBow.GetFloat64(w.IntervalColumnIndex, index)
 			}
 
-			// from there we have the index where the value should be filled
-			// we need to get the value before, and after to calculate the linear interpolation
 			if index > lastIndex {
 				return nil, nil
 			}
