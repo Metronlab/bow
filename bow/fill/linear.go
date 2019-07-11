@@ -9,37 +9,37 @@ func Linear(colName string) rolling.ColumnInterpolation {
 	previousIndex := -1
 
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool},
-		func(colIndex int, neededPos float64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
+		func(colIndex int, neededPos int64, w bow.Window, fullBow bow.Bow) (interface{}, error) {
 			if fullBow.NumRows() == 0 {
 				return nil, nil
 			}
 
 			index := previousIndex
 			lastIndex := fullBow.NumRows() - 1
-			var nextPos float64
+			var nextPos int64
 			for nextPos < neededPos {
 				index++
 				if index > lastIndex {
 					break
 				}
-				nextPos, _ = fullBow.GetFloat64(w.IntervalColumnIndex, index)
+				nextPos, _ = fullBow.GetInt64(w.IntervalColumnIndex, index)
 			}
 
 			if index > lastIndex {
 				return nil, nil
 			}
 
-			prevPos, prevVal, prevIndex := fullBow.GetPreviousFloat64s(w.IntervalColumnIndex, colIndex, index-1)
+			prevPosFloat, prevVal, prevIndex := fullBow.GetPreviousFloat64s(w.IntervalColumnIndex, colIndex, index-1)
 			if prevIndex < 0 {
 				return nil, nil
 			}
 
-			nextPos, nextVal, nextIndex := fullBow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, index)
+			nextPosFloat, nextVal, nextIndex := fullBow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, index)
 			if nextIndex < 0 {
 				return nil, nil
 			}
 
-			coefficient := (neededPos - prevPos) / (nextPos - prevPos)
+			coefficient := (float64(neededPos) - prevPosFloat) / (nextPosFloat - prevPosFloat)
 
 			return ((nextVal - prevVal) * coefficient) + prevVal, nil
 		},

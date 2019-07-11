@@ -13,16 +13,6 @@ const (
 	valueCol = "value"
 )
 
-var (
-	//badCol   = "badcol"
-
-	//emptyCols = [][]interface{}{{}, {}}
-	sparseBow = newInputTestBow([][]interface{}{
-		{10., 15., 16., 25., 29.},
-		{.10, .15, .16, .25, .29},
-	})
-)
-
 func TestStepPrevious(t *testing.T) {
 	var interval int64 = 2
 	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
