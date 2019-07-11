@@ -22,7 +22,6 @@ func TestLinear(t *testing.T) {
 		{.30, .25, .24, .15, .11},
 	})
 
-
 	t.Run("ascendant no options", func(t *testing.T) {
 		r, err := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
 		log.Println(err)
