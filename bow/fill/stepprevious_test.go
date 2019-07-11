@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
+const (
 	timeCol  = "time"
 	valueCol = "value"
 )
@@ -30,7 +30,7 @@ func TestStepPrevious(t *testing.T) {
 			{1.0, 1.0, 1.3},
 		})
 		assert.Nil(t, err)
-		assert.Equal(t, true, filled.Equal(expected))
+		assert.Equal(t, true, filled.Equal(expected), expected.String(), filled.String())
 	})
 
 	t.Run("with offset", func(t *testing.T) {
@@ -43,6 +43,6 @@ func TestStepPrevious(t *testing.T) {
 			{nil, 1.0, 1.0, 1.3},
 		})
 		assert.Nil(t, err)
-		assert.Equal(t, true, filled.Equal(expected))
+		assert.Equal(t, true, filled.Equal(expected), expected.String(), filled.String())
 	})
 }
