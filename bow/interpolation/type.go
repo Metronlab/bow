@@ -1,4 +1,4 @@
-package intepolation
+package interpolation
 
 import "errors"
 
