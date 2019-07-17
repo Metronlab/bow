@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow/transform"
 )
 
 type ColumnAggregation interface {
@@ -18,6 +19,8 @@ type ColumnAggregation interface {
 
 	Type() bow.Type
 	Func() ColumnAggregationFunc
+	Transform(...transform.Transform) ColumnAggregation
+	Transforms() []transform.Transform
 }
 
 type columnAggregation struct {
@@ -25,7 +28,8 @@ type columnAggregation struct {
 	inputIndex      int
 	inclusiveWindow bool
 
-	fn ColumnAggregationFunc
+	fn         ColumnAggregationFunc
+	transforms []transform.Transform
 
 	outputName string
 	typ        bow.Type
@@ -41,6 +45,7 @@ func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow
 	}
 }
 
+type ColumnAggregationConstruct func(col string) ColumnAggregation
 type ColumnAggregationFunc func(col int, w bow.Window) (interface{}, error)
 
 func (a *columnAggregation) InputIndex() int {
@@ -61,6 +66,16 @@ func (a *columnAggregation) Type() bow.Type {
 
 func (a *columnAggregation) Func() ColumnAggregationFunc {
 	return a.fn
+}
+
+func (a *columnAggregation) Transform(transforms ...transform.Transform) ColumnAggregation {
+	a2 := *a
+	a2.transforms = transforms
+	return &a2
+}
+
+func (a *columnAggregation) Transforms() []transform.Transform {
+	return a.transforms
 }
 
 func (a *columnAggregation) OutputName() string {
@@ -215,6 +230,12 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 		}
 		if val == nil {
 			continue
+		}
+		for _, transform := range aggr.Transforms() {
+			val, err = transform(val)
+			if err != nil {
+				return nil, bow.Unknown, err
+			}
 		}
 
 		buf.SetOrDrop(winIndex, val)
