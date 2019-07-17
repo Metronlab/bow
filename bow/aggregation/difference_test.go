@@ -8,7 +8,7 @@ import (
 )
 
 func TestDifference(t *testing.T) {
-	runTestCases(t, Difference, []bowTest{
+	runTestCases(t, Difference, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,
