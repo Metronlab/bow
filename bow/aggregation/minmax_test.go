@@ -8,7 +8,7 @@ import (
 )
 
 func TestMin(t *testing.T) {
-	runTestCases(t, Min, []bowTest{
+	runTestCases(t, Min, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,
@@ -44,7 +44,7 @@ func TestMin(t *testing.T) {
 }
 
 func TestMax(t *testing.T) {
-	runTestCases(t, Max, []bowTest{
+	runTestCases(t, Max, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,

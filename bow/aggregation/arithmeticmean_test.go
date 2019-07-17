@@ -8,7 +8,7 @@ import (
 )
 
 func TestArithmeticMean(t *testing.T) {
-	runTestCases(t, ArithmeticMean, []bowTest{
+	runTestCases(t, ArithmeticMean, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,

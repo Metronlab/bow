@@ -8,7 +8,7 @@ import (
 )
 
 func TestCount(t *testing.T) {
-	runTestCases(t, Count, []bowTest{
+	runTestCases(t, Count, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,
