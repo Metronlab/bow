@@ -228,14 +228,14 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 		if err != nil {
 			return nil, bow.Unknown, err
 		}
-		if val == nil {
-			continue
-		}
 		for _, transform := range aggr.Transforms() {
 			val, err = transform(val)
 			if err != nil {
 				return nil, bow.Unknown, err
 			}
+		}
+		if val == nil {
+			continue
 		}
 
 		buf.SetOrDrop(winIndex, val)

@@ -48,6 +48,9 @@ func TestIntegralStep_scaled(t *testing.T) {
 	factor := 0.1
 	transforms := []transform.Transform{
 		func(x interface{}) (interface{}, error) {
+			if x == nil {
+				return nil, nil
+			}
 			return x.(float64) * factor, nil
 		},
 	}
