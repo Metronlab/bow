@@ -52,7 +52,6 @@ type Bow interface {
 	InnerJoin(b2 Bow) Bow
 
 	Equal(Bow) bool
-	StrictEqual(Bow) bool
 	// todo: design and rethink:
 	// Merge(bows ...Bow) (Bow, error)
 
@@ -463,17 +462,6 @@ func (b *bow) Equal(B2 Bow) bool {
 		}
 	}
 	return true
-}
-
-// StrictEqual compares bows also with a row count including invalid rows.
-func (b *bow) StrictEqual(B2 Bow) bool {
-	b2, ok := B2.(*bow)
-	if !ok {
-		panic("bow: cannot StrictEqual on non bow object")
-	}
-
-	return b.Equal(B2) &&
-		b.NumRows() == b2.NumRows()
 }
 
 func (b *bow) SetMarshalJSONRowBased(rowOriented bool) {
