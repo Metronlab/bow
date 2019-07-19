@@ -350,14 +350,14 @@ func TestBow_DropNil(t *testing.T) {
 			{},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.StrictEqual(expected),
+		assert.True(t, compacted.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, compacted))
 	})
 
 	t.Run("unchanged without nil", func(t *testing.T) {
 		compacted, err := filledBow.DropNil()
 		assert.Nil(t, err)
-		assert.True(t, compacted.StrictEqual(filledBow),
+		assert.True(t, compacted.Equal(filledBow),
 			fmt.Sprintf("want %v\ngot %v", filledBow, compacted))
 	})
 
@@ -366,7 +366,7 @@ func TestBow_DropNil(t *testing.T) {
 		assert.Nil(t, err)
 		compactedAll, err := holedBow.DropNil("b", "c", "a")
 		assert.Nil(t, err)
-		assert.True(t, compactedDefault.StrictEqual(compactedAll),
+		assert.True(t, compactedDefault.Equal(compactedAll),
 			fmt.Sprintf("default %v\nall %v", compactedDefault, compactedAll))
 	})
 
@@ -378,7 +378,7 @@ func TestBow_DropNil(t *testing.T) {
 			{333},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.StrictEqual(expected),
+		assert.True(t, compacted.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, compacted))
 	})
 
@@ -390,7 +390,7 @@ func TestBow_DropNil(t *testing.T) {
 			{111, 333, nil},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.StrictEqual(expected),
+		assert.True(t, compacted.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, compacted))
 	})
 
@@ -403,7 +403,7 @@ func TestBow_DropNil(t *testing.T) {
 			{1, 2},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.StrictEqual(expected),
+		assert.True(t, compacted.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, compacted))
 	})
 }
