@@ -73,7 +73,6 @@ type Bow interface {
 
 	NumRows() int
 	NumCols() int
-	NumSchemaCols() int
 }
 
 type bow struct {
@@ -189,7 +188,7 @@ func (b *bow) NewEmpty() Bow {
 }
 
 func (b *bow) NewValues(columns [][]interface{}) (Bow, error) {
-	if len(columns) != b.NumSchemaCols() {
+	if len(columns) != b.NumCols() {
 		return nil, errors.New("bow: mismatch between schema and data")
 	}
 	seriess := make([]Series, len(columns))
@@ -575,10 +574,4 @@ func (b *bow) NumCols() int {
 		return 0
 	}
 	return int(b.Record.NumCols())
-}
-
-// NumSchemaCols counts columns based on schema fields,
-// independently of data written.
-func (b *bow) NumSchemaCols() int {
-	return len(b.Schema().Fields())
 }

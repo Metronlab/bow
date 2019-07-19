@@ -257,6 +257,15 @@ func TestBow_AppendBows(t *testing.T) {
 			"want:\n%v\nhave:\n%v", b, appended))
 	})
 
+	t.Run("first empty bow", func(t *testing.T) {
+		b1, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{}})
+		b2, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{1}})
+		appended, err := AppendBows(b1, b2)
+		assert.NoError(t, err)
+		assert.True(t, appended.Equal(b2), fmt.Sprintf(
+			"want:\n%v\nhave:\n%v", b2, appended))
+	})
+
 	t.Run("several empty bows", func(t *testing.T) {
 		b, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{}})
 		appended, err := AppendBows(b, b)
