@@ -122,7 +122,7 @@ func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolat
 			return nil, err
 		}
 
-		seriess, err := it2.fillWindowSeriess(interpolations, w, w.Start)
+		seriess, err := it2.fillWindowSeriess(interpolations, w)
 		if err != nil {
 			return nil, err
 		}
@@ -136,7 +136,7 @@ func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolat
 	return bows, nil
 }
 
-func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInterpolation, w *bow.Window, neededPos int64) ([]bow.Series, error) {
+func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInterpolation, w *bow.Window) ([]bow.Series, error) {
 	seriess := make([]bow.Series, len(interpolations))
 
 	var first int64 = -1
@@ -164,7 +164,7 @@ func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInte
 
 		rowIndex := 0
 		if startIsMissing {
-			start, err := interp.fn(interp.inputCol, neededPos, *w, it.bow)
+			start, err := interp.fn(interp.inputCol, w.Start, *w, it.bow)
 			if err != nil {
 				return nil, err
 			}
@@ -172,7 +172,17 @@ func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInte
 			rowIndex++
 		}
 		for exRowIndex := 0; exRowIndex < w.Bow.NumRows(); exRowIndex++ {
-			buf.SetOrDrop(exRowIndex+rowIndex, w.Bow.GetValue(interp.inputCol, exRowIndex))
+			v := w.Bow.GetValue(interp.inputCol, exRowIndex)
+			if v == nil {
+				pos, ok := w.Bow.GetInt64(it.column, exRowIndex)
+				if ok {
+					v, err = interp.fn(interp.inputCol, pos, *w, it.bow)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+			buf.SetOrDrop(exRowIndex+rowIndex, v)
 		}
 
 		seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
