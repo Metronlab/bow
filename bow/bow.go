@@ -155,27 +155,23 @@ func AppendBows(bows ...Bow) (Bow, error) {
 
 	seriess := make([]Series, refBow.NumCols())
 	bufs := make([]Buffer, refBow.NumCols())
-	for ci := 0; ci < refBow.NumCols(); ci++ {
-		typ := refBow.GetType(ci)
-		bufs[ci] = NewBuffer(numRows, typ, true)
-	}
 
 	for ci := 0; ci < refBow.NumCols(); ci++ {
 		var rowOffset int
+		typ := refBow.GetType(ci)
+		name, err := refBow.GetName(ci)
+		if err != nil {
+			return nil, err
+		}
+
+		bufs[ci] = NewBuffer(numRows, typ, true)
 		for _, b := range bows {
 			for ri := 0; ri < b.NumRows(); ri++ {
 				bufs[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
 			}
 			rowOffset += b.NumRows()
 		}
-	}
 
-	for ci := 0; ci < refBow.NumCols(); ci++ {
-		typ := refBow.GetType(ci)
-		name, err := refBow.GetName(ci)
-		if err != nil {
-			return nil, err
-		}
 		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
 	}
 
