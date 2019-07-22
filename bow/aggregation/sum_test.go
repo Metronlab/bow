@@ -8,7 +8,7 @@ import (
 )
 
 func TestSum(t *testing.T) {
-	runTestCases(t, Sum, []bowTest{
+	runTestCases(t, Sum, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,

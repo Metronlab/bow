@@ -2,10 +2,12 @@ package aggregation
 
 import (
 	"fmt"
+	"testing"
+
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow/transform"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var (
@@ -41,7 +43,9 @@ type bowTest struct {
 	ExpectedBow bow.Bow
 }
 
-func runTestCases(t *testing.T, aggregationFunc func(col string) rolling.ColumnAggregation, testCases []bowTest) {
+func runTestCases(t *testing.T,
+	aggrConstruct rolling.ColumnAggregationConstruct, aggrTransforms []transform.Transform,
+	testCases []bowTest) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			r, err := rolling.IntervalRolling(test.TestedBow, tc, 10, rolling.Options{})
@@ -49,7 +53,7 @@ func runTestCases(t *testing.T, aggregationFunc func(col string) rolling.ColumnA
 			aggregated, err := r.
 				Aggregate(
 					WindowStart(tc),
-					aggregationFunc(vc)).
+					aggrConstruct(vc).Transform(aggrTransforms...)).
 				Bow()
 			assert.NoError(t, err)
 			assert.NotNil(t, aggregated)

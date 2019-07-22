@@ -1,14 +1,15 @@
 package aggregation
 
 import (
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 	"testing"
+
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWeightedAverageStep(t *testing.T) {
-	runTestCases(t, WeightedAverageStep, []bowTest{
+	runTestCases(t, WeightedAverageStep, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,
@@ -44,7 +45,7 @@ func TestWeightedAverageStep(t *testing.T) {
 }
 
 func TestWeightedAverageLinear(t *testing.T) {
-	runTestCases(t, WeightedAverageLinear, []bowTest{
+	runTestCases(t, WeightedAverageLinear, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,
