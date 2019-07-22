@@ -22,15 +22,15 @@ func TestStepPrevious(t *testing.T) {
 		})
 		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
 		filled, err := r.
-			Fill(IntervalPosition(timeCol), StepPrevious(valueCol)).
+			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 12, 13},
 			{1.0, 1.0, 1.3},
 		})
 		assert.Nil(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("expected %s\nactual %s",
-			expected.String(), filled.String()))
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
 	t.Run("with offset", func(t *testing.T) {
@@ -38,17 +38,17 @@ func TestStepPrevious(t *testing.T) {
 			{10, 13},
 			{1.0, 1.3},
 		})
-		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{Offset: 1.})
+		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{Offset: 1})
 		filled, err := r.
-			Fill(IntervalPosition(timeCol), StepPrevious(valueCol)).
+			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{9, 10, 11, 13},
 			{nil, 1.0, 1.0, 1.3},
 		})
 		assert.Nil(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("expected %s\nactual %s",
-			expected.String(), filled.String()))
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
 	t.Run("with nils", func(t *testing.T) {
@@ -58,14 +58,14 @@ func TestStepPrevious(t *testing.T) {
 		})
 		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
 		filled, err := r.
-			Fill(IntervalPosition(timeCol), StepPrevious(valueCol)).
+			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 11, 12, 13, 14, 15},
-			{1.0, 1.0, 1.0, 1.0, 1.0, 1.5},
+			{1.0, nil, 1.0, nil, 1.0, 1.5},
 		})
 		assert.Nil(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("expected %s\nactual %s",
-			expected.String(), filled.String()))
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 }
