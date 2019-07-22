@@ -31,7 +31,7 @@ var (
 )
 
 func TestMode(t *testing.T) {
-	runTestCases(t, Mode, []bowTest{
+	runTestCases(t, Mode, nil, []bowTest{
 		{
 			Name:      "empty",
 			TestedBow: empty,
