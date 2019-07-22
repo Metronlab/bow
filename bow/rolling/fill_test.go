@@ -44,6 +44,21 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		assert.EqualError(t, err, fmt.Sprintf("fill: must keep interval column '%s'", timeCol))
 	})
 
+	t.Run("empty bow", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+			{},
+			{},
+		})
+		r, _ := IntervalRolling(b, timeCol, interval, Options{})
+
+		filled, err := r.
+			Fill(timeInterp, valueInterp).
+			Bow()
+		assert.Nil(t, err)
+
+		assert.True(t, filled.Equal(b))
+	})
+
 	t.Run("no options", func(t *testing.T) {
 		r, _ := IntervalRolling(b, timeCol, interval, Options{})
 

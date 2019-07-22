@@ -239,21 +239,68 @@ func TestBow_Empty(t *testing.T) {
 	}
 }
 
-func TestBow_Append(t *testing.T) {
-	colNames := []string{"time", "value"}
+func TestBow_AppendBows(t *testing.T) {
+	colNames := []string{"a", "b"}
 	types := []Type{Int64, Float64}
-	b1, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{1, 2}, {.1, .2}})
-	b2, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{3, 4}, {.3, .4}})
-	b3, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{5, 6}, {.5, .6}})
 
-	expected, err := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{
-		{1, 2, 3, 4, 5, 6}, {.1, .2, .3, .4, .5, .6}})
-	assert.NoError(t, err)
-	actual, err := AppendBows(b1, b2, b3)
-	assert.NoError(t, err)
-	assert.True(t, actual.Equal(expected), fmt.Sprintf(
-		"want:\n%v\nhave:\n%v", expected, actual))
-	// todo: corner cases
+	t.Run("no bow", func(t *testing.T) {
+		appended, err := AppendBows()
+		assert.Nil(t, err)
+		assert.Nil(t, appended)
+	})
+
+	t.Run("one empty bow", func(t *testing.T) {
+		b, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{}})
+		appended, err := AppendBows(b)
+		assert.NoError(t, err)
+		assert.True(t, appended.Equal(b), fmt.Sprintf(
+			"want:\n%v\nhave:\n%v", b, appended))
+	})
+
+	t.Run("first empty bow", func(t *testing.T) {
+		b1, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{}})
+		b2, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{1}})
+		appended, err := AppendBows(b1, b2)
+		assert.NoError(t, err)
+		assert.True(t, appended.Equal(b2), fmt.Sprintf(
+			"want:\n%v\nhave:\n%v", b2, appended))
+	})
+
+	t.Run("several empty bows", func(t *testing.T) {
+		b, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{}})
+		appended, err := AppendBows(b, b)
+		assert.NoError(t, err)
+		assert.True(t, appended.Equal(b), fmt.Sprintf(
+			"want:\n%v\nhave:\n%v", b, appended))
+	})
+
+	t.Run("schema type mismatch", func(t *testing.T) {
+		b1, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{1}})
+		b2, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Float64}, [][]interface{}{{.2}})
+		appended, err := AppendBows(b1, b2)
+		assert.EqualError(t, err, "schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - a: type=float64")
+		assert.Nil(t, appended)
+	})
+
+	t.Run("schema name mismatch", func(t *testing.T) {
+		b1, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{1}})
+		b2, _ := NewBowFromColumnBasedInterfaces([]string{"b"}, []Type{Int64}, [][]interface{}{{2}})
+		appended, err := AppendBows(b1, b2)
+		assert.EqualError(t, err, "schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - b: type=int64")
+		assert.Nil(t, appended)
+	})
+
+	t.Run("3 bows of 2 cols", func(t *testing.T) {
+		b1, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{1, 2, 3}, {.1, .2, .3}})
+		b2, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{4, 5}, {.4, .5}})
+		b3, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{{6}, {.6}})
+		appended, err := AppendBows(b1, b2, b3)
+		expected, _ := NewBowFromColumnBasedInterfaces(colNames, types, [][]interface{}{
+			{1, 2, 3, 4, 5, 6}, {.1, .2, .3, .4, .5, .6}})
+		assert.NoError(t, err)
+		assert.True(t, appended.Equal(expected), fmt.Sprintf(
+			"want:\n%v\nhave:\n%v", expected, appended))
+	})
 }
 
 func TestBow_NewSlice(t *testing.T) {
@@ -280,4 +327,83 @@ func TestBow_NewSlice(t *testing.T) {
 	assert.NoError(t, err)
 	slice = slice.NewSlice(1, 1)
 	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
+}
+
+func TestBow_DropNil(t *testing.T) {
+	filledBow, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+		{100, 200, 300, 400},
+		{110, 220, 330, 440},
+		{111, 222, 333, 444},
+	})
+	holedBow, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+		{nil, 200, 300, 400},
+		{110, nil, 330, 440},
+		{111, nil, 333, nil},
+	})
+
+	t.Run("empty bow", func(t *testing.T) {
+		b, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{
+			{},
+		})
+		compacted, err := b.DropNil()
+		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{
+			{},
+		})
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(expected),
+			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+	})
+
+	t.Run("unchanged without nil", func(t *testing.T) {
+		compacted, err := filledBow.DropNil()
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(filledBow),
+			fmt.Sprintf("want %v\ngot %v", filledBow, compacted))
+	})
+
+	t.Run("drop default", func(t *testing.T) {
+		compactedDefault, err := holedBow.DropNil()
+		assert.Nil(t, err)
+		compactedAll, err := holedBow.DropNil("b", "c", "a")
+		assert.Nil(t, err)
+		assert.True(t, compactedDefault.Equal(compactedAll),
+			fmt.Sprintf("default %v\nall %v", compactedDefault, compactedAll))
+	})
+
+	t.Run("drop on all columns", func(t *testing.T) {
+		compacted, err := holedBow.DropNil()
+		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+			{300},
+			{330},
+			{333},
+		})
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(expected),
+			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+	})
+
+	t.Run("drop on one column", func(t *testing.T) {
+		compacted, err := holedBow.DropNil("b")
+		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+			{nil, 300, 400},
+			{110, 330, 440},
+			{111, 333, nil},
+		})
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(expected),
+			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+	})
+
+	t.Run("drop consecutively at start/middle/end", func(t *testing.T) {
+		b, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{
+			{nil, nil, 1, nil, nil, 2, nil, nil},
+		})
+		compacted, err := b.DropNil()
+		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{
+			{1, 2},
+		})
+		assert.Nil(t, err)
+		assert.True(t, compacted.Equal(expected),
+			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+	})
 }

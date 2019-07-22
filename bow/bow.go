@@ -62,6 +62,7 @@ type Bow interface {
 	NewSlice(i, j int) Bow
 	NewValues(columns [][]interface{}) (bobow Bow, err error)
 	NewEmpty() Bow
+	DropNil(nilCols ...string) (Bow, error)
 
 	// Exposed from Record:
 	Release()
@@ -71,7 +72,6 @@ type Bow interface {
 
 	NumRows() int
 	NumCols() int
-	NumSchemaCols() int
 }
 
 type bow struct {
@@ -142,25 +142,40 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		return bows[0], nil
 	}
 
-	// todo: compare schemas
 	refBow := bows[0]
+	refSchema := refBow.Schema()
 	var numRows int
 	for _, b := range bows {
+		schema := b.Schema()
+		if !schema.Equal(refSchema) {
+			return nil, fmt.Errorf("schema mismatch: got both\n%v\nand\n%v", refSchema, schema)
+		}
 		numRows += b.NumRows()
 	}
 
-	cols := make([][]interface{}, refBow.NumCols())
-	for ci := range cols {
-		cols[ci] = make([]interface{}, numRows)
-		var offset int
+	seriess := make([]Series, refBow.NumCols())
+	bufs := make([]Buffer, refBow.NumCols())
+
+	for ci := 0; ci < refBow.NumCols(); ci++ {
+		var rowOffset int
+		typ := refBow.GetType(ci)
+		name, err := refBow.GetName(ci)
+		if err != nil {
+			return nil, err
+		}
+
+		bufs[ci] = NewBuffer(numRows, typ, true)
 		for _, b := range bows {
 			for ri := 0; ri < b.NumRows(); ri++ {
-				cols[ci][ri+offset] = b.GetValue(ci, ri)
+				bufs[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
 			}
-			offset += b.NumRows()
+			rowOffset += b.NumRows()
 		}
+
+		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
 	}
-	return refBow.NewValues(cols)
+
+	return NewBow(seriess...)
 }
 
 func (b *bow) NewEmpty() Bow {
@@ -168,7 +183,7 @@ func (b *bow) NewEmpty() Bow {
 }
 
 func (b *bow) NewValues(columns [][]interface{}) (Bow, error) {
-	if len(columns) != b.NumSchemaCols() {
+	if len(columns) != b.NumCols() {
 		return nil, errors.New("bow: mismatch between schema and data")
 	}
 	seriess := make([]Series, len(columns))
@@ -185,6 +200,66 @@ func (b *bow) NewValues(columns [][]interface{}) (Bow, error) {
 		}
 	}
 	return NewBow(seriess...)
+}
+
+// DropNil drops any row that contains a nil for any of `nilCols`.
+// `nilCols` defaults to all columns.
+func (b *bow) DropNil(nilCols ...string) (Bow, error) {
+	// default = all columns
+	if len(nilCols) == 0 {
+		for _, field := range b.Schema().Fields() {
+			nilCols = append(nilCols, field.Name)
+		}
+	} else {
+		nilCols = dedupStrings(nilCols)
+	}
+
+	nilColIndexes := make([]int, len(nilCols))
+	for i := 0; i < len(nilCols); i++ {
+		var err error
+		nilColIndexes[i], err = b.GetIndex(nilCols[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var dropped []int
+	for ri := 0; ri < b.NumRows(); ri++ {
+		for _, ci := range nilColIndexes {
+			if b.GetValue(ci, ri) == nil {
+				dropped = append(dropped, ri)
+				break
+			}
+		}
+	}
+
+	if len(dropped) == 0 {
+		return b, nil
+	}
+
+	slices := make([]Bow, len(dropped)+1)
+	var curr int
+	for i, di := range dropped {
+		slices[i] = b.NewSlice(curr, di)
+		curr = di + 1
+	}
+	slices[len(dropped)] = b.NewSlice(curr, b.NumRows())
+
+	return AppendBows(slices...)
+}
+
+func dedupStrings(s []string) []string {
+	seen := make(map[string]struct{}, len(s))
+	writeIndex := 0
+	for _, v := range s {
+		if _, ok := seen[v]; ok {
+			continue
+		}
+		seen[v] = struct{}{}
+		s[writeIndex] = v
+		writeIndex++
+	}
+	return s[:writeIndex]
 }
 
 func (b *bow) String() string {
@@ -483,10 +558,4 @@ func (b *bow) NumCols() int {
 		return 0
 	}
 	return int(b.Record.NumCols())
-}
-
-// NumSchemaCols counts columns based on schema fields,
-// independently of data written.
-func (b *bow) NumSchemaCols() int {
-	return len(b.Schema().Fields())
 }
