@@ -47,6 +47,9 @@ func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) R
 	if err != nil {
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
+	if b == nil {
+		b = it.bow.NewEmpty()
+	}
 
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, it2.interval, it2.options)
 	if err != nil {
