@@ -7,7 +7,8 @@ import (
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 )
 
-type ColumnInterpolationFunc func(inputCol int, neededPos int64, window bow.Window, fullBow bow.Bow) (interface{}, error)
+// ColumnInterpolationFunc provides a value at the start of `window`.
+type ColumnInterpolationFunc func(inputCol int, window bow.Window, fullBow bow.Bow) (interface{}, error)
 
 func NewColumnInterpolation(inputName string, inputTypes []bow.Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
@@ -25,6 +26,7 @@ type ColumnInterpolation struct {
 	inputCol int
 }
 
+// Fill each window by interpolating its start if missing
 func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) Rolling {
 	const logPrefix = "fill: "
 
@@ -38,12 +40,7 @@ func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) R
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
 
-	bows, err := it2.fillWindows(interpolations)
-	if err != nil {
-		return it2.setError(errors.New(logPrefix + err.Error()))
-	}
-
-	b, err := bow.AppendBows(bows...)
+	b, err := it2.fillWindows(interpolations)
 	if err != nil {
 		return it2.setError(errors.New(logPrefix + err.Error()))
 	}
@@ -111,7 +108,7 @@ func (it *intervalRollingIterator) validateInterpolation(interp *ColumnInterpola
 	return readIndex == it.column, nil
 }
 
-func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolation) ([]bow.Bow, error) {
+func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolation) (bow.Bow, error) {
 	it2 := *it
 
 	bows := make([]bow.Bow, it2.numWindows)
@@ -122,33 +119,37 @@ func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolat
 			return nil, err
 		}
 
-		seriess, err := it2.fillWindowSeriess(interpolations, w, w.Start)
-		if err != nil {
-			return nil, err
-		}
-
-		bows[winIndex], err = bow.NewBow(seriess...)
+		bows[winIndex], err = it2.fillWindow(interpolations, winIndex, w)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return bows, nil
+	return bow.AppendBows(bows...)
 }
 
-func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInterpolation, w *bow.Window, neededPos int64) ([]bow.Series, error) {
-	seriess := make([]bow.Series, len(interpolations))
-
+func (it *intervalRollingIterator) fillWindow(interpolations []ColumnInterpolation, wIndex int, w *bow.Window) (bow.Bow, error) {
 	var first int64 = -1
 	if w.Bow.NumRows() > 0 {
-		value, valid := w.Bow.GetInt64(it.column, 0)
-		if valid {
-			first = value
+		value, i := w.Bow.GetNextFloat64(it.column, 0)
+		if i > -1 {
+			first = int64(value)
 		}
 	}
 
-	startIsMissing := first != w.Start
+	// has start: call interpolation anyway for those stateful
+	if first == w.Start {
+		for _, interp := range interpolations {
+			_, err := interp.fn(interp.inputCol, *w, it.bow)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return w.Bow, nil
+	}
 
+	// missing start
+	seriess := make([]bow.Series, len(interpolations))
 	for writeColIndex, interp := range interpolations {
 		typ := w.Bow.GetType(interp.inputCol)
 		name, err := w.Bow.GetName(interp.inputCol)
@@ -156,27 +157,21 @@ func (it *intervalRollingIterator) fillWindowSeriess(interpolations []ColumnInte
 			return nil, err
 		}
 
-		bufSize := w.Bow.NumRows()
-		if startIsMissing {
-			bufSize++
+		start, err := interp.fn(interp.inputCol, *w, it.bow)
+		if err != nil {
+			return nil, err
 		}
-		buf := bow.NewBuffer(bufSize, typ, true)
 
-		rowIndex := 0
-		if startIsMissing {
-			start, err := interp.fn(interp.inputCol, neededPos, *w, it.bow)
-			if err != nil {
-				return nil, err
-			}
-			buf.SetOrDrop(rowIndex, start)
-			rowIndex++
-		}
-		for exRowIndex := 0; exRowIndex < w.Bow.NumRows(); exRowIndex++ {
-			buf.SetOrDrop(exRowIndex+rowIndex, w.Bow.GetValue(interp.inputCol, exRowIndex))
-		}
+		buf := bow.NewBuffer(1, typ, true)
+		buf.SetOrDrop(0, start)
 
 		seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 	}
 
-	return seriess, nil
+	startBow, err := bow.NewBow(seriess...)
+	if err != nil {
+		return nil, err
+	}
+
+	return bow.AppendBows(startBow, w.Bow)
 }
