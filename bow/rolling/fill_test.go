@@ -9,25 +9,23 @@ import (
 )
 
 func TestIntervalRolling_Fill(t *testing.T) {
-	var interval int64 = 2
-	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
-		{10, 13},
-		{1.0, 1.3},
-	})
-
 	timeInterp := NewColumnInterpolation(timeCol, []bow.Type{bow.Int64},
-		func(colIndex int, neededPos int64, w bow.Window, full bow.Bow) (interface{}, error) {
-			return neededPos, nil
+		func(colIndex int, w bow.Window, full bow.Bow) (interface{}, error) {
+			return w.Start, nil
 		})
 	valueInterp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
-		func(colIndex int, neededPos int64, w bow.Window, full bow.Bow) (interface{}, error) {
+		func(colIndex int, w bow.Window, full bow.Bow) (interface{}, error) {
 			return 9.9, nil
 		})
 
 	t.Run("invalid input type", func(t *testing.T) {
-		r, _ := IntervalRolling(b, timeCol, interval, Options{})
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+			{10, 13},
+			{1.0, 1.3},
+		})
+		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 		interp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Bool},
-			func(colIndex int, neededPos int64, w bow.Window, full bow.Bow) (interface{}, error) {
+			func(colIndex int, w bow.Window, full bow.Bow) (interface{}, error) {
 				return true, nil
 			})
 		_, err := r.
@@ -37,7 +35,11 @@ func TestIntervalRolling_Fill(t *testing.T) {
 	})
 
 	t.Run("missing interval column", func(t *testing.T) {
-		r, _ := IntervalRolling(b, timeCol, interval, Options{})
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+			{10, 13},
+			{1.0, 1.3},
+		})
+		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 		_, err := r.
 			Fill(valueInterp).
 			Bow()
@@ -49,18 +51,22 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{},
 			{},
 		})
-		r, _ := IntervalRolling(b, timeCol, interval, Options{})
+		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).
 			Bow()
 		assert.Nil(t, err)
 
-		assert.True(t, filled.Equal(b))
+		assert.True(t, filled.Equal(b), fmt.Sprintf("expected %v\nactual  %v", b, filled))
 	})
 
 	t.Run("no options", func(t *testing.T) {
-		r, _ := IntervalRolling(b, timeCol, interval, Options{})
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+			{10, 13},
+			{1.0, 1.3},
+		})
+		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).
@@ -71,11 +77,15 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{10, 12, 13},
 			{1.0, 9.9, 1.3},
 		})
-		assert.True(t, filled.Equal(expected))
+		assert.True(t, filled.Equal(expected), fmt.Sprintf("expected %v\nactual  %v", expected, filled))
 	})
 
 	t.Run("with offset", func(t *testing.T) {
-		r, _ := IntervalRolling(b, timeCol, interval, Options{Offset: 1})
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+			{10, 13},
+			{1.0, 1.3},
+		})
+		r, _ := IntervalRolling(b, timeCol, 2, Options{Offset: 1})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).
@@ -86,6 +96,6 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{9, 10, 11, 13},
 			{9.9, 1.0, 9.9, 1.3},
 		})
-		assert.True(t, filled.Equal(expected))
+		assert.True(t, filled.Equal(expected), fmt.Sprintf("expected %v\nactual  %v", expected, filled))
 	})
 }

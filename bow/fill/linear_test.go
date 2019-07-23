@@ -1,9 +1,11 @@
 package fill
 
 import (
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"fmt"
 	"log"
 	"testing"
+
+	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
 
 	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +28,7 @@ func TestLinear(t *testing.T) {
 		r, err := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
 		log.Println(err)
 		filled, err := r.
-			Fill(IntervalPosition(timeCol), Linear(valueCol)).
+			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -35,13 +37,14 @@ func TestLinear(t *testing.T) {
 		})
 
 		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String())
+		assert.Equal(t, expected.String(), filled.String(),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
 	t.Run("descendant no options", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
-			Fill(IntervalPosition(timeCol), Linear(valueCol)).
+			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -50,13 +53,14 @@ func TestLinear(t *testing.T) {
 		})
 
 		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String())
+		assert.Equal(t, expected.String(), filled.String(),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
 	t.Run("ascendant with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
-			Fill(IntervalPosition(timeCol), Linear(valueCol)).
+			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -65,13 +69,14 @@ func TestLinear(t *testing.T) {
 		})
 
 		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String())
+		assert.Equal(t, expected.String(), filled.String(),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
 	t.Run("descendant with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
-			Fill(IntervalPosition(timeCol), Linear(valueCol)).
+			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -80,7 +85,8 @@ func TestLinear(t *testing.T) {
 		})
 
 		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String())
+		assert.Equal(t, expected.String(), filled.String(),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
 }
