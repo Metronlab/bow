@@ -15,6 +15,12 @@ func TestFactor(t *testing.T) {
 		assert.Nil(t, res)
 	})
 
+	t.Run("preserve nil", func(t *testing.T) {
+		res, err := transform(nil)
+		assert.Nil(t, err)
+		assert.Nil(t, res)
+	})
+
 	t.Run("preserve int64", func(t *testing.T) {
 		res, err := transform(int64(11))
 		assert.Nil(t, err)
