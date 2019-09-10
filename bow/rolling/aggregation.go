@@ -11,7 +11,7 @@ import (
 type ColumnAggregation interface {
 	InputName() string
 	InputIndex() int
-	MutateIndex(int)
+	MutateInputIndex(int)
 
 	OutputName() string
 	Rename(string) ColumnAggregation
@@ -56,7 +56,7 @@ func (a *columnAggregation) InputName() string {
 	return a.inputName
 }
 
-func (a *columnAggregation) MutateIndex(i int) {
+func (a *columnAggregation) MutateInputIndex(i int) {
 	a.inputIndex = i
 }
 
@@ -158,7 +158,7 @@ func (it *intervalRollingIterator) validateAggr(aggr ColumnAggregation, newIndex
 	if err != nil {
 		return false, err
 	}
-	aggr.MutateIndex(readIndex)
+	aggr.MutateInputIndex(readIndex)
 
 	if aggr.NeedInclusive() {
 		it.options.Inclusive = true
