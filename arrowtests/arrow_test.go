@@ -1,4 +1,4 @@
-package arrow
+package arrowtests
 
 import "github.com/apache/arrow/go/arrow/array"
 

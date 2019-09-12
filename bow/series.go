@@ -39,14 +39,6 @@ func NewSeriesFromInterfaces(name string, typeOf Type, cells []interface{}) (ser
 	return NewSeries(name, typeOf, buf.Value, buf.Valid), nil
 }
 
-func newEmptyRecord(schema *arrow.Schema) array.Record {
-	pool := memory.NewGoAllocator()
-	b := array.NewRecordBuilder(pool, schema)
-	defer b.Release()
-
-	return b.NewRecord()
-}
-
 func newRecordFromSeries(series ...Series) (array.Record, error) {
 	if len(series) == 0 {
 		return nil, nil
@@ -68,7 +60,7 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 		case Bool:
 			field.Type = arrow.FixedWidthTypes.Boolean
 		default:
-			return nil, fmt.Errorf("bow: unknown type")
+			return nil, fmt.Errorf("bow: unhandled type: %s", s.Type)
 		}
 
 		fields = append(fields, field)
@@ -80,19 +72,24 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 	b := array.NewRecordBuilder(pool, schema)
 	defer b.Release()
 
-	if len(series[0].Data.Valid) == 0 {
-		return b.NewRecord(), nil
-	}
-
 	for colIndex, s := range series {
 		switch s.Type {
 		case Float64:
+			if len(s.Data.Value.([]float64)) == 0 {
+				return b.NewRecord(), nil
+			}
 			b.Field(colIndex).(*array.Float64Builder).
 				AppendValues(s.Data.Value.([]float64), s.Data.Valid)
 		case Int64:
+			if len(s.Data.Value.([]int64)) == 0 {
+				return b.NewRecord(), nil
+			}
 			b.Field(colIndex).(*array.Int64Builder).
 				AppendValues(s.Data.Value.([]int64), s.Data.Valid)
 		case Bool:
+			if len(s.Data.Value.([]bool)) == 0 {
+				return b.NewRecord(), nil
+			}
 			b.Field(colIndex).(*array.BooleanBuilder).
 				AppendValues(s.Data.Value.([]bool), s.Data.Valid)
 		}
