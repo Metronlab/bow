@@ -72,12 +72,16 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 		switch aggr.Type() {
 		case bow.Int64, bow.Float64, bow.Bool:
 			typ = aggr.Type()
-		case bow.InputDependent:
-			typ = b.GetType(aggr.InputIndex())
-		case bow.IteratorDependent:
+		case bow.InputDependent, bow.IteratorDependent: // no iterator involved
 			typ = b.GetType(aggr.InputIndex())
 		default:
 			return nil, fmt.Errorf("invalid return type %s", aggr.Type())
+		}
+
+		if b.NumRows() == 0 {
+			buf := bow.NewBuffer(0, typ, true)
+			seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
+			continue
 		}
 
 		buf := bow.NewBuffer(1, typ, true)
