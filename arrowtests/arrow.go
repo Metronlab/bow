@@ -1,4 +1,4 @@
-package arrow
+package arrowtests
 
 import (
 	"errors"
@@ -99,10 +99,4 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	for _, e := range events {
 		fmt.Println("time:", e.Time, ", value:", e.Value, ", quality:", e.quality)
 	}
-}
-
-func merge() {
-	// Seems to be able to join
-	// poc to do
-	//array.NewTableFromRecords()
 }

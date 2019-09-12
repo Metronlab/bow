@@ -1,6 +1,8 @@
 package bow
 
-import "testing"
+import (
+	"testing"
+)
 
 func BenchmarkBow_InnerJoin(b *testing.B) {
 	bow1, err := NewBow(
