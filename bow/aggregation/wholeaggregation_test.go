@@ -17,9 +17,10 @@ func TestBow_Aggregate(t *testing.T) {
 	t.Run("empty bow", func(t *testing.T) {
 		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{{}, {}})
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{valueCol}, []bow.Type{bow.Float64},
-			[][]interface{}{{}})
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{{}, {}})
 		actual, err := Aggregate(b, timeCol,
+			WindowStart(timeCol),
 			ArithmeticMean(valueCol),
 		)
 		require.Nil(t, err)
