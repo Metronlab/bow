@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	modeFloatBow, _ = bow.NewBowFromRowBasedInterfaces(
+func TestMode(t *testing.T) {
+	var modeFloatBow, _ = bow.NewBowFromRowBasedInterfaces(
 		[]string{tc, vc},
 		[]bow.Type{bow.Int64, bow.Float64},
 		[][]interface{}{
@@ -28,9 +28,7 @@ var (
 			{50, nil}, // only nil values to nil
 			{51, nil},
 		})
-)
 
-func TestMode(t *testing.T) {
 	runTestCases(t, Mode, nil, []bowTest{
 		{
 			Name:      "empty",
@@ -45,7 +43,7 @@ func TestMode(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "mode",
+			Name:      "mode float",
 			TestedBow: modeFloatBow,
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
@@ -57,6 +55,44 @@ func TestMode(t *testing.T) {
 						{30, 10.},
 						{40, nil},
 						{50, nil},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse bool",
+			TestedBow: sparseBoolBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{tc, vc},
+					[]bow.Type{bow.Int64, bow.Bool},
+					[][]interface{}{
+						{10, true},
+						{20, nil},
+						{30, nil},
+						{40, false},
+						{50, true},
+						{60, true},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse string",
+			TestedBow: sparseStringBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{tc, vc},
+					[]bow.Type{bow.Int64, bow.String},
+					[][]interface{}{
+						{10, "10."},
+						{20, nil},
+						{30, nil},
+						{40, "10."},
+						{50, "10."},
+						{60, "test"},
 					})
 				assert.NoError(t, err)
 				return b

@@ -52,14 +52,9 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 		}
 		field := arrow.Field{Name: s.Name}
 
-		switch s.Type {
-		case Float64:
-			field.Type = arrow.PrimitiveTypes.Float64
-		case Int64:
-			field.Type = arrow.PrimitiveTypes.Int64
-		case Bool:
-			field.Type = arrow.FixedWidthTypes.Boolean
-		default:
+		var ok bool
+		field.Type, ok = s.Type.arrowDataType()
+		if !ok {
 			return nil, fmt.Errorf("bow: unhandled type: %s", s.Type)
 		}
 
@@ -92,6 +87,12 @@ func newRecordFromSeries(series ...Series) (array.Record, error) {
 			}
 			b.Field(colIndex).(*array.BooleanBuilder).
 				AppendValues(s.Data.Value.([]bool), s.Data.Valid)
+		case String:
+			if len(s.Data.Value.([]string)) == 0 {
+				return b.NewRecord(), nil
+			}
+			b.Field(colIndex).(*array.StringBuilder).
+				AppendValues(s.Data.Value.([]string), s.Data.Valid)
 		}
 	}
 
