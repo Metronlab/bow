@@ -1,0 +1,37 @@
+image: golang:1.12
+
+stages:
+  - test
+  - sonar
+  - bench
+
+before_script:
+  # define and print VERSION
+  - export VERSION="${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}"
+  - export SERVICE_NAME=$CI_PROJECT_NAME
+  - export IMAGE=$SERVICE_NAME:$VERSION
+  - echo $IMAGE
+
+job-spelling:
+  stage: test
+  script:
+    - make install
+    - make check
+  tags:
+    - docker
+
+job-test:
+  stage: test
+  script:
+    - make install
+    - make test
+  tags:
+    - docker
+
+job-benchmark:
+  stage: bench
+  script:
+    - make bench
+  tags:
+    - docker
+
