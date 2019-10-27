@@ -41,29 +41,8 @@ func TestFirst(t *testing.T) {
 			}(),
 		},
 		{
-			Name: "sparse bool",
-			TestedBow: func() bow.Bow {
-				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
-					[]bow.Type{bow.Int64, bow.Bool},
-					[][]interface{}{
-						{10, true}, // partially valid window
-						{11, nil},
-						{20, nil}, // only invalid window
-
-						// empty window
-
-						{40, nil}, // partially valid with start of window invalid
-						{41, true},
-						{50, true}, // valid with two values on start of window
-						{51, false},
-						{61, false}, // valid with two values NOT on start of window
-						{69, true},
-					})
-
-				assert.NoError(t, err)
-				return b
-			}(),
+			Name:      "sparse bool",
+			TestedBow: sparseBoolBow,
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
@@ -72,9 +51,28 @@ func TestFirst(t *testing.T) {
 						{10, true},
 						{20, nil},
 						{30, nil},
-						{40, true},
+						{40, false},
 						{50, true},
-						{60, false},
+						{60, true},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse string",
+			TestedBow: sparseStringBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.String},
+					[][]interface{}{
+						{10, "10."},
+						{20, nil},
+						{30, nil},
+						{40, "10."},
+						{50, "10."},
+						{60, "test"},
 					})
 				assert.NoError(t, err)
 				return b
@@ -98,7 +96,7 @@ func TestLast(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse",
+			Name:      "sparse float",
 			TestedBow: sparseFloatBow,
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
@@ -117,29 +115,8 @@ func TestLast(t *testing.T) {
 			}(),
 		},
 		{
-			Name: "sparse bool",
-			TestedBow: func() bow.Bow {
-				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
-					[]bow.Type{bow.Int64, bow.Bool},
-					[][]interface{}{
-						{10, true}, // partially valid window
-						{11, nil},
-						{20, nil}, // only invalid window
-
-						// empty window
-
-						{40, nil}, // partially valid with start of window invalid
-						{41, true},
-						{50, true}, // valid with two values on start of window
-						{51, false},
-						{61, false}, // valid with two values NOT on start of window
-						{69, true},
-					})
-
-				assert.NoError(t, err)
-				return b
-			}(),
+			Name:      "sparse bool",
+			TestedBow: sparseBoolBow,
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
@@ -148,9 +125,28 @@ func TestLast(t *testing.T) {
 						{10, true},
 						{20, nil},
 						{30, nil},
-						{40, true},
+						{40, false},
 						{50, false},
-						{60, true},
+						{60, false},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse string",
+			TestedBow: sparseStringBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.String},
+					[][]interface{}{
+						{10, "10."},
+						{20, nil},
+						{30, nil},
+						{40, "10."},
+						{50, "20."},
+						{60, "20."},
 					})
 				assert.NoError(t, err)
 				return b

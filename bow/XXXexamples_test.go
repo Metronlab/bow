@@ -18,7 +18,7 @@ func ExampleNewBow() {
 
 	fmt.Print(b)
 	// output:
-	//col1:Int64  col2:Float64  col3:Bool
+	//col1:int64  col2:float64  col3:bool
 	//1           1.1           true
 	//2           <nil>         <nil>
 	//3           3.3           true
@@ -43,7 +43,7 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 	b.Release()
 
 	// output:
-	//time:Int64  value:Int64  valueFromJson:Float64
+	//time:int64  value:int64  valueFromJson:float64
 	//1           1            1.1
 	//<nil>       <nil>        <nil>
 	//3           3            1.3
@@ -76,13 +76,24 @@ func ExampleBow_MarshalJSON() {
 	}
 	fmt.Println(out.String())
 	//output:
-	//	{
-	//	"columnsTypes": {
-	//		"time": "int64",
-	//		"value": "int64",
-	//		"valueFromJson": "float64"
+	//{
+	//	"Schema": {
+	//		"Columns": [
+	//			{
+	//				"Name": "time",
+	//				"Type": "int64"
+	//			},
+	//			{
+	//				"Name": "value",
+	//				"Type": "int64"
+	//			},
+	//			{
+	//				"Name": "valueFromJson",
+	//				"Type": "float64"
+	//			}
+	//		]
 	//	},
-	//	"rows": [
+	//	"Rows": [
 	//		{
 	//			"time": 1,
 	//			"value": 1,

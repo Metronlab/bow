@@ -135,7 +135,7 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 	t.Run("invalid interval type", func(t *testing.T) {
 		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Float64}, [][]interface{}{{0.}})
 		_, err := IntervalRolling(b, timeCol, 1, Options{})
-		assert.EqualError(t, err, "intervalrolling: impossible to roll over type Float64")
+		assert.EqualError(t, err, "intervalrolling: impossible to roll over type float64")
 	})
 
 	t.Run("empty bow gives valid finished iterator", func(t *testing.T) {
