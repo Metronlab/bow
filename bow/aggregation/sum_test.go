@@ -22,7 +22,7 @@ func TestSum(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse",
+			Name:      "sparse float",
 			TestedBow: sparseFloatBow,
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
@@ -35,6 +35,44 @@ func TestSum(t *testing.T) {
 						{40, 10.},
 						{50, 30.},
 						{60, 30.},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse bool",
+			TestedBow: sparseBoolBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Float64},
+					[][]interface{}{
+						{10, 1.},
+						{20, 0.},
+						{30, 0.},
+						{40, 0.},
+						{50, 1.},
+						{60, 1.},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse string",
+			TestedBow: sparseStringBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Float64},
+					[][]interface{}{
+						{10, 10.},
+						{20, 0.},
+						{30, 0.},
+						{40, 10.},
+						{50, 30.},
+						{60, 20.},
 					})
 				assert.NoError(t, err)
 				return b

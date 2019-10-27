@@ -22,7 +22,7 @@ func TestDifference(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse",
+			Name:      "sparse float64",
 			TestedBow: sparseFloatBow,
 			ExpectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
@@ -35,6 +35,44 @@ func TestDifference(t *testing.T) {
 						{40, 0.},
 						{50, 10.},
 						{60, 10.},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse bool",
+			TestedBow: sparseBoolBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Float64},
+					[][]interface{}{
+						{10, 0.},
+						{20, nil},
+						{30, nil},
+						{40, 1.},
+						{50, -1.},
+						{60, -1.},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
+			Name:      "sparse string",
+			TestedBow: sparseStringBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Float64},
+					[][]interface{}{
+						{10, 0.},
+						{20, nil},
+						{30, nil},
+						{40, 0.},
+						{50, 10.},
+						{60, nil},
 					})
 				assert.NoError(t, err)
 				return b

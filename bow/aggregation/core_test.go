@@ -35,6 +35,40 @@ var (
 			{61, 10.}, // valid with two values NOT on start of window
 			{69, 20.},
 		})
+	sparseBoolBow, _ = bow.NewBowFromRowBasedInterfaces(
+		[]string{tc, vc},
+		[]bow.Type{bow.Int64, bow.Bool},
+		[][]interface{}{
+			{10, true}, // partially valid window
+			{11, nil},
+			{20, nil}, // only invalid window
+
+			// empty window
+
+			{40, nil}, // partially valid with start of window invalid
+			{41, false},
+			{50, true}, // valid with two values on start of window
+			{51, false},
+			{61, true}, // valid with two values NOT on start of window
+			{69, false},
+		})
+	sparseStringBow, _ = bow.NewBowFromRowBasedInterfaces(
+		[]string{tc, vc},
+		[]bow.Type{bow.Int64, bow.String},
+		[][]interface{}{
+			{10, "10."}, // partially valid window
+			{11, nil},
+			{20, nil}, // only invalid window
+
+			// empty window
+
+			{40, nil}, // partially valid with start of window invalid
+			{41, "10."},
+			{50, "10."}, // valid with two values on start of window
+			{51, "20."},
+			{61, "test"}, // valid with two values NOT on start of window
+			{69, "20."},
+		})
 )
 
 type bowTest struct {

@@ -31,7 +31,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		_, err := r.
 			Fill(timeInterp, interp).
 			Bow()
-		assert.EqualError(t, err, "fill: interpolation accepts types [Int64 Bool], got type Float64")
+		assert.EqualError(t, err, "fill: interpolation accepts types [int64 bool], got type float64")
 	})
 
 	t.Run("missing interval column", func(t *testing.T) {
