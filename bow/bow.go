@@ -1,15 +1,13 @@
 package bow
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
 	"reflect"
 	"strings"
 	"text/tabwriter"
-
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
 )
 
 //Bow is a wrapper of apache arrow array record.
@@ -188,7 +186,7 @@ func (b *bow) NewValues(columns [][]interface{}) (Bow, error) {
 	}
 	seriess := make([]Series, len(columns))
 	for i, c := range columns {
-		typ := getTypeFromArrowType(b.Schema().Field(i).Type.Name())
+		typ := b.GetType(i)
 		buf, err := NewBufferFromInterfaces(typ, c)
 		if err != nil {
 			return nil, err
@@ -268,7 +266,7 @@ func (b *bow) String() string {
 	}
 	w := new(tabwriter.Writer)
 	writer := new(strings.Builder)
-	// tabs will be replaced by two spaces by formater
+	// tabs will be replaced by two spaces by formatter
 	w.Init(writer, 0, 4, 2, ' ', 0)
 
 	// format any line (header or row)
@@ -407,11 +405,11 @@ func (b *bow) makeColNamesAndTypesOnJoin(
 	colType := make([]Type, len(b.Schema().Fields())+len(rColNotInLIndexes))
 	for i, f := range b.Schema().Fields() {
 		colNames[i] = f.Name
-		colType[i] = getTypeFromArrowType(f.Type.Name())
+		colType[i] = b.GetType(i)
 	}
 	for i, index := range rColNotInLIndexes {
 		colNames[len(b.Schema().Fields())+i] = b2.Schema().Field(index).Name
-		colType[len(b.Schema().Fields())+i] = getTypeFromArrowType(b2.Schema().Field(index).Type.Name())
+		colType[len(b.Schema().Fields())+i] = b2.GetType(index)
 	}
 	return colNames, colType
 }
@@ -458,86 +456,6 @@ func (b *bow) Equal(B2 Bow) bool {
 		}
 	}
 	return true
-}
-
-func (b *bow) SetMarshalJSONRowBased(rowOriented bool) {
-	b.marshalJSONRowBased = rowOriented
-}
-
-func (b *bow) MarshalJSON() ([]byte, error) {
-	if b.marshalJSONRowBased {
-		rowBased := struct {
-			ColumnsTypes map[string]string        `json:"columnsTypes"`
-			Rows         []map[string]interface{} `json:"rows"`
-		}{ColumnsTypes: map[string]string{}}
-		for row := range b.RowMapIter() {
-			if len(row) == 0 {
-				continue
-			}
-			rowBased.Rows = append(rowBased.Rows, row)
-		}
-		for _, col := range b.Schema().Fields() {
-			rowBased.ColumnsTypes[col.Name] = col.Type.Name()
-		}
-		return json.Marshal(rowBased)
-	}
-	panic("bow: column based json marshaller not implemented")
-}
-
-func (b *bow) UnmarshalJSON(data []byte) error {
-	jsonBow := struct {
-		// Columns specifics
-		Columns map[string]interface{} `json:"columns"`
-
-		// Rows specifics
-		ColumnsTypes map[string]string        `json:"columnsTypes"`
-		Rows         []map[string]interface{} `json:"rows"`
-	}{}
-
-	if err := json.Unmarshal(data, &jsonBow); err != nil {
-		return err
-	}
-	if jsonBow.Columns != nil {
-		panic("bow: column based json unMarshaller not implemented")
-	} else {
-		b.SetMarshalJSONRowBased(true)
-		series := make([]Series, len(jsonBow.ColumnsTypes))
-		i := 0
-		for colName, ArrowTypeName := range jsonBow.ColumnsTypes {
-			t := getTypeFromArrowType(ArrowTypeName)
-			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Rows), func() chan interface{} {
-				cellsChan := make(chan interface{})
-				go func(cellsChan chan interface{}, colName string) {
-					for _, row := range jsonBow.Rows {
-						val, ok := row[colName]
-						if !ok {
-							cellsChan <- nil
-						} else {
-							_, ok = val.(float64)
-							if t == Int64 && ok {
-								val = int64(val.(float64))
-							}
-							cellsChan <- val
-						}
-					}
-					close(cellsChan)
-				}(cellsChan, colName)
-				return cellsChan
-			}())
-			if err != nil {
-				return err
-			}
-			series[i] = NewSeries(colName, t, buf.Value, buf.Valid)
-			i++
-		}
-		tmpBow, err := NewBow(series...)
-		if err != nil {
-			return err
-		}
-		b.Record = tmpBow.(*bow).Record
-	}
-
-	return nil
 }
 
 func (b *bow) NewSlice(i, j int) Bow {

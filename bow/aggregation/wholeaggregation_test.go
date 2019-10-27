@@ -146,3 +146,66 @@ func TestBow_Aggregate(t *testing.T) {
 		require.EqualError(t, err, "aggregate on 'time': no column '-'")
 	})
 }
+
+func TestAggregate(t *testing.T) {
+	t.Run("float", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10, 20, 30},
+				{1., 2., 3.},
+			})
+		actual, err := Aggregate(b, timeCol,
+			WindowStart(timeCol),
+			ArithmeticMean(valueCol),
+		)
+		require.Nil(t, err)
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10},
+				{2.},
+			})
+		require.Nil(t, err)
+		require.True(t, actual.Equal(expected),
+			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
+	})
+	t.Run("bool", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool},
+			[][]interface{}{
+				{10, 20, 30},
+				{true, true, false},
+			})
+		actual, err := Aggregate(b, timeCol,
+			WindowStart(timeCol),
+			ArithmeticMean(valueCol),
+		)
+		require.Nil(t, err)
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10},
+				{2. / 3.},
+			})
+		require.Nil(t, err)
+		require.True(t, actual.Equal(expected),
+			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
+	})
+	t.Run("string", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String},
+			[][]interface{}{
+				{10, 20, 30},
+				{"1.", "2.", "test"},
+			})
+		actual, err := Aggregate(b, timeCol,
+			WindowStart(timeCol),
+			ArithmeticMean(valueCol),
+		)
+		require.Nil(t, err)
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10},
+				{3. / 2.},
+			})
+		require.Nil(t, err)
+		require.True(t, actual.Equal(expected),
+			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
+	})
+}

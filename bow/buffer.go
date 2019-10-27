@@ -36,6 +36,11 @@ func NewBuffer(size int, t Type, nullable bool) Buffer {
 			Value: make([]bool, size),
 			Valid: valid,
 		}
+	case String:
+		return Buffer{
+			Value: make([]string, size),
+			Valid: valid,
+		}
 	default:
 		panic(fmt.Errorf("unknown type for buffer: %v", t))
 	}
@@ -56,7 +61,7 @@ func NewBufferFromInterfaces(t Type, cells []interface{}) (Buffer, error) {
 
 func NewBufferFromInterfacesIter(t Type, length int, cells chan interface{}) (Buffer, error) {
 	valid := make([]bool, length)
-	i := 0
+	var i int
 	switch t {
 	case Unknown:
 		return Buffer{}, errors.New("bow: cannot create buffer of unknown type")
@@ -110,6 +115,16 @@ func NewBufferFromInterfacesIter(t Type, length int, cells chan interface{}) (Bu
 			i++
 		}
 		return Buffer{Value: vv, Valid: valid}, nil
+	case String:
+		vv := make([]string, length)
+		for c := range cells {
+			if i >= length {
+				return Buffer{}, errors.New(ErrBufferOverload)
+			}
+			vv[i], valid[i] = c.(string)
+			i++
+		}
+		return Buffer{Value: vv, Valid: valid}, nil
 	}
 	return Buffer{}, fmt.Errorf("bow: unhandled type number: %v", t)
 }
@@ -122,6 +137,8 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 		v[i], b.Valid[i] = Float64.Convert(value).(float64)
 	case []bool:
 		v[i], b.Valid[i] = Bool.Convert(value).(bool)
+	case []string:
+		v[i], b.Valid[i] = String.Convert(value).(string)
 	default:
 		panic(fmt.Errorf("unsuported buffer type %T", v))
 	}
@@ -136,7 +153,7 @@ func seekType(cells []interface{}) (Type, error) {
 			case int, int64:
 				return Int64, nil
 			case string:
-				return Unknown, errors.New("strings are not handled yet")
+				return String, nil
 			case bool:
 				return Bool, nil
 			}

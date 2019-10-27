@@ -70,7 +70,7 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 		var typ bow.Type
 
 		switch aggr.Type() {
-		case bow.Int64, bow.Float64, bow.Bool:
+		case bow.Int64, bow.Float64, bow.Bool, bow.String:
 			typ = aggr.Type()
 		case bow.InputDependent, bow.IteratorDependent: // no iterator involved
 			typ = b.GetType(aggr.InputIndex())

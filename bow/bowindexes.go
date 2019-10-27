@@ -17,7 +17,7 @@ func (b *bow) newIndex(colName string) {
 
 	colIndex := b.Schema().FieldIndex(colName)
 
-	dType := getTypeFromArrowType(b.Schema().Field(colIndex).Type.Name())
+	dType := b.GetType(colIndex)
 	m := make(map[interface{}][]int)
 	for i := 0; i < b.NumRows(); i++ {
 		val := b.GetValue(colIndex, i)
