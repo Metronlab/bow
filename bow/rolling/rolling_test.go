@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
+	"github.com/Metronlab/bow/bow"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,4 +1,4 @@
-module git.prod.metronlab.io/backend_libraries/go-bow
+module github.com/Metronlab/bow
 
 require (
 	github.com/apache/arrow/go/arrow v0.0.0-20190627144708-7ae6a58d16ea

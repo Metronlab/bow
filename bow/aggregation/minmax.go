@@ -1,8 +1,8 @@
 package aggregation
 
 import (
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow"
-	"git.prod.metronlab.io/backend_libraries/go-bow/bow/rolling"
+	"github.com/Metronlab/bow/bow"
+	"github.com/Metronlab/bow/bow/rolling"
 )
 
 func Min(col string) rolling.ColumnAggregation {
