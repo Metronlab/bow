@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/Metronlab/bow/bow"
-	"github.com/Metronlab/bow/bow/rolling"
+	"github.com/metronlab/bow/bow"
+	"github.com/metronlab/bow/bow/rolling"
 )
 
 // BenchSize of 1e8 triggers out of memory on a 16Go mem computer

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Metronlab/bow/bow"
+	"github.com/metronlab/bow/bow"
 )
 
 // ColumnInterpolationFunc provides a value at the start of `window`.

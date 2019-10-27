@@ -3,8 +3,8 @@ package fill
 import (
 	"testing"
 
-	"github.com/Metronlab/bow/bow"
-	"github.com/Metronlab/bow/bow/rolling"
+	"github.com/metronlab/bow/bow"
+	"github.com/metronlab/bow/bow/rolling"
 	"github.com/stretchr/testify/assert"
 )
 

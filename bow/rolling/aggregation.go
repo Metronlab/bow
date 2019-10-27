@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Metronlab/bow/bow"
-	"github.com/Metronlab/bow/bow/transform"
+	"github.com/metronlab/bow/bow"
+	"github.com/metronlab/bow/bow/transform"
 )
 
 type ColumnAggregation interface {

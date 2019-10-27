@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Metronlab/bow/bow"
+	"github.com/metronlab/bow/bow"
 )
 
 // Rolling allows to process a bow via windows.

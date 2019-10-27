@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Metronlab/bow/bow"
-	"github.com/Metronlab/bow/bow/rolling"
+	"github.com/metronlab/bow/bow"
+	"github.com/metronlab/bow/bow/rolling"
 )
 
 // Aggregate any column with a ColumnAggregation

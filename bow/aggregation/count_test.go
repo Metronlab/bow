@@ -3,7 +3,7 @@ package aggregation
 import (
 	"testing"
 
-	"github.com/Metronlab/bow/bow"
+	"github.com/metronlab/bow/bow"
 	"github.com/stretchr/testify/assert"
 )
 

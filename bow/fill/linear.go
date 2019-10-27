@@ -1,8 +1,8 @@
 package fill
 
 import (
-	"github.com/Metronlab/bow/bow"
-	"github.com/Metronlab/bow/bow/rolling"
+	"github.com/metronlab/bow/bow"
+	"github.com/metronlab/bow/bow/rolling"
 )
 
 func Linear(colName string) rolling.ColumnInterpolation {

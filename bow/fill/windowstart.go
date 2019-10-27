@@ -1,7 +1,7 @@
 package fill
 
-import "github.com/Metronlab/bow/bow"
-import "github.com/Metronlab/bow/bow/rolling"
+import "github.com/metronlab/bow/bow"
+import "github.com/metronlab/bow/bow/rolling"
 
 func WindowStart(colName string) rolling.ColumnInterpolation {
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64},
