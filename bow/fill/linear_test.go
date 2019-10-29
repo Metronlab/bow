@@ -58,33 +58,6 @@ func TestLinear(t *testing.T) {
 			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
-	t.Run("descendant no options", func(t *testing.T) {
-		b, err := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
-			{10, 15},
-			{"test", "test2"},
-		})
-		require.NoError(t, err)
-		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
-		_, err = r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
-		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type utf8")
-	})
-
-	t.Run("descendant no options", func(t *testing.T) {
-		b, err := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
-			{10, 15},
-			{true, false},
-		})
-		require.NoError(t, err)
-		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
-		res, err := r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
-		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type bool",
-			"have res: %v", res)
-	})
-
 	t.Run("ascendant with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
@@ -117,4 +90,30 @@ func TestLinear(t *testing.T) {
 			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
+	t.Run("string error", func(t *testing.T) {
+		b, err := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
+			{10, 15},
+			{"test", "test2"},
+		})
+		require.NoError(t, err)
+		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
+		_, err = r.
+			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Bow()
+		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type utf8")
+	})
+
+	t.Run("bool error", func(t *testing.T) {
+		b, err := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
+			{10, 15},
+			{true, false},
+		})
+		require.NoError(t, err)
+		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
+		res, err := r.
+			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Bow()
+		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type bool",
+			"have res: %v", res)
+	})
 }
