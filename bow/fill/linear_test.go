@@ -2,6 +2,7 @@ package fill
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"log"
 	"testing"
 
@@ -55,6 +56,33 @@ func TestLinear(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, expected.String(), filled.String(),
 			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
+	})
+
+	t.Run("descendant no options", func(t *testing.T) {
+		b, err := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
+			{10, 15},
+			{"test", "test2"},
+		})
+		require.NoError(t, err)
+		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
+		_, err = r.
+			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Bow()
+		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type utf8")
+	})
+
+	t.Run("descendant no options", func(t *testing.T) {
+		b, err := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
+			{10, 15},
+			{true, false},
+		})
+		require.NoError(t, err)
+		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
+		res, err := r.
+			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Bow()
+		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type bool",
+			"have res: %v", res)
 	})
 
 	t.Run("ascendant with offset", func(t *testing.T) {
