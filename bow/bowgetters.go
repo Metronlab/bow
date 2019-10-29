@@ -107,8 +107,8 @@ func (b *bow) GetPreviousValues(col1, col2, row int) (interface{}, interface{}, 
 
 	for row >= 0 && row < b.NumRows() {
 		var v1 interface{}
-		v1, row = b.GetPreviousFloat64(col1, row)
-		v2, row2 := b.GetPreviousFloat64(col2, row)
+		v1, row = b.GetPreviousValue(col1, row)
+		v2, row2 := b.GetPreviousValue(col2, row)
 		if row == row2 {
 			return v1, v2, row
 		}

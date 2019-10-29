@@ -153,16 +153,8 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 func TestIntervalRolling_iterate(t *testing.T) {
 	var interval int64 = 5
 	b := newIntervalRollingTestBow([][]interface{}{
-		{
-			12,
-			15, 16,
-			25, 29,
-		},
-		{
-			1.2,
-			1.5, 1.6,
-			2.5, 2.9,
-		},
+		{12, 15, 16, 25, 29},
+		{1.2, 1.5, 1.6, 2.5, 2.9},
 	})
 
 	t.Run("no option", func(t *testing.T) {
@@ -174,7 +166,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		expected := []testWindow{
 			{0, 10, 15, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 15, 20, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
-			{2, 20, 25, -1, emptyCols},
+			{2, 20, 25, 3, emptyCols},
 			{3, 25, 30, 3, [][]interface{}{{25, 29}, {2.5, 2.9}}},
 		}
 
@@ -239,7 +231,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 
 		expected := []testWindow{
 			{0, 12, 17, 0, [][]interface{}{{12, 15, 16}, {1.2, 1.5, 1.6}}},
-			{1, 17, 22, -1, emptyCols},
+			{1, 17, 22, 3, emptyCols},
 			{2, 22, 27, 3, [][]interface{}{{25}, {2.5}}},
 			{3, 27, 32, 4, [][]interface{}{{29}, {2.9}}},
 		}
@@ -262,7 +254,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		expected := []testWindow{
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
-			{2, 18, 23, -1, emptyCols},
+			{2, 18, 23, 3, emptyCols},
 			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
 			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
 		}
@@ -285,7 +277,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		expected := []testWindow{
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
-			{2, 18, 23, -1, emptyCols},
+			{2, 18, 23, 3, emptyCols},
 			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
 			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
 		}
@@ -308,7 +300,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		expected := []testWindow{
 			{0, 10, 15, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 15, 20, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
-			{2, 20, 25, -1, emptyCols},
+			{2, 20, 25, 3, emptyCols},
 			{3, 25, 30, 3, [][]interface{}{{25, 29}, {2.5, 2.9}}},
 		}
 
@@ -330,7 +322,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		expected := []testWindow{
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
-			{2, 18, 23, -1, emptyCols},
+			{2, 18, 23, 3, emptyCols},
 			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
 			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
 		}
@@ -363,12 +355,7 @@ func checkTestWindow(t *testing.T, iter *intervalRollingIterator, expected testW
 	assert.Equal(t, expected.end, w.End)
 	assert.Equal(t, expected.firstIndex, w.FirstIndex)
 	b := newIntervalRollingTestBow(expected.cols)
-	// fmt.Println("")
-	// fmt.Println("expected", expected.windowIndex, expected.start, expected.end, expected.firstIndex)
-	// fmt.Println("actual  ", wi, w.Start, w.End, w.FirstIndex)
-	// fmt.Println("expected bow", b)
-	// fmt.Println("actual   bow", w.Bow)
-	assert.True(t, w.Bow.Equal(b))
+	assert.True(t, w.Bow.Equal(b), "expect: %v\nhave: %v", b, w.Bow)
 }
 
 func newIntervalRollingTestBow(cols [][]interface{}) bow.Bow {

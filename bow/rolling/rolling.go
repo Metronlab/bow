@@ -157,12 +157,10 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 	start := it.currStart
 	end := it.currStart + it.interval // include last position even if last point is excluded
 
-	firstIndex := -1
-	lastIndex := -1
-
+	firstIndex, lastIndex := it.currIndex, -1
 	var i int
 	var isInclusive bool
-	for i = it.currIndex; i < it.bow.NumRows(); i++ {
+	for i = firstIndex; i < it.bow.NumRows(); i++ {
 		ref, ok := it.bow.GetInt64(it.column, i)
 		if !ok {
 			continue
@@ -181,9 +179,6 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 			isInclusive = true
 		}
 
-		if firstIndex == -1 {
-			firstIndex = i
-		}
 		lastIndex = i
 	}
 
@@ -192,12 +187,13 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 	} else {
 		it.currIndex = i - 1
 	}
+
 	it.currStart = end
 	windowIndex = it.windowIndex
 	it.windowIndex++
 
 	var b bow.Bow
-	if firstIndex == -1 {
+	if lastIndex == -1 {
 		b = it.bow.NewEmpty()
 	} else {
 		b = it.bow.NewSlice(firstIndex, lastIndex+1)

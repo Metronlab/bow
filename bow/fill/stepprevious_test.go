@@ -33,6 +33,42 @@ func TestStepPrevious(t *testing.T) {
 			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
 	})
 
+	t.Run("bool", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
+			{10, 13},
+			{true, false},
+		})
+		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
+		filled, err := r.
+			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
+			Bow()
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
+			{10, 12, 13},
+			{true, true, false},
+		})
+		assert.Nil(t, err)
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
+	})
+
+	t.Run("string", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
+			{10, 13},
+			{"test", "test2"},
+		})
+		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
+		filled, err := r.
+			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
+			Bow()
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
+			{10, 12, 13},
+			{"test", "test", "test2"},
+		})
+		assert.Nil(t, err)
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
+	})
+
 	t.Run("with offset", func(t *testing.T) {
 		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 13},
