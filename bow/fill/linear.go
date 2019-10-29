@@ -6,31 +6,19 @@ import (
 )
 
 func Linear(colName string) rolling.ColumnInterpolation {
-	lastIndex := -1
-
-	updateLastIndex := func(w bow.Window) {
-		if w.FirstIndex != -1 {
-			lastIndex = w.FirstIndex + w.Bow.NumRows() - 1
-		}
-	}
-
-	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool},
+	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64},
 		func(inputCol int, w bow.Window, full bow.Bow) (interface{}, error) {
-			prevPos, prevVal, prevIndex := full.GetPreviousFloat64s(w.IntervalColumnIndex, inputCol, lastIndex)
+			t0, v0, prevIndex := full.GetPreviousFloat64s(w.IntervalColumnIndex, inputCol, w.FirstIndex-1)
 			if prevIndex == -1 {
-				updateLastIndex(w)
 				return nil, nil
 			}
-			nextPos, nextVal, nextIndex := full.GetNextFloat64s(w.IntervalColumnIndex, inputCol, lastIndex+1)
+			t2, v2, nextIndex := full.GetNextFloat64s(w.IntervalColumnIndex, inputCol, w.FirstIndex)
 			if nextIndex == -1 {
-				updateLastIndex(w)
 				return nil, nil
 			}
-			updateLastIndex(w)
 
-			coefficient := (float64(w.Start) - prevPos) / (nextPos - prevPos)
-			val := ((nextVal - prevVal) * coefficient) + prevVal
-			return val, nil
+			coef := (float64(w.Start) - t0) / (t2 - t0)
+			return ((v2 - v0) * coef) + v0, nil
 		},
 	)
 }
