@@ -1,3 +1,31 @@
+0.5.0 [2019-10-27]
+-------------------
+
+#### Bugfixes
+
+- fix previous value getter that where calling next values ones
+
+0.5.0 [2019-10-27]
+-------------------
+
+#### Features
+
+- string storage and aggregation
+
+0.4.0 [2019-09-12]
+-------------------
+
+#### Features
+
+- implement full column aggregations
+
+0.3.0 [2019-07-22]
+-------------------
+
+#### Features
+
+- implement aggregation and interpolations grouped by integers / only works on sorted increasing integer column 
+
 0.2.0 [2019-02-19]
 -------------------
 
