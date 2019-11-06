@@ -44,7 +44,6 @@ type Bow interface {
 	GetPreviousFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
 
 	// Iterators
-
 	RowMapIter() chan map[string]interface{}
 
 	InnerJoin(b2 Bow) Bow
