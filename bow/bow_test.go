@@ -2,9 +2,10 @@ package bow
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestBow_InnerJoin(t *testing.T) {
@@ -151,6 +152,23 @@ func TestBow_AppendBows(t *testing.T) {
 		appended, err := AppendBows()
 		assert.Nil(t, err)
 		assert.Nil(t, appended)
+	})
+
+	t.Run("one nil bow", func(t *testing.T) {
+		appended, err := AppendBows(nil)
+		assert.Nil(t, err)
+		assert.Nil(t, appended)
+	})
+
+	t.Run("middle nil bow", func(t *testing.T) {
+		b1, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{1}})
+		b2, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{{2}})
+		appended, err := AppendBows(b1, b2)
+		assert.Nil(t, err)
+
+		appendedWithNil, err := AppendBows(b1, nil, b2)
+		assert.Nil(t, err)
+		assert.True(t, appendedWithNil.Equal(appended))
 	})
 
 	t.Run("one empty bow", func(t *testing.T) {
