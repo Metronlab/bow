@@ -6,7 +6,7 @@ import (
 
 	"github.com/metronlab/bow/bow"
 	"github.com/metronlab/bow/bow/rolling"
-	"github.com/metronlab/bow/bow/transform"
+	"github.com/metronlab/bow/bow/rolling/aggregation/transform"
 	"github.com/stretchr/testify/assert"
 )
 
