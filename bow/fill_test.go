@@ -25,39 +25,39 @@ func TestBow_FillPrevious(t *testing.T) {
 		b, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{
 			{},
 		})
-		compacted, err := b.FillPrevious()
+		filled, err := b.FillPrevious()
 		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{
 			{},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.Equal(expected),
-			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("want %v\ngot %v", expected, filled))
 	})
 
 	t.Run("unchanged without nil", func(t *testing.T) {
-		compacted, err := filledBow.FillPrevious()
+		filled, err := filledBow.FillPrevious()
 		assert.Nil(t, err)
-		assert.True(t, compacted.Equal(filledBow),
-			fmt.Sprintf("want %v\ngot %v", filledBow, compacted))
+		assert.True(t, filled.Equal(filledBow),
+			fmt.Sprintf("want %v\ngot %v", filledBow, filled))
 	})
 
 	t.Run("compare default fill previous with all columns at random order", func(t *testing.T) {
-		compactedDefault, err := holedBow.FillPrevious()
+		filledDefault, err := holedBow.FillPrevious()
 		assert.Nil(t, err)
-		compactedAll, err := holedBow.FillPrevious("b", "c", "d", "a")
+		filledAll, err := holedBow.FillPrevious("b", "c", "d", "a")
 		assert.Nil(t, err)
-		assert.True(t, compactedDefault.Equal(compactedAll),
-			fmt.Sprintf("default %v\nall %v", compactedDefault, compactedAll))
+		assert.True(t, filledDefault.Equal(filledAll),
+			fmt.Sprintf("default %v\nall %v", filledDefault, filledAll))
 	})
 
 	t.Run("wrong column name", func(t *testing.T) {
-		nilBow, err := holedBow.FillPrevious("b", "c", "x", "a")
-		assert.Nil(t, nilBow)
+		filled, err := holedBow.FillPrevious("b", "c", "x", "a")
+		assert.Nil(t, filled)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("fill previous on all columns", func(t *testing.T) {
-		compacted, err := holedBow.FillPrevious()
+		filled, err := holedBow.FillPrevious()
 		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c", "d"}, []Type{Int64, Int64, Int64, Int64}, [][]interface{}{
 			{nil, 200, 300, 400},
 			{110, 110, 330, 440},
@@ -65,12 +65,12 @@ func TestBow_FillPrevious(t *testing.T) {
 			{113, 113, 113, 113},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.Equal(expected),
-			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("want %v\ngot %v", expected, filled))
 	})
 
 	t.Run("fill previous on one column", func(t *testing.T) {
-		compacted, err := holedBow.FillPrevious("b")
+		filled, err := holedBow.FillPrevious("b")
 		expected, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c", "d"}, []Type{Int64, Int64, Int64, Int64}, [][]interface{}{
 			{nil, 200, 300, 400},
 			{110, 110, 330, 440},
@@ -78,7 +78,7 @@ func TestBow_FillPrevious(t *testing.T) {
 			{113, nil, nil, 113},
 		})
 		assert.Nil(t, err)
-		assert.True(t, compacted.Equal(expected),
-			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("want %v\ngot %v", expected, filled))
 	})
 }
