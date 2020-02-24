@@ -3,7 +3,6 @@ package bow
 import (
 	"fmt"
 	"github.com/apache/arrow/go/arrow"
-
 	"github.com/apache/arrow/go/arrow/array"
 )
 

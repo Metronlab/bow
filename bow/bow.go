@@ -63,7 +63,9 @@ type Bow interface {
 	DropNil(nilCols ...string) (Bow, error)
 
 	// Handling missing data
-	FillPrevious(colNames ...string) (Bow, error)
+	FillPrevious(colNames ...string) (bobow Bow, err error)
+	FillNext(colNames ...string) (bobow Bow, err error)
+	FillLinear(colNames ...string) (bobow Bow, err error)
 
 	// Exposed from Record:
 	Release()
