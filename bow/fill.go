@@ -10,16 +10,17 @@ func (b *bow) FillLinear(colNames ...string) (bobow Bow, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	for colIndex, col := range b.Schema().Fields() {
 		if toFill[colIndex] && b.GetType(colIndex) != Float64 && b.GetType(colIndex) != Int64 {
 			err = fmt.Errorf("linear interpolation type error: column '%s' is of type '%s'", col.Name, b.GetType(colIndex))
 			return nil, err
 		}
 	}
-	filledSeries := make([]Series, b.NumCols())
-	seriesChan := make(chan Series)
+
+	seriesChannel := make(chan Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
-		go func() {
+		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
 			buf := NewBuffer(b.NumRows(), typ, true)
 			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
@@ -43,11 +44,10 @@ func (b *bow) FillLinear(colNames ...string) (bobow Bow, err error) {
 				}
 				buf.SetOrDrop(rowIndex, newValue)
 			}
-			seriesChan <- Series{Name: col.Name, Type: typ, Data: buf}
-		}()
-		filledSeries[colIndex] = <-seriesChan
+			seriesChannel <- Series{Name: colName, Type: typ, Data: buf}
+		}(colIndex, col.Name)
 	}
-	return NewBow(filledSeries...)
+	return newBowFromSeriesChannel(b, seriesChannel)
 }
 
 // FillNext fills any row that contains a nil for any of `nilCols`
@@ -58,20 +58,23 @@ func (b *bow) FillNext(colNames ...string) (bobow Bow, err error) {
 	if err != nil {
 		return nil, err
 	}
-	filledSeries := make([]Series, b.NumCols())
+
+	seriesChannel := make(chan Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
-		typ := b.GetType(colIndex)
-		buf := NewBuffer(b.NumRows(), typ, true)
-		for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-			newValue := b.GetValue(colIndex, rowIndex)
-			if newValue == nil && toFill[colIndex] {
-				newValue, _ = b.GetNextValue(colIndex, rowIndex)
+		go func(colIndex int, colName string) {
+			typ := b.GetType(colIndex)
+			buf := NewBuffer(b.NumRows(), typ, true)
+			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
+				newValue := b.GetValue(colIndex, rowIndex)
+				if newValue == nil && toFill[colIndex] {
+					newValue, _ = b.GetNextValue(colIndex, rowIndex)
+				}
+				buf.SetOrDrop(rowIndex, newValue)
 			}
-			buf.SetOrDrop(rowIndex, newValue)
-		}
-		filledSeries[colIndex] = Series{Name: col.Name, Type: typ, Data: buf}
+			seriesChannel <- Series{Name: colName, Type: typ, Data: buf}
+		}(colIndex, col.Name)
 	}
-	return NewBow(filledSeries...)
+	return newBowFromSeriesChannel(b, seriesChannel)
 }
 
 // FillPrevious fills any row that contains a nil for any of `nilCols`
@@ -82,20 +85,23 @@ func (b *bow) FillPrevious(colNames ...string) (bobow Bow, err error) {
 	if err != nil {
 		return nil, err
 	}
-	filledSeries := make([]Series, b.NumCols())
+
+	seriesChannel := make(chan Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
-		typ := b.GetType(colIndex)
-		buf := NewBuffer(b.NumRows(), typ, true)
-		for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-			newValue := b.GetValue(colIndex, rowIndex)
-			if newValue == nil && toFill[colIndex] {
-				newValue, _ = b.GetPreviousValue(colIndex, rowIndex)
+		go func(colIndex int, colName string) {
+			typ := b.GetType(colIndex)
+			buf := NewBuffer(b.NumRows(), typ, true)
+			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
+				newValue := b.GetValue(colIndex, rowIndex)
+				if newValue == nil && toFill[colIndex] {
+					newValue, _ = b.GetPreviousValue(colIndex, rowIndex)
+				}
+				buf.SetOrDrop(rowIndex, newValue)
 			}
-			buf.SetOrDrop(rowIndex, newValue)
-		}
-		filledSeries[colIndex] = Series{Name: col.Name, Type: typ, Data: buf}
+			seriesChannel <- Series{Name: colName, Type: typ, Data: buf}
+		}(colIndex, col.Name)
 	}
-	return NewBow(filledSeries...)
+	return newBowFromSeriesChannel(b, seriesChannel)
 }
 
 // colsToFill returns a bool slice of size b.NumCols
@@ -119,4 +125,21 @@ func colsToFill(b *bow, colNames []string) ([]bool, error) {
 		}
 	}
 	return toFill, nil
+}
+
+func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (bobow Bow, err error) {
+	seriesCounter := 0
+	filledSeries := make([]Series, b.NumCols())
+	for s := range seriesChannel {
+		for colIndex, col := range b.Schema().Fields() {
+			if s.Name == col.Name {
+				filledSeries[colIndex] = s
+				seriesCounter++
+				if seriesCounter == b.NumCols() {
+					close(seriesChannel)
+				}
+			}
+		}
+	}
+	return NewBow(filledSeries...)
 }
