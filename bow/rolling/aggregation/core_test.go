@@ -2,12 +2,11 @@ package aggregation
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/metronlab/bow/bow"
 	"github.com/metronlab/bow/bow/rolling"
 	"github.com/metronlab/bow/bow/rolling/aggregation/transform"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 var (

@@ -7,7 +7,7 @@ import (
 
 func Sum(col string) rolling.ColumnAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.Float64,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.NumRows() == 0 {
 				return 0., nil
 			}

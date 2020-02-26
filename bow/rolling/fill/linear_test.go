@@ -2,14 +2,11 @@ package fill
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"log"
-	"testing"
-
 	"github.com/metronlab/bow/bow"
-
 	"github.com/metronlab/bow/bow/rolling"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestLinear(t *testing.T) {
@@ -26,8 +23,7 @@ func TestLinear(t *testing.T) {
 	})
 
 	t.Run("ascendant no options", func(t *testing.T) {
-		r, err := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
-		log.Println(err)
+		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()

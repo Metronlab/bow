@@ -1,11 +1,9 @@
 package aggregation
 
 import (
-	"testing"
-
 	"github.com/metronlab/bow/bow"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestWeightedAverageStep(t *testing.T) {

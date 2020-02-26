@@ -2,10 +2,9 @@ package rolling
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/metronlab/bow/bow"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIntervalRolling_Aggregate(t *testing.T) {
@@ -16,15 +15,15 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 	r, _ := IntervalRolling(b, timeCol, 10, Options{})
 
 	timeAggr := NewColumnAggregation(timeCol, false, bow.Int64,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w Window) (interface{}, error) {
 			return w.Start, nil
 		})
 	valueAggr := NewColumnAggregation(valueCol, false, bow.Float64,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w Window) (interface{}, error) {
 			return float64(w.Bow.NumRows()), nil
 		})
 	doubleAggr := NewColumnAggregation(valueCol, false, bow.Float64,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w Window) (interface{}, error) {
 			return float64(w.Bow.NumRows()) * 2, nil
 		})
 
@@ -109,7 +108,51 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 
 	t.Run("invalid column", func(t *testing.T) {
 		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", false, bow.Int64,
-			func(col int, w bow.Window) (interface{}, error) { return nil, nil })).Bow()
+			func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
 		assert.EqualError(t, err, "aggregate: no column '-'")
 	})
+}
+
+func TestWindow_UnsetInclusive(t *testing.T) {
+	inclusiveBow, err := bow.NewBowFromColumnBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
+		[][]interface{}{
+			{1, 2},
+			{1, 2}})
+	assert.NoError(t, err)
+	exclusiveBow, err := bow.NewBowFromColumnBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
+		[][]interface{}{
+			{1},
+			{1}})
+	assert.NoError(t, err)
+
+	inclusiveWindow := Window{
+		Bow:                 inclusiveBow,
+		FirstIndex:          0,
+		IntervalColumnIndex: 0,
+		Start:               0,
+		End:                 2,
+		IsInclusive:         true,
+	}
+
+	exclusiveWindow := inclusiveWindow.UnsetInclusive()
+	assert.True(t, exclusiveWindow.Bow.Equal(exclusiveBow))
+	exclusiveWindow.Bow = nil
+	assert.Equal(t, Window{
+		Bow:                 nil,
+		FirstIndex:          0,
+		IntervalColumnIndex: 0,
+		Start:               0,
+		End:                 2,
+		IsInclusive:         false,
+	}, exclusiveWindow)
+
+	// inclusive window should not be modified
+	assert.Equal(t, Window{
+		Bow:                 inclusiveBow,
+		FirstIndex:          0,
+		IntervalColumnIndex: 0,
+		Start:               0,
+		End:                 2,
+		IsInclusive:         true,
+	}, inclusiveWindow)
 }

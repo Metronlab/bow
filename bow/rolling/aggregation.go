@@ -3,7 +3,6 @@ package rolling
 import (
 	"errors"
 	"fmt"
-
 	"github.com/metronlab/bow/bow"
 	"github.com/metronlab/bow/bow/rolling/aggregation/transform"
 )
@@ -46,7 +45,7 @@ func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow
 }
 
 type ColumnAggregationConstruct func(col string) ColumnAggregation
-type ColumnAggregationFunc func(col int, w bow.Window) (interface{}, error)
+type ColumnAggregationFunc func(col int, w Window) (interface{}, error)
 
 func (a *columnAggregation) InputIndex() int {
 	return a.inputIndex
@@ -242,4 +241,14 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 	}
 
 	return &buf, typ, nil
+}
+
+func (w Window) UnsetInclusive() Window {
+	if !w.IsInclusive {
+		return w
+	}
+	cp := w
+	cp.IsInclusive = false
+	cp.Bow = cp.Bow.NewSlice(0, cp.Bow.NumRows()-1)
+	return cp
 }

@@ -7,7 +7,7 @@ import (
 
 func First(col string) rolling.ColumnAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.InputDependent,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}
@@ -22,7 +22,7 @@ func First(col string) rolling.ColumnAggregation {
 
 func Last(col string) rolling.ColumnAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.InputDependent,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}

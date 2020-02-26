@@ -3,12 +3,11 @@ package rolling
 import (
 	"errors"
 	"fmt"
-
 	"github.com/metronlab/bow/bow"
 )
 
 // ColumnInterpolationFunc provides a value at the start of `window`.
-type ColumnInterpolationFunc func(inputCol int, window bow.Window, fullBow bow.Bow) (interface{}, error)
+type ColumnInterpolationFunc func(inputCol int, window Window, fullBow bow.Bow) (interface{}, error)
 
 func NewColumnInterpolation(inputName string, inputTypes []bow.Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
@@ -128,7 +127,7 @@ func (it *intervalRollingIterator) fillWindows(interpolations []ColumnInterpolat
 	return bow.AppendBows(bows...)
 }
 
-func (it *intervalRollingIterator) fillWindow(interpolations []ColumnInterpolation, wIndex int, w *bow.Window) (bow.Bow, error) {
+func (it *intervalRollingIterator) fillWindow(interpolations []ColumnInterpolation, wIndex int, w *Window) (bow.Bow, error) {
 	var first int64 = -1
 	if w.Bow.NumRows() > 0 {
 		value, i := w.Bow.GetNextFloat64(it.column, 0)

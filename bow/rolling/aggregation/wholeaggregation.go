@@ -3,7 +3,6 @@ package aggregation
 import (
 	"errors"
 	"fmt"
-
 	"github.com/metronlab/bow/bow"
 	"github.com/metronlab/bow/bow/rolling"
 )
@@ -98,7 +97,7 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 		if endIndex == -1 {
 			end = -1
 		}
-		w := bow.Window{
+		w := rolling.Window{
 			Bow:                 b,
 			IntervalColumnIndex: intervalCol,
 			IsInclusive:         true,

@@ -3,9 +3,17 @@ package rolling
 import (
 	"errors"
 	"fmt"
-
 	"github.com/metronlab/bow/bow"
 )
+
+type Window struct {
+	Bow                 bow.Bow
+	FirstIndex          int // index (across all windows) of first row in this window (-1 if none)
+	IntervalColumnIndex int
+	Start               int64
+	End                 int64
+	IsInclusive         bool
+}
 
 // Rolling allows to process a bow via windows.
 // Use `Fill` and/or `Aggregate` to transform windows.
@@ -17,7 +25,7 @@ type Rolling interface {
 
 	NumWindows() (int, error)
 	HasNext() bool
-	Next() (windowIndex int, w *bow.Window, err error)
+	Next() (windowIndex int, w *Window, err error)
 
 	Bow() (bow.Bow, error)
 }
@@ -149,7 +157,7 @@ func (it *intervalRollingIterator) HasNext() bool {
 // This mutates the iterator.
 //
 // todo: concurrent-safe
-func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err error) {
+func (it *intervalRollingIterator) Next() (windowIndex int, w *Window, err error) {
 	if !it.HasNext() {
 		return it.windowIndex, nil, nil
 	}
@@ -198,7 +206,7 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *bow.Window, err e
 	} else {
 		b = it.bow.NewSlice(firstIndex, lastIndex+1)
 	}
-	return windowIndex, &bow.Window{
+	return windowIndex, &Window{
 		FirstIndex:          firstIndex,
 		Bow:                 b,
 		IntervalColumnIndex: it.column,

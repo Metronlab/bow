@@ -1,11 +1,10 @@
 package fill
 
 import (
-	"testing"
-
 	"github.com/metronlab/bow/bow"
 	"github.com/metronlab/bow/bow/rolling"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIntervalPosition(t *testing.T) {

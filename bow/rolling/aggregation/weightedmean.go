@@ -8,7 +8,7 @@ import (
 func WeightedAverageStep(col string) rolling.ColumnAggregation {
 	integralFunc := IntegralStep(col).Func()
 	return rolling.NewColumnAggregation(col, false, bow.Float64,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w rolling.Window) (interface{}, error) {
 			v, err := integralFunc(col, w)
 			if v == nil || err != nil {
 				return v, err
@@ -21,7 +21,7 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 func WeightedAverageLinear(col string) rolling.ColumnAggregation {
 	integralFunc := IntegralTrapezoid(col).Func()
 	return rolling.NewColumnAggregation(col, true, bow.Float64,
-		func(col int, w bow.Window) (interface{}, error) {
+		func(col int, w rolling.Window) (interface{}, error) {
 			v, err := integralFunc(col, w)
 			if v == nil || err != nil {
 				return v, err

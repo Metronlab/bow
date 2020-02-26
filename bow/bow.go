@@ -19,6 +19,7 @@ type Bow interface {
 	String() string
 
 	// Getters
+	// Unused and similar to GetIndex
 	GetColNameIndex(string) int
 
 	GetType(colIndex int) Type

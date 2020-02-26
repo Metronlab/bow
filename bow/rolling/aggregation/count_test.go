@@ -1,10 +1,9 @@
 package aggregation
 
 import (
-	"testing"
-
 	"github.com/metronlab/bow/bow"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestCount(t *testing.T) {
