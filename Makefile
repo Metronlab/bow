@@ -8,16 +8,16 @@ install: ## install dependencies
 		github.com/jstemmer/go-junit-report
 
 test: ## Run unit tests
-	./tools/script/test.sh
+	./scripts/test.sh
 
 fix-fmt: ## use fmt -w
-	./tools/script/fix-fmt.sh
+	./scripts/fix-fmt.sh
 
 check: ## check code syntax
-	./tools/script/code-checks.sh
+	./scripts/code-checks.sh
 
 bench: ## run benchmarks
-	./tools/script/bench.sh
+	./scripts/bench.sh
 
 count: ## count lines and contributions
-	./tools/script/count-code-lines.sh
+	./scripts/count-code-lines.sh
