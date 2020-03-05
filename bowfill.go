@@ -42,26 +42,56 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 				newValue := b.GetValue(colIndex, rowIndex)
 				if newValue == nil && colIndex == toFillIndex {
-					prevCol, prevRow := b.GetPreviousValue(colIndex, rowIndex)
-					nextCol, nextRow := b.GetNextValue(colIndex, rowIndex)
+					prevCol, prevIndex := b.GetPreviousValue(colIndex, rowIndex)
+					nextCol, nextIndex := b.GetNextValue(colIndex, rowIndex)
 					ref := b.GetValue(refIndex, rowIndex)
-					prevRef, _ := b.GetPreviousValue(refIndex, prevRow)
-					nextRef, _ := b.GetNextValue(refIndex, nextRow)
+					prevRef, prevRefIndex := b.GetPreviousValue(refIndex, prevIndex)
+					nextRef, nextRefIndex := b.GetNextValue(refIndex, nextIndex)
 					if prevCol != nil && nextCol != nil && ref != nil && prevRef != nil && nextRef != nil {
 						if typ == Float64 {
-							prevFloat, _ := ToFloat64(prevCol)
-							nextFloat, _ := ToFloat64(nextCol)
-							refFloat, _ := ToFloat64(ref)
-							prevRefFloat, _ := ToFloat64(prevRef)
-							nextRefFloat, _ := ToFloat64(nextRef)
-							newValue = ((refFloat-prevRefFloat)/(nextRefFloat-prevRefFloat))*(nextFloat-prevFloat) + prevFloat
+							prevVal, ok := ToFloat64(prevCol)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevIndex, colName))
+							}
+							nextVal, ok := ToFloat64(nextCol)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextIndex, colName))
+							}
+							refFloat, ok := ToFloat64(ref)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", refIndex, colName))
+							}
+							prevRefFloat, ok := ToFloat64(prevRef)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevRefIndex, colName))
+							}
+							nextRefFloat, ok := ToFloat64(nextRef)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextRefIndex, colName))
+							}
+							newValue = ((refFloat-prevRefFloat)/(nextRefFloat-prevRefFloat))*(nextVal-prevVal) + prevVal
 						} else if typ == Int64 {
-							prevInt, _ := ToInt64(prevCol)
-							nextInt, _ := ToInt64(nextCol)
-							refInt, _ := ToInt64(ref)
-							prevRefInt, _ := ToInt64(prevRef)
-							nextRefInt, _ := ToInt64(nextRef)
-							newValue = ((refInt-prevRefInt)/(nextRefInt-prevRefInt))*(nextInt-prevInt) + prevInt
+							prevVal, ok := ToInt64(prevCol)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevIndex, colName))
+							}
+							nextVal, ok := ToInt64(nextCol)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextIndex, colName))
+							}
+							refInt, ok := ToInt64(ref)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", refIndex, colName))
+							}
+							prevRefInt, ok := ToInt64(prevRef)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevRefIndex, colName))
+							}
+							nextRefInt, ok := ToInt64(nextRef)
+							if !ok {
+								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextRefIndex, colName))
+							}
+							newValue = ((refInt-prevRefInt)/(nextRefInt-prevRefInt))*(nextVal-prevVal) + prevVal
 						}
 					}
 				}
@@ -97,19 +127,32 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 				newValue := b.GetValue(colIndex, rowIndex)
 				if newValue == nil && toFill[colIndex] {
-					prev, _ := b.GetPreviousValue(colIndex, rowIndex)
-					next, _ := b.GetNextValue(colIndex, rowIndex)
+					prev, prevIndex := b.GetPreviousValue(colIndex, rowIndex)
+					next, nextIndex := b.GetNextValue(colIndex, rowIndex)
 					if prev != nil && next != nil {
+						var ok bool
 						if typ == Float64 {
-							var prevFloat, nextFloat float64
-							prevFloat, _ = ToFloat64(prev)
-							nextFloat, _ = ToFloat64(next)
-							newValue = (prevFloat + nextFloat) / 2
+							var prevVal, nextVal float64
+							prevVal, ok = ToFloat64(prev)
+							if !ok {
+								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", prevIndex, colName))
+							}
+							nextVal, ok = ToFloat64(next)
+							if !ok {
+								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", nextIndex, colName))
+							}
+							newValue = (prevVal + nextVal) / 2
 						} else if typ == Int64 {
-							var prevInt, nextInt int64
-							prevInt, _ = ToInt64(prev)
-							nextInt, _ = ToInt64(next)
-							newValue = (prevInt + nextInt) / 2
+							var prevVal, nextVal int64
+							prevVal, ok = ToInt64(prev)
+							if !ok {
+								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", prevIndex, colName))
+							}
+							nextVal, ok = ToInt64(next)
+							if !ok {
+								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", nextIndex, colName))
+							}
+							newValue = (prevVal + nextVal) / 2
 						}
 					}
 				}
@@ -210,31 +253,46 @@ func isColSorted(b Bow, colIndex int, typ Type) error {
 		}
 	}
 
-	var asc bool
-	if typ == Int64 {
-		var currInt, nextInt int64
+	if typ != Int64 && typ != Float64 {
+		err := fmt.Errorf("isColSorted: type unknown")
+		return err
+	}
 
-		for currInt == nextInt { // attempt to compare first two unequal values
-			curr = b.GetValue(colIndex, row)
-			next, row = b.GetNextValue(colIndex, row+1)
-			if next == nil {
-				return nil // only one value, column sorted
-			}
+	var asc bool
+	var currInt, nextInt int64
+	var currFloat, nextFloat float64
+
+	for (typ == Int64 && currInt == nextInt) ||
+		(typ == Float64 && currFloat == nextFloat) { // attempt to compare first two unequal values
+		curr = b.GetValue(colIndex, row)
+		next, row = b.GetNextValue(colIndex, row+1)
+		if next == nil {
+			return nil // only one value, column sorted
+		}
+		if typ == Int64 {
 			currInt = curr.(int64)
 			nextInt = next.(int64)
 			if currInt < nextInt {
 				asc = true
 			}
-			if row == b.NumRows() || row == -1 {
-				return nil // only equal values, column sorted
+		} else if typ == Float64 {
+			currFloat = curr.(float64)
+			nextFloat = next.(float64)
+			if currFloat < nextFloat {
+				asc = true
 			}
 		}
-		for row < b.NumRows() { // compare other values
-			curr = b.GetValue(colIndex, row)
-			next, row = b.GetNextValue(colIndex, row+1)
-			if next == nil {
-				return nil // end of values, column sorted
-			}
+		if row == b.NumRows() || row == -1 {
+			return nil // only equal values, column sorted
+		}
+	}
+	for row < b.NumRows() { // compare other values
+		curr = b.GetValue(colIndex, row)
+		next, row = b.GetNextValue(colIndex, row+1)
+		if next == nil {
+			return nil // end of values, column sorted
+		}
+		if typ == Int64 {
 			currInt = curr.(int64)
 			nextInt = next.(int64)
 			if asc && currInt > nextInt {
@@ -245,31 +303,7 @@ func isColSorted(b Bow, colIndex int, typ Type) error {
 				err := fmt.Errorf("reference column '%s' is not sorted", name)
 				return err
 			}
-		}
-	} else if typ == Float64 {
-		var currFloat, nextFloat float64
-
-		for currFloat == nextFloat { // attempt to compare first two unequal values
-			curr = b.GetValue(colIndex, row)
-			next, row = b.GetNextValue(colIndex, row+1)
-			if next == nil {
-				return nil // only one value, column sorted
-			}
-			currFloat = curr.(float64)
-			nextFloat = next.(float64)
-			if currFloat < nextFloat {
-				asc = true
-			}
-			if row == b.NumRows() || row == -1 {
-				return nil // only equal values, column sorted
-			}
-		}
-		for row < b.NumRows() { // compare other values
-			curr = b.GetValue(colIndex, row)
-			next, row = b.GetNextValue(colIndex, row+1)
-			if next == nil {
-				return nil // end of values, column sorted
-			}
+		} else if typ == Float64 {
 			currFloat = curr.(float64)
 			nextFloat = next.(float64)
 			if asc && currFloat > nextFloat {
@@ -280,13 +314,7 @@ func isColSorted(b Bow, colIndex int, typ Type) error {
 				err := fmt.Errorf("reference column '%s' is not sorted", name)
 				return err
 			}
-			if row == b.NumRows() || row == -1 {
-				return nil // only equal values, column sorted
-			}
 		}
-	} else {
-		err := fmt.Errorf("isColSorted: type unknown")
-		return err
 	}
 	return nil
 }
