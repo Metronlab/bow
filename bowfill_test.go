@@ -6,6 +6,77 @@ import (
 	"testing"
 )
 
+func TestBow_FillIsColSorted(t *testing.T) {
+	var err error
+	intBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
+		{-2, 1, nil, nil, -8},
+		{0, nil, 3, 4, 0},
+		{1, nil, nil, 120, nil},
+		{10, 4, 10, 10, -5},
+		{13, nil, nil, nil, nil},
+		{20, 6, 30, 400, -10},
+	})
+
+	t.Run("column a sorted", func(t *testing.T) {
+		err = isColSorted(intBobow, 0, Int64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("column b sorted", func(t *testing.T) {
+		err = isColSorted(intBobow, 1, Int64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("column c sorted", func(t *testing.T) {
+		err = isColSorted(intBobow, 2, Int64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("column d unsorted", func(t *testing.T) {
+		err = isColSorted(intBobow, 3, Int64)
+		assert.Error(t, err)
+	})
+
+	t.Run("column e unsorted", func(t *testing.T) {
+		err = isColSorted(intBobow, 4, Int64)
+		assert.Error(t, err)
+	})
+
+	floatBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
+		{-2.0, 1.0, nil, nil, -8.0},
+		{0.0, nil, 3.0, 4.0, 0.0},
+		{1.0, nil, nil, 120.0, nil},
+		{10.0, 4.0, 10.0, 10.0, -5.0},
+		{13.0, nil, nil, nil, nil},
+		{20.0, 6.0, 30.0, 400.0, -10.0},
+	})
+
+	t.Run("column a sorted", func(t *testing.T) {
+		err = isColSorted(floatBobow, 0, Float64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("column b sorted", func(t *testing.T) {
+		err = isColSorted(floatBobow, 1, Float64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("column c sorted", func(t *testing.T) {
+		err = isColSorted(floatBobow, 2, Float64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("column d unsorted", func(t *testing.T) {
+		err = isColSorted(floatBobow, 3, Float64)
+		assert.Error(t, err)
+	})
+
+	t.Run("column e unsorted", func(t *testing.T) {
+		err = isColSorted(floatBobow, 4, Float64)
+		assert.Error(t, err)
+	})
+}
+
 // TODO: need to add more tests for FillLinear
 func TestBow_FillLinear(t *testing.T) {
 	holedInt, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
@@ -33,23 +104,23 @@ func TestBow_FillLinear(t *testing.T) {
 	})
 
 	holedFloat, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
-		{-2.0, 1.0, nil, nil, -8.0},
-		{0.0, nil, 3.0, 4.0, 0.0},
-		{1.0, nil, nil, 120.0, nil},
-		{10.0, 4.0, 10.0, 10.0, -5.0},
-		{13.0, nil, nil, nil, nil},
 		{20.0, 6.0, 30.0, 400.0, -10.0},
+		{13.0, nil, nil, nil, nil},
+		{10.0, 4.0, 10.0, 10.0, -5.0},
+		{1.0, nil, nil, 120.0, nil},
+		{0.0, nil, 3.0, 4.0, 0.0},
+		{-2.0, 1.0, nil, nil, -8.0},
 	})
 
 	t.Run("float64 fill linear on first column", func(t *testing.T) {
 		filled, err := holedFloat.FillLinear("a", "b")
 		expected, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
-			{-2.0, 1.0, nil, nil, -8.0},
-			{0.0, 1.5, 3.0, 4.0, 0.0},
-			{1.0, 1.75, nil, 120.0, nil},
-			{10.0, 4.0, 10.0, 10.0, -5.0},
-			{13.0, 4.6, nil, nil, nil},
 			{20.0, 6.0, 30.0, 400.0, -10.0},
+			{13.0, 4.6, nil, nil, nil},
+			{10.0, 4.0, 10.0, 10.0, -5.0},
+			{1.0, 1.75, nil, 120.0, nil},
+			{0.0, 1.5, 3.0, 4.0, 0.0},
+			{-2.0, 1.0, nil, nil, -8.0},
 		})
 		assert.Nil(t, err)
 		assert.True(t, filled.Equal(expected),
@@ -59,16 +130,37 @@ func TestBow_FillLinear(t *testing.T) {
 	t.Run("float64 fill linear on second column", func(t *testing.T) {
 		filled, err := holedFloat.FillLinear("a", "c")
 		expected, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
-			{-2.0, 1.0, nil, nil, -8.0},
-			{0.0, nil, 3.0, 4.0, 0.0},
-			{1.0, nil, 3.7, 120.0, nil},
-			{10.0, 4.0, 10.0, 10.0, -5.0},
-			{13.0, nil, 16.0, nil, nil},
 			{20.0, 6.0, 30.0, 400.0, -10.0},
+			{13.0, nil, 16.0, nil, nil},
+			{10.0, 4.0, 10.0, 10.0, -5.0},
+			{1.0, nil, 3.7, 120.0, nil},
+			{0.0, nil, 3.0, 4.0, 0.0},
+			{-2.0, 1.0, nil, nil, -8.0},
 		})
 		assert.Nil(t, err)
 		assert.True(t, filled.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, filled))
+	})
+
+	unsortedRefCol, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
+		{-2, 1, nil, nil, -8},
+		{0, nil, 3, 4, 0},
+		{1, nil, nil, 120, nil},
+		{14, 4, 10, 10, -5},
+		{13, nil, nil, nil, nil},
+		{20, 6, 30, 400, -10},
+	})
+
+	t.Run("error unsorted refCol a", func(t *testing.T) {
+		filled, err := unsortedRefCol.FillLinear("a", "b")
+		assert.Nil(t, filled)
+		assert.Error(t, err)
+	})
+
+	t.Run("error unsorted refCol e", func(t *testing.T) {
+		filled, err := unsortedRefCol.FillLinear("e", "b")
+		assert.Nil(t, filled)
+		assert.Error(t, err)
 	})
 }
 

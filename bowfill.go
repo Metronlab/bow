@@ -15,6 +15,10 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = isColSorted(b, refIndex, b.GetType(refIndex))
+	if err != nil {
+		return nil, err
+	}
 	toFillIndex, err := b.GetIndex(toFillCol)
 	if err != nil {
 		return nil, err
@@ -193,9 +197,102 @@ func (b *bow) FillPreviousNoConcurrency(colNames ...string) (Bow, error) {
 	return NewBow(series...)
 }
 
+// isColSorted returns nil if the column colIndex is sorted or an error otherwise.
+func isColSorted(b Bow, colIndex int, typ Type) error {
+	var row int
+	var curr, next interface{}
+
+	curr = b.GetValue(colIndex, row)
+	if curr == nil {
+		next, row = b.GetNextValue(colIndex, row+1) // skip first nil values
+		if next == nil {
+			return nil // empty column, column sorted
+		}
+	}
+
+	var asc bool
+	if typ == Int64 {
+		var currInt, nextInt int64
+
+		for currInt == nextInt { // attempt to compare first two unequal values
+			curr = b.GetValue(colIndex, row)
+			next, row = b.GetNextValue(colIndex, row+1)
+			if next == nil {
+				return nil // only one value, column sorted
+			}
+			currInt = curr.(int64)
+			nextInt = next.(int64)
+			if currInt < nextInt {
+				asc = true
+			}
+			if row == b.NumRows() || row == -1 {
+				return nil // only equal values, column sorted
+			}
+		}
+		for row < b.NumRows() { // compare other values
+			curr = b.GetValue(colIndex, row)
+			next, row = b.GetNextValue(colIndex, row+1)
+			if next == nil {
+				return nil // end of values, column sorted
+			}
+			currInt = curr.(int64)
+			nextInt = next.(int64)
+			if asc && currInt > nextInt {
+				name, errName := b.GetName(colIndex)
+				if errName != nil {
+					return errName
+				}
+				err := fmt.Errorf("reference column '%s' is not sorted", name)
+				return err
+			}
+		}
+	} else if typ == Float64 {
+		var currFloat, nextFloat float64
+
+		for currFloat == nextFloat { // attempt to compare first two unequal values
+			curr = b.GetValue(colIndex, row)
+			next, row = b.GetNextValue(colIndex, row+1)
+			if next == nil {
+				return nil // only one value, column sorted
+			}
+			currFloat = curr.(float64)
+			nextFloat = next.(float64)
+			if currFloat < nextFloat {
+				asc = true
+			}
+			if row == b.NumRows() || row == -1 {
+				return nil // only equal values, column sorted
+			}
+		}
+		for row < b.NumRows() { // compare other values
+			curr = b.GetValue(colIndex, row)
+			next, row = b.GetNextValue(colIndex, row+1)
+			if next == nil {
+				return nil // end of values, column sorted
+			}
+			currFloat = curr.(float64)
+			nextFloat = next.(float64)
+			if asc && currFloat > nextFloat {
+				name, errName := b.GetName(colIndex)
+				if errName != nil {
+					return errName
+				}
+				err := fmt.Errorf("reference column '%s' is not sorted", name)
+				return err
+			}
+			if row == b.NumRows() || row == -1 {
+				return nil // only equal values, column sorted
+			}
+		}
+	} else {
+		err := fmt.Errorf("isColSorted: type unknown")
+		return err
+	}
+	return nil
+}
+
 // colsToFill returns a bool slice of size b.NumCols
 // with 'true' values at indexes of the corresponding colNames
-// (`colNames` defaults to all columns)
 func colsToFill(b *bow, colNames []string) ([]bool, error) {
 	toFill := make([]bool, b.NumCols())
 	nilColsNb := len(colNames)

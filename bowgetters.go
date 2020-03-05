@@ -71,7 +71,6 @@ func (b *bow) GetNextValues(col1, col2, row int) (interface{}, interface{}, int)
 
 		row++
 	}
-
 	return nil, nil, -1
 }
 
@@ -104,7 +103,6 @@ func (b *bow) GetPreviousValues(col1, col2, row int) (interface{}, interface{}, 
 		}
 		row--
 	}
-
 	return nil, nil, -1
 }
 
