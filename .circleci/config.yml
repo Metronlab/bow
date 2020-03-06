@@ -32,4 +32,3 @@ jobs:
 				echo >&2 "Some files are not formatted, please run docker-compose run --rm fmt or edit the files"
 				echo >&2 "Unformatted files:"
 				echo >&2 ${unformatted}
-
