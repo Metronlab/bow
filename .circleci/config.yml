@@ -1,12 +1,9 @@
-# Golang CircleCI 2.0 configuration file
-#
 version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.14
 
-    working_directory: /go/src/bow
     steps:
       - checkout
-      - run: make
+      - run: go get golang.org/x/lint/golint
