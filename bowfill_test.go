@@ -2,8 +2,9 @@ package bow
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBow_FillIsColSorted(t *testing.T) {
@@ -40,6 +41,34 @@ func TestBow_FillIsColSorted(t *testing.T) {
 	t.Run("column e unsorted", func(t *testing.T) {
 		err = isColSorted(intBobow, 4, Int64)
 		assert.Error(t, err)
+	})
+
+	t.Run("int64 random bow with missing data asc sorted", func(t *testing.T) {
+		bobow, err := NewRandomBow(1000, 1000, Int64, true, 1, true)
+		assert.Nil(t, err)
+		err = isColSorted(bobow, 1, Int64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("int64 random bow with missing data desc sorted", func(t *testing.T) {
+		bobow, err := NewRandomBow(1000, 1000, Int64, true, 1, false)
+		assert.Nil(t, err)
+		err = isColSorted(bobow, 1, Int64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("float64 random bow with missing data asc sorted", func(t *testing.T) {
+		bobow, err := NewRandomBow(1000, 1000, Float64, true, 0, true)
+		assert.Nil(t, err)
+		err = isColSorted(bobow, 0, Float64)
+		assert.Nil(t, err)
+	})
+
+	t.Run("float64 random bow with missing data desc sorted", func(t *testing.T) {
+		bobow, err := NewRandomBow(1000, 1000, Float64, true, 0, false)
+		assert.Nil(t, err)
+		err = isColSorted(bobow, 0, Float64)
+		assert.Nil(t, err)
 	})
 
 	floatBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
@@ -102,7 +131,6 @@ func TestBow_FillLinear(t *testing.T) {
 		assert.True(t, filled.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, filled))
 	})
-
 	holedFloat, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 		{20.0, 6.0, 30.0, 400.0, -10.0},
 		{13.0, nil, nil, nil, nil},

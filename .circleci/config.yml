@@ -59,6 +59,9 @@ jobs: # basic units of work in a run
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
             go test ${PKG} -v -race -cover -covermode=atomic -coverprofile=${COVER_RESULTS}/coverage.cover -timeout 30s \
               | tee ${TEST_RESULTS}/go-test.out
+      - run:
+          name: BENCHMARKS
+          command: go test -bench .
       - save_cache: # Store cache in the /go/pkg directory
           key: v1-pkg-cache
           paths:
