@@ -61,7 +61,7 @@ jobs: # basic units of work in a run
               | tee ${TEST_RESULTS}/go-test.out
       - run:
           name: BENCHMARKS
-          command: go test -bench .
+          command: go test ./... -run=XXX -bench=. -benchmem
       - save_cache: # Store cache in the /go/pkg directory
           key: v1-pkg-cache
           paths:

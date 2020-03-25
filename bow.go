@@ -101,17 +101,6 @@ func NewBow(series ...Series) (Bow, error) {
 	}, nil
 }
 
-func NewBow2(series ...Series2) (Bow, error) {
-	record, err := newRecordFromSeries2(series...)
-	if err != nil {
-		return nil, err
-	}
-
-	return &bow{
-		Record: record,
-	}, nil
-}
-
 func NewBowFromColumnBasedInterfaces(columnsNames []string, types []Type, columns [][]interface{}) (bobow Bow, err error) {
 	if len(columnsNames) != len(columns) {
 		return nil, errors.New("bow: columnsNames name and values doesn't match")
