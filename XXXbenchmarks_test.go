@@ -93,20 +93,6 @@ func BenchmarkFillPrevious_Int(b *testing.B) {
 	}
 }
 
-func BenchmarkFillPrevious_Float(b *testing.B) {
-	newBow, err := NewRandomBow(rows, cols, Float64, true, -1, true)
-	if err != nil {
-		panic("bow generator error")
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, err = newBow.FillPrevious()
-		if err != nil {
-			panic("fill error")
-		}
-	}
-}
-
 func BenchmarkFillPrevious2_Int(b *testing.B) {
 	newBow, err := NewRandomBow(rows, cols, Int64, true, -1, true)
 	if err != nil {
@@ -115,6 +101,20 @@ func BenchmarkFillPrevious2_Int(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillPrevious2()
+		if err != nil {
+			panic("fill error")
+		}
+	}
+}
+
+func BenchmarkFillPrevious_Float(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Float64, true, -1, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = newBow.FillPrevious()
 		if err != nil {
 			panic("fill error")
 		}

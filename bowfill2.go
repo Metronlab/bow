@@ -22,8 +22,8 @@ func (b *bow) FillPrevious2(colNames ...string) (Bow, error) {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
-					valids := getValids(prevArray.NullBitmapBytes())
-					for rowIndex := 0; rowIndex < prevArray.Len(); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), len(values))
+					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
 						if !valids[rowIndex] {
 							prevInt, prevRow := b.GetPreviousInt64(colIndex, rowIndex-1)
 							if prevRow > -1 {
@@ -39,8 +39,8 @@ func (b *bow) FillPrevious2(colNames ...string) (Bow, error) {
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
 					values := prevArray.Float64Values()
-					valids := getValids(prevArray.NullBitmapBytes())
-					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), len(values))
+					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
 						if !valids[rowIndex] {
 							prevInt, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 							if prevRow > -1 {
@@ -64,24 +64,6 @@ func (b *bow) FillPrevious2(colNames ...string) (Bow, error) {
 		}(colIndex, col.Name)
 	}
 	return newBowFromSeries2Channel(b, seriesChannel)
-}
-
-var bitMask = [8]byte{1, 2, 4, 8, 16, 32, 64, 128}
-
-// bitIsSet returns true if the bit at index i in buf is set (1).
-func bitIsSet(buf []byte, i int) bool { return (buf[uint(i)/8] & bitMask[byte(i)%8]) != 0 }
-
-func getValids(bytes []byte) []bool {
-	valids := make([]bool, len(bytes))
-
-	for i := 0; i < len(bytes); i++ {
-		if bitIsSet(bytes, i) {
-			valids[i] = true
-		} else {
-			valids[i] = false
-		}
-	}
-	return valids
 }
 
 func newBowFromSeries2Channel(b *bow, seriesChannel chan Series2) (Bow, error) {

@@ -46,7 +46,7 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 			case Int64:
 				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Int64Values()
-				newBufValid := getInt64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if colIndex == toFillIndex {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -72,7 +72,7 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 			case Float64:
 				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Float64Values()
-				newBufValid := getFloat64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if colIndex == toFillIndex {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -125,7 +125,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			case Int64:
 				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Int64Values()
-				newBufValid := getInt64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if toFill[colIndex] {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -146,7 +146,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			case Float64:
 				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Float64Values()
-				newBufValid := getFloat64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if toFill[colIndex] {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -187,7 +187,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 			case Int64:
 				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Int64Values()
-				newBufValid := getInt64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if toFill[colIndex] {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -207,7 +207,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 			case Float64:
 				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Float64Values()
-				newBufValid := getFloat64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if toFill[colIndex] {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -247,7 +247,7 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 			case Int64:
 				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Int64Values()
-				newBufValid := getInt64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if toFill[colIndex] {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -267,7 +267,7 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 			case Float64:
 				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
 				newBufValue := newArray.Float64Values()
-				newBufValid := getFloat64BufValid(newArray)
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
 				if toFill[colIndex] {
 					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
 						if !newBufValid[rowIndex] {
@@ -408,28 +408,20 @@ func colsToFill(b *bow, colNames []string) ([]bool, error) {
 	return toFill, nil
 }
 
-func getInt64BufValid(a *array.Int64) []bool {
-	var bools []bool
+var bitMask = [8]byte{1, 2, 4, 8, 16, 32, 64, 128}
 
-	for i := 0; i < a.Len(); i++ {
-		if a.IsValid(i) {
-			bools = append(bools, true)
+// bitIsSet returns true if the bit at index i in buf is set (1).
+func bitIsSet(buf []byte, i int) bool { return (buf[uint(i)/8] & bitMask[byte(i)%8]) != 0 }
+
+func getValids(bytes []byte, size int) []bool {
+	valids := make([]bool, size)
+
+	for i := 0; i < size; i++ {
+		if bitIsSet(bytes, i) {
+			valids[i] = true
 		} else {
-			bools = append(bools, false)
+			valids[i] = false
 		}
 	}
-	return bools
-}
-
-func getFloat64BufValid(a *array.Float64) []bool {
-	var bools []bool
-
-	for i := 0; i < a.Len(); i++ {
-		if a.IsValid(i) {
-			bools = append(bools, true)
-		} else {
-			bools = append(bools, false)
-		}
-	}
-	return bools
+	return valids
 }
