@@ -170,32 +170,6 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	return newBowFromSeriesChannel(b, seriesChannel)
 }
 
-func getInt64BufValid(a *array.Int64) []bool {
-	var bools []bool
-
-	for i := 0; i < a.Len(); i++ {
-		if a.IsValid(i) {
-			bools = append(bools, true)
-		} else {
-			bools = append(bools, false)
-		}
-	}
-	return bools
-}
-
-func getFloat64BufValid(a *array.Float64) []bool {
-	var bools []bool
-
-	for i := 0; i < a.Len(); i++ {
-		if a.IsValid(i) {
-			bools = append(bools, true)
-		} else {
-			bools = append(bools, false)
-		}
-	}
-	return bools
-}
-
 // FillNext fills any row that contains a nil for any of `nilCols`
 // using NOCB (Next Obs. Carried Backward) method and returns a new Bow.
 // (`colNames` defaults to all columns)
@@ -316,6 +290,23 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 	return newBowFromSeriesChannel(b, seriesChannel)
 }
 
+func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
+	seriesCounter := 0
+	filledSeries := make([]Series, b.NumCols())
+	for s := range seriesChannel {
+		for colIndex, col := range b.Schema().Fields() {
+			if s.Name == col.Name {
+				filledSeries[colIndex] = s
+				seriesCounter++
+				if seriesCounter == b.NumCols() {
+					close(seriesChannel)
+				}
+			}
+		}
+	}
+	return NewBow(filledSeries...)
+}
+
 // isColSorted returns nil if the column colIndex is sorted or an error otherwise.
 func isColSorted(b Bow, colIndex int, typ Type) error {
 	var row int
@@ -417,19 +408,28 @@ func colsToFill(b *bow, colNames []string) ([]bool, error) {
 	return toFill, nil
 }
 
-func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
-	seriesCounter := 0
-	filledSeries := make([]Series, b.NumCols())
-	for s := range seriesChannel {
-		for colIndex, col := range b.Schema().Fields() {
-			if s.Name == col.Name {
-				filledSeries[colIndex] = s
-				seriesCounter++
-				if seriesCounter == b.NumCols() {
-					close(seriesChannel)
-				}
-			}
+func getInt64BufValid(a *array.Int64) []bool {
+	var bools []bool
+
+	for i := 0; i < a.Len(); i++ {
+		if a.IsValid(i) {
+			bools = append(bools, true)
+		} else {
+			bools = append(bools, false)
 		}
 	}
-	return NewBow(filledSeries...)
+	return bools
+}
+
+func getFloat64BufValid(a *array.Float64) []bool {
+	var bools []bool
+
+	for i := 0; i < a.Len(); i++ {
+		if a.IsValid(i) {
+			bools = append(bools, true)
+		} else {
+			bools = append(bools, false)
+		}
+	}
+	return bools
 }
