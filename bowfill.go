@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/apache/arrow/go/arrow/array"
-	"gonum.org/v1/gonum/mat"
 )
 
 // FillLinear fills any row that contains a nil for any of `nilCols`
@@ -310,37 +309,69 @@ func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
 
 // isColSorted returns nil if the column colIndex is sorted or an error otherwise.
 func isColSorted(b *bow, colIndex int) error {
-	var floatValues []float64
+	var rowIndex int
+	var order int8
 	switch b.GetType(colIndex) {
 	case Int64:
 		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
 		values := arr.Int64Values()
-		for i := range values {
-			if !arr.IsNull(i) {
-				floatValues = append(floatValues, float64(values[i]))
+		for arr.IsNull(rowIndex) {
+			rowIndex++
+			if rowIndex == len(values) {
+				return fmt.Errorf("bow: isColSorted: empty column")
 			}
+		}
+		curr := values[rowIndex]
+		var next int64
+		rowIndex++
+		for rowIndex < len(values) {
+			if arr.IsValid(rowIndex) {
+				next = values[rowIndex]
+				if order == 0 {
+					if curr > next {
+						order = -1
+					} else if curr < next {
+						order = 1
+					}
+				}
+				if order == -1 && next > curr || order == 1 && next < curr {
+					return fmt.Errorf("bow: isColSorted: column not sorted")
+				}
+				curr = next
+			}
+			rowIndex++
 		}
 	case Float64:
 		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
 		values := arr.Float64Values()
-		for i := range values {
-			if !arr.IsNull(i) {
-				floatValues = append(floatValues, float64(values[i]))
+		for arr.IsNull(rowIndex) {
+			rowIndex++
+			if rowIndex == len(values) {
+				return fmt.Errorf("bow: isColSorted: empty column")
 			}
+		}
+		curr := values[rowIndex]
+		var next float64
+		rowIndex++
+		for rowIndex < len(values) {
+			if arr.IsValid(rowIndex) {
+				next = values[rowIndex]
+				if order == 0 {
+					if curr > next {
+						order = -1
+					} else if curr < next {
+						order = 1
+					}
+				}
+				if order == -1 && next > curr || order == 1 && next < curr {
+					return fmt.Errorf("bow: isColSorted: column not sorted")
+				}
+				curr = next
+			}
+			rowIndex++
 		}
 	default:
 		return fmt.Errorf("bow: isColSorted: data type '%s' not supported", b.GetType(colIndex).String())
-	}
-	shiftedValues := floatValues[1:]
-	shiftedValues = append(shiftedValues, floatValues[len(floatValues)-1])
-	vec1 := mat.NewVecDense(len(floatValues), floatValues)
-	vec2 := mat.NewVecDense(len(floatValues), shiftedValues)
-	var vec3 mat.VecDense
-	vec3.SubVec(vec1, vec2)
-	for i := range floatValues {
-		if vec3.At(0, 0) > 0 && vec3.At(i, 0) < 0 || vec3.At(0, 0) < 0 && vec3.At(i, 0) > 0 {
-			return fmt.Errorf("column not sorted")
-		}
 	}
 	return nil
 }
