@@ -197,7 +197,7 @@ func BenchmarkIsColSorted_Int(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err = isColSorted(newBow, 3, Int64)
+		err = isColSorted(newBow.(*bow), 3)
 		if err != nil {
 			panic("isColSorted error")
 		}
@@ -210,7 +210,7 @@ func BenchmarkIsColSorted_Float(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err = isColSorted(newBow, 3, Float64)
+		err = isColSorted(newBow.(*bow), 3)
 		if err != nil {
 			panic("isColSorted error")
 		}

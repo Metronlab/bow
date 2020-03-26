@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/apache/arrow/go/arrow/array"
+	"gonum.org/v1/gonum/mat"
 )
 
 // FillLinear fills any row that contains a nil for any of `nilCols`
@@ -19,7 +20,7 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = isColSorted(b, refIndex, b.GetType(refIndex))
+	err = isColSorted(b, refIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -308,79 +309,37 @@ func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
 }
 
 // isColSorted returns nil if the column colIndex is sorted or an error otherwise.
-func isColSorted(b Bow, colIndex int, typ Type) error {
-	var row int
-	var curr, next interface{}
-
-	curr = b.GetValue(colIndex, row)
-	if curr == nil {
-		next, row = b.GetNextValue(colIndex, row+1) // skip first nil values
-		if next == nil {
-			return nil // empty column, column sorted
+func isColSorted(b *bow, colIndex int) error {
+	var floatValues []float64
+	switch b.GetType(colIndex) {
+	case Int64:
+		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
+		values := arr.Int64Values()
+		for i := range values {
+			if !arr.IsNull(i) {
+				floatValues = append(floatValues, float64(values[i]))
+			}
 		}
+	case Float64:
+		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+		values := arr.Float64Values()
+		for i := range values {
+			if !arr.IsNull(i) {
+				floatValues = append(floatValues, float64(values[i]))
+			}
+		}
+	default:
+		return fmt.Errorf("bow: isColSorted: data type '%s' not supported", b.GetType(colIndex).String())
 	}
-
-	if typ != Int64 && typ != Float64 {
-		err := fmt.Errorf("isColSorted: type unknown")
-		return err
-	}
-
-	var asc bool
-	var currInt, nextInt int64
-	var currFloat, nextFloat float64
-
-	for (typ == Int64 && currInt == nextInt) ||
-		(typ == Float64 && currFloat == nextFloat) { // attempt to compare first two unequal values
-		curr = b.GetValue(colIndex, row)
-		next, row = b.GetNextValue(colIndex, row+1)
-		if next == nil {
-			return nil // only one value, column sorted
-		}
-		if typ == Int64 {
-			currInt = curr.(int64)
-			nextInt = next.(int64)
-			if currInt < nextInt {
-				asc = true
-			}
-		} else if typ == Float64 {
-			currFloat = curr.(float64)
-			nextFloat = next.(float64)
-			if currFloat < nextFloat {
-				asc = true
-			}
-		}
-		if row == b.NumRows() || row == -1 {
-			return nil // only equal values, column sorted
-		}
-	}
-	for row < b.NumRows() { // compare other values
-		curr = b.GetValue(colIndex, row)
-		next, row = b.GetNextValue(colIndex, row+1)
-		if next == nil {
-			return nil // end of values, column sorted
-		}
-		if typ == Int64 {
-			currInt = curr.(int64)
-			nextInt = next.(int64)
-			if asc && currInt > nextInt {
-				name, errName := b.GetName(colIndex)
-				if errName != nil {
-					return errName
-				}
-				err := fmt.Errorf("reference column '%s' is not sorted", name)
-				return err
-			}
-		} else if typ == Float64 {
-			currFloat = curr.(float64)
-			nextFloat = next.(float64)
-			if asc && currFloat > nextFloat {
-				name, errName := b.GetName(colIndex)
-				if errName != nil {
-					return errName
-				}
-				err := fmt.Errorf("reference column '%s' is not sorted", name)
-				return err
-			}
+	shiftedValues := floatValues[1:]
+	shiftedValues = append(shiftedValues, floatValues[len(floatValues)-1])
+	vec1 := mat.NewVecDense(len(floatValues), floatValues)
+	vec2 := mat.NewVecDense(len(floatValues), shiftedValues)
+	var vec3 mat.VecDense
+	vec3.SubVec(vec1, vec2)
+	for i := range floatValues {
+		if vec3.At(0, 0) > 0 && vec3.At(i, 0) < 0 || vec3.At(0, 0) < 0 && vec3.At(i, 0) > 0 {
+			return fmt.Errorf("column not sorted")
 		}
 	}
 	return nil

@@ -19,55 +19,55 @@ func TestBow_FillIsColSorted(t *testing.T) {
 	})
 
 	t.Run("column a sorted", func(t *testing.T) {
-		err = isColSorted(intBobow, 0, Int64)
+		err = isColSorted(intBobow.(*bow), 0)
 		assert.Nil(t, err)
 	})
 
 	t.Run("column b sorted", func(t *testing.T) {
-		err = isColSorted(intBobow, 1, Int64)
+		err = isColSorted(intBobow.(*bow), 1)
 		assert.Nil(t, err)
 	})
 
 	t.Run("column c sorted", func(t *testing.T) {
-		err = isColSorted(intBobow, 2, Int64)
+		err = isColSorted(intBobow.(*bow), 2)
 		assert.Nil(t, err)
 	})
 
 	t.Run("column d unsorted", func(t *testing.T) {
-		err = isColSorted(intBobow, 3, Int64)
+		err = isColSorted(intBobow.(*bow), 3)
 		assert.Error(t, err)
 	})
 
 	t.Run("column e unsorted", func(t *testing.T) {
-		err = isColSorted(intBobow, 4, Int64)
+		err = isColSorted(intBobow.(*bow), 4)
 		assert.Error(t, err)
 	})
 
 	t.Run("int64 random bow with missing data asc sorted", func(t *testing.T) {
 		bobow, err := NewRandomBow(1000, 1000, Int64, true, 1, true)
 		assert.Nil(t, err)
-		err = isColSorted(bobow, 1, Int64)
+		err = isColSorted(bobow.(*bow), 1)
 		assert.Nil(t, err)
 	})
 
 	t.Run("int64 random bow with missing data desc sorted", func(t *testing.T) {
 		bobow, err := NewRandomBow(1000, 1000, Int64, true, 1, false)
 		assert.Nil(t, err)
-		err = isColSorted(bobow, 1, Int64)
+		err = isColSorted(bobow.(*bow), 1)
 		assert.Nil(t, err)
 	})
 
 	t.Run("float64 random bow with missing data asc sorted", func(t *testing.T) {
 		bobow, err := NewRandomBow(1000, 1000, Float64, true, 0, true)
 		assert.Nil(t, err)
-		err = isColSorted(bobow, 0, Float64)
+		err = isColSorted(bobow.(*bow), 0)
 		assert.Nil(t, err)
 	})
 
 	t.Run("float64 random bow with missing data desc sorted", func(t *testing.T) {
 		bobow, err := NewRandomBow(1000, 1000, Float64, true, 0, false)
 		assert.Nil(t, err)
-		err = isColSorted(bobow, 0, Float64)
+		err = isColSorted(bobow.(*bow), 0)
 		assert.Nil(t, err)
 	})
 
@@ -81,27 +81,27 @@ func TestBow_FillIsColSorted(t *testing.T) {
 	})
 
 	t.Run("column a sorted", func(t *testing.T) {
-		err = isColSorted(floatBobow, 0, Float64)
+		err = isColSorted(floatBobow.(*bow), 0)
 		assert.Nil(t, err)
 	})
 
 	t.Run("column b sorted", func(t *testing.T) {
-		err = isColSorted(floatBobow, 1, Float64)
+		err = isColSorted(floatBobow.(*bow), 1)
 		assert.Nil(t, err)
 	})
 
 	t.Run("column c sorted", func(t *testing.T) {
-		err = isColSorted(floatBobow, 2, Float64)
+		err = isColSorted(floatBobow.(*bow), 2)
 		assert.Nil(t, err)
 	})
 
 	t.Run("column d unsorted", func(t *testing.T) {
-		err = isColSorted(floatBobow, 3, Float64)
+		err = isColSorted(floatBobow.(*bow), 3)
 		assert.Error(t, err)
 	})
 
 	t.Run("column e unsorted", func(t *testing.T) {
-		err = isColSorted(floatBobow, 4, Float64)
+		err = isColSorted(floatBobow.(*bow), 4)
 		assert.Error(t, err)
 	})
 }
