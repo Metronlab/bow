@@ -2,6 +2,7 @@ package bow
 
 import (
 	"fmt"
+
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 )
@@ -122,6 +123,10 @@ func (b *bow) GetPreviousValue(col, row int) (interface{}, int) {
 }
 
 func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
+		return 0, false
+	}
+
 	switch b.Schema().Field(colIndex).Type.ID() {
 	case arrow.INT64:
 		vd := array.NewInt64Data(b.Column(colIndex).Data())
@@ -137,6 +142,21 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 		panic(fmt.Sprintf("bow: unhandled type %s",
 			b.Schema().Field(colIndex).Type.Name()))
 	}
+}
+
+func (b *bow) GetNextInt64(col, row int) (int64, int) {
+	if row < 0 || row >= b.NumRows() {
+		return 0., -1
+	}
+
+	for row < b.NumRows() {
+		value, ok := b.GetInt64(col, row)
+		if ok {
+			return value, row
+		}
+		row++
+	}
+	return 0., -1
 }
 
 func (b *bow) GetPreviousInt64(col, row int) (int64, int) {
@@ -155,6 +175,10 @@ func (b *bow) GetPreviousInt64(col, row int) (int64, int) {
 }
 
 func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
+		return 0., false
+	}
+
 	switch b.Schema().Field(colIndex).Type.ID() {
 	case arrow.FLOAT64:
 		vd := array.NewFloat64Data(b.Column(colIndex).Data())

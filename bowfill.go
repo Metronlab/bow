@@ -1,6 +1,10 @@
 package bow
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/apache/arrow/go/arrow/array"
+)
 
 // FillLinear fills any row that contains a nil for any of `nilCols`
 // in the column toFillCol using the Linear interpolation method according
@@ -15,7 +19,7 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = isColSorted(b, refIndex, b.GetType(refIndex))
+	err = isColSorted(b, refIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -38,66 +42,60 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
-			buf := NewBuffer(b.NumRows(), typ, true)
-			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-				newValue := b.GetValue(colIndex, rowIndex)
-				if newValue == nil && colIndex == toFillIndex {
-					prevCol, prevIndex := b.GetPreviousValue(colIndex, rowIndex)
-					nextCol, nextIndex := b.GetNextValue(colIndex, rowIndex)
-					ref := b.GetValue(refIndex, rowIndex)
-					prevRef, prevRefIndex := b.GetPreviousValue(refIndex, prevIndex)
-					nextRef, nextRefIndex := b.GetNextValue(refIndex, nextIndex)
-					if prevCol != nil && nextCol != nil && ref != nil && prevRef != nil && nextRef != nil {
-						if typ == Float64 {
-							prevVal, ok := ToFloat64(prevCol)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevIndex, colName))
+			switch typ {
+			case Int64:
+				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Int64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if colIndex == toFillIndex {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							refInt, valid1 := b.GetInt64(refIndex, rowIndex)
+							prevToFillInt, rowPrev := b.GetPreviousInt64(colIndex, rowIndex-1)
+							nextToFillInt, rowNext := b.GetNextInt64(colIndex, rowIndex+1)
+							prevRefInt, valid2 := b.GetInt64(refIndex, rowPrev)
+							nextRefInt, valid3 := b.GetInt64(refIndex, rowNext)
+							if valid1 && valid2 && valid3 && nextRefInt-prevRefInt != 0 {
+								newBufValue[rowIndex] = (refInt - prevRefInt) / (nextRefInt - prevRefInt)
+								newBufValue[rowIndex] *= (nextToFillInt - prevToFillInt)
+								newBufValue[rowIndex] += prevToFillInt
+								newBufValid[rowIndex] = true
 							}
-							nextVal, ok := ToFloat64(nextCol)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextIndex, colName))
-							}
-							refFloat, ok := ToFloat64(ref)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", refIndex, colName))
-							}
-							prevRefFloat, ok := ToFloat64(prevRef)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevRefIndex, colName))
-							}
-							nextRefFloat, ok := ToFloat64(nextRef)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextRefIndex, colName))
-							}
-							newValue = ((refFloat-prevRefFloat)/(nextRefFloat-prevRefFloat))*(nextVal-prevVal) + prevVal
-						} else if typ == Int64 {
-							prevVal, ok := ToInt64(prevCol)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevIndex, colName))
-							}
-							nextVal, ok := ToInt64(nextCol)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextIndex, colName))
-							}
-							refInt, ok := ToInt64(ref)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", refIndex, colName))
-							}
-							prevRefInt, ok := ToInt64(prevRef)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", prevRefIndex, colName))
-							}
-							nextRefInt, ok := ToInt64(nextRef)
-							if !ok {
-								panic(fmt.Errorf("fill linear convert error: row %d column '%s'", nextRefIndex, colName))
-							}
-							newValue = ((refInt-prevRefInt)/(nextRefInt-prevRefInt))*(nextVal-prevVal) + prevVal
 						}
 					}
 				}
-				buf.SetOrDrop(rowIndex, newValue)
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
+			case Float64:
+				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Float64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if colIndex == toFillIndex {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							refFloat, valid1 := b.GetFloat64(refIndex, rowIndex)
+							prevToFillFloat, rowPrev := b.GetPreviousFloat64(colIndex, rowIndex-1)
+							nextToFillFloat, rowNext := b.GetNextFloat64(colIndex, rowIndex+1)
+							prevRefFloat, valid2 := b.GetFloat64(refIndex, rowPrev)
+							nextRefFloat, valid3 := b.GetFloat64(refIndex, rowNext)
+							if valid1 && valid2 && valid3 && nextRefFloat-prevRefFloat != 0.0 {
+								newBufValue[rowIndex] = (refFloat - prevRefFloat) / (nextRefFloat - prevRefFloat)
+								newBufValue[rowIndex] *= (nextToFillFloat - prevToFillFloat)
+								newBufValue[rowIndex] += prevToFillFloat
+								newBufValid[rowIndex] = true
+							}
+						}
+					}
+				}
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
 			}
-			seriesChannel <- Series{Name: colName, Type: typ, Data: buf}
 		}(colIndex, col.Name)
 	}
 	return newBowFromSeriesChannel(b, seriesChannel)
@@ -123,42 +121,50 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
-			buf := NewBuffer(b.NumRows(), typ, true)
-			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-				newValue := b.GetValue(colIndex, rowIndex)
-				if newValue == nil && toFill[colIndex] {
-					prev, prevIndex := b.GetPreviousValue(colIndex, rowIndex)
-					next, nextIndex := b.GetNextValue(colIndex, rowIndex)
-					if prev != nil && next != nil {
-						var ok bool
-						if typ == Float64 {
-							var prevVal, nextVal float64
-							prevVal, ok = ToFloat64(prev)
-							if !ok {
-								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", prevIndex, colName))
+			switch typ {
+			case Int64:
+				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Int64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if toFill[colIndex] {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							prevInt, prevRow := b.GetPreviousInt64(colIndex, rowIndex-1)
+							nextInt, nextRow := b.GetNextInt64(colIndex, rowIndex+1)
+							if prevRow > -1 && nextRow > -1 {
+								newBufValue[rowIndex] = (prevInt + nextInt) / 2
+								newBufValid[rowIndex] = true
 							}
-							nextVal, ok = ToFloat64(next)
-							if !ok {
-								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", nextIndex, colName))
-							}
-							newValue = (prevVal + nextVal) / 2
-						} else if typ == Int64 {
-							var prevVal, nextVal int64
-							prevVal, ok = ToInt64(prev)
-							if !ok {
-								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", prevIndex, colName))
-							}
-							nextVal, ok = ToInt64(next)
-							if !ok {
-								panic(fmt.Errorf("fill mean convert error: row %d column '%s'", nextIndex, colName))
-							}
-							newValue = (prevVal + nextVal) / 2
 						}
 					}
 				}
-				buf.SetOrDrop(rowIndex, newValue)
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
+			case Float64:
+				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Float64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if toFill[colIndex] {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							prevFloat, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
+							nextFloat, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
+							if prevRow > -1 && nextRow > -1 {
+								newBufValue[rowIndex] = (prevFloat + nextFloat) / 2
+								newBufValid[rowIndex] = true
+							}
+						}
+					}
+				}
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
 			}
-			seriesChannel <- Series{Name: colName, Type: typ, Data: buf}
 		}(colIndex, col.Name)
 	}
 	return newBowFromSeriesChannel(b, seriesChannel)
@@ -177,15 +183,48 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
-			buf := NewBuffer(b.NumRows(), typ, true)
-			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-				newValue := b.GetValue(colIndex, rowIndex)
-				if newValue == nil && toFill[colIndex] {
-					newValue, _ = b.GetNextValue(colIndex, rowIndex)
+			switch typ {
+			case Int64:
+				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Int64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if toFill[colIndex] {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							nextInt, nextRow := b.GetNextInt64(colIndex, rowIndex+1)
+							if nextRow > -1 {
+								newBufValue[rowIndex] = nextInt
+								newBufValid[rowIndex] = true
+							}
+						}
+					}
 				}
-				buf.SetOrDrop(rowIndex, newValue)
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
+			case Float64:
+				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Float64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if toFill[colIndex] {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							nextFloat, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
+							if nextRow > -1 {
+								newBufValue[rowIndex] = nextFloat
+								newBufValid[rowIndex] = true
+							}
+						}
+					}
+				}
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
 			}
-			seriesChannel <- Series{Name: colName, Type: typ, Data: buf}
 		}(colIndex, col.Name)
 	}
 	return newBowFromSeriesChannel(b, seriesChannel)
@@ -204,117 +243,135 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
-			buf := NewBuffer(b.NumRows(), typ, true)
-			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-				newValue := b.GetValue(colIndex, rowIndex)
-				if newValue == nil && toFill[colIndex] {
-					newValue, _ = b.GetPreviousValue(colIndex, rowIndex)
+			switch typ {
+			case Int64:
+				newArray := array.NewInt64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Int64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if toFill[colIndex] {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							prevInt, prevRow := b.GetPreviousInt64(colIndex, rowIndex-1)
+							if prevRow > -1 {
+								newBufValue[rowIndex] = prevInt
+								newBufValid[rowIndex] = true
+							}
+						}
+					}
 				}
-				buf.SetOrDrop(rowIndex, newValue)
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
+			case Float64:
+				newArray := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+				newBufValue := newArray.Float64Values()
+				newBufValid := getValids(newArray.NullBitmapBytes(), len(newBufValue))
+				if toFill[colIndex] {
+					for rowIndex := 0; rowIndex < newArray.Len(); rowIndex++ {
+						if !newBufValid[rowIndex] {
+							prevFloat, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
+							if prevRow > -1 {
+								newBufValue[rowIndex] = prevFloat
+								newBufValid[rowIndex] = true
+							}
+						}
+					}
+				}
+				seriesChannel <- Series{
+					Name: colName,
+					Type: typ,
+					Data: Buffer{Value: newBufValue, Valid: newBufValid},
+				}
 			}
-			seriesChannel <- Series{Name: colName, Type: typ, Data: buf}
 		}(colIndex, col.Name)
 	}
 	return newBowFromSeriesChannel(b, seriesChannel)
 }
 
-func (b *bow) FillPreviousNoConcurrency(colNames ...string) (Bow, error) {
-	toFill, err := colsToFill(b, colNames)
-	if err != nil {
-		return nil, err
-	}
-
-	series := make([]Series, b.NumCols())
-	for colIndex, col := range b.Schema().Fields() {
-		typ := b.GetType(colIndex)
-		buf := NewBuffer(b.NumRows(), typ, true)
-		for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-			newValue := b.GetValue(colIndex, rowIndex)
-			if newValue == nil && toFill[colIndex] {
-				newValue, _ = b.GetPreviousValue(colIndex, rowIndex)
+func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
+	seriesCounter := 0
+	filledSeries := make([]Series, b.NumCols())
+	for s := range seriesChannel {
+		for colIndex, col := range b.Schema().Fields() {
+			if s.Name == col.Name {
+				filledSeries[colIndex] = s
+				seriesCounter++
+				if seriesCounter == b.NumCols() {
+					close(seriesChannel)
+				}
 			}
-			buf.SetOrDrop(rowIndex, newValue)
 		}
-		series[colIndex] = Series{Name: col.Name, Type: typ, Data: buf}
 	}
-	return NewBow(series...)
+	return NewBow(filledSeries...)
 }
 
 // isColSorted returns nil if the column colIndex is sorted or an error otherwise.
-func isColSorted(b Bow, colIndex int, typ Type) error {
-	var row int
-	var curr, next interface{}
-
-	curr = b.GetValue(colIndex, row)
-	if curr == nil {
-		next, row = b.GetNextValue(colIndex, row+1) // skip first nil values
-		if next == nil {
-			return nil // empty column, column sorted
-		}
-	}
-
-	if typ != Int64 && typ != Float64 {
-		err := fmt.Errorf("isColSorted: type unknown")
-		return err
-	}
-
-	var asc bool
-	var currInt, nextInt int64
-	var currFloat, nextFloat float64
-
-	for (typ == Int64 && currInt == nextInt) ||
-		(typ == Float64 && currFloat == nextFloat) { // attempt to compare first two unequal values
-		curr = b.GetValue(colIndex, row)
-		next, row = b.GetNextValue(colIndex, row+1)
-		if next == nil {
-			return nil // only one value, column sorted
-		}
-		if typ == Int64 {
-			currInt = curr.(int64)
-			nextInt = next.(int64)
-			if currInt < nextInt {
-				asc = true
-			}
-		} else if typ == Float64 {
-			currFloat = curr.(float64)
-			nextFloat = next.(float64)
-			if currFloat < nextFloat {
-				asc = true
+func isColSorted(b *bow, colIndex int) error {
+	var rowIndex int
+	var order int8
+	switch b.GetType(colIndex) {
+	case Int64:
+		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
+		values := arr.Int64Values()
+		for arr.IsNull(rowIndex) {
+			rowIndex++
+			if rowIndex == len(values) {
+				return fmt.Errorf("bow: isColSorted: empty column")
 			}
 		}
-		if row == b.NumRows() || row == -1 {
-			return nil // only equal values, column sorted
-		}
-	}
-	for row < b.NumRows() { // compare other values
-		curr = b.GetValue(colIndex, row)
-		next, row = b.GetNextValue(colIndex, row+1)
-		if next == nil {
-			return nil // end of values, column sorted
-		}
-		if typ == Int64 {
-			currInt = curr.(int64)
-			nextInt = next.(int64)
-			if asc && currInt > nextInt {
-				name, errName := b.GetName(colIndex)
-				if errName != nil {
-					return errName
+		curr := values[rowIndex]
+		var next int64
+		rowIndex++
+		for rowIndex < len(values) {
+			if arr.IsValid(rowIndex) {
+				next = values[rowIndex]
+				if order == 0 {
+					if curr > next {
+						order = -1
+					} else if curr < next {
+						order = 1
+					}
 				}
-				err := fmt.Errorf("reference column '%s' is not sorted", name)
-				return err
-			}
-		} else if typ == Float64 {
-			currFloat = curr.(float64)
-			nextFloat = next.(float64)
-			if asc && currFloat > nextFloat {
-				name, errName := b.GetName(colIndex)
-				if errName != nil {
-					return errName
+				if order == -1 && next > curr || order == 1 && next < curr {
+					return fmt.Errorf("bow: isColSorted: column not sorted")
 				}
-				err := fmt.Errorf("reference column '%s' is not sorted", name)
-				return err
+				curr = next
+			}
+			rowIndex++
+		}
+	case Float64:
+		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+		values := arr.Float64Values()
+		for arr.IsNull(rowIndex) {
+			rowIndex++
+			if rowIndex == len(values) {
+				return fmt.Errorf("bow: isColSorted: empty column")
 			}
 		}
+		curr := values[rowIndex]
+		var next float64
+		rowIndex++
+		for rowIndex < len(values) {
+			if arr.IsValid(rowIndex) {
+				next = values[rowIndex]
+				if order == 0 {
+					if curr > next {
+						order = -1
+					} else if curr < next {
+						order = 1
+					}
+				}
+				if order == -1 && next > curr || order == 1 && next < curr {
+					return fmt.Errorf("bow: isColSorted: column not sorted")
+				}
+				curr = next
+			}
+			rowIndex++
+		}
+	default:
+		return fmt.Errorf("bow: isColSorted: data type '%s' not supported", b.GetType(colIndex).String())
 	}
 	return nil
 }
@@ -341,19 +398,20 @@ func colsToFill(b *bow, colNames []string) ([]bool, error) {
 	return toFill, nil
 }
 
-func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
-	seriesCounter := 0
-	filledSeries := make([]Series, b.NumCols())
-	for s := range seriesChannel {
-		for colIndex, col := range b.Schema().Fields() {
-			if s.Name == col.Name {
-				filledSeries[colIndex] = s
-				seriesCounter++
-				if seriesCounter == b.NumCols() {
-					close(seriesChannel)
-				}
-			}
+var bitMask = [8]byte{1, 2, 4, 8, 16, 32, 64, 128}
+
+// bitIsSet returns true if the bit at index i in buf is set (1).
+func bitIsSet(buf []byte, i int) bool { return (buf[uint(i)/8] & bitMask[byte(i)%8]) != 0 }
+
+func getValids(bytes []byte, size int) []bool {
+	valids := make([]bool, size)
+
+	for i := 0; i < size; i++ {
+		if bitIsSet(bytes, i) {
+			valids[i] = true
+		} else {
+			valids[i] = false
 		}
 	}
-	return NewBow(filledSeries...)
+	return valids
 }

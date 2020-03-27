@@ -2,12 +2,14 @@ package bow
 
 import (
 	"errors"
+
 	"fmt"
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
 	"reflect"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
 )
 
 //Bow is a wrapper of apache arrow array record.
@@ -36,6 +38,7 @@ type Bow interface {
 	GetPreviousValues(col1, col2, row int) (v1, v2 interface{}, resultsRow int)
 
 	GetInt64(colIndex, rowIndex int) (int64, bool)
+	GetNextInt64(col, row int) (v int64, resultsRow int)
 	GetPreviousInt64(col, row int) (v int64, resultsRow int)
 
 	GetFloat64(colIndex, rowIndex int) (float64, bool)
@@ -65,7 +68,7 @@ type Bow interface {
 
 	// Handling missing data
 	FillPrevious(colNames ...string) (Bow, error)
-	FillPreviousNoConcurrency(colNames ...string) (Bow, error)
+	FillPrevious2(colNames ...string) (Bow, error)
 	FillNext(colNames ...string) (Bow, error)
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refCol string, toFillCol string) (Bow, error)

@@ -47,18 +47,34 @@ func BenchmarkBow_InnerJoin(b *testing.B) {
 }
 
 var (
-	rows = 100000
-	cols = 1000
+	rows = 10000
+	cols = 100
 )
 
-func BenchmarkFillPrevious_Int_NoConcurrency(b *testing.B) {
-	newBow, err := NewRandomBow(rows, cols, Int64, true)
+func BenchmarkFillNext_Int(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Int64, true, -1, true)
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = newBow.FillPreviousNoConcurrency()
+		_, err = newBow.FillNext()
+		if err != nil {
+			panic("fill error")
+		}
+	}
+}
+
+func BenchmarkFillNext_Float(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Float64, true, -1, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = newBow.FillNext()
 		if err != nil {
 			panic("fill error")
 		}
@@ -66,10 +82,11 @@ func BenchmarkFillPrevious_Int_NoConcurrency(b *testing.B) {
 }
 
 func BenchmarkFillPrevious_Int(b *testing.B) {
-	newBow, err := NewRandomBow(rows, cols, Int64, true)
+	newBow, err := NewRandomBow(rows, cols, Int64, true, -1, true)
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillPrevious()
@@ -77,17 +94,17 @@ func BenchmarkFillPrevious_Int(b *testing.B) {
 			panic("fill error")
 		}
 	}
-
 }
 
-func BenchmarkFillPrevious_Float_NoConcurrency(b *testing.B) {
-	newBow, err := NewRandomBow(rows, cols, Float64, true)
+func BenchmarkFillPrevious2_Int(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Int64, true, -1, true)
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = newBow.FillPreviousNoConcurrency()
+		_, err = newBow.FillPrevious2()
 		if err != nil {
 			panic("fill error")
 		}
@@ -95,15 +112,119 @@ func BenchmarkFillPrevious_Float_NoConcurrency(b *testing.B) {
 }
 
 func BenchmarkFillPrevious_Float(b *testing.B) {
-	newBow, err := NewRandomBow(rows, cols, Float64, true)
+	newBow, err := NewRandomBow(rows, cols, Float64, true, -1, true)
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillPrevious()
 		if err != nil {
 			panic("fill error")
+		}
+	}
+}
+
+func BenchmarkFillPrevious2_Float(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Float64, true, -1, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = newBow.FillPrevious2()
+		if err != nil {
+			panic("fill error")
+		}
+	}
+}
+func BenchmarkFillMean_Int(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Int64, true, -1, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = newBow.FillMean()
+		if err != nil {
+			panic("fill error")
+		}
+	}
+}
+
+func BenchmarkFillMean_Float(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Float64, true, -1, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = newBow.FillMean()
+		if err != nil {
+			panic("fill error")
+		}
+	}
+}
+
+func BenchmarkFillLinear_Int(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Int64, true, 3, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = newBow.FillLinear("3", "6")
+		if err != nil {
+			panic("fill error")
+		}
+	}
+}
+
+func BenchmarkFillLinear_Float(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Float64, true, 3, false)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = newBow.FillLinear("3", "6")
+		if err != nil {
+			panic("fill error")
+		}
+	}
+}
+
+func BenchmarkIsColSorted_Int(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Int64, true, 3, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err = isColSorted(newBow.(*bow), 3)
+		if err != nil {
+			panic("isColSorted error")
+		}
+	}
+}
+func BenchmarkIsColSorted_Float(b *testing.B) {
+	newBow, err := NewRandomBow(rows, cols, Float64, true, 3, true)
+	if err != nil {
+		panic("bow generator error")
+	}
+	defer newBow.Release()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err = isColSorted(newBow.(*bow), 3)
+		if err != nil {
+			panic("isColSorted error")
 		}
 	}
 }

@@ -2,7 +2,7 @@ version: 2 # use CircleCI 2.0
 jobs: # basic units of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     docker: # run the steps with Docker
-      - image: circleci/golang:1.12 #
+      - image: circleci/golang:1.13 #
 
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/test-results # path to where test results will be saved
@@ -59,6 +59,9 @@ jobs: # basic units of work in a run
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
             go test ${PKG} -v -race -cover -covermode=atomic -coverprofile=${COVER_RESULTS}/coverage.cover -timeout 30s \
               | tee ${TEST_RESULTS}/go-test.out
+      - run:
+          name: BENCHMARKS
+          command: go test ./... -run=XXX -bench=. -benchmem
       - save_cache: # Store cache in the /go/pkg directory
           key: v1-pkg-cache
           paths:
