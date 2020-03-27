@@ -56,6 +56,7 @@ func BenchmarkFillNext_Int(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillNext()
@@ -70,6 +71,7 @@ func BenchmarkFillNext_Float(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillNext()
@@ -84,6 +86,7 @@ func BenchmarkFillPrevious_Int(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillPrevious()
@@ -98,6 +101,7 @@ func BenchmarkFillPrevious2_Int(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillPrevious2()
@@ -112,6 +116,7 @@ func BenchmarkFillPrevious_Float(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillPrevious()
@@ -126,6 +131,7 @@ func BenchmarkFillPrevious2_Float(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillPrevious2()
@@ -139,6 +145,7 @@ func BenchmarkFillMean_Int(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillMean()
@@ -153,6 +160,7 @@ func BenchmarkFillMean_Float(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillMean()
@@ -167,6 +175,7 @@ func BenchmarkFillLinear_Int(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillLinear("3", "6")
@@ -181,6 +190,7 @@ func BenchmarkFillLinear_Float(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = newBow.FillLinear("3", "6")
@@ -195,6 +205,7 @@ func BenchmarkIsColSorted_Int(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err = isColSorted(newBow.(*bow), 3)
@@ -208,6 +219,7 @@ func BenchmarkIsColSorted_Float(b *testing.B) {
 	if err != nil {
 		panic("bow generator error")
 	}
+	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err = isColSorted(newBow.(*bow), 3)
