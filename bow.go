@@ -68,7 +68,6 @@ type Bow interface {
 
 	// Handling missing data
 	FillPrevious(colNames ...string) (Bow, error)
-	FillPrevious2(colNames ...string) (Bow, error)
 	FillNext(colNames ...string) (Bow, error)
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refCol string, toFillCol string) (Bow, error)
