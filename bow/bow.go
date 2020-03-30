@@ -3,11 +3,12 @@ package bow
 import (
 	"errors"
 	"fmt"
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
 	"reflect"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
 )
 
 //Bow is a wrapper of apache arrow array record.
@@ -133,17 +134,24 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 }
 
 func AppendBows(bows ...Bow) (Bow, error) {
-	if len(bows) == 0 {
-		return nil, nil
-	}
-	if len(bows) == 1 {
-		return bows[0], nil
+	var bowsNotNil []Bow
+	for _, b := range bows {
+		if b != nil {
+			bowsNotNil = append(bowsNotNil, b)
+		}
 	}
 
-	refBow := bows[0]
+	if len(bowsNotNil) == 0 {
+		return nil, nil
+	}
+	if len(bowsNotNil) == 1 {
+		return bowsNotNil[0], nil
+	}
+
+	refBow := bowsNotNil[0]
 	refSchema := refBow.Schema()
 	var numRows int
-	for _, b := range bows {
+	for _, b := range bowsNotNil {
 		schema := b.Schema()
 		if !schema.Equal(refSchema) {
 			return nil, fmt.Errorf("schema mismatch: got both\n%v\nand\n%v", refSchema, schema)
@@ -163,7 +171,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		}
 
 		bufs[ci] = NewBuffer(numRows, typ, true)
-		for _, b := range bows {
+		for _, b := range bowsNotNil {
 			for ri := 0; ri < b.NumRows(); ri++ {
 				bufs[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
 			}
