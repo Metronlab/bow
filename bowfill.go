@@ -2,6 +2,7 @@ package bow
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/apache/arrow/go/arrow/array"
 )
@@ -19,8 +20,8 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = isColSorted(b, refIndex)
-	if err != nil {
+	if !b.IsColSorted(refIndex) {
+		err := fmt.Errorf("linear interpolation error: reference column is empty or not sorted")
 		return nil, err
 	}
 	toFillIndex, err := b.GetIndex(toFillCol)
@@ -56,9 +57,11 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 							prevRefInt, valid2 := b.GetInt64(refIndex, rowPrev)
 							nextRefInt, valid3 := b.GetInt64(refIndex, rowNext)
 							if valid1 && valid2 && valid3 && nextRefInt-prevRefInt != 0 {
-								newBufValue[rowIndex] = (refInt - prevRefInt) / (nextRefInt - prevRefInt)
-								newBufValue[rowIndex] *= (nextToFillInt - prevToFillInt)
-								newBufValue[rowIndex] += prevToFillInt
+								tmp := float64(refInt) - float64(prevRefInt)
+								tmp /= (float64(nextRefInt) - float64(prevRefInt))
+								tmp *= (float64(nextToFillInt) - float64(prevToFillInt))
+								tmp += float64(prevToFillInt)
+								newBufValue[rowIndex] = int64(math.Round(tmp))
 								newBufValid[rowIndex] = true
 							}
 						}
@@ -132,7 +135,8 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 							prevInt, prevRow := b.GetPreviousInt64(colIndex, rowIndex-1)
 							nextInt, nextRow := b.GetNextInt64(colIndex, rowIndex+1)
 							if prevRow > -1 && nextRow > -1 {
-								newBufValue[rowIndex] = (prevInt + nextInt) / 2
+								tmp := (float64(prevInt) + float64(nextInt)) / 2
+								newBufValue[rowIndex] = int64(math.Round(tmp))
 								newBufValid[rowIndex] = true
 							}
 						}
@@ -305,75 +309,6 @@ func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
 		}
 	}
 	return NewBow(filledSeries...)
-}
-
-// isColSorted returns nil if the column colIndex is sorted or an error otherwise.
-func isColSorted(b *bow, colIndex int) error {
-	var rowIndex int
-	var order int8
-	switch b.GetType(colIndex) {
-	case Int64:
-		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
-		values := arr.Int64Values()
-		for arr.IsNull(rowIndex) {
-			rowIndex++
-			if rowIndex == len(values) {
-				return fmt.Errorf("bow: isColSorted: empty column")
-			}
-		}
-		curr := values[rowIndex]
-		var next int64
-		rowIndex++
-		for rowIndex < len(values) {
-			if arr.IsValid(rowIndex) {
-				next = values[rowIndex]
-				if order == 0 {
-					if curr > next {
-						order = -1
-					} else if curr < next {
-						order = 1
-					}
-				}
-				if order == -1 && next > curr || order == 1 && next < curr {
-					return fmt.Errorf("bow: isColSorted: column not sorted")
-				}
-				curr = next
-			}
-			rowIndex++
-		}
-	case Float64:
-		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
-		values := arr.Float64Values()
-		for arr.IsNull(rowIndex) {
-			rowIndex++
-			if rowIndex == len(values) {
-				return fmt.Errorf("bow: isColSorted: empty column")
-			}
-		}
-		curr := values[rowIndex]
-		var next float64
-		rowIndex++
-		for rowIndex < len(values) {
-			if arr.IsValid(rowIndex) {
-				next = values[rowIndex]
-				if order == 0 {
-					if curr > next {
-						order = -1
-					} else if curr < next {
-						order = 1
-					}
-				}
-				if order == -1 && next > curr || order == 1 && next < curr {
-					return fmt.Errorf("bow: isColSorted: column not sorted")
-				}
-				curr = next
-			}
-			rowIndex++
-		}
-	default:
-		return fmt.Errorf("bow: isColSorted: data type '%s' not supported", b.GetType(colIndex).String())
-	}
-	return nil
 }
 
 // colsToFill returns a bool slice of size b.NumCols

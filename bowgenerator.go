@@ -6,31 +6,76 @@ import (
 	"strconv"
 )
 
-// NewRandomBow generates a new bow filled with random values of type typ, with or without missing data
-// and can include a reference column without missing data which is sorted
-func NewRandomBow(rows, cols int, typ Type, missingData bool, refCol int, ascSort bool) (Bow, error) {
-	if rows < 1 || cols < 1 {
+// RandomBow is
+type RandomBow struct {
+	Rows        int
+	Cols        int
+	DataType    Type
+	MissingData bool
+	RefCol      int
+	AscSort     bool
+}
+
+type Option func(*RandomBow)
+
+func Rows(rows int) Option { return func(f *RandomBow) { f.Rows = rows } }
+
+func Cols(cols int) Option { return func(f *RandomBow) { f.Cols = cols } }
+
+func DataType(typ Type) Option { return func(f *RandomBow) { f.DataType = typ } }
+
+func MissingData(missing bool) Option { return func(f *RandomBow) { f.MissingData = missing } }
+
+func RefCol(refCol int) Option { return func(f *RandomBow) { f.RefCol = refCol } }
+
+func DescSort(ascSort bool) Option { return func(f *RandomBow) { f.AscSort = ascSort } }
+
+// NewRandomBow generates a new random bow filled with the following options:
+//
+// Rows(rows int): number of rows (default 10)
+//
+// Cols(cols int): number of columns (default 10)
+//
+// DataType(typ Type): type of data (default Int64)
+//
+// MissingData(missing bool): enable random missing data (default false)
+//
+// RefCol(refCol int): index of reference column, without missing data and sorted (default no column)
+//
+// DescSort(descSort bool): column index sorted in descending order (default false)
+func NewRandomBow(options ...Option) (Bow, error) {
+	// Default options
+	f := &RandomBow{
+		Rows:     10,
+		Cols:     10,
+		DataType: Int64,
+		RefCol:   -1,
+	}
+	for _, option := range options {
+		option(f)
+	}
+	if f.Rows < 1 || f.Cols < 1 {
 		err := fmt.Errorf("random bow generation error: rows and cols must be positive")
 		return nil, err
 	}
-	if typ != Int64 && typ != Float64 {
+	if f.DataType != Int64 && f.DataType != Float64 {
 		err := fmt.Errorf("random bow generation error: data type must be Int64 or Float64")
 		return nil, err
 	}
-	series := make([]Series, cols)
+	series := make([]Series, f.Cols)
 	for i := range series {
-		if i == refCol {
-			series[i] = newSortedRandomSeries(strconv.Itoa(i), typ, rows, ascSort)
+		if i == f.RefCol {
+			series[i] = newSortedRandomSeries(strconv.Itoa(i), f.DataType, f.Rows, f.AscSort)
 		} else {
-			series[i] = newRandomSeries(strconv.Itoa(i), typ, rows)
+			series[i] = newRandomSeries(strconv.Itoa(i), f.DataType, f.Rows)
 		}
 	}
-	if missingData {
+	if f.MissingData {
 		for sIndex, s := range series {
-			if sIndex != refCol {
-				nils := rand.Intn(rows)
+			if sIndex != f.RefCol {
+				nils := rand.Intn(f.Rows)
 				for j := 0; j < nils; j++ {
-					nils2 := rand.Intn(rows)
+					nils2 := rand.Intn(f.Rows)
 					s.Data.SetOrDrop(nils2, nil)
 				}
 			}

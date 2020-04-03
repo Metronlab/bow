@@ -2,9 +2,10 @@ package bow
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestBow_InnerJoin(t *testing.T) {
@@ -309,5 +310,51 @@ func TestBow_DropNil(t *testing.T) {
 		assert.Nil(t, err)
 		assert.True(t, compacted.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+	})
+}
+
+func TestBow_IsColSorted(t *testing.T) {
+	t.Run("int64", func(t *testing.T) {
+		intBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
+			{-2, 1, nil, nil, -8},
+			{0, nil, 3, 4, 0},
+			{1, nil, nil, 120, nil},
+			{10, 4, 10, 10, -5},
+			{13, nil, nil, nil, nil},
+			{20, 6, 30, 400, -10},
+		})
+		assert.True(t, intBobow.IsColSorted(0))
+		assert.True(t, intBobow.IsColSorted(1))
+		assert.True(t, intBobow.IsColSorted(2))
+		assert.False(t, intBobow.IsColSorted(3))
+		assert.False(t, intBobow.IsColSorted(4))
+	})
+
+	t.Run("float64", func(t *testing.T) {
+		floatBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
+			{-2.0, 1.0, nil, nil, -8.0},
+			{0.0, nil, 3.0, 4.0, 0.0},
+			{1.0, nil, nil, 120.0, nil},
+			{10.0, 4.0, 10.0, 10.0, -5.0},
+			{13.0, nil, nil, nil, nil},
+			{20.0, 6.0, 30.0, 400.0, -10.0},
+		})
+		assert.True(t, floatBobow.IsColSorted(0))
+		assert.True(t, floatBobow.IsColSorted(1))
+		assert.True(t, floatBobow.IsColSorted(2))
+		assert.False(t, floatBobow.IsColSorted(3))
+		assert.False(t, floatBobow.IsColSorted(4))
+	})
+	t.Run("string (unsupported type)", func(t *testing.T) {
+		stringBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b"}, []Type{String, String}, [][]interface{}{
+			{"egr", "rgr"},
+			{"zrr", nil},
+			{"zrfr", nil},
+			{"rgrg", "zefe"},
+			{"zfer", nil},
+			{"sffe", "srre"},
+		})
+		assert.False(t, stringBobow.IsColSorted(0))
+		assert.False(t, stringBobow.IsColSorted(1))
 	})
 }

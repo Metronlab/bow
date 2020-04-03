@@ -3,6 +3,7 @@ package rolling
 import (
 	"errors"
 	"fmt"
+
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/transform"
 )
@@ -241,14 +242,4 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 	}
 
 	return &buf, typ, nil
-}
-
-func (w Window) UnsetInclusive() Window {
-	if !w.IsInclusive {
-		return w
-	}
-	cp := w
-	cp.IsInclusive = false
-	cp.Bow = cp.Bow.NewSlice(0, cp.Bow.NumRows()-1)
-	return cp
 }
