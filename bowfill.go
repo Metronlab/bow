@@ -63,6 +63,9 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 								tmp += float64(prevToFillInt)
 								newBufValue[rowIndex] = int64(math.Round(tmp))
 								newBufValid[rowIndex] = true
+							} else if valid1 && valid2 && valid3 && nextRefInt == prevRefInt {
+								newBufValue[rowIndex] = prevToFillInt
+								newBufValid[rowIndex] = true
 							}
 						}
 					}
@@ -88,6 +91,9 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 								newBufValue[rowIndex] = (refFloat - prevRefFloat) / (nextRefFloat - prevRefFloat)
 								newBufValue[rowIndex] *= (nextToFillFloat - prevToFillFloat)
 								newBufValue[rowIndex] += prevToFillFloat
+								newBufValid[rowIndex] = true
+							} else if valid1 && valid2 && valid3 && nextRefFloat == prevRefFloat {
+								newBufValue[rowIndex] = prevToFillFloat
 								newBufValid[rowIndex] = true
 							}
 						}
