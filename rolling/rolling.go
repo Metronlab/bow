@@ -3,17 +3,9 @@ package rolling
 import (
 	"errors"
 	"fmt"
+
 	"github.com/metronlab/bow"
 )
-
-type Window struct {
-	Bow                 bow.Bow
-	FirstIndex          int // index (across all windows) of first row in this window (-1 if none)
-	IntervalColumnIndex int
-	Start               int64
-	End                 int64
-	IsInclusive         bool
-}
 
 // Rolling allows to process a bow via windows.
 // Use `Fill` and/or `Aggregate` to transform windows.
