@@ -6,46 +6,60 @@ import (
 	"strconv"
 )
 
-// RandomBow is
-type RandomBow struct {
+type randomBowOptions struct {
 	Rows        int
 	Cols        int
 	DataType    Type
 	MissingData bool
 	RefCol      int
-	AscSort     bool
+	DescSort    bool
 }
 
-type Option func(*RandomBow)
+// Option is a type used for self-referential functions
+type Option func(*randomBowOptions)
 
-func Rows(rows int) Option { return func(f *RandomBow) { f.Rows = rows } }
+// Rows defines the number of rows for NewRandomBow
+func Rows(rows int) Option {
+	return func(f *randomBowOptions) {
+		if rows < 1 {
+			panic("NewRandomBow: Rows value must be positive")
+		}
+		f.Rows = rows
+	}
+}
 
-func Cols(cols int) Option { return func(f *RandomBow) { f.Cols = cols } }
+// Cols defines the number of columns for NewRandomBow
+func Cols(cols int) Option {
+	return func(f *randomBowOptions) {
+		if cols < 1 {
+			panic("NewRandomBow: Cols value must be positive")
+		}
+		f.Cols = cols
+	}
+}
 
-func DataType(typ Type) Option { return func(f *RandomBow) { f.DataType = typ } }
+// DataType defines the data type for NewRandomBow
+func DataType(typ Type) Option { return func(f *randomBowOptions) { f.DataType = typ } }
 
-func MissingData(missing bool) Option { return func(f *RandomBow) { f.MissingData = missing } }
+// MissingData defines if the NewRandomBow includes random missing data
+func MissingData(missing bool) Option { return func(f *randomBowOptions) { f.MissingData = missing } }
 
-func RefCol(refCol int) Option { return func(f *RandomBow) { f.RefCol = refCol } }
+// RefCol defines the index of a reference column, which does not include missing data and is sorted
+func RefCol(refCol int) Option { return func(f *randomBowOptions) { f.RefCol = refCol } }
 
-func DescSort(ascSort bool) Option { return func(f *RandomBow) { f.AscSort = ascSort } }
+// DescSort defines the number of rows for NewRandomBow
+func DescSort(descSort bool) Option { return func(f *randomBowOptions) { f.DescSort = descSort } }
 
 // NewRandomBow generates a new random bow filled with the following options:
-//
 // Rows(rows int): number of rows (default 10)
-//
 // Cols(cols int): number of columns (default 10)
-//
-// DataType(typ Type): type of data (default Int64)
-//
+// DataType(typ Type): data type (default Int64)
 // MissingData(missing bool): enable random missing data (default false)
-//
-// RefCol(refCol int): index of reference column, without missing data and sorted (default no column)
-//
+// RefCol(refCol int): defines the index of a reference column, which does not include missing data and is sorted (default -1 = no column)
 // DescSort(descSort bool): column index sorted in descending order (default false)
 func NewRandomBow(options ...Option) (Bow, error) {
-	// Default options
-	f := &RandomBow{
+	// Set default options
+	f := &randomBowOptions{
 		Rows:     10,
 		Cols:     10,
 		DataType: Int64,
@@ -54,10 +68,6 @@ func NewRandomBow(options ...Option) (Bow, error) {
 	for _, option := range options {
 		option(f)
 	}
-	if f.Rows < 1 || f.Cols < 1 {
-		err := fmt.Errorf("random bow generation error: rows and cols must be positive")
-		return nil, err
-	}
 	if f.DataType != Int64 && f.DataType != Float64 {
 		err := fmt.Errorf("random bow generation error: data type must be Int64 or Float64")
 		return nil, err
@@ -65,7 +75,7 @@ func NewRandomBow(options ...Option) (Bow, error) {
 	series := make([]Series, f.Cols)
 	for i := range series {
 		if i == f.RefCol {
-			series[i] = newSortedRandomSeries(strconv.Itoa(i), f.DataType, f.Rows, f.AscSort)
+			series[i] = newSortedRandomSeries(strconv.Itoa(i), f.DataType, f.Rows, f.DescSort)
 		} else {
 			series[i] = newRandomSeries(strconv.Itoa(i), f.DataType, f.Rows)
 		}
@@ -73,9 +83,9 @@ func NewRandomBow(options ...Option) (Bow, error) {
 	if f.MissingData {
 		for sIndex, s := range series {
 			if sIndex != f.RefCol {
-				nils := rand.Intn(f.Rows)
+				nils := rand.Intn(int(f.Rows))
 				for j := 0; j < nils; j++ {
-					nils2 := rand.Intn(f.Rows)
+					nils2 := rand.Intn(int(f.Rows))
 					s.Data.SetOrDrop(nils2, nil)
 				}
 			}
@@ -90,17 +100,32 @@ func newSortedRandomSeries(name string, typ Type, size int, ascSort bool) Series
 		Type: typ,
 		Data: NewBuffer(size, typ, true),
 	}
-	var basei int64
-	var basef float64
-	for row := 0; row < size; row++ {
-		if ascSort {
-			new, _ := ToInt64(randomIncreasingNumber(typ, basei))
-			newSeries.Data.SetOrDrop(row, new)
-			basei += 100
-		} else {
-			new, _ := ToFloat64(randomDecreasingNumber(typ, basef))
-			newSeries.Data.SetOrDrop(row, new)
-			basef -= 100
+	switch typ {
+	case Int64:
+		var base int64
+		for row := 0; row < size; row++ {
+			if ascSort {
+				newValue, _ := ToInt64(randomIncreasingNumber(typ, base))
+				newSeries.Data.SetOrDrop(row, newValue)
+				base += 100
+			} else {
+				newValue, _ := ToInt64(randomDecreasingNumber(typ, base))
+				newSeries.Data.SetOrDrop(row, newValue)
+				base -= 100
+			}
+		}
+	case Float64:
+		var base float64
+		for row := 0; row < size; row++ {
+			if ascSort {
+				newValue, _ := ToFloat64(randomIncreasingNumber(typ, base))
+				newSeries.Data.SetOrDrop(row, newValue)
+				base += 100
+			} else {
+				newValue, _ := ToFloat64(randomDecreasingNumber(typ, base))
+				newSeries.Data.SetOrDrop(row, newValue)
+				base -= 100
+			}
 		}
 	}
 	return newSeries
@@ -125,7 +150,7 @@ func randomNumber(typ Type) interface{} {
 	case Float64:
 		return rand.Float64() * 100
 	default:
-		panic("unknown data type")
+		panic("unsupported data type")
 	}
 }
 
@@ -140,7 +165,7 @@ func randomIncreasingNumber(typ Type, base interface{}) interface{} {
 		add, _ := ToFloat64(randomNumber(Float64))
 		return base + add
 	default:
-		panic("unknown data type")
+		panic("unsupported data type")
 	}
 }
 
@@ -155,6 +180,6 @@ func randomDecreasingNumber(typ Type, base interface{}) interface{} {
 		add, _ := ToFloat64(randomNumber(Float64))
 		return base - add
 	default:
-		panic("unknown data type")
+		panic("unsupported data type")
 	}
 }
