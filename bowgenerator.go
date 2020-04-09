@@ -2,6 +2,8 @@ package bow
 
 import (
 	"fmt"
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
 	"math/rand"
 	"strconv"
 )
@@ -77,70 +79,88 @@ func NewRandomBow(options ...Option) (Bow, error) {
 		if i == f.RefCol {
 			series[i] = newSortedRandomSeries(strconv.Itoa(i), f.DataType, f.Rows, f.DescSort)
 		} else {
-			series[i] = newRandomSeries(strconv.Itoa(i), f.DataType, f.Rows)
-		}
-	}
-	if f.MissingData {
-		for sIndex, s := range series {
-			if sIndex != f.RefCol {
-				nils := rand.Intn(int(f.Rows))
-				for j := 0; j < nils; j++ {
-					nils2 := rand.Intn(int(f.Rows))
-					s.Data.SetOrDrop(nils2, nil)
-				}
-			}
+			series[i] = newRandomSeries(strconv.Itoa(i), f.DataType, f.Rows, f.MissingData)
 		}
 	}
 	return NewBow(series...)
 }
 
 func newSortedRandomSeries(name string, typ Type, size int, ascSort bool) Series {
-	newSeries := Series{
-		Name: name,
-		Type: typ,
-		Data: NewBuffer(size, typ, true),
-	}
+	var newArray array.Interface
+	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	newBuf := NewBuffer(size, typ, true)
 	switch typ {
 	case Int64:
+		b := array.NewInt64Builder(pool)
+		defer b.Release()
 		var base int64
 		for row := 0; row < size; row++ {
 			if ascSort {
 				newValue, _ := ToInt64(randomIncreasingNumber(typ, base))
-				newSeries.Data.SetOrDrop(row, newValue)
+				newBuf.SetOrDrop(row, newValue)
 				base += 100
 			} else {
 				newValue, _ := ToInt64(randomDecreasingNumber(typ, base))
-				newSeries.Data.SetOrDrop(row, newValue)
+				newBuf.SetOrDrop(row, newValue)
 				base -= 100
 			}
 		}
+		b.AppendValues(newBuf.Value.([]int64), newBuf.Valid)
+		newArray = b.NewArray()
 	case Float64:
+		b := array.NewFloat64Builder(pool)
+		defer b.Release()
 		var base float64
 		for row := 0; row < size; row++ {
 			if ascSort {
 				newValue, _ := ToFloat64(randomIncreasingNumber(typ, base))
-				newSeries.Data.SetOrDrop(row, newValue)
+				newBuf.SetOrDrop(row, newValue)
 				base += 100
 			} else {
 				newValue, _ := ToFloat64(randomDecreasingNumber(typ, base))
-				newSeries.Data.SetOrDrop(row, newValue)
+				newBuf.SetOrDrop(row, newValue)
 				base -= 100
 			}
 		}
+		b.AppendValues(newBuf.Value.([]float64), newBuf.Valid)
+		newArray = b.NewArray()
 	}
-	return newSeries
+	return Series{
+		Name:  name,
+		Array: newArray,
+	}
 }
 
-func newRandomSeries(name string, typ Type, size int) Series {
-	newSeries := Series{
-		Name: name,
-		Type: typ,
-		Data: NewBuffer(size, typ, true),
-	}
+func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
+	newBuf := NewBuffer(size, typ, true)
 	for row := 0; row < size; row++ {
-		newSeries.Data.SetOrDrop(row, randomNumber(typ))
+		newBuf.SetOrDrop(row, randomNumber(typ))
 	}
-	return newSeries
+	if missingData {
+		nils := rand.Intn(int(size))
+		for j := 0; j < nils; j++ {
+			nils2 := rand.Intn(int(size))
+			newBuf.SetOrDrop(nils2, nil)
+		}
+	}
+	var newArray array.Interface
+	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	switch typ {
+	case Float64:
+		b := array.NewFloat64Builder(pool)
+		defer b.Release()
+		b.AppendValues(newBuf.Value.([]float64), newBuf.Valid)
+		newArray = b.NewArray()
+	case Int64:
+		b := array.NewInt64Builder(pool)
+		defer b.Release()
+		b.AppendValues(newBuf.Value.([]int64), newBuf.Valid)
+		newArray = b.NewArray()
+	}
+	return Series{
+		Name:  name,
+		Array: newArray,
+	}
 }
 
 func randomNumber(typ Type) interface{} {

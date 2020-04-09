@@ -92,26 +92,18 @@ func benchmarkBow(b *testing.B) {
 				Series = make([]bow.Series, 2)
 				rand.Seed(42)
 				Series[0] = func(size int64) bow.Series {
-					tCol := bow.NewSeries(
-						"time", bow.Int64,
-						make([]int64, size),
-						make([]bool, size),
-					)
+					buf := bow.NewBuffer(int(size), bow.Int64, true)
 					for i := int64(0); i < size; i++ {
-						tCol.Data.Value.([]int64)[i], tCol.Data.Valid[i] = i, true
+						buf.Value.([]int64)[i], buf.Valid[i] = i, true
 					}
-					return tCol
+					return bow.NewSeries("time", bow.Int64, buf.Value, buf.Valid)
 				}(BenchSize)
 				Series[1] = func(size int64) bow.Series {
-					tCol := bow.NewSeries(
-						"value", bow.Float64,
-						make([]float64, size),
-						make([]bool, size),
-					)
+					buf := bow.NewBuffer(int(size), bow.Float64, true)
 					for i := int64(0); i < size; i++ {
-						tCol.Data.Value.([]float64)[i], tCol.Data.Valid[i] = rand.Float64(), true
+						buf.Value.([]float64)[i], buf.Valid[i] = rand.Float64(), true
 					}
-					return tCol
+					return bow.NewSeries("value", bow.Float64, buf.Value, buf.Valid)
 				}(BenchSize)
 			}
 		})
@@ -130,26 +122,18 @@ func benchmarkBow(b *testing.B) {
 				Series = make([]bow.Series, 2)
 				rand.Seed(42)
 				Series[0] = func(size int64) bow.Series {
-					tCol := bow.NewSeries(
-						"time", bow.Int64,
-						make([]int64, size),
-						nil,
-					)
+					buf := bow.NewBuffer(int(size), bow.Int64, true)
 					for i := int64(0); i < size; i++ {
-						tCol.Data.Value.([]int64)[i] = i
+						buf.Value.([]int64)[i] = i
 					}
-					return tCol
+					return bow.NewSeries("time", bow.Int64, buf.Value, nil)
 				}(BenchSize)
 				Series[1] = func(size int64) bow.Series {
-					tCol := bow.NewSeries(
-						"value", bow.Float64,
-						make([]float64, size),
-						nil,
-					)
+					buf := bow.NewBuffer(int(size), bow.Float64, true)
 					for i := int64(0); i < size; i++ {
-						tCol.Data.Value.([]float64)[i] = rand.Float64()
+						buf.Value.([]float64)[i] = rand.Float64()
 					}
-					return tCol
+					return bow.NewSeries("value", bow.Float64, buf.Value, nil)
 				}(BenchSize)
 			}
 		})

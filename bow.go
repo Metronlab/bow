@@ -2,7 +2,6 @@ package bow
 
 import (
 	"errors"
-
 	"fmt"
 	"reflect"
 	"strings"
@@ -17,16 +16,14 @@ import (
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
 type Bow interface {
-	// meet Stringer interface
+	// Meeting Stringer interface
 	String() string
 
 	// Getters
-	// Unused and similar to GetIndex
-	GetColNameIndex(string) int
-
 	GetType(colIndex int) Type
 	GetName(colIndex int) (string, error)
 	GetIndex(colName string) (int, error)
+	GetColNameIndex(string) int
 
 	GetRow(rowIndex int) map[string]interface{}
 
@@ -48,10 +45,11 @@ type Bow interface {
 	GetPreviousFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
 
 	// Iterators
-
 	RowMapIter() chan map[string]interface{}
 
-	InnerJoin(b2 Bow) Bow
+	// Joins
+	InnerJoin(other Bow) Bow
+	OuterJoin(other Bow, onCol string) Bow
 
 	Equal(Bow) bool
 	// todo: design and rethink:
@@ -72,43 +70,68 @@ type Bow interface {
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refCol string, toFillCol string) (Bow, error)
 
-	// Exposed from Record:
+	// Exposed from arrow.Record
 	Release()
 	Retain()
 	Schema() *arrow.Schema
 	Column(i int) array.Interface
-
 	NumRows() int
 	NumCols() int
 
-	IsColSorted(colIndex int) bool
+	IsColSorted(colIndex int) (sorted bool, err error)
 }
 
 type bow struct {
 	indexes             map[string]index
 	marshalJSONRowBased bool
-
 	array.Record
 }
 
-func NewBow(series ...Series) (Bow, error) {
-	record, err := newRecordFromSeries(series...)
-	if err != nil {
-		return nil, err
+func NewBow(series ...Series) (bobow Bow, err error) {
+	if len(series) == 0 {
+		bobow = &bow{}
+		return
 	}
-
-	return &bow{
-		Record: record,
-	}, nil
+	var fields []arrow.Field
+	var cols []array.Interface
+	nrows := int64(series[0].Array.Len())
+	for _, s := range series {
+		if s.Name == "" {
+			err = errors.New("bow: empty Series name")
+			return
+		}
+		if getTypeFromArrowType(s.Array.DataType()) == Unknown {
+			err = fmt.Errorf("bow: unsupported type: %s", s.Array.DataType().Name())
+			return
+		}
+		if int64(s.Array.Len()) != nrows {
+			err = fmt.Errorf("bow: Series '%s' has a length of %d, which is different from the previous ones",
+				s.Name, s.Array.Len())
+			return
+		}
+		newField := arrow.Field{
+			Name: s.Name,
+			Type: s.Array.DataType(),
+		}
+		fields = append(fields, newField)
+		cols = append(cols, s.Array)
+	}
+	schema := arrow.NewSchema(fields, nil)
+	bobow = &bow{
+		Record: array.NewRecord(schema, cols, nrows),
+	}
+	return
 }
 
 func NewBowFromColumnBasedInterfaces(columnsNames []string, types []Type, columns [][]interface{}) (bobow Bow, err error) {
 	if len(columnsNames) != len(columns) {
-		return nil, errors.New("bow: columnsNames name and values doesn't match")
+		err = errors.New("bow: columnsNames and columns array lengths don't match")
+		return
 	}
 
 	if types != nil && len(columnsNames) != len(types) {
-		return nil, errors.New("bow: columnsNames name and types doesn't match")
+		err = errors.New("bow: columnsNames and types array lengths don't match")
+		return
 	}
 
 	series := make([]Series, len(columnsNames))
@@ -127,7 +150,8 @@ func NewBowFromColumnBasedInterfaces(columnsNames []string, types []Type, column
 
 func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]interface{}) (bobow Bow, err error) {
 	if len(rows) <= 0 {
-		return nil, errors.New("bow: empty rows")
+		err = errors.New("bow: empty rows")
+		return
 	}
 	columnBasedRows := make([][]interface{}, len(columnsNames))
 	for column := range columnsNames {
@@ -135,7 +159,8 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 	}
 	for rowI, row := range rows {
 		if len(columnsNames) < len(row) {
-			return nil, errors.New("bow: mismatch between columnsNames names and row len")
+			err = errors.New("bow: mismatch between columnsNames names and row len")
+			return
 		}
 		for colI := range columnsNames {
 			columnBasedRows[colI][rowI] = row[colI]
@@ -144,36 +169,36 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
 }
 
-func AppendBows(bows ...Bow) (Bow, error) {
+func AppendBows(bows ...Bow) (bobow Bow, err error) {
 	if len(bows) == 0 {
-		return nil, nil
+		return
 	}
 	if len(bows) == 1 {
-		return bows[0], nil
+		bobow = bows[0]
+		return
 	}
-
 	refBow := bows[0]
 	refSchema := refBow.Schema()
 	var numRows int
 	for _, b := range bows {
 		schema := b.Schema()
 		if !schema.Equal(refSchema) {
-			return nil, fmt.Errorf("schema mismatch: got both\n%v\nand\n%v", refSchema, schema)
+			err = fmt.Errorf("schema mismatch: got both\n%v\nand\n%v", refSchema, schema)
+			return
 		}
 		numRows += b.NumRows()
 	}
 
 	seriess := make([]Series, refBow.NumCols())
 	bufs := make([]Buffer, refBow.NumCols())
-
+	var name string
 	for ci := 0; ci < refBow.NumCols(); ci++ {
 		var rowOffset int
 		typ := refBow.GetType(ci)
-		name, err := refBow.GetName(ci)
+		name, err = refBow.GetName(ci)
 		if err != nil {
-			return nil, err
+			return
 		}
-
 		bufs[ci] = NewBuffer(numRows, typ, true)
 		for _, b := range bows {
 			for ri := 0; ri < b.NumRows(); ri++ {
@@ -184,7 +209,6 @@ func AppendBows(bows ...Bow) (Bow, error) {
 
 		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
 	}
-
 	return NewBow(seriess...)
 }
 
@@ -203,11 +227,7 @@ func (b *bow) NewValues(columns [][]interface{}) (Bow, error) {
 		if err != nil {
 			return nil, err
 		}
-		seriess[i] = Series{
-			Name: b.Schema().Field(i).Name,
-			Type: typ,
-			Data: buf,
-		}
+		seriess[i] = NewSeries(b.Schema().Field(i).Name, typ, buf.Value, buf.Valid)
 	}
 	return NewBow(seriess...)
 }
@@ -332,100 +352,6 @@ func (b *bow) rowMapIter(mapChan chan map[string]interface{}) {
 	}
 }
 
-func (b *bow) InnerJoin(B2 Bow) Bow {
-	b2, ok := B2.(*bow)
-	if !ok {
-		panic("bow: non bow object pass as argument")
-	}
-
-	// build indexing over column names
-	commonColumns, err := b.seekCommonColumnsNames(b2)
-	if err != nil {
-		panic(err)
-	}
-
-	// build leftOver indexes from b2
-	var rColIndexes []int
-	for i, rField := range b2.Schema().Fields() {
-		if _, ok := commonColumns[rField.Name]; !ok {
-			rColIndexes = append(rColIndexes, i)
-		}
-	}
-
-	for name := range commonColumns {
-		b2.newIndex(name)
-	}
-
-	resultInterfaces := b.innerJoinInColumnBaseInterfaces(b2, commonColumns, rColIndexes)
-
-	columnNames, columnsTypes := b.makeColNamesAndTypesOnJoin(b2, commonColumns, rColIndexes)
-
-	res, err := NewBowFromColumnBasedInterfaces(columnNames, columnsTypes, resultInterfaces)
-	if err != nil {
-		panic(err)
-	}
-	return res
-}
-
-//innerJoinInColumnBaseInterfaces create a column based interface transitory dataframe.
-// TODO: used series directly
-// For each resulting row, every values is filled first with all left bow columns then right uncommon columns
-// If several values are present on right on same indexes, the left indexes/values will be duplicated
-// left bow:         right bow:
-// index col         index col2
-// 1     1           1     1
-//                   1     2
-// result:
-// index col col2
-// 1     1   1
-// 1     1   2
-func (b *bow) innerJoinInColumnBaseInterfaces(b2 *bow, commonColumns map[string]struct{}, rColIndexes []int) [][]interface{} {
-	resultInterfaces := make([][]interface{}, len(b.Schema().Fields())+len(rColIndexes))
-	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-		for _, rValIndex := range b.getRightBowIndexesAtRow(b2, commonColumns, rowIndex) {
-			for colIndex := range b.Schema().Fields() {
-				resultInterfaces[colIndex] = append(resultInterfaces[colIndex], b.GetValue(colIndex, rowIndex))
-			}
-			for i, rColIndex := range rColIndexes {
-				resultInterfaces[len(b.Schema().Fields())+i] =
-					append(resultInterfaces[len(b.Schema().Fields())+i], b2.GetValue(rColIndex, rValIndex))
-			}
-		}
-	}
-	return resultInterfaces
-}
-
-func (b *bow) seekCommonColumnsNames(b2 *bow) (map[string]struct{}, error) {
-	commonColumns := map[string]struct{}{}
-	for _, lField := range b.Schema().Fields() {
-		rField, ok := b2.Schema().FieldByName(lField.Name)
-		if !ok {
-			continue
-		}
-		if rField.Type.ID() != lField.Type.ID() {
-			return nil, errors.New("bow: left and right bow on join columns are of incompatible types: " + lField.Name)
-		}
-		commonColumns[lField.Name] = struct{}{}
-
-	}
-	return commonColumns, nil
-}
-
-func (b *bow) makeColNamesAndTypesOnJoin(
-	b2 *bow, commonColumns map[string]struct{}, rColNotInLIndexes []int) ([]string, []Type) {
-	colNames := make([]string, len(b.Schema().Fields())+len(rColNotInLIndexes))
-	colType := make([]Type, len(b.Schema().Fields())+len(rColNotInLIndexes))
-	for i, f := range b.Schema().Fields() {
-		colNames[i] = f.Name
-		colType[i] = b.GetType(i)
-	}
-	for i, index := range rColNotInLIndexes {
-		colNames[len(b.Schema().Fields())+i] = b2.Schema().Field(index).Name
-		colType[len(b.Schema().Fields())+i] = b2.GetType(index)
-	}
-	return colNames, colType
-}
-
 func (b *bow) Equal(B2 Bow) bool {
 	b2, ok := B2.(*bow)
 	if !ok {
@@ -491,8 +417,8 @@ func (b *bow) NumCols() int {
 }
 
 // IsColSorted returns a boolean whether the column colIndex is sorted or not, skipping nil values.
-// An empty column returns false
-func (b *bow) IsColSorted(colIndex int) bool {
+// An empty column or a data type unsupported returns false and an error
+func (b *bow) IsColSorted(colIndex int) (sorted bool, err error) {
 	var rowIndex int
 	var order int8
 	switch b.GetType(colIndex) {
@@ -502,8 +428,8 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		for arr.IsNull(rowIndex) {
 			rowIndex++
 			if rowIndex == len(values) {
-				fmt.Printf("bow: IsColSorted: empty column")
-				return false
+				err = fmt.Errorf("bow: IsColSorted: empty column")
+				return
 			}
 		}
 		curr := values[rowIndex]
@@ -520,7 +446,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 					}
 				}
 				if order == -1 && next > curr || order == 1 && next < curr {
-					return false
+					return
 				}
 				curr = next
 			}
@@ -532,7 +458,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		for arr.IsNull(rowIndex) {
 			rowIndex++
 			if rowIndex == len(values) {
-				return false
+				return
 			}
 		}
 		curr := values[rowIndex]
@@ -549,15 +475,16 @@ func (b *bow) IsColSorted(colIndex int) bool {
 					}
 				}
 				if order == -1 && next > curr || order == 1 && next < curr {
-					return false
+					return
 				}
 				curr = next
 			}
 			rowIndex++
 		}
 	default:
-		fmt.Printf("bow: IsColSorted: data type '%s' not supported", b.GetType(colIndex).String())
-		return false
+		err = fmt.Errorf("bow: IsColSorted: data type '%s' is not supported", b.GetType(colIndex).String())
+		return
 	}
-	return true
+	sorted = true
+	return
 }

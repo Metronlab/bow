@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBow_Fill(t *testing.T) {
+func TestFill(t *testing.T) {
 	holedInt, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 		{20, 6, 30, 400, -10},
 		{13, nil, nil, nil, nil},
@@ -92,15 +92,17 @@ func TestBow_Fill(t *testing.T) {
 	})
 
 	t.Run("Linear refCol not sorted", func(t *testing.T) {
-		_, err := holedFloat.FillLinear("d", "b")
+		filled, err := holedFloat.FillLinear("d", "b")
+		assert.Nil(t, filled)
 		assert.Error(t, err)
-		_, err = holedInt.FillLinear("d", "b")
+		filled, err = holedInt.FillLinear("d", "b")
+		assert.Nil(t, filled)
 		assert.Error(t, err)
 	})
 
 	t.Run("Mean int64 toFill b", func(t *testing.T) {
 		filled, err := holedInt.FillMean("b")
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 5, nil, nil, nil},
