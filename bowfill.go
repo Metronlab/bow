@@ -40,18 +40,19 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 	}
 
 	seriesChannel := make(chan Series, b.NumCols())
+	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
 			var newArray array.Interface
-			prevData := b.Record.Column(colIndex).Data()
 			if colIndex == toFillIndex {
+				prevData := b.Record.Column(colIndex).Data()
 				switch typ {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							refInt, valid1 := b.GetInt64(refIndex, rowIndex)
 							prevToFillInt, rowPrev := b.GetPreviousInt64(colIndex, rowIndex-1)
@@ -72,14 +73,14 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewInt64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewInt64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
 					values := prevArray.Float64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							refFloat, valid1 := b.GetFloat64(refIndex, rowIndex)
 							prevToFillFloat, rowPrev := b.GetPreviousFloat64(colIndex, rowIndex-1)
@@ -99,12 +100,12 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewFloat64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewFloat64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				}
 			} else {
-				newArray = array.MakeFromData(prevData)
+				newArray = b.Record.Column(colIndex)
 			}
 			seriesChannel <- Series{
 				Name:  colName,
@@ -125,18 +126,19 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	}
 
 	seriesChannel := make(chan Series, b.NumCols())
+	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
 			var newArray array.Interface
-			prevData := b.Record.Column(colIndex).Data()
 			if toFill[colIndex] {
+				prevData := b.Record.Column(colIndex).Data()
 				switch typ {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							prevInt, prevRow := b.GetPreviousInt64(colIndex, rowIndex-1)
 							nextInt, nextRow := b.GetNextInt64(colIndex, rowIndex+1)
@@ -148,14 +150,14 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewInt64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewInt64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
 					values := prevArray.Float64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							prevFloat, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 							nextFloat, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
@@ -166,12 +168,12 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewFloat64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewFloat64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				}
 			} else {
-				newArray = array.MakeFromData(prevData)
+				newArray = b.Record.Column(colIndex)
 			}
 			seriesChannel <- Series{
 				Name:  colName,
@@ -192,18 +194,19 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 	}
 
 	seriesChannel := make(chan Series, b.NumCols())
+	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
 			var newArray array.Interface
-			prevData := b.Record.Column(colIndex).Data()
 			if toFill[colIndex] {
+				prevData := b.Record.Column(colIndex).Data()
 				switch typ {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							nextInt, nextRow := b.GetNextInt64(colIndex, rowIndex+1)
 							if nextRow > -1 {
@@ -213,14 +216,14 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewInt64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewInt64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
 					values := prevArray.Float64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							nextFloat, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 							if nextRow > -1 {
@@ -230,12 +233,12 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewFloat64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewFloat64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				}
 			} else {
-				newArray = array.MakeFromData(prevData)
+				newArray = b.Record.Column(colIndex)
 			}
 			seriesChannel <- Series{
 				Name:  colName,
@@ -256,18 +259,19 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 	}
 
 	seriesChannel := make(chan Series, b.NumCols())
+	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		go func(colIndex int, colName string) {
 			typ := b.GetType(colIndex)
 			var newArray array.Interface
-			prevData := b.Record.Column(colIndex).Data()
 			if toFill[colIndex] {
+				prevData := b.Record.Column(colIndex).Data()
 				switch typ {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							prevInt, prevRow := b.GetPreviousInt64(colIndex, rowIndex-1)
 							if prevRow > -1 {
@@ -277,14 +281,14 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewInt64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewInt64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
 					values := prevArray.Float64Values()
-					valids := getValids(prevArray.NullBitmapBytes(), len(values))
-					for rowIndex := 0; rowIndex < len(valids); rowIndex++ {
+					valids := getValids(prevArray.NullBitmapBytes(), length)
+					for rowIndex := 0; rowIndex < length; rowIndex++ {
 						if !valids[rowIndex] {
 							prevFloat, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 							if prevRow > -1 {
@@ -294,12 +298,12 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 						}
 					}
 					pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-					b := array.NewFloat64Builder(pool)
-					b.AppendValues(values, valids)
-					newArray = b.NewArray()
+					build := array.NewFloat64Builder(pool)
+					build.AppendValues(values, valids)
+					newArray = build.NewArray()
 				}
 			} else {
-				newArray = array.MakeFromData(prevData)
+				newArray = b.Record.Column(colIndex)
 			}
 			seriesChannel <- Series{
 				Name:  colName,

@@ -1,6 +1,7 @@
 package bow
 
 import (
+	"log"
 	"testing"
 )
 
@@ -179,7 +180,10 @@ func BenchmarkIsColSorted_Int(b *testing.B) {
 	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		newBow.IsColSorted(3)
+		_, err := newBow.IsColSorted(3)
+		if err != nil {
+			log.Panicf("IsColSorted error")
+		}
 	}
 }
 func BenchmarkIsColSorted_Float(b *testing.B) {
@@ -190,6 +194,9 @@ func BenchmarkIsColSorted_Float(b *testing.B) {
 	defer newBow.Release()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		newBow.IsColSorted(3)
+		_, err := newBow.IsColSorted(3)
+		if err != nil {
+			log.Panicf("IsColSorted error")
+		}
 	}
 }

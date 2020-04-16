@@ -49,7 +49,7 @@ type Bow interface {
 
 	// Joins
 	InnerJoin(other Bow) Bow
-	OuterJoin(other Bow, onCol string) Bow
+	OuterJoin(other Bow) Bow
 
 	Equal(Bow) bool
 	// todo: design and rethink:
@@ -94,8 +94,15 @@ func NewBow(series ...Series) (bobow Bow, err error) {
 	}
 	var fields []arrow.Field
 	var cols []array.Interface
-	nrows := int64(series[0].Array.Len())
+	var nrows int64
+	if series != nil && series[0].Array != nil {
+		nrows = int64(series[0].Array.Len())
+	}
 	for _, s := range series {
+		if s.Array == nil {
+			err = errors.New("bow: NewBow: empty Series")
+			return
+		}
 		if s.Name == "" {
 			err = errors.New("bow: empty Series name")
 			return
