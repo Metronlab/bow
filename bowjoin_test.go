@@ -148,7 +148,6 @@ func TestOuterJoin3(t *testing.T) {
 	}
 }
 
-/*
 func TestOuterJoin4(t *testing.T) {
 	bow1, err := NewBowFromRowBasedInterfaces([]string{"index1", "col1", "col2", "index2", "col3"},
 		[]Type{Int64, Int64, Int64, Float64, Int64}, [][]interface{}{
@@ -183,20 +182,20 @@ func TestOuterJoin4(t *testing.T) {
 	expected, err := NewBowFromRowBasedInterfaces([]string{"index1", "col1", "col2", "index2", "col3", "col4", "col5"},
 		[]Type{Int64, Int64, Int64, Float64, Int64, Int64, Int64}, [][]interface{}{
 			{2, 20, 22, 0.0, 3, nil, nil},
-			{2, nil, 0, 0.0, 11, nil, nil},
-			{nil, nil, nil, nil, nil, nil, nil},
 			{nil, nil, nil, nil, nil, nil, nil},
 			{5, 4, nil, 2.0, 5, 41, 6},
 			{10, -5, 2, nil, 7, nil, nil},
+			{2, nil, 0, 0.0, 11, nil, nil},
 			{14, nil, 0, 6.0, 0, nil, nil},
 			{0, 0, 0, 0.0, 0, 0, 0},
 			{18, 4, -3, 2.0, -1, nil, nil},
+			{nil, nil, nil, nil, nil, nil, nil},
 			{-5, nil, nil, 30.0, nil, 10, nil},
-			{-5, nil, nil, 30.0, nil, 42, 6},
-			{-5, nil, nil, 30.0, nil, 40, 6},
 			{-3, nil, nil, 1.0, nil, 10, nil},
 			{40, nil, nil, 10.0, nil, 14, 13},
 			{41, nil, nil, 0.0, nil, nil, nil},
+			{-5, nil, nil, 30.0, nil, 42, 6},
+			{-5, nil, nil, 30.0, nil, 40, 6},
 		})
 	require.NoError(t, err)
 	defer expected.Release()
@@ -207,7 +206,7 @@ func TestOuterJoin4(t *testing.T) {
 	if !bow3.Equal(expected) {
 		t.Error(expected, bow3)
 	}
-}*/
+}
 
 func TestInnerJoin(t *testing.T) {
 	bow1, err := NewBowFromRowBasedInterfaces(

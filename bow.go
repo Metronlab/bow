@@ -424,7 +424,7 @@ func (b *bow) NumCols() int {
 }
 
 // IsColSorted returns a boolean whether the column colIndex is sorted or not, skipping nil values.
-// An empty column or a data type unsupported returns false and an error
+// An empty column or an unsupported data type returns false and an error
 func (b *bow) IsColSorted(colIndex int) (sorted bool, err error) {
 	var rowIndex int
 	var order int8

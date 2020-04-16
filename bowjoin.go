@@ -110,10 +110,11 @@ func (b *bow) OuterJoin(other Bow) Bow {
 						for commonRow := 0; commonRow < len(commonRows[1]); commonRow++ {
 							if rightRow == commonRows[1][commonRow] {
 								isRowCommon = true
+								break
 							}
 						}
 						if !isRowCommon {
-							val, valid := right.GetInt64(col, rightRow)
+							val, valid := right.GetInt64(commonCols[left.ColumnName(col)][1], rightRow)
 							if valid {
 								dataArray[newRow] = val
 								validArray[newRow] = true
@@ -153,10 +154,11 @@ func (b *bow) OuterJoin(other Bow) Bow {
 						for commonRow := 0; commonRow < len(commonRows[1]); commonRow++ {
 							if rightRow == commonRows[1][commonRow] {
 								isRowCommon = true
+								break
 							}
 						}
 						if !isRowCommon {
-							val, valid := right.GetFloat64(col, rightRow)
+							val, valid := right.GetFloat64(commonCols[left.ColumnName(col)][1], rightRow)
 							if valid {
 								dataArray[newRow] = val
 								validArray[newRow] = true
@@ -199,6 +201,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 					for commonRow := 0; commonRow < len(commonRows[1]); commonRow++ {
 						if rightRow == commonRows[1][commonRow] {
 							isRowCommon = true
+							break
 						}
 					}
 					if !isRowCommon {
@@ -235,6 +238,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 					for commonRow := 0; commonRow < len(commonRows[1]); commonRow++ {
 						if rightRow == commonRows[1][commonRow] {
 							isRowCommon = true
+							break
 						}
 					}
 					if !isRowCommon {
