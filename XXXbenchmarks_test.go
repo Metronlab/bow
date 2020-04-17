@@ -47,6 +47,12 @@ func BenchmarkJoin(b *testing.B) {
 			bow3.Release()
 		}
 	})
+	b.Run("Inner2", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			bow3 := bow1.InnerJoin2(bow2)
+			bow3.Release()
+		}
+	})
 	b.Run("Outer", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			bow3 := bow1.OuterJoin(bow2)

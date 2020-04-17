@@ -49,6 +49,7 @@ type Bow interface {
 
 	// Joins
 	InnerJoin(other Bow) Bow
+	InnerJoin2(other Bow) Bow
 	OuterJoin(other Bow) Bow
 
 	Equal(Bow) bool

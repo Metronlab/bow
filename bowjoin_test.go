@@ -408,3 +408,134 @@ func TestInnerJoin_NoCommonColumn(t *testing.T) {
 		t.Errorf("Have:\n%v,\nExpect:\n%v", res, expectedBow)
 	}
 }
+
+func TestInnerJoin2(t *testing.T) {
+	bow1, err := NewBowFromRowBasedInterfaces(
+		[]string{"index1", "index2", "col1"},
+		[]Type{Int64, Float64, Int64}, [][]interface{}{
+			{1, 1.1, 1},
+			{1, 1.1, nil},
+			{2, nil, 3},
+			{3, 3.3, 4},
+			{4, 4.4, 5},
+		})
+	require.NoError(t, err)
+	defer bow1.Release()
+
+	bow2, err := NewBowFromRowBasedInterfaces(
+		[]string{"index1", "index2", "col2"},
+		[]Type{Int64, Float64, Int64}, [][]interface{}{
+			{1, 1.1, 1},
+			{2, 0.0, 2},
+			{3, 3.0, 3},
+			{5, 4.4, 4},
+		})
+	require.NoError(t, err)
+	defer bow2.Release()
+
+	expectedBow, err := NewBowFromRowBasedInterfaces(
+		[]string{"index1", "index2", "col1", "col2"},
+		[]Type{Int64, Float64, Int64, Int64}, [][]interface{}{
+			// 1 is present
+			// 1 is present as index 1 and 1.1 are contained twice in bow1 and col1 val is nil
+			// 2 is absent as index2 is false on validity bitmap
+			// 3 is absent as there is no matching "col1" index
+			// 4 is absent as there is no matching "index"
+			{1, 1.1, 1, 1},
+			{1, 1.1, nil, 1},
+		})
+	require.NoError(t, err)
+	defer expectedBow.Release()
+
+	bow3 := bow1.InnerJoin2(bow2)
+	defer bow3.Release()
+	if !bow3.Equal(expectedBow) {
+		t.Error(expectedBow, bow3)
+	}
+}
+
+func TestInnerJoin2_noResultingRow(t *testing.T) {
+	bow1, err := NewBow(
+		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
+		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+	)
+	require.NoError(t, err)
+	defer bow1.Release()
+
+	noResultingValuesBow, err := NewBow(
+		NewSeries("index1", Int64, []int64{10}, nil),
+		NewSeries("col2", Int64, []int64{10}, nil),
+	)
+	require.NoError(t, err)
+	defer noResultingValuesBow.Release()
+
+	expectedBow, err := NewBow(
+		NewSeries("index1", Int64, []int64{}, nil),
+		NewSeries("index2", Float64, []float64{}, nil),
+		NewSeries("col1", Int64, []int64{}, []bool{}),
+		NewSeries("col2", Int64, []int64{}, nil),
+	)
+	require.NoError(t, err)
+	defer expectedBow.Release()
+
+	bow3 := bow1.InnerJoin2(noResultingValuesBow)
+	if !bow3.Equal(expectedBow) {
+		t.Errorf("expect:\n%v\nhave\n%v", expectedBow, bow3)
+	}
+}
+
+func TestInnerJoin2_NonComplyingType(t *testing.T) {
+	bow1, err := NewBow(
+		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
+		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+	)
+	require.NoError(t, err)
+	defer bow1.Release()
+
+	uncomplyingBow, err := NewBow(
+		NewSeries("index1", Float64, []float64{1}, nil),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer uncomplyingBow.Release()
+	defer func() {
+		if r := recover(); r == nil ||
+			r.(error).Error() != "bow: left and right bow on join columns are of incompatible types: index1" {
+			t.Errorf("indexes of bow1 and uncomplyingBow are incompatible and should panic. Have %v, expect %v",
+				r, "bow: left and right bow on join columns are of incompatible types: index1")
+		}
+	}()
+	bow1.InnerJoin2(uncomplyingBow)
+}
+
+func TestInnerJoin2_NoCommonColumn(t *testing.T) {
+	bow1, err := NewBow(
+		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
+		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+	)
+	require.NoError(t, err)
+	defer bow1.Release()
+
+	uncomplyingBow, err := NewBow(
+		NewSeries("index3", Float64, []float64{1.1}, nil),
+	)
+	require.NoError(t, err)
+
+	expectedBow, err := NewBow(
+		NewSeries("index1", Int64, []int64{}, nil),
+		NewSeries("index2", Float64, []float64{}, nil),
+		NewSeries("col1", Int64, []int64{}, nil),
+		NewSeries("index3", Float64, []float64{}, []bool{}),
+	)
+	require.NoError(t, err)
+	defer expectedBow.Release()
+
+	res := bow1.InnerJoin2(uncomplyingBow)
+	if !res.Equal(expectedBow) {
+		t.Errorf("Have:\n%v,\nExpect:\n%v", res, expectedBow)
+	}
+}
