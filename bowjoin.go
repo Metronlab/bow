@@ -599,9 +599,9 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 	for leftRow := 0; len(commonCols) > 0 && leftRow < left.NumRows(); leftRow++ {
 		for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 			isCommon := true
-			for _, colIndex := range commonCols {
+			for _, commonCol := range commonCols {
 				// TODO: improve performance by replacing GetValue by accessing array.Data values directly
-				if left.GetValue(colIndex[0], leftRow) != right.GetValue(colIndex[1], rightRow) {
+				if left.GetValue(commonCol[0], leftRow) != right.GetValue(commonCol[1], rightRow) {
 					isCommon = false
 					continue
 				}
@@ -615,9 +615,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 	newRowNum := len(commonRows[0])
 
 	// Fill newSeries
-	var rightCol int
-	var leftRow int
-	var commonRow int
+	var rightCol, leftRow, commonRow, newRow int
 	newValid := make([]bool, newRowNum)
 	newSeries := make([]Series, newColNum)
 	for col := 0; col < newColNum; col++ {
@@ -632,7 +630,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 			case Int64:
 				leftData := array.NewInt64Data(left.Column(col).Data())
 				newArray := make([]int64, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
 						newValid[newRow] = true
@@ -653,7 +651,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 			case Float64:
 				leftData := array.NewFloat64Data(left.Column(col).Data())
 				newArray := make([]float64, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
 						newValid[newRow] = true
@@ -674,7 +672,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 			case Bool:
 				leftData := array.NewBooleanData(left.Column(col).Data())
 				newArray := make([]bool, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
 						newValid[newRow] = true
@@ -695,7 +693,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 			case String:
 				leftData := array.NewStringData(left.Column(col).Data())
 				newArray := make([]string, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
 						newValid[newRow] = true
@@ -724,7 +722,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 				rightData := array.NewInt64Data(right.Column(rightCol).Data())
 				newArray := make([]int64, newRowNum)
 				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows[0]) && commonRows[0][commonRow] == leftRow && newRow < newRowNum {
 						if right.Column(rightCol).IsValid(commonRows[1][commonRow]) {
 							newArray[newRow] = rightData.Value(commonRows[1][commonRow])
@@ -742,7 +740,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 				rightData := array.NewFloat64Data(right.Column(rightCol).Data())
 				newArray := make([]float64, newRowNum)
 				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows[0]) && commonRows[0][commonRow] == leftRow && newRow < newRowNum {
 						if right.Column(rightCol).IsValid(commonRows[1][commonRow]) {
 							newArray[newRow] = rightData.Value(commonRows[1][commonRow])
@@ -760,7 +758,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 				rightData := array.NewBooleanData(right.Column(rightCol).Data())
 				newArray := make([]bool, newRowNum)
 				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows[0]) && commonRows[0][commonRow] == leftRow && newRow < newRowNum {
 						if right.Column(rightCol).IsValid(commonRows[1][commonRow]) {
 							newArray[newRow] = rightData.Value(commonRows[1][commonRow])
@@ -778,7 +776,7 @@ func (b *bow) InnerJoin2(other Bow) Bow {
 				rightData := array.NewStringData(right.Column(rightCol).Data())
 				newArray := make([]string, newRowNum)
 				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
+				for newRow = 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows[0]) && commonRows[0][commonRow] == leftRow && newRow < newRowNum {
 						if right.Column(rightCol).IsValid(commonRows[1][commonRow]) {
 							newArray[newRow] = rightData.Value(commonRows[1][commonRow])

@@ -35,16 +35,14 @@ func TestGenerator(t *testing.T) {
 		assert.Equal(t, 100, bow.NumRows())
 		assert.Equal(t, 50, bow.NumCols())
 		assert.Equal(t, Float64, bow.GetType(0))
-		sorted, err := bow.IsColSorted(0)
-		assert.NoError(t, err)
+		sorted := bow.IsColSorted(0)
 		assert.True(t, sorted)
 	})
 
 	t.Run("descending sort on last column", func(t *testing.T) {
 		bow, err := NewRandomBow(RefCol(9), DescSort(true))
 		assert.Nil(t, err)
-		sorted, err := bow.IsColSorted(9)
-		assert.NoError(t, err)
+		sorted := bow.IsColSorted(9)
 		assert.True(t, sorted)
 	})
 

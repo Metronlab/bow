@@ -79,7 +79,8 @@ type Bow interface {
 	NumRows() int
 	NumCols() int
 
-	IsColSorted(colIndex int) (sorted bool, err error)
+	IsColEmpty(colIndex int) bool
+	IsColSorted(colIndex int) bool
 }
 
 type bow struct {
@@ -422,77 +423,4 @@ func (b *bow) NumCols() int {
 		return 0
 	}
 	return int(b.Record.NumCols())
-}
-
-// IsColSorted returns a boolean whether the column colIndex is sorted or not, skipping nil values.
-// An empty column or an unsupported data type returns false and an error
-func (b *bow) IsColSorted(colIndex int) (sorted bool, err error) {
-	var rowIndex int
-	var order int8
-	switch b.GetType(colIndex) {
-	case Int64:
-		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
-		values := arr.Int64Values()
-		for arr.IsNull(rowIndex) {
-			rowIndex++
-			if rowIndex == len(values) {
-				err = fmt.Errorf("bow: IsColSorted: empty column")
-				return
-			}
-		}
-		curr := values[rowIndex]
-		var next int64
-		rowIndex++
-		for rowIndex < len(values) {
-			if arr.IsValid(rowIndex) {
-				next = values[rowIndex]
-				if order == 0 {
-					if curr > next {
-						order = -1
-					} else if curr < next {
-						order = 1
-					}
-				}
-				if order == -1 && next > curr || order == 1 && next < curr {
-					return
-				}
-				curr = next
-			}
-			rowIndex++
-		}
-	case Float64:
-		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
-		values := arr.Float64Values()
-		for arr.IsNull(rowIndex) {
-			rowIndex++
-			if rowIndex == len(values) {
-				return
-			}
-		}
-		curr := values[rowIndex]
-		var next float64
-		rowIndex++
-		for rowIndex < len(values) {
-			if arr.IsValid(rowIndex) {
-				next = values[rowIndex]
-				if order == 0 {
-					if curr > next {
-						order = -1
-					} else if curr < next {
-						order = 1
-					}
-				}
-				if order == -1 && next > curr || order == 1 && next < curr {
-					return
-				}
-				curr = next
-			}
-			rowIndex++
-		}
-	default:
-		err = fmt.Errorf("bow: IsColSorted: data type '%s' is not supported", b.GetType(colIndex).String())
-		return
-	}
-	sorted = true
-	return
 }
