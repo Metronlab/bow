@@ -72,8 +72,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 
 func (b *bow) IsColEmpty(colIndex int) bool {
 	var rowIndex int
-	var arr = b.Column(colIndex)
-
+	arr := b.Column(colIndex)
 	for rowIndex < arr.Len() && arr.IsNull(rowIndex) {
 		rowIndex++
 	}

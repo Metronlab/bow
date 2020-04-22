@@ -5,6 +5,7 @@ import (
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
 	"math"
+	"sync"
 )
 
 // FillLinear fills the column toFillCol using the Linear interpolation method according
@@ -45,10 +46,13 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 		return nil, err
 	}
 
-	seriesChannel := make(chan Series, b.NumCols())
+	var wg sync.WaitGroup
+	filledSeries := make([]Series, b.NumCols())
 	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
-		go func(colIndex int, colName string) {
+		wg.Add(1)
+		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+			defer wg.Done()
 			typ := b.GetType(colIndex)
 			if colIndex == toFillIndex {
 				var newArray array.Interface
@@ -111,19 +115,20 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name)
+		}(colIndex, col.Name, &wg)
 	}
-	return newBowFromSeriesChannel(b, seriesChannel)
+	wg.Wait()
+	return NewBow(filledSeries...)
 }
 
 // FillMean fills any row that contains a nil for any of `nilCols`
@@ -148,10 +153,13 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 		}
 	}
 
-	seriesChannel := make(chan Series, b.NumCols())
+	var wg sync.WaitGroup
+	filledSeries := make([]Series, b.NumCols())
 	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
-		go func(colIndex int, colName string) {
+		wg.Add(1)
+		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+			defer wg.Done()
 			typ := b.GetType(colIndex)
 			if toFill[colIndex] {
 				var newArray array.Interface
@@ -193,19 +201,20 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name)
+		}(colIndex, col.Name, &wg)
 	}
-	return newBowFromSeriesChannel(b, seriesChannel)
+	wg.Wait()
+	return NewBow(filledSeries...)
 }
 
 // FillNext fills any row that contains a nil for any of `nilCols`
@@ -217,10 +226,13 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 		return nil, err
 	}
 
-	seriesChannel := make(chan Series, b.NumCols())
+	var wg sync.WaitGroup
+	filledSeries := make([]Series, b.NumCols())
 	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
-		go func(colIndex int, colName string) {
+		wg.Add(1)
+		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+			defer wg.Done()
 			typ := b.GetType(colIndex)
 			if toFill[colIndex] {
 				var newArray array.Interface
@@ -302,19 +314,20 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name)
+		}(colIndex, col.Name, &wg)
 	}
-	return newBowFromSeriesChannel(b, seriesChannel)
+	wg.Wait()
+	return NewBow(filledSeries...)
 }
 
 // FillPrevious fills any row that contains a nil for any of `nilCols`
@@ -326,10 +339,13 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 		return nil, err
 	}
 
-	seriesChannel := make(chan Series, b.NumCols())
+	var wg sync.WaitGroup
+	filledSeries := make([]Series, b.NumCols())
 	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
-		go func(colIndex int, colName string) {
+		wg.Add(1)
+		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+			defer wg.Done()
 			typ := b.GetType(colIndex)
 			if toFill[colIndex] {
 				var newArray array.Interface
@@ -411,35 +427,19 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				seriesChannel <- Series{
+				filledSeries[b.GetColNameIndex(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name)
+		}(colIndex, col.Name, &wg)
 	}
-	return newBowFromSeriesChannel(b, seriesChannel)
-}
-
-func newBowFromSeriesChannel(b *bow, seriesChannel chan Series) (Bow, error) {
-	seriesCounter := 0
-	filledSeries := make([]Series, b.NumCols())
-	for s := range seriesChannel {
-		for colIndex, col := range b.Schema().Fields() {
-			if s.Name == col.Name {
-				filledSeries[colIndex] = s
-				seriesCounter++
-				if seriesCounter == b.NumCols() {
-					close(seriesChannel)
-				}
-			}
-		}
-	}
+	wg.Wait()
 	return NewBow(filledSeries...)
 }
 

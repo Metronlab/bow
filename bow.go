@@ -11,7 +11,7 @@ import (
 	"github.com/apache/arrow/go/arrow/array"
 )
 
-//Bow is a wrapper of apache arrow array record.
+// Bow is a wrapper of apache arrow array record.
 // It was not implemented as a facade shadowing arrow
 // in order to expose low lvl arrow decisions to bow users
 // while arrow is in beta
@@ -49,7 +49,6 @@ type Bow interface {
 
 	// Joins
 	InnerJoin(other Bow) Bow
-	InnerJoin2(other Bow) Bow
 	OuterJoin(other Bow) Bow
 
 	Equal(Bow) bool
@@ -84,7 +83,6 @@ type Bow interface {
 }
 
 type bow struct {
-	indexes             map[string]index
 	marshalJSONRowBased bool
 	array.Record
 }

@@ -1,8 +1,8 @@
 package bow
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ func TestFill(t *testing.T) {
 
 	t.Run("Linear int64 refCol a toFill b (desc)", func(t *testing.T) {
 		filled, err := holedInt.FillLinear("a", "b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 5, nil, nil, nil},
@@ -29,13 +29,13 @@ func TestFill(t *testing.T) {
 			{nil, nil, nil, nil, nil},
 			{-2, 1, nil, nil, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Linear int64 refCol a toFill e (asc)", func(t *testing.T) {
 		filled, err := holedInt.FillLinear("a", "e")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, nil, nil, nil, -7},
@@ -45,13 +45,13 @@ func TestFill(t *testing.T) {
 			{nil, nil, nil, nil, nil},
 			{-2, 1, nil, nil, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Mean int64 toFill b", func(t *testing.T) {
 		filled, err := holedInt.FillMean("b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 5, nil, nil, nil},
@@ -61,13 +61,13 @@ func TestFill(t *testing.T) {
 			{nil, 3, nil, nil, nil},
 			{-2, 1, nil, nil, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Mean int64 toFill all columns", func(t *testing.T) {
 		filled, err := holedInt.FillMean()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 5, 20, 205, -8},
@@ -77,13 +77,13 @@ func TestFill(t *testing.T) {
 			{-1, 3, nil, nil, -4},
 			{-2, 1, nil, nil, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Next int64 toFill b", func(t *testing.T) {
 		filled, err := holedInt.FillNext("b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 4, nil, nil, nil},
@@ -93,13 +93,13 @@ func TestFill(t *testing.T) {
 			{nil, 1, nil, nil, nil},
 			{-2, 1, nil, nil, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Next int64 toFill all columns", func(t *testing.T) {
 		filled, err := holedInt.FillNext()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 4, 10, 10, -5},
@@ -109,13 +109,13 @@ func TestFill(t *testing.T) {
 			{-2, 1, nil, nil, -8},
 			{-2, 1, nil, nil, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Previous int64 toFill b", func(t *testing.T) {
 		filled, err := holedInt.FillPrevious("b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 6, nil, nil, nil},
@@ -125,13 +125,13 @@ func TestFill(t *testing.T) {
 			{nil, 4, nil, nil, nil},
 			{-2, 1, nil, nil, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Previous int64 toFill all columns", func(t *testing.T) {
 		filled, err := holedInt.FillPrevious()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
 			{20, 6, 30, 400, -10},
 			{13, 6, 30, 400, -10},
@@ -141,8 +141,8 @@ func TestFill(t *testing.T) {
 			{0, 4, 3, 4, 0},
 			{-2, 1, 3, 4, -8},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	holedFloat, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
@@ -157,7 +157,7 @@ func TestFill(t *testing.T) {
 
 	t.Run("Linear float64 refCol a toFill b (desc)", func(t *testing.T) {
 		filled, err := holedFloat.FillLinear("a", "b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, 4.6, nil, nil, nil},
@@ -167,13 +167,13 @@ func TestFill(t *testing.T) {
 			{nil, nil, nil, nil, nil},
 			{-2.0, 1.0, nil, nil, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Linear float64 refCol a toFill e (asc)", func(t *testing.T) {
 		filled, err := holedFloat.FillLinear("a", "e")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, nil, nil, nil, -6.5},
@@ -183,8 +183,8 @@ func TestFill(t *testing.T) {
 			{nil, nil, nil, nil, nil},
 			{-2.0, 1.0, nil, nil, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Linear refCol not sorted", func(t *testing.T) {
@@ -198,7 +198,7 @@ func TestFill(t *testing.T) {
 
 	t.Run("Mean float64 toFill b", func(t *testing.T) {
 		filled, err := holedFloat.FillMean("b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, 5.0, nil, nil, nil},
@@ -208,13 +208,13 @@ func TestFill(t *testing.T) {
 			{nil, 2.5, nil, nil, nil},
 			{-2.0, 1.0, nil, nil, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Mean float64 toFill all columns", func(t *testing.T) {
 		filled, err := holedFloat.FillMean()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, 5.0, 20.0, 205.0, -7.5},
@@ -224,13 +224,13 @@ func TestFill(t *testing.T) {
 			{-1.0, 2.5, nil, nil, -4.0},
 			{-2.0, 1.0, nil, nil, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Next float64 toFill b", func(t *testing.T) {
 		filled, err := holedFloat.FillNext("b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, 4.0, nil, nil, nil},
@@ -240,13 +240,13 @@ func TestFill(t *testing.T) {
 			{nil, 1.0, nil, nil, nil},
 			{-2.0, 1.0, nil, nil, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Next float64 toFill all columns", func(t *testing.T) {
 		filled, err := holedFloat.FillNext()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, 4.0, 10.0, 10.0, -5.0},
@@ -256,13 +256,13 @@ func TestFill(t *testing.T) {
 			{-2.0, 1.0, nil, nil, -8.0},
 			{-2.0, 1.0, nil, nil, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Previous float64 toFill b", func(t *testing.T) {
 		filled, err := holedFloat.FillPrevious("b")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, 6.0, nil, nil, nil},
@@ -272,13 +272,13 @@ func TestFill(t *testing.T) {
 			{nil, 4.0, nil, nil, nil},
 			{-2.0, 1.0, nil, nil, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Previous float64 toFill all columns", func(t *testing.T) {
 		filled, err := holedFloat.FillPrevious()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 			{13.0, 6.0, 30.0, 400.0, -10.0},
@@ -288,8 +288,8 @@ func TestFill(t *testing.T) {
 			{0.0, 4.0, 3.0, 4.0, 0.0},
 			{-2.0, 1.0, 3.0, 4.0, -8.0},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	nonNumeric, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Bool, String}, [][]interface{}{
@@ -304,7 +304,7 @@ func TestFill(t *testing.T) {
 
 	t.Run("Previous non numeric", func(t *testing.T) {
 		filled, err := nonNumeric.FillPrevious()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Bool, String}, [][]interface{}{
 			{20, nil, "dgr"},
 			{13, false, "sfr"},
@@ -314,14 +314,14 @@ func TestFill(t *testing.T) {
 			{-1, true, "yop"},
 			{-2, false, "ioi"},
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, filled)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Next non numeric", func(t *testing.T) {
 		filled, err := nonNumeric.FillNext()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Bool, String}, [][]interface{}{
 			{20, false, "dgr"},
 			{13, false, "sfr"},
@@ -331,8 +331,8 @@ func TestFill(t *testing.T) {
 			{-1, true, "ioi"},
 			{-2, false, "ioi"},
 		})
-		assert.NoError(t, err)
-		assert.True(t, filled.Equal(expected), fmt.Sprintf("want %v\ngot %v", expected, filled))
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
 	t.Run("Mean non numeric", func(t *testing.T) {
