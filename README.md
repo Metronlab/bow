@@ -22,11 +22,11 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 * [ ] expose native Arrow IPC
 
 **Features**
-* [x] implement data aggregations
-* [x] implement data interpolations
-* [x] implement innerjoin method
-* [ ] implement Fill methods to handle missing data
-* [ ] implement Outerjoin method
+* [x] implement windowed data aggregations
+* [x] implement windowed data interpolations
+* [x] implement Fill methods to handle missing data
+* [x] implement InnerJoin method
+* [x] implement OuterJoin method
 * [ ] implement Select columns method
 * [ ] implement Apply method
 * [ ] implement facade for all accessible features to simplify usage
