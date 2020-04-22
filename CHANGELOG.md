@@ -1,3 +1,16 @@
+v0.6.0 [2020-04-22]
+-------------------
+
+#### Features
+- Add Fill functions for missing data interpolation
+- Add OuterJoin method
+- Refactor InnerJoin method
+- Add new CI with CircleCI
+- Refactor the sub package bow to have the main functionalities available in the root module
+
+#### How to migrate to v0.6.0
+It is necessary to replace the library import path from github.com/Metronlab/bow/bow to github.com/Metronlab/bow
+
 0.2.0 [2019-02-19]
 -------------------
 
