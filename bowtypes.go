@@ -87,11 +87,6 @@ func (t Type) String() string {
 	return at.Name()
 }
 
-func (t Type) arrowDataType() (arrow.DataType, bool) {
-	adt, ok := mapTypeArrowDataType[t]
-	return adt, ok
-}
-
 func getTypeFromArrowType(arrowType arrow.DataType) Type {
 	t, ok := mapArrowTTypes[arrowType]
 	if !ok {

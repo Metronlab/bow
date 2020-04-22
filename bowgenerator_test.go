@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBow_Generator(t *testing.T) {
+func TestGenerator(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		bow, err := NewRandomBow()
 		assert.Nil(t, err)
@@ -35,13 +35,15 @@ func TestBow_Generator(t *testing.T) {
 		assert.Equal(t, 100, bow.NumRows())
 		assert.Equal(t, 50, bow.NumCols())
 		assert.Equal(t, Float64, bow.GetType(0))
-		assert.True(t, bow.IsColSorted(0))
+		sorted := bow.IsColSorted(0)
+		assert.True(t, sorted)
 	})
 
 	t.Run("descending sort on last column", func(t *testing.T) {
 		bow, err := NewRandomBow(RefCol(9), DescSort(true))
 		assert.Nil(t, err)
-		assert.True(t, bow.IsColSorted(9))
+		sorted := bow.IsColSorted(9)
+		assert.True(t, sorted)
 	})
 
 	t.Run("unsupported data type", func(t *testing.T) {

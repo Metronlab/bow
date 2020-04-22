@@ -1,27 +1,44 @@
 package bow
 
 import (
-	"errors"
-	"fmt"
-	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
 )
 
+// A Series is simply a named Apache Arrow array, which is immutable
 type Series struct {
-	Name string
-	Type Type
-	Data Buffer
+	Name  string
+	Array array.Interface
 }
 
 func NewSeries(name string, t Type, dataArray interface{}, validArray []bool) Series {
+	var newArray array.Interface
+	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	switch t {
+	case Float64:
+		b := array.NewFloat64Builder(pool)
+		defer b.Release()
+		b.AppendValues(dataArray.([]float64), validArray)
+		newArray = b.NewArray()
+	case Int64:
+		b := array.NewInt64Builder(pool)
+		defer b.Release()
+		b.AppendValues(dataArray.([]int64), validArray)
+		newArray = b.NewArray()
+	case Bool:
+		b := array.NewBooleanBuilder(pool)
+		defer b.Release()
+		b.AppendValues(dataArray.([]bool), validArray)
+		newArray = b.NewArray()
+	case String:
+		b := array.NewStringBuilder(pool)
+		defer b.Release()
+		b.AppendValues(dataArray.([]string), validArray)
+		newArray = b.NewArray()
+	}
 	return Series{
-		Name: name,
-		Type: t,
-		Data: Buffer{
-			Value: dataArray,
-			Valid: validArray,
-		},
+		Name:  name,
+		Array: newArray,
 	}
 }
 
@@ -36,64 +53,4 @@ func NewSeriesFromInterfaces(name string, typeOf Type, cells []interface{}) (ser
 		return Series{}, err
 	}
 	return NewSeries(name, typeOf, buf.Value, buf.Valid), nil
-}
-
-func newRecordFromSeries(series ...Series) (array.Record, error) {
-	if len(series) == 0 {
-		return nil, nil
-	}
-
-	var fields []arrow.Field
-
-	for _, s := range series {
-		if s.Name == "" {
-			return nil, errors.New("bow: empty series name")
-		}
-		field := arrow.Field{Name: s.Name}
-
-		var ok bool
-		field.Type, ok = s.Type.arrowDataType()
-		if !ok {
-			return nil, fmt.Errorf("bow: unhandled type: %s", s.Type)
-		}
-
-		fields = append(fields, field)
-	}
-
-	schema := arrow.NewSchema(fields, nil)
-
-	pool := memory.NewGoAllocator()
-	b := array.NewRecordBuilder(pool, schema)
-	defer b.Release()
-
-	for colIndex, s := range series {
-		switch s.Type {
-		case Float64:
-			if len(s.Data.Value.([]float64)) == 0 {
-				return b.NewRecord(), nil
-			}
-			b.Field(colIndex).(*array.Float64Builder).
-				AppendValues(s.Data.Value.([]float64), s.Data.Valid)
-		case Int64:
-			if len(s.Data.Value.([]int64)) == 0 {
-				return b.NewRecord(), nil
-			}
-			b.Field(colIndex).(*array.Int64Builder).
-				AppendValues(s.Data.Value.([]int64), s.Data.Valid)
-		case Bool:
-			if len(s.Data.Value.([]bool)) == 0 {
-				return b.NewRecord(), nil
-			}
-			b.Field(colIndex).(*array.BooleanBuilder).
-				AppendValues(s.Data.Value.([]bool), s.Data.Valid)
-		case String:
-			if len(s.Data.Value.([]string)) == 0 {
-				return b.NewRecord(), nil
-			}
-			b.Field(colIndex).(*array.StringBuilder).
-				AppendValues(s.Data.Value.([]string), s.Data.Valid)
-		}
-	}
-
-	return b.NewRecord(), nil
 }
