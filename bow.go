@@ -23,7 +23,7 @@ type Bow interface {
 	GetType(colIndex int) Type
 	GetName(colIndex int) (string, error)
 	GetIndex(colName string) (int, error)
-	GetColNameIndex(string) int
+	GetColNameIndexUnsafe(string) int
 
 	GetRow(rowIndex int) map[string]interface{}
 

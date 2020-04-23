@@ -115,12 +115,12 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -201,12 +201,12 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -314,12 +314,12 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -427,12 +427,12 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndex(colName)] = Series{
+				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}

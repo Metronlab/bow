@@ -285,13 +285,16 @@ func (b *bow) GetName(colIndex int) (string, error) {
 }
 
 func (b *bow) GetIndex(colName string) (int, error) {
-	index := b.Schema().FieldIndex(colName)
-	if index == -1 {
-		return index, fmt.Errorf("no column '%s'", colName)
+	indices := b.Schema().FieldIndices(colName)
+	if len(indices) == 0 {
+		return -1, fmt.Errorf("no column '%s'", colName)
 	}
-	return index, nil
+	if len(indices) > 1 {
+		return -1, fmt.Errorf("too many column with name '%s'", colName)
+	}
+	return indices[0], nil
 }
 
-func (b *bow) GetColNameIndex(s string) int {
-	return b.Schema().FieldIndex(s)
+func (b *bow) GetColNameIndexUnsafe(s string) int {
+	return b.Schema().FieldIndices(s)[0]
 }
