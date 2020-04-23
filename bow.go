@@ -22,8 +22,7 @@ type Bow interface {
 	// Getters
 	GetType(colIndex int) Type
 	GetName(colIndex int) (string, error)
-	GetIndex(colName string) (int, error)
-	GetColNameIndexUnsafe(string) int
+	GetColumnIndex(colName string) (int, error)
 
 	GetRow(rowIndex int) map[string]interface{}
 
@@ -254,7 +253,7 @@ func (b *bow) DropNil(nilCols ...string) (Bow, error) {
 	nilColIndexes := make([]int, len(nilCols))
 	for i := 0; i < len(nilCols); i++ {
 		var err error
-		nilColIndexes[i], err = b.GetIndex(nilCols[i])
+		nilColIndexes[i], err = b.GetColumnIndex(nilCols[i])
 		if err != nil {
 			return nil, err
 		}

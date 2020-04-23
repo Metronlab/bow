@@ -154,7 +154,7 @@ func (it *intervalRollingIterator) validateAggr(aggr ColumnAggregation, newIndex
 	if aggr.InputName() == "" {
 		return false, fmt.Errorf("aggregation %d has no column name", newIndex)
 	}
-	readIndex, err := it.bow.GetIndex(aggr.InputName())
+	readIndex, err := it.bow.GetColumnIndex(aggr.InputName())
 	if err != nil {
 		return false, err
 	}

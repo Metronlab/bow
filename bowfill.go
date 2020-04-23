@@ -16,7 +16,7 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 		err := fmt.Errorf("bow: FillLinear: reference and column to fill are equal")
 		return nil, err
 	}
-	refIndex, err := b.GetIndex(refCol)
+	refIndex, err := b.GetColumnIndex(refCol)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 	if !sorted {
 		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refCol)
 	}
-	toFillIndex, err := b.GetIndex(toFillCol)
+	toFillIndex, err := b.GetColumnIndex(toFillCol)
 	if err != nil {
 		return nil, err
 	}
@@ -115,12 +115,12 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -201,12 +201,12 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -314,12 +314,12 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -427,12 +427,12 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.GetColNameIndexUnsafe(colName)] = Series{
+				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -455,7 +455,7 @@ func colsToFill(b *bow, colNames []string) ([]bool, error) {
 		}
 	} else {
 		for _, colName := range colNames {
-			foundColIndex, err := b.GetIndex(colName)
+			foundColIndex, err := b.GetColumnIndex(colName)
 			if err != nil {
 				return nil, err
 			}

@@ -284,7 +284,7 @@ func (b *bow) GetName(colIndex int) (string, error) {
 	return b.Schema().Field(colIndex).Name, nil
 }
 
-func (b *bow) GetIndex(colName string) (int, error) {
+func (b *bow) GetColumnIndex(colName string) (int, error) {
 	indices := b.Schema().FieldIndices(colName)
 	if len(indices) == 0 {
 		return -1, fmt.Errorf("no column '%s'", colName)
@@ -295,6 +295,6 @@ func (b *bow) GetIndex(colName string) (int, error) {
 	return indices[0], nil
 }
 
-func (b *bow) GetColNameIndexUnsafe(s string) int {
-	return b.Schema().FieldIndices(s)[0]
+func (b *bow) getColumnIndexUnsafe(colName string) int {
+	return b.Schema().FieldIndices(colName)[0]
 }
