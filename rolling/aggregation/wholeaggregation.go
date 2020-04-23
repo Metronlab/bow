@@ -18,7 +18,7 @@ func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregatio
 		return nil, errors.New(errPrefix + "at least one column aggregation is required")
 	}
 
-	intervalCol, err := b.GetIndex(indexColName)
+	intervalCol, err := b.GetColumnIndex(indexColName)
 	if err != nil {
 		return nil, errors.New(errPrefix + err.Error())
 	}
@@ -43,7 +43,7 @@ func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
 		return fmt.Errorf("no column name")
 	}
 
-	readIndex, err := b.GetIndex(aggr.InputName())
+	readIndex, err := b.GetColumnIndex(aggr.InputName())
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package arrowtests
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/apache/arrow/go/arrow"
@@ -55,18 +54,9 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	events := make([]Event, table.NumRows())
 
 	// Seek schema index for event
-	timeIndex := table.Schema().FieldIndex("time")
-	if timeIndex < 0 {
-		panic(errors.New("impossible to convert record to event"))
-	}
-	valueIndex := table.Schema().FieldIndex("value")
-	if valueIndex < 0 {
-		panic(errors.New("impossible to convert record to event"))
-	}
-	qualityIndex := table.Schema().FieldIndex("quality")
-	if qualityIndex < 0 {
-		panic(errors.New("impossible to convert record to event"))
-	}
+	timeIndex := table.Schema().FieldIndices("time")[0]
+	valueIndex := table.Schema().FieldIndices("value")[0]
+	qualityIndex := table.Schema().FieldIndices("quality")[0]
 
 	// TableReader is able to iter on a table grouping by indexes,
 	// marvellous to do calculation in parallel

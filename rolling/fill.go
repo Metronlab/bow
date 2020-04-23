@@ -85,7 +85,7 @@ func (it *intervalRollingIterator) validateInterpolation(interp *ColumnInterpola
 	if interp.inputName == "" {
 		return false, fmt.Errorf("interpolation %d has no column name", newIndex)
 	}
-	readIndex, err := it.bow.GetIndex(interp.inputName)
+	readIndex, err := it.bow.GetColumnIndex(interp.inputName)
 	if err != nil {
 		return false, err
 	}
