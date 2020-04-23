@@ -2,6 +2,7 @@ package bow
 
 import (
 	"errors"
+	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"sort"
 )
@@ -23,18 +24,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 		return right
 	}
 
-	// Get common columns names and indexes
-	commonCols := make(map[string][]int)
-	for _, lField := range left.Schema().Fields() {
-		rField, commonCol := right.Schema().FieldByName(lField.Name)
-		if commonCol {
-			if rField.Type.ID() != lField.Type.ID() {
-				panic(errors.New("bow: left and right bow on join columns are of incompatible types: " + lField.Name))
-			}
-			commonCols[lField.Name] = append(commonCols[lField.Name], left.Schema().FieldIndex(lField.Name))
-			commonCols[lField.Name] = append(commonCols[lField.Name], right.Schema().FieldIndex(rField.Name))
-		}
-	}
+	commonCols := getCommonCols(left.Schema(), right.Schema())
 
 	// Compute new columns number
 	newColNum := left.NumCols() + right.NumCols() - len(commonCols)
@@ -446,18 +436,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		return right
 	}
 
-	// Get common columns names and indexes
-	commonCols := make(map[string][]int)
-	for _, lField := range left.Schema().Fields() {
-		rField, commonCol := right.Schema().FieldByName(lField.Name)
-		if commonCol {
-			if rField.Type.ID() != lField.Type.ID() {
-				panic(errors.New("bow: left and right bow on join columns are of incompatible types: " + lField.Name))
-			}
-			commonCols[lField.Name] = append(commonCols[lField.Name], left.Schema().FieldIndex(lField.Name))
-			commonCols[lField.Name] = append(commonCols[lField.Name], right.Schema().FieldIndex(rField.Name))
-		}
-	}
+	commonCols := getCommonCols(left.Schema(), right.Schema())
 
 	// Compute new columns number
 	newColNum := left.NumCols() + right.NumCols() - len(commonCols)
@@ -667,4 +646,26 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		panic(err.Error())
 	}
 	return newBow
+}
+
+// getCommonCols return in key column names and corresponding indexes on l / r
+// TODO: improve behavior of multiple column with same name
+func getCommonCols(l, r *arrow.Schema) map[string][]int {
+	commonCols := make(map[string][]int)
+	for _, lField := range l.Fields() {
+		rFields, commonCol := r.FieldsByName(lField.Name)
+		if commonCol {
+			if len(rFields) > 1 {
+				panic("many column carry the same name")
+			}
+			rField := rFields[0]
+			if rField.Type.ID() != lField.Type.ID() {
+				panic(errors.New("bow: left and right bow on join columns are of incompatible types: " + lField.Name))
+			}
+
+			commonCols[lField.Name] = append(commonCols[lField.Name], l.FieldIndices(lField.Name)[0])
+			commonCols[lField.Name] = append(commonCols[lField.Name], r.FieldIndices(lField.Name)[0])
+		}
+	}
+	return commonCols
 }
