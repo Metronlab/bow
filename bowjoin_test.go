@@ -70,6 +70,61 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 }
 
 func TestOuterJoin_simple(t *testing.T) {
+	t.Run("timeSeries like", func(t *testing.T) {
+		bow1, err := NewBowFromRowBasedInterfaces([]string{"a", "b"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{10, 0},
+				{11, 1},
+				{12, 2},
+				{13, 3},
+				{14, 4},
+				{15, 5},
+				{16, 6},
+				{17, 7},
+				{18, 8},
+				{19, 9},
+			})
+		require.NoError(t, err)
+		defer bow1.Release()
+
+		bow2, err := NewBowFromRowBasedInterfaces([]string{"a", "c"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{11, 0},
+				{12, 1},
+				{13, 2},
+				{14, 3},
+				{15, 4},
+				{16, 5},
+				{17, 6},
+				{18, 7},
+				{19, 8},
+				{20, 9},
+			})
+		require.NoError(t, err)
+		defer bow2.Release()
+
+		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"},
+			[]Type{Int64, Int64, Int64}, [][]interface{}{
+				{10, 0, nil},
+				{11, 1, 0},
+				{12, 2, 1},
+				{13, 3, 2},
+				{14, 4, 3},
+				{15, 5, 4},
+				{16, 6, 5},
+				{17, 7, 6},
+				{18, 8, 7},
+				{19, 9, 8},
+				{20, nil, 9},
+			})
+		require.NoError(t, err)
+		defer expected.Release()
+
+		result := bow1.OuterJoin(bow2)
+		defer result.Release()
+		assert.EqualValues(t, expected.String(), result.String())
+	})
+
 	t.Run("with one common column", func(t *testing.T) {
 		bow1, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"},
 			[]Type{Int64, Int64, Int64}, [][]interface{}{
@@ -351,6 +406,59 @@ func TestInnerJoin(t *testing.T) {
 		[]Type{Int64, Float64, Int64, Int64}, [][]interface{}{
 			{1, 1.1, 1, 1},
 			{1, 1.1, nil, 1},
+		})
+	require.NoError(t, err)
+	defer expected.Release()
+
+	result := bow1.InnerJoin(bow2)
+	defer result.Release()
+	assert.EqualValues(t, expected.String(), result.String())
+}
+
+func TestInnerJoin_timeSeries_like(t *testing.T) {
+	bow1, err := NewBowFromRowBasedInterfaces([]string{"a", "b"},
+		[]Type{Int64, Int64}, [][]interface{}{
+			{10, 0},
+			{11, 1},
+			{12, 2},
+			{13, 3},
+			{14, 4},
+			{15, 5},
+			{16, 6},
+			{17, 7},
+			{18, 8},
+			{19, 9},
+		})
+	require.NoError(t, err)
+	defer bow1.Release()
+
+	bow2, err := NewBowFromRowBasedInterfaces([]string{"a", "c"},
+		[]Type{Int64, Int64}, [][]interface{}{
+			{11, 0},
+			{12, 1},
+			{13, 2},
+			{14, 3},
+			{15, 4},
+			{16, 5},
+			{17, 6},
+			{18, 7},
+			{19, 8},
+			{20, 9},
+		})
+	require.NoError(t, err)
+	defer bow2.Release()
+
+	expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"},
+		[]Type{Int64, Int64, Int64}, [][]interface{}{
+			{11, 1, 0},
+			{12, 2, 1},
+			{13, 3, 2},
+			{14, 4, 3},
+			{15, 5, 4},
+			{16, 6, 5},
+			{17, 7, 6},
+			{18, 8, 7},
+			{19, 9, 8},
 		})
 	require.NoError(t, err)
 	defer expected.Release()
