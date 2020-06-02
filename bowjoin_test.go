@@ -77,12 +77,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{11, 1},
 				{12, 2},
 				{13, 3},
-				{14, 4},
-				{15, 5},
-				{16, 6},
-				{17, 7},
-				{18, 8},
-				{19, 9},
 			})
 		require.NoError(t, err)
 		defer bow1.Release()
@@ -93,12 +87,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{12, 1},
 				{13, 2},
 				{14, 3},
-				{15, 4},
-				{16, 5},
-				{17, 6},
-				{18, 7},
-				{19, 8},
-				{20, 9},
 			})
 		require.NoError(t, err)
 		defer bow2.Release()
@@ -109,13 +97,7 @@ func TestOuterJoin_simple(t *testing.T) {
 				{11, 1, 0},
 				{12, 2, 1},
 				{13, 3, 2},
-				{14, 4, 3},
-				{15, 5, 4},
-				{16, 6, 5},
-				{17, 7, 6},
-				{18, 8, 7},
-				{19, 9, 8},
-				{20, nil, 9},
+				{14, nil, 3},
 			})
 		require.NoError(t, err)
 		defer expected.Release()
@@ -422,12 +404,6 @@ func TestInnerJoin_timeSeries_like(t *testing.T) {
 			{11, 1},
 			{12, 2},
 			{13, 3},
-			{14, 4},
-			{15, 5},
-			{16, 6},
-			{17, 7},
-			{18, 8},
-			{19, 9},
 		})
 	require.NoError(t, err)
 	defer bow1.Release()
@@ -438,12 +414,6 @@ func TestInnerJoin_timeSeries_like(t *testing.T) {
 			{12, 1},
 			{13, 2},
 			{14, 3},
-			{15, 4},
-			{16, 5},
-			{17, 6},
-			{18, 7},
-			{19, 8},
-			{20, 9},
 		})
 	require.NoError(t, err)
 	defer bow2.Release()
@@ -453,12 +423,6 @@ func TestInnerJoin_timeSeries_like(t *testing.T) {
 			{11, 1, 0},
 			{12, 2, 1},
 			{13, 3, 2},
-			{14, 4, 3},
-			{15, 5, 4},
-			{16, 6, 5},
-			{17, 7, 6},
-			{18, 8, 7},
-			{19, 9, 8},
 		})
 	require.NoError(t, err)
 	defer expected.Release()
