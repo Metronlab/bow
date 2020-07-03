@@ -10,8 +10,8 @@ func (b *bow) SetMarshalJSONRowBased(rowOriented bool) {
 }
 
 type jsonColSchema struct {
-	Name string
-	Type string
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 type jsonRecord struct {
