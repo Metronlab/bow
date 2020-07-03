@@ -77,8 +77,8 @@ func ExampleBow_MarshalJSON() {
 	fmt.Println(out.String())
 	//output:
 	//{
-	//	"Schema": {
-	//		"Columns": [
+	//	"schema": {
+	//		"fields": [
 	//			{
 	//				"Name": "time",
 	//				"Type": "int64"
@@ -93,7 +93,7 @@ func ExampleBow_MarshalJSON() {
 	//			}
 	//		]
 	//	},
-	//	"Rows": [
+	//	"data": [
 	//		{
 	//			"time": 1,
 	//			"value": 1,
