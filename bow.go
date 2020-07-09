@@ -69,7 +69,7 @@ type Bow interface {
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refCol string, toFillCol string) (Bow, error)
 
-	GetRecord() *array.Record
+	GetRecord() array.Record
 
 	// Exposed from arrow.Record
 	Release()
