@@ -80,16 +80,16 @@ func ExampleBow_MarshalJSON() {
 	//	"schema": {
 	//		"fields": [
 	//			{
-	//				"Name": "time",
-	//				"Type": "int64"
+	//				"name": "time",
+	//				"type": "int64"
 	//			},
 	//			{
-	//				"Name": "value",
-	//				"Type": "int64"
+	//				"name": "value",
+	//				"type": "int64"
 	//			},
 	//			{
-	//				"Name": "valueFromJson",
-	//				"Type": "float64"
+	//				"name": "valueFromJson",
+	//				"type": "float64"
 	//			}
 	//		]
 	//	},

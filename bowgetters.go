@@ -298,3 +298,7 @@ func (b *bow) GetColumnIndex(colName string) (int, error) {
 func (b *bow) getColumnIndexUnsafe(colName string) int {
 	return b.Schema().FieldIndices(colName)[0]
 }
+
+func (b *bow) GetRecord() *array.Record {
+	return &b.Record
+}
