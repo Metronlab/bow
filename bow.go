@@ -3,7 +3,9 @@ package bow
 import (
 	"errors"
 	"fmt"
+	"github.com/apache/arrow/go/arrow/memory"
 	"reflect"
+	"sort"
 	"strings"
 	"text/tabwriter"
 
@@ -62,6 +64,7 @@ type Bow interface {
 	NewValues(columns [][]interface{}) (bobow Bow, err error)
 	NewEmpty() Bow
 	DropNil(nilCols ...string) (Bow, error)
+	SortByCol(colName string) (Bow, error)
 
 	// Handling missing data
 	FillPrevious(colNames ...string) (Bow, error)
@@ -291,6 +294,126 @@ func (b *bow) DropNil(nilCols ...string) (Bow, error) {
 
 	return AppendBows(slices...)
 }
+
+// SortByCol returns a new Bow with the rows sorted by a column in ascending order.
+// Currently, the column to sort by needs to respect the following constraints:
+// - Int64 type only
+// - No nil values
+// - No duplicate values if the column is not already sorted
+// Currently, the other columns need to respect the following constraints:
+// - Float64 type only
+func (b *bow) SortByCol(sortByColName string) (Bow, error) {
+	if b.NumCols() < 1 {
+		return nil, fmt.Errorf("bow: function SortByCol: empty bow")
+	}
+	sortByColIndex, err := b.GetColumnIndex(sortByColName)
+	if err != nil {
+		return nil, fmt.Errorf("bow: function SortByCol: column to sort by not found")
+	}
+	if b.NumRows() == 0 {
+		return b, nil
+	}
+	colData := b.Record.Column(sortByColIndex).Data()
+	valids := make([]bool, b.NumRows())
+	for i := 0; i < b.NumRows(); i++ {
+		valids[i] = true
+	}
+	var newArray array.Interface
+	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	sortedSortByValues := make([]int64, b.NumRows())
+	switch b.GetType(sortByColIndex) {
+	case Int64:
+		colArray := array.NewInt64Data(colData)
+		unsortedSortByValues := colArray.Int64Values()
+
+		// Check if sort by column has nil values
+		valids := getValids(colArray.NullBitmapBytes(), b.NumRows())
+		for i := 0; i < b.NumRows(); i++ {
+			if !valids[i] {
+				return nil, fmt.Errorf("bow: function SortByCol: nil values the column to sort by")
+			}
+		}
+
+		// Stop if sort by column is already sorted
+		if Int64sAreSorted(unsortedSortByValues) {
+			return b, nil
+		}
+
+		// Sort the column values
+		copy(sortedSortByValues, unsortedSortByValues)
+		sort.Sort(Int64Slice(sortedSortByValues))
+
+		// Check if sort by column has duplicate values
+		for i := 1; i < b.NumRows(); i++ {
+			if sortedSortByValues[i] == sortedSortByValues[i-1] {
+				return nil, fmt.Errorf("bow: function SortByCol: duplicate values in the column to sort by")
+			}
+		}
+		build := array.NewInt64Builder(pool)
+		build.AppendValues(sortedSortByValues, valids)
+		newArray = build.NewArray()
+	default:
+		return nil, fmt.Errorf("bow: function SortByCol: unsupported type for the column to sort by (Int64 only)")
+	}
+
+	sortedSeries := make([]Series, b.NumCols())
+	sortedSeries[sortByColIndex] = Series{
+		Name:  sortByColName,
+		Array: newArray,
+	}
+	// Reflect row order changes to the other columns
+	for colIndex, col := range b.Schema().Fields() {
+		if col.Name == sortByColName {
+			continue
+		}
+		var newArray array.Interface
+		pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+		//colData := b.Record.Column(colIndex).Data()
+		switch b.GetType(colIndex) {
+		case Float64:
+			//colArray := array.NewInt64Data(colData)
+			//valids := getValids(colArray.NullBitmapBytes(), b.NumRows())
+
+			newValues := make([]float64, b.NumRows())
+			newValids := make([]bool, b.NumRows())
+
+			i := 0
+			for pointMap := range b.RowMapIter() {
+				for j := 0; j < b.NumRows(); j++ {
+					if pointMap[sortByColName] == sortedSortByValues[j] {
+						if pointMap[col.Name] != nil {
+							newValues[j] = pointMap[col.Name].(float64)
+							newValids[j] = true
+						}
+						break
+					}
+				}
+				i++
+			}
+			build := array.NewFloat64Builder(pool)
+			build.AppendValues(newValues, newValids)
+			newArray = build.NewArray()
+		default:
+			return nil, fmt.Errorf("bow: function SortByCol: unsupported type for other columns (Float64 only)")
+		}
+		sortedSeries[colIndex] = Series{
+			Name:  col.Name,
+			Array: newArray,
+		}
+	}
+	return NewBow(sortedSeries...)
+}
+
+// Int64Slice attaches the methods of Interface to []int64, sorting in increasing order
+// (not-a-number values are treated as less than other values).
+type Int64Slice []int64
+
+func (p Int64Slice) Len() int           { return len(p) }
+func (p Int64Slice) Less(i, j int) bool { return p[i] < p[j] }
+func (p Int64Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+// Int64sAreSorted tests whether a slice of int64s is sorted in increasing order.
+func Int64sAreSorted(a []int64) bool { return sort.IsSorted(Int64Slice(a)) }
 
 func dedupStrings(s []string) []string {
 	seen := make(map[string]struct{}, len(s))
