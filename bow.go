@@ -356,28 +356,24 @@ func (b *bow) SortByCol(sortByColName string) (Bow, error) {
 		return nil, fmt.Errorf("bow: function SortByCol: unsupported type for the column to sort by (Int64 only)")
 	}
 
+	// Fill the sort by column with sorted values
 	sortedSeries := make([]Series, b.NumCols())
 	sortedSeries[sortByColIndex] = Series{
 		Name:  sortByColName,
 		Array: newArray,
 	}
-	// Reflect row order changes to the other columns
+
+	// Reflect row order changes to fill the other columns
 	for colIndex, col := range b.Schema().Fields() {
 		if col.Name == sortByColName {
 			continue
 		}
 		var newArray array.Interface
 		pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-		//colData := b.Record.Column(colIndex).Data()
 		switch b.GetType(colIndex) {
 		case Float64:
-			//colArray := array.NewInt64Data(colData)
-			//valids := getValids(colArray.NullBitmapBytes(), b.NumRows())
-
 			newValues := make([]float64, b.NumRows())
 			newValids := make([]bool, b.NumRows())
-
-			i := 0
 			for pointMap := range b.RowMapIter() {
 				for j := 0; j < b.NumRows(); j++ {
 					if pointMap[sortByColName] == sortedSortByValues[j] {
@@ -388,7 +384,6 @@ func (b *bow) SortByCol(sortByColName string) (Bow, error) {
 						break
 					}
 				}
-				i++
 			}
 			build := array.NewFloat64Builder(pool)
 			build.AppendValues(newValues, newValids)
