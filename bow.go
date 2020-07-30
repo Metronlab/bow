@@ -159,10 +159,6 @@ func NewBowFromColumnBasedInterfaces(columnsNames []string, types []Type, column
 }
 
 func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]interface{}) (bobow Bow, err error) {
-	if len(rows) <= 0 {
-		err = errors.New("bow: empty rows")
-		return
-	}
 	columnBasedRows := make([][]interface{}, len(columnsNames))
 	for column := range columnsNames {
 		columnBasedRows[column] = make([]interface{}, len(rows))
@@ -290,6 +286,7 @@ func (b *bow) DropNil(nilCols ...string) (Bow, error) {
 
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
 // The only type currently supported for the column to sort by is Int64
+// Returns the same Bow if the column is already sorted
 func (b *bow) SortByCol(colName string) (Bow, error) {
 	if b.NumCols() == 0 {
 		return nil, fmt.Errorf("bow: function SortByCol: empty bow")

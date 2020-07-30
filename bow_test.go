@@ -135,6 +135,14 @@ func TestBow_SortByCol(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+	t.Run("no rows", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a"}, []Type{Int64, Float64}, [][]interface{}{})
+		require.NoError(t, err)
+		expected := bobow
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
 	t.Run("ERR: empty bow", func(t *testing.T) {
 		bobow, err := NewBow()
 		require.NoError(t, err)
