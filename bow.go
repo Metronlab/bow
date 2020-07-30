@@ -288,7 +288,7 @@ func (b *bow) DropNil(nilCols ...string) (Bow, error) {
 }
 
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
-// The only type currently supported for the column to sort is Int64
+// The only type currently supported for the column to sort by is Int64
 func (b *bow) SortByCol(colName string) (Bow, error) {
 	if b.NumCols() == 0 {
 		return nil, fmt.Errorf("bow: function SortByCol: empty bow")

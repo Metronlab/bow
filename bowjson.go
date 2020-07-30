@@ -10,15 +10,15 @@ func (b *bow) SetMarshalJSONRowBased(rowOriented bool) {
 }
 
 type jsonColSchema struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Name string
+	Type string
 }
 
 type jsonRecord struct {
 	Schema struct {
-		Fields []jsonColSchema `json:"fields"`
-	} `json:"schema"`
-	Data []map[string]interface{} `json:"data"`
+		Columns []jsonColSchema
+	}
+	Rows []map[string]interface{}
 }
 
 func (b *bow) MarshalJSON() ([]byte, error) {
@@ -28,7 +28,7 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 	}
 	rowBased := jsonRecord{}
 	for _, col := range b.Schema().Fields() {
-		rowBased.Schema.Fields = append(rowBased.Schema.Fields, jsonColSchema{
+		rowBased.Schema.Columns = append(rowBased.Schema.Columns, jsonColSchema{
 			Name: col.Name,
 			Type: col.Type.Name(),
 		})
@@ -37,7 +37,7 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 		if len(row) == 0 {
 			continue
 		}
-		rowBased.Data = append(rowBased.Data, row)
+		rowBased.Rows = append(rowBased.Rows, row)
 	}
 	return json.Marshal(rowBased)
 }
@@ -47,15 +47,15 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &jsonBow); err != nil {
 		return err
 	}
-	if jsonBow.Data != nil {
-		series := make([]Series, len(jsonBow.Schema.Fields))
+	if jsonBow.Rows != nil {
+		series := make([]Series, len(jsonBow.Schema.Columns))
 		i := 0
-		for _, colSchema := range jsonBow.Schema.Fields {
+		for _, colSchema := range jsonBow.Schema.Columns {
 			t := newTypeFromArrowName(colSchema.Type)
-			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Data), func() chan interface{} {
+			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Rows), func() chan interface{} {
 				cellsChan := make(chan interface{})
 				go func(cellsChan chan interface{}, colName string) {
-					for _, row := range jsonBow.Data {
+					for _, row := range jsonBow.Rows {
 						val, ok := row[colName]
 						if !ok {
 							cellsChan <- nil
