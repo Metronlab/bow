@@ -310,17 +310,17 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	switch b.GetType(colIndex) {
 	case Int64:
-		prevValues := array.NewInt64Data(prevData)
-		colValues := prevValues.Int64Values()
-		valids := getValids(prevValues.NullBitmapBytes(), b.NumRows())
-
 		// Build the Int64Col interface to store the row indices before sorting
-		for i := 0; i < b.NumRows(); i++ {
-			colToSortBy = append(colToSortBy, Int64Val{
-				colValues[i],
-				valids[i],
-				i})
-		}
+		colToSortBy.Indices = func() []int {
+			res := make([]int, b.NumRows())
+			for i := range res {
+				res[i] = i
+			}
+			return res
+		}()
+		prevValues := array.NewInt64Data(prevData)
+		colToSortBy.Values = prevValues.Int64Values()
+		colToSortBy.Valids = getValids(prevValues.NullBitmapBytes(), b.NumRows())
 
 		// Stop if sort by column is already sorted
 		if Int64ColIsSorted(colToSortBy) {
@@ -330,17 +330,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		// Sort the column by ascending values
 		sort.Sort(colToSortBy)
 
-		newValues := make([]int64, b.NumRows())
-		newValids := make([]bool, b.NumRows())
-		if colToSortBy != nil {
-			for i := 0; i < b.NumRows(); i++ {
-				newValues[i] = colToSortBy[i].Value
-				newValids[i] = colToSortBy[i].Valid
-			}
-		}
-
 		builder := array.NewInt64Builder(pool)
-		builder.AppendValues(newValues, newValids)
+		builder.AppendValues(colToSortBy.Values, colToSortBy.Valids)
 		newArray = builder.NewArray()
 	default:
 		return nil, fmt.Errorf("bow: function SortByCol: unsupported type for the column to sort by (Int64 only)")
@@ -370,12 +361,10 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			case Int64:
 				prevValues := array.NewInt64Data(prevData)
 				newValues := make([]int64, b.NumRows())
-				if colToSortBy != nil {
-					for i := 0; i < b.NumRows(); i++ {
-						newValues[i] = prevValues.Value(colToSortBy[i].Index)
-						if prevValues.IsValid(colToSortBy[i].Index) {
-							newValids[i] = true
-						}
+				for i := 0; i < b.NumRows(); i++ {
+					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
+					if prevValues.IsValid(colToSortBy.Indices[i]) {
+						newValids[i] = true
 					}
 				}
 				builder := array.NewInt64Builder(pool)
@@ -384,12 +373,10 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			case Float64:
 				prevValues := array.NewFloat64Data(prevData)
 				newValues := make([]float64, b.NumRows())
-				if colToSortBy != nil {
-					for i := 0; i < b.NumRows(); i++ {
-						newValues[i] = prevValues.Value(colToSortBy[i].Index)
-						if prevValues.IsValid(colToSortBy[i].Index) {
-							newValids[i] = true
-						}
+				for i := 0; i < b.NumRows(); i++ {
+					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
+					if prevValues.IsValid(colToSortBy.Indices[i]) {
+						newValids[i] = true
 					}
 				}
 				builder := array.NewFloat64Builder(pool)
@@ -398,12 +385,10 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			case Bool:
 				prevValues := array.NewBooleanData(prevData)
 				newValues := make([]bool, b.NumRows())
-				if colToSortBy != nil {
-					for i := 0; i < b.NumRows(); i++ {
-						newValues[i] = prevValues.Value(colToSortBy[i].Index)
-						if prevValues.IsValid(colToSortBy[i].Index) {
-							newValids[i] = true
-						}
+				for i := 0; i < b.NumRows(); i++ {
+					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
+					if prevValues.IsValid(colToSortBy.Indices[i]) {
+						newValids[i] = true
 					}
 				}
 				builder := array.NewBooleanBuilder(pool)
@@ -412,12 +397,10 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			case String:
 				prevValues := array.NewStringData(prevData)
 				newValues := make([]string, b.NumRows())
-				if colToSortBy != nil {
-					for i := 0; i < b.NumRows(); i++ {
-						newValues[i] = prevValues.Value(colToSortBy[i].Index)
-						if prevValues.IsValid(colToSortBy[i].Index) {
-							newValids[i] = true
-						}
+				for i := 0; i < b.NumRows(); i++ {
+					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
+					if prevValues.IsValid(colToSortBy.Indices[i]) {
+						newValids[i] = true
 					}
 				}
 				builder := array.NewStringBuilder(pool)
@@ -440,22 +423,20 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 // Int64ColIsSorted tests whether a column of int64s is sorted in increasing order.
 func Int64ColIsSorted(col Int64Col) bool { return sort.IsSorted(col) }
 
-// Int64Col attaches the methods of sort.Interface to []Int64Val, sorting in increasing order
+// Int64Col implements the methods of sort.Interface, sorting in increasing order
 // (not-a-number values are treated as less than other values).
-type Int64Col []Int64Val
-
-type Int64Val struct {
-	Value int64
-	Valid bool
-	Index int
+type Int64Col struct {
+	Values  []int64
+	Valids  []bool
+	Indices []int
 }
 
-func (p Int64Col) Len() int           { return len(p) }
-func (p Int64Col) Less(i, j int) bool { return p[i].Value < p[j].Value }
+func (p Int64Col) Len() int           { return len(p.Indices) }
+func (p Int64Col) Less(i, j int) bool { return p.Values[i] < p.Values[j] }
 func (p Int64Col) Swap(i, j int) {
-	p[i].Value, p[j].Value = p[j].Value, p[i].Value
-	p[i].Valid, p[j].Valid = p[j].Valid, p[i].Valid
-	p[i].Index, p[j].Index = p[j].Index, p[i].Index
+	p.Values[i], p.Values[j] = p.Values[j], p.Values[i]
+	p.Valids[i], p.Valids[j] = p.Valids[j], p.Valids[i]
+	p.Indices[i], p.Indices[j] = p.Indices[j], p.Indices[i]
 }
 
 func dedupStrings(s []string) []string {
