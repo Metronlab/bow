@@ -294,10 +294,12 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	if b.NumCols() == 0 {
 		return nil, fmt.Errorf("bow: function SortByCol: empty bow")
 	}
+
 	colIndex, err := b.GetColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: function SortByCol: column to sort by not found")
 	}
+
 	if b.NumRows() == 0 {
 		return b, nil
 	}
@@ -354,12 +356,12 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	// Reflect row order changes to fill the other columns
 	var wg sync.WaitGroup
 	for colIndex, col := range b.Schema().Fields() {
+		if col.Name == colName {
+			continue
+		}
 		wg.Add(1)
 		go func(colIndex int, col arrow.Field, wg *sync.WaitGroup) {
 			defer wg.Done()
-			if col.Name == colName {
-				return
-			}
 			var newArray array.Interface
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 			switch b.GetType(colIndex) {
