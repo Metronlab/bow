@@ -69,8 +69,6 @@ type Bow interface {
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refCol string, toFillCol string) (Bow, error)
 
-	GetRecord() array.Record
-
 	// Exposed from arrow.Record
 	Release()
 	Retain()
@@ -95,9 +93,9 @@ func NewBow(series ...Series) (bobow Bow, err error) {
 	}
 	var fields []arrow.Field
 	var cols []array.Interface
-	var nRows int64
-	if series[0].Array != nil {
-		nRows = int64(series[0].Array.Len())
+	var nrows int64
+	if series != nil && series[0].Array != nil {
+		nrows = int64(series[0].Array.Len())
 	}
 	for _, s := range series {
 		if s.Array == nil {
@@ -112,7 +110,7 @@ func NewBow(series ...Series) (bobow Bow, err error) {
 			err = fmt.Errorf("bow: unsupported type: %s", s.Array.DataType().Name())
 			return
 		}
-		if int64(s.Array.Len()) != nRows {
+		if int64(s.Array.Len()) != nrows {
 			err = fmt.Errorf("bow: Series '%s' has a length of %d, which is different from the previous ones",
 				s.Name, s.Array.Len())
 			return
@@ -126,7 +124,7 @@ func NewBow(series ...Series) (bobow Bow, err error) {
 	}
 	schema := arrow.NewSchema(fields, nil)
 	bobow = &bow{
-		Record: array.NewRecord(schema, cols, nRows),
+		Record: array.NewRecord(schema, cols, nrows),
 	}
 	return
 }
@@ -175,12 +173,6 @@ func NewBowFromRowBasedInterfaces(columnsNames []string, types []Type, rows [][]
 		}
 	}
 	return NewBowFromColumnBasedInterfaces(columnsNames, types, columnBasedRows)
-}
-
-func NewBowFromRecord(rec array.Record) Bow {
-	return &bow{
-		Record: rec,
-	}
 }
 
 func AppendBows(bows ...Bow) (bobow Bow, err error) {
