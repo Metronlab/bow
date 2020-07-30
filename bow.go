@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/apache/arrow/go/arrow"
@@ -351,73 +352,79 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	}
 
 	// Reflect row order changes to fill the other columns
+	var wg sync.WaitGroup
 	for colIndex, col := range b.Schema().Fields() {
-		if col.Name == colName {
-			continue
-		}
-		var newArray array.Interface
-		pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-		switch b.GetType(colIndex) {
-		case Int64:
-			newValues := make([]int64, b.NumRows())
-			newValids := make([]bool, b.NumRows())
-			if colToSortBy != nil {
-				for i := 0; i < b.NumRows(); i++ {
-					newValues[i], newValids[i] = b.GetInt64(colIndex, colToSortBy[i].Index)
-				}
+		wg.Add(1)
+		go func(colIndex int, col arrow.Field, wg *sync.WaitGroup) {
+			defer wg.Done()
+			if col.Name == colName {
+				return
 			}
-			build := array.NewInt64Builder(pool)
-			build.AppendValues(newValues, newValids)
-			newArray = build.NewArray()
-		case Float64:
-			newValues := make([]float64, b.NumRows())
-			newValids := make([]bool, b.NumRows())
-			if colToSortBy != nil {
-				for i := 0; i < b.NumRows(); i++ {
-					newValues[i], newValids[i] = b.GetFloat64(colIndex, colToSortBy[i].Index)
-				}
-			}
-			build := array.NewFloat64Builder(pool)
-			build.AppendValues(newValues, newValids)
-			newArray = build.NewArray()
-		case Bool:
-			newValues := make([]bool, b.NumRows())
-			newValids := make([]bool, b.NumRows())
-			if colToSortBy != nil {
-				for i := 0; i < b.NumRows(); i++ {
-					val := b.GetValue(colIndex, colToSortBy[i].Index)
-					if val != nil {
-						newValues[i] = val.(bool)
-						newValids[i] = true
+			var newArray array.Interface
+			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+			switch b.GetType(colIndex) {
+			case Int64:
+				newValues := make([]int64, b.NumRows())
+				newValids := make([]bool, b.NumRows())
+				if colToSortBy != nil {
+					for i := 0; i < b.NumRows(); i++ {
+						newValues[i], newValids[i] = b.GetInt64(colIndex, colToSortBy[i].Index)
 					}
 				}
-			}
-			build := array.NewBooleanBuilder(pool)
-			build.AppendValues(newValues, newValids)
-			newArray = build.NewArray()
-		case String:
-			newValues := make([]string, b.NumRows())
-			newValids := make([]bool, b.NumRows())
-			if colToSortBy != nil {
-				for i := 0; i < b.NumRows(); i++ {
-					str := b.GetValue(colIndex, colToSortBy[i].Index)
-					if str != nil {
-						newValues[i] = str.(string)
-						newValids[i] = true
+				build := array.NewInt64Builder(pool)
+				build.AppendValues(newValues, newValids)
+				newArray = build.NewArray()
+			case Float64:
+				newValues := make([]float64, b.NumRows())
+				newValids := make([]bool, b.NumRows())
+				if colToSortBy != nil {
+					for i := 0; i < b.NumRows(); i++ {
+						newValues[i], newValids[i] = b.GetFloat64(colIndex, colToSortBy[i].Index)
 					}
 				}
+				build := array.NewFloat64Builder(pool)
+				build.AppendValues(newValues, newValids)
+				newArray = build.NewArray()
+			case Bool:
+				newValues := make([]bool, b.NumRows())
+				newValids := make([]bool, b.NumRows())
+				if colToSortBy != nil {
+					for i := 0; i < b.NumRows(); i++ {
+						val := b.GetValue(colIndex, colToSortBy[i].Index)
+						if val != nil {
+							newValues[i] = val.(bool)
+							newValids[i] = true
+						}
+					}
+				}
+				build := array.NewBooleanBuilder(pool)
+				build.AppendValues(newValues, newValids)
+				newArray = build.NewArray()
+			case String:
+				newValues := make([]string, b.NumRows())
+				newValids := make([]bool, b.NumRows())
+				if colToSortBy != nil {
+					for i := 0; i < b.NumRows(); i++ {
+						str := b.GetValue(colIndex, colToSortBy[i].Index)
+						if str != nil {
+							newValues[i] = str.(string)
+							newValids[i] = true
+						}
+					}
+				}
+				build := array.NewStringBuilder(pool)
+				build.AppendValues(newValues, newValids)
+				newArray = build.NewArray()
+			default:
+				return
 			}
-			build := array.NewStringBuilder(pool)
-			build.AppendValues(newValues, newValids)
-			newArray = build.NewArray()
-		default:
-			return nil, fmt.Errorf("bow: function SortByCol: unsupported type for other columns")
-		}
-		sortedSeries[colIndex] = Series{
-			Name:  col.Name,
-			Array: newArray,
-		}
+			sortedSeries[colIndex] = Series{
+				Name:  col.Name,
+				Array: newArray,
+			}
+		}(colIndex, col, &wg)
 	}
+	wg.Wait()
 	return NewBow(sortedSeries...)
 }
 
