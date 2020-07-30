@@ -21,19 +21,19 @@ func TestBow_SortByCol(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, bobow.String(), sorted.String())
 	})
-	t.Run("simple unsorted", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
-			{10, 2.4, 3.1},
-			{11, 2.8, 5.9},
-			{13, 3.9, 13.4},
-			{12, 2.9, 7.5},
+	t.Run("simple unsorted - all types", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "i", "f", "b", "s"}, []Type{Int64, Int64, Float64, Bool, String}, [][]interface{}{
+			{10, 2, 3.1, true, "ho"},
+			{11, 2, 5.9, false, "la"},
+			{13, 3, 13.4, true, "tal"},
+			{12, 2, 7.5, false, "que"},
 		})
 		require.NoError(t, err)
-		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
-			{10, 2.4, 3.1},
-			{11, 2.8, 5.9},
-			{12, 2.9, 7.5},
-			{13, 3.9, 13.4},
+		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "i", "f", "b", "s"}, []Type{Int64, Int64, Float64, Bool, String}, [][]interface{}{
+			{10, 2, 3.1, true, "ho"},
+			{11, 2, 5.9, false, "la"},
+			{12, 2, 7.5, false, "que"},
+			{13, 3, 13.4, true, "tal"},
 		})
 		require.NoError(t, err)
 		sorted, err := bobow.SortByCol("time")
@@ -158,17 +158,6 @@ func TestBow_SortByCol(t *testing.T) {
 			{12., 2.9, 7.5},
 			{11., 2.8, 5.9},
 			{10., 2.4, 3.1},
-		})
-		require.NoError(t, err)
-		_, err = bobow.SortByCol("time")
-		assert.Error(t, err)
-	})
-	t.Run("ERR: unsupported type - other column", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Int64, Float64}, [][]interface{}{
-			{13, 3, 13.4},
-			{12, 2, 7.5},
-			{11, 2, 5.9},
-			{10, 2, 3.1},
 		})
 		require.NoError(t, err)
 		_, err = bobow.SortByCol("time")

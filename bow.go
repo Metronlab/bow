@@ -288,7 +288,7 @@ func (b *bow) DropNil(nilCols ...string) (Bow, error) {
 }
 
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
-// Currently, the only type supported for the column to sort by Int64
+// The only type currently supported for the column to sort is Int64
 func (b *bow) SortByCol(colName string) (Bow, error) {
 	if b.NumCols() == 0 {
 		return nil, fmt.Errorf("bow: function SortByCol: empty bow")
@@ -358,6 +358,17 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		var newArray array.Interface
 		pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 		switch b.GetType(colIndex) {
+		case Int64:
+			newValues := make([]int64, b.NumRows())
+			newValids := make([]bool, b.NumRows())
+			if colToSortBy != nil {
+				for i := 0; i < b.NumRows(); i++ {
+					newValues[i], newValids[i] = b.GetInt64(colIndex, colToSortBy[i].Index)
+				}
+			}
+			build := array.NewInt64Builder(pool)
+			build.AppendValues(newValues, newValids)
+			newArray = build.NewArray()
 		case Float64:
 			newValues := make([]float64, b.NumRows())
 			newValids := make([]bool, b.NumRows())
@@ -369,8 +380,38 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			build := array.NewFloat64Builder(pool)
 			build.AppendValues(newValues, newValids)
 			newArray = build.NewArray()
+		case Bool:
+			newValues := make([]bool, b.NumRows())
+			newValids := make([]bool, b.NumRows())
+			if colToSortBy != nil {
+				for i := 0; i < b.NumRows(); i++ {
+					val := b.GetValue(colIndex, colToSortBy[i].Index)
+					if val != nil {
+						newValues[i] = val.(bool)
+						newValids[i] = true
+					}
+				}
+			}
+			build := array.NewBooleanBuilder(pool)
+			build.AppendValues(newValues, newValids)
+			newArray = build.NewArray()
+		case String:
+			newValues := make([]string, b.NumRows())
+			newValids := make([]bool, b.NumRows())
+			if colToSortBy != nil {
+				for i := 0; i < b.NumRows(); i++ {
+					str := b.GetValue(colIndex, colToSortBy[i].Index)
+					if str != nil {
+						newValues[i] = str.(string)
+						newValids[i] = true
+					}
+				}
+			}
+			build := array.NewStringBuilder(pool)
+			build.AppendValues(newValues, newValids)
+			newArray = build.NewArray()
 		default:
-			return nil, fmt.Errorf("bow: function SortByCol: unsupported type for other columns (Float64 only)")
+			return nil, fmt.Errorf("bow: function SortByCol: unsupported type for other columns")
 		}
 		sortedSeries[colIndex] = Series{
 			Name:  col.Name,
