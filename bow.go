@@ -364,10 +364,10 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			defer wg.Done()
 			var newArray array.Interface
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+			newValids := make([]bool, b.NumRows())
 			switch b.GetType(colIndex) {
 			case Int64:
 				newValues := make([]int64, b.NumRows())
-				newValids := make([]bool, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
 						newValues[i], newValids[i] = b.GetInt64(colIndex, colToSortBy[i].Index)
@@ -378,7 +378,6 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				newArray = build.NewArray()
 			case Float64:
 				newValues := make([]float64, b.NumRows())
-				newValids := make([]bool, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
 						newValues[i], newValids[i] = b.GetFloat64(colIndex, colToSortBy[i].Index)
@@ -389,7 +388,6 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				newArray = build.NewArray()
 			case Bool:
 				newValues := make([]bool, b.NumRows())
-				newValids := make([]bool, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
 						val := b.GetValue(colIndex, colToSortBy[i].Index)
@@ -404,7 +402,6 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				newArray = build.NewArray()
 			case String:
 				newValues := make([]string, b.NumRows())
-				newValids := make([]bool, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
 						str := b.GetValue(colIndex, colToSortBy[i].Index)
@@ -433,7 +430,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 // Int64ColIsSorted tests whether a column of int64s is sorted in increasing order.
 func Int64ColIsSorted(col Int64Col) bool { return sort.IsSorted(col) }
 
-// Int64Col attaches the methods of Interface to []int64, sorting in increasing order
+// Int64Col attaches the methods of sort.Interface to []Int64Val, sorting in increasing order
 // (not-a-number values are treated as less than other values).
 type Int64Col []Int64Val
 
