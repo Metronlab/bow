@@ -365,34 +365,43 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			var newArray array.Interface
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 			newValids := make([]bool, b.NumRows())
+			prevData := b.Record.Column(colIndex).Data()
 			switch b.GetType(colIndex) {
 			case Int64:
+				prevArray := array.NewInt64Data(prevData)
 				newValues := make([]int64, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
-						newValues[i], newValids[i] = b.GetInt64(colIndex, colToSortBy[i].Index)
+						newValues[i] = prevArray.Value(colToSortBy[i].Index)
+						if prevArray.IsValid(colToSortBy[i].Index) {
+							newValids[i] = true
+						}
 					}
 				}
 				build := array.NewInt64Builder(pool)
 				build.AppendValues(newValues, newValids)
 				newArray = build.NewArray()
 			case Float64:
+				prevArray := array.NewFloat64Data(prevData)
 				newValues := make([]float64, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
-						newValues[i], newValids[i] = b.GetFloat64(colIndex, colToSortBy[i].Index)
+						newValues[i] = prevArray.Value(colToSortBy[i].Index)
+						if prevArray.IsValid(colToSortBy[i].Index) {
+							newValids[i] = true
+						}
 					}
 				}
 				build := array.NewFloat64Builder(pool)
 				build.AppendValues(newValues, newValids)
 				newArray = build.NewArray()
 			case Bool:
+				prevArray := array.NewBooleanData(prevData)
 				newValues := make([]bool, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
-						val := b.GetValue(colIndex, colToSortBy[i].Index)
-						if val != nil {
-							newValues[i] = val.(bool)
+						newValues[i] = prevArray.Value(colToSortBy[i].Index)
+						if prevArray.IsValid(colToSortBy[i].Index) {
 							newValids[i] = true
 						}
 					}
@@ -401,12 +410,12 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				build.AppendValues(newValues, newValids)
 				newArray = build.NewArray()
 			case String:
+				prevArray := array.NewStringData(prevData)
 				newValues := make([]string, b.NumRows())
 				if colToSortBy != nil {
 					for i := 0; i < b.NumRows(); i++ {
-						str := b.GetValue(colIndex, colToSortBy[i].Index)
-						if str != nil {
-							newValues[i] = str.(string)
+						newValues[i] = prevArray.Value(colToSortBy[i].Index)
+						if prevArray.IsValid(colToSortBy[i].Index) {
 							newValids[i] = true
 						}
 					}
@@ -415,7 +424,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				build.AppendValues(newValues, newValids)
 				newArray = build.NewArray()
 			default:
-				return
+				panic(fmt.Sprintf("bow: SortByCol function: unhandled type %s",
+					b.Schema().Field(colIndex).Type.Name()))
 			}
 			sortedSeries[colIndex] = Series{
 				Name:  col.Name,
