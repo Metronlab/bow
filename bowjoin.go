@@ -29,7 +29,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 	// Compute new columns number
 	newColNum := left.NumCols() + right.NumCols() - len(commonCols)
 
-	// Get common rows indexes
+	// Get common rows indices
 	var commonRows struct{ l, r []int }
 	for leftRow := 0; len(commonCols) > 0 && leftRow < left.NumRows(); leftRow++ {
 		for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
@@ -88,6 +88,8 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Int64:
 				leftData := array.NewInt64Data(left.Column(col).Data())
 				newArray := make([]int64, newRowNum)
+
+				// Fill rows from left bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
@@ -103,7 +105,9 @@ func (b *bow) OuterJoin(other Bow) Bow {
 						}
 						commonRow++
 					}
-					leftRow++
+					if leftRow++; leftRow >= left.NumRows() {
+						break
+					}
 				}
 
 				// Fill remaining rows from right bow if column is common
@@ -131,6 +135,8 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Float64:
 				leftData := array.NewFloat64Data(left.Column(col).Data())
 				newArray := make([]float64, newRowNum)
+
+				// Fill rows from left bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
@@ -146,7 +152,9 @@ func (b *bow) OuterJoin(other Bow) Bow {
 						}
 						commonRow++
 					}
-					leftRow++
+					if leftRow++; leftRow >= left.NumRows() {
+						break
+					}
 				}
 
 				// Fill remaining rows from right bow if column is common
@@ -174,6 +182,8 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Bool:
 				leftData := array.NewBooleanData(left.Column(col).Data())
 				newArray := make([]bool, newRowNum)
+
+				// Fill rows from left bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
@@ -189,7 +199,9 @@ func (b *bow) OuterJoin(other Bow) Bow {
 						}
 						commonRow++
 					}
-					leftRow++
+					if leftRow++; leftRow >= left.NumRows() {
+						break
+					}
 				}
 
 				// Fill remaining rows from right bow if column is common
@@ -217,6 +229,8 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case String:
 				leftData := array.NewStringData(left.Column(col).Data())
 				newArray := make([]string, newRowNum)
+
+				// Fill rows from left bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					if left.Column(col).IsValid(leftRow) {
 						newArray[newRow] = leftData.Value(leftRow)
@@ -232,7 +246,9 @@ func (b *bow) OuterJoin(other Bow) Bow {
 						}
 						commonRow++
 					}
-					leftRow++
+					if leftRow++; leftRow >= left.NumRows() {
+						break
+					}
 				}
 
 				// Fill remaining rows from right bow if column is common
@@ -267,6 +283,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Int64:
 				rightData := array.NewInt64Data(right.Column(rightCol).Data())
 				newArray := make([]int64, newRowNum)
+
 				// Fill common rows from right bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
@@ -281,6 +298,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 					}
 					leftRow++
 				}
+
 				// Fill remaining rows from right bow
 				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
@@ -303,6 +321,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Float64:
 				rightData := array.NewFloat64Data(right.Column(rightCol).Data())
 				newArray := make([]float64, newRowNum)
+
 				// Fill common rows from right bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
@@ -317,6 +336,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 					}
 					leftRow++
 				}
+
 				// Fill remaining rows from right bow
 				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
@@ -339,6 +359,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Bool:
 				rightData := array.NewBooleanData(right.Column(rightCol).Data())
 				newArray := make([]bool, newRowNum)
+
 				// Fill common rows from right bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
@@ -353,6 +374,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 					}
 					leftRow++
 				}
+
 				// Fill remaining rows from right bow
 				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
@@ -375,6 +397,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case String:
 				rightData := array.NewStringData(right.Column(rightCol).Data())
 				newArray := make([]string, newRowNum)
+
 				// Fill common rows from right bow
 				for newRow := 0; newRow < newRowNum; newRow++ {
 					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
@@ -389,6 +412,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 					}
 					leftRow++
 				}
+
 				// Fill remaining rows from right bow
 				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {

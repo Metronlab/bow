@@ -1,5 +1,5 @@
-github.com/apache/arrow/go/arrow v0.0.0-20200416134234-3cbcb7b62c2f h1:XNN4OCZmHjAqwaj2pLTtJ5nh93s0gSbmZzuD1fl+I3o=
-github.com/apache/arrow/go/arrow v0.0.0-20200416134234-3cbcb7b62c2f/go.mod h1:QNYViu/X0HXDHw7m3KXzWSVXIbfUvJqBFe6Gj8/pYA0=
+github.com/apache/arrow/go/arrow v0.0.0-20200727110821-c49e4ca157f6 h1:4MIlO4nJZbpC4pMIEkl9MfsFi65a6rndRiQgnGNWLbY=
+github.com/apache/arrow/go/arrow v0.0.0-20200727110821-c49e4ca157f6/go.mod h1:QNYViu/X0HXDHw7m3KXzWSVXIbfUvJqBFe6Gj8/pYA0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
