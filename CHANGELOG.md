@@ -1,3 +1,9 @@
+v0.7.0 [2020-08-03]
+-------------------
+
+### Features
+- Add SortByCol method to sort a bow by a column name
+
 v0.6.2 [2020-06-02]
 -------------------
 
