@@ -46,6 +46,9 @@ type Bow interface {
 	GetPreviousFloat64(col, row int) (v float64, resultsRow int)
 	GetPreviousFloat64s(col1, col2, row int) (v1, v2 float64, resultsRow int)
 
+	// Setters
+	SetColName(colIndex int, newName string) (Bow, error)
+
 	// Iterators
 	RowMapIter() chan map[string]interface{}
 
