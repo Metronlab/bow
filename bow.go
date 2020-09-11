@@ -94,14 +94,10 @@ type bow struct {
 }
 
 func NewBow(series ...Series) (bobow Bow, err error) {
-	if len(series) == 0 {
-		bobow = &bow{}
-		return
-	}
 	var fields []arrow.Field
 	var cols []array.Interface
 	var nrows int64
-	if series != nil && series[0].Array != nil {
+	if len(series) != 0 && series[0].Array != nil {
 		nrows = int64(series[0].Array.Len())
 	}
 	for _, s := range series {
@@ -454,7 +450,7 @@ func dedupStrings(s []string) []string {
 }
 
 func (b *bow) String() string {
-	if b.Record == nil {
+	if b.NumCols() == 0 {
 		return ""
 	}
 	w := new(tabwriter.Writer)
