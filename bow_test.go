@@ -8,6 +8,171 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBow_SortByCol(t *testing.T) {
+	t.Run("sorted", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{10, 2.4, 3.1},
+			{11, 2.8, 5.9},
+			{12, 2.9, 7.5},
+			{13, 3.9, 13.4},
+		})
+		require.NoError(t, err)
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, bobow.String(), sorted.String())
+	})
+	t.Run("simple unsorted - all types", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "i", "f", "b", "s"}, []Type{Int64, Int64, Float64, Bool, String}, [][]interface{}{
+			{10, 2, 3.1, true, "ho"},
+			{11, 2, 5.9, false, "la"},
+			{13, 3, 13.4, true, "tal"},
+			{12, 2, 7.5, false, "que"},
+		})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "i", "f", "b", "s"}, []Type{Int64, Int64, Float64, Bool, String}, [][]interface{}{
+			{10, 2, 3.1, true, "ho"},
+			{11, 2, 5.9, false, "la"},
+			{12, 2, 7.5, false, "que"},
+			{13, 3, 13.4, true, "tal"},
+		})
+		require.NoError(t, err)
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+	t.Run("simple unsorted different cols", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "time"}, []Type{Float64, Float64, Int64}, [][]interface{}{
+			{2.4, 3.1, 10},
+			{2.8, 5.9, 11},
+			{3.9, 13.4, 13},
+			{2.9, 7.5, 12},
+		})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "time"}, []Type{Float64, Float64, Int64}, [][]interface{}{
+			{2.4, 3.1, 10},
+			{2.8, 5.9, 11},
+			{2.9, 7.5, 12},
+			{3.9, 13.4, 13},
+		})
+		require.NoError(t, err)
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+	t.Run("simple unsorted with nil values", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{10, 2.4, nil},
+			{11, 2.8, 5.9},
+			{13, nil, 13.4},
+			{12, 2.9, 7.5},
+		})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{10, 2.4, nil},
+			{11, 2.8, 5.9},
+			{12, 2.9, 7.5},
+			{13, nil, 13.4},
+		})
+		require.NoError(t, err)
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+	t.Run("sorted in desc order", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{13, 3.9, 13.4},
+			{12, 2.9, 7.5},
+			{11, 2.8, 5.9},
+			{10, 2.4, 3.1},
+		})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{10, 2.4, 3.1},
+			{11, 2.8, 5.9},
+			{12, 2.9, 7.5},
+			{13, 3.9, 13.4},
+		})
+		require.NoError(t, err)
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+	t.Run("duplicate values - sort by column", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{13, 3.9, 13.4},
+			{12, 2.9, 7.5},
+			{12, 2.8, 5.9},
+			{10, 2.4, 3.1},
+		})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{10, 2.4, 3.1},
+			{12, 2.9, 7.5},
+			{12, 2.8, 5.9},
+			{13, 3.9, 13.4},
+		})
+		require.NoError(t, err)
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+	t.Run("nil values - sort by column", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{13, 3.9, 13.4},
+			{12, 2.9, 7.5},
+			{nil, 2.8, 5.9},
+			{10, 2.4, 3.1},
+		})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{nil, 2.8, 5.9},
+			{10, 2.4, 3.1},
+			{12, 2.9, 7.5},
+			{13, 3.9, 13.4},
+		})
+		require.NoError(t, err)
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+	t.Run("no rows", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a"}, []Type{Int64, Float64}, [][]interface{}{})
+		require.NoError(t, err)
+		expected := bobow
+		sorted, err := bobow.SortByCol("time")
+		assert.Nil(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+	t.Run("ERR: empty bow", func(t *testing.T) {
+		bobow, err := NewBow()
+		require.NoError(t, err)
+		_, err = bobow.SortByCol("time")
+		assert.Error(t, err)
+	})
+	t.Run("ERR: missing column", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"other", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{13, 3.9, 13.4},
+			{12, 2.9, 7.5},
+			{11, 2.8, 5.9},
+			{10, 2.4, 3.1},
+		})
+		require.NoError(t, err)
+		_, err = bobow.SortByCol("time")
+		assert.Error(t, err)
+	})
+	t.Run("ERR: unsupported type - sort by column", func(t *testing.T) {
+		bobow, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Float64, Float64, Float64}, [][]interface{}{
+			{13., 3.9, 13.4},
+			{12., 2.9, 7.5},
+			{11., 2.8, 5.9},
+			{10., 2.4, 3.1},
+		})
+		require.NoError(t, err)
+		_, err = bobow.SortByCol("time")
+		assert.Error(t, err)
+	})
+}
+
 func TestBow_Empty(t *testing.T) {
 	emptyBow, err := NewBow()
 	require.NoError(t, err)

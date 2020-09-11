@@ -53,12 +53,11 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
 			defer wg.Done()
-			typ := b.GetType(colIndex)
 			if colIndex == toFillIndex {
 				var newArray array.Interface
 				prevData := b.Record.Column(colIndex).Data()
 				pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-				switch typ {
+				switch b.GetType(colIndex) {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
