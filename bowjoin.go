@@ -14,16 +14,6 @@ func (b *bow) OuterJoin(other Bow) Bow {
 		panic("bow: non bow object passed as argument")
 	}
 
-	if left.NumRows() <= 0 && right.NumRows() <= 0 {
-		return &bow{}
-	}
-	if left.NumRows() > 0 && right.NumRows() <= 0 {
-		return left
-	}
-	if right.NumRows() > 0 && left.NumRows() <= 0 {
-		return right
-	}
-
 	commonCols := getCommonCols(left.Schema(), right.Schema())
 
 	// Compute new columns number
@@ -88,22 +78,25 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Int64:
 				leftData := array.NewInt64Data(left.Column(col).Data())
 				newArray := make([]int64, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					if left.Column(col).IsValid(leftRow) {
-						newArray[newRow] = leftData.Value(leftRow)
-						newValid[newRow] = true
-					}
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+
+				if left.NumRows() > 0 {
+					for newRow := 0; newRow < newRowNum; newRow++ {
 						if left.Column(col).IsValid(leftRow) {
 							newArray[newRow] = leftData.Value(leftRow)
 							newValid[newRow] = true
 						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
+						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+							if left.Column(col).IsValid(leftRow) {
+								newArray[newRow] = leftData.Value(leftRow)
+								newValid[newRow] = true
+							}
+							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
+								newRow++
+							}
+							commonRow++
 						}
-						commonRow++
+						leftRow++
 					}
-					leftRow++
 				}
 
 				// Fill remaining rows from right bow if column is common
@@ -131,22 +124,25 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Float64:
 				leftData := array.NewFloat64Data(left.Column(col).Data())
 				newArray := make([]float64, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					if left.Column(col).IsValid(leftRow) {
-						newArray[newRow] = leftData.Value(leftRow)
-						newValid[newRow] = true
-					}
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+
+				if left.NumRows() > 0 {
+					for newRow := 0; newRow < newRowNum; newRow++ {
 						if left.Column(col).IsValid(leftRow) {
 							newArray[newRow] = leftData.Value(leftRow)
 							newValid[newRow] = true
 						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
+						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+							if left.Column(col).IsValid(leftRow) {
+								newArray[newRow] = leftData.Value(leftRow)
+								newValid[newRow] = true
+							}
+							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
+								newRow++
+							}
+							commonRow++
 						}
-						commonRow++
+						leftRow++
 					}
-					leftRow++
 				}
 
 				// Fill remaining rows from right bow if column is common
@@ -174,22 +170,25 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case Bool:
 				leftData := array.NewBooleanData(left.Column(col).Data())
 				newArray := make([]bool, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					if left.Column(col).IsValid(leftRow) {
-						newArray[newRow] = leftData.Value(leftRow)
-						newValid[newRow] = true
-					}
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+
+				if left.NumRows() > 0 {
+					for newRow := 0; newRow < newRowNum; newRow++ {
 						if left.Column(col).IsValid(leftRow) {
 							newArray[newRow] = leftData.Value(leftRow)
 							newValid[newRow] = true
 						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
+						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+							if left.Column(col).IsValid(leftRow) {
+								newArray[newRow] = leftData.Value(leftRow)
+								newValid[newRow] = true
+							}
+							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
+								newRow++
+							}
+							commonRow++
 						}
-						commonRow++
+						leftRow++
 					}
-					leftRow++
 				}
 
 				// Fill remaining rows from right bow if column is common
@@ -217,22 +216,25 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			case String:
 				leftData := array.NewStringData(left.Column(col).Data())
 				newArray := make([]string, newRowNum)
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					if left.Column(col).IsValid(leftRow) {
-						newArray[newRow] = leftData.Value(leftRow)
-						newValid[newRow] = true
-					}
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+
+				if left.NumRows() > 0 {
+					for newRow := 0; newRow < newRowNum; newRow++ {
 						if left.Column(col).IsValid(leftRow) {
 							newArray[newRow] = leftData.Value(leftRow)
 							newValid[newRow] = true
 						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
+						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
+							if left.Column(col).IsValid(leftRow) {
+								newArray[newRow] = leftData.Value(leftRow)
+								newValid[newRow] = true
+							}
+							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
+								newRow++
+							}
+							commonRow++
 						}
-						commonRow++
+						leftRow++
 					}
-					leftRow++
 				}
 
 				// Fill remaining rows from right bow if column is common

@@ -67,6 +67,80 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
+
+	t.Run("left bow of len 0", func(t *testing.T) {
+		bow1, err := NewBow(
+			NewSeries("index1", Int64, []int64{}, nil),
+			NewSeries("index2", Float64, []float64{}, nil),
+			NewSeries("col1", Int64, []int64{}, nil),
+		)
+		require.NoError(t, err)
+
+		bow2, err := NewBowFromRowBasedInterfaces(
+			[]string{"index1", "index2", "col2"},
+			[]Type{Int64, Float64, Int64}, [][]interface{}{
+				{1, 1.1, 1},
+				{1, 1.1, nil},
+				{2, nil, 3},
+				{3, 3.3, 4},
+				{4, 4.4, 5},
+			})
+		require.NoError(t, err)
+		defer bow2.Release()
+
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"index1", "index2", "col1", "col2"},
+			[]Type{Int64, Float64, Int64, Int64}, [][]interface{}{
+				{1, 1.1, nil, 1},
+				{1, 1.1, nil, nil},
+				{2, nil, nil, 3},
+				{3, 3.3, nil, 4},
+				{4, 4.4, nil, 5},
+			})
+		require.NoError(t, err)
+		defer expected.Release()
+
+		result := bow1.OuterJoin(bow2)
+		defer result.Release()
+		assert.EqualValues(t, expected.String(), result.String())
+	})
+
+	t.Run("right bow of len 0", func(t *testing.T) {
+		bow1, err := NewBow(
+			NewSeries("index1", Int64, []int64{}, nil),
+			NewSeries("index2", Float64, []float64{}, nil),
+			NewSeries("col1", Int64, []int64{}, nil),
+		)
+		require.NoError(t, err)
+
+		bow2, err := NewBowFromRowBasedInterfaces(
+			[]string{"index1", "index2", "col2"},
+			[]Type{Int64, Float64, Int64}, [][]interface{}{
+				{1, 1.1, 1},
+				{1, 1.1, nil},
+				{2, nil, 3},
+				{3, 3.3, 4},
+				{4, 4.4, 5},
+			})
+		require.NoError(t, err)
+		defer bow2.Release()
+
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"index1", "index2", "col2", "col1"},
+			[]Type{Int64, Float64, Int64, Int64}, [][]interface{}{
+				{1, 1.1, 1, nil},
+				{1, 1.1, nil, nil},
+				{2, nil, 3, nil},
+				{3, 3.3, 4, nil},
+				{4, 4.4, 5, nil},
+			})
+		require.NoError(t, err)
+		defer expected.Release()
+
+		result := bow2.OuterJoin(bow1)
+		defer result.Release()
+		assert.EqualValues(t, expected.String(), result.String())
+	})
 }
 
 func TestOuterJoin_simple(t *testing.T) {
