@@ -141,6 +141,32 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
+
+	t.Run("left and right bow of len 0", func(t *testing.T) {
+		bow1, err := NewBow(
+			NewSeries("index1", Int64, []int64{}, nil),
+			NewSeries("index2", Float64, []float64{}, nil),
+			NewSeries("col1", Int64, []int64{}, nil),
+		)
+		require.NoError(t, err)
+		bow2, err := NewBow(
+			NewSeries("index1", Int64, []int64{}, nil),
+			NewSeries("index2", Float64, []float64{}, nil),
+			NewSeries("col2", Int64, []int64{}, nil),
+		)
+		require.NoError(t, err)
+		expected, err := NewBow(
+			NewSeries("index1", Int64, []int64{}, nil),
+			NewSeries("index2", Float64, []float64{}, nil),
+			NewSeries("col1", Int64, []int64{}, nil),
+			NewSeries("col2", Int64, []int64{}, nil),
+		)
+		require.NoError(t, err)
+
+		result := bow1.OuterJoin(bow2)
+		defer result.Release()
+		assert.EqualValues(t, expected.String(), result.String())
+	})
 }
 
 func TestOuterJoin_simple(t *testing.T) {
