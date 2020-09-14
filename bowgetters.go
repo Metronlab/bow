@@ -290,7 +290,7 @@ func (b *bow) GetColumnIndex(colName string) (int, error) {
 		return -1, fmt.Errorf("no column '%s'", colName)
 	}
 	if len(indices) > 1 {
-		return -1, fmt.Errorf("too many column with name '%s'", colName)
+		return -1, fmt.Errorf("too many columns with name '%s'", colName)
 	}
 	return indices[0], nil
 }
