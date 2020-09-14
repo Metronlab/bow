@@ -640,7 +640,7 @@ func getCommonCols(l, r *arrow.Schema) map[string][]int {
 		rFields, commonCol := r.FieldsByName(lField.Name)
 		if commonCol {
 			if len(rFields) > 1 {
-				panic("many column carry the same name")
+				panic("too many columns carry the same name")
 			}
 			rField := rFields[0]
 			if rField.Type.ID() != lField.Type.ID() {
