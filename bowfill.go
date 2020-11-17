@@ -135,7 +135,7 @@ func (b *bow) FillLinear(refCol string, toFillCol string) (Bow, error) {
 // Fills values only for int64 and float64 numeric types.
 // (`colNames` defaults to all columns)
 func (b *bow) FillMean(colNames ...string) (Bow, error) {
-	toFill, err := colsToFill(b, colNames)
+	toFill, err := selectCols(b, colNames)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 // using NOCB (Next Obs. Carried Backward) method and returns a new Bow.
 // (`colNames` defaults to all columns)
 func (b *bow) FillNext(colNames ...string) (Bow, error) {
-	toFill, err := colsToFill(b, colNames)
+	toFill, err := selectCols(b, colNames)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 // using LOCF (Last Obs. Carried Forward) method and returns a new Bow.
 // (`colNames` defaults to all columns)
 func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
-	toFill, err := colsToFill(b, colNames)
+	toFill, err := selectCols(b, colNames)
 	if err != nil {
 		return nil, err
 	}
@@ -442,9 +442,9 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 	return NewBow(filledSeries...)
 }
 
-// colsToFill returns a bool slice of size b.NumCols
+// selectCols returns a bool slice of size b.NumCols
 // with 'true' values at indexes of the corresponding colNames
-func colsToFill(b *bow, colNames []string) ([]bool, error) {
+func selectCols(b *bow, colNames []string) ([]bool, error) {
 	toFill := make([]bool, b.NumCols())
 	nilColsNb := len(colNames)
 	// default: all columns to fill

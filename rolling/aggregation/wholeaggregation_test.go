@@ -167,6 +167,26 @@ func TestAggregate(t *testing.T) {
 		require.True(t, actual.Equal(expected),
 			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
 	})
+	t.Run("float only nil", func(t *testing.T) {
+		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10, 20, 30},
+				{nil, nil, nil},
+			})
+		actual, err := Aggregate(b, timeCol,
+			WindowStart(timeCol),
+			WeightedAverageLinear(valueCol),
+		)
+		require.Nil(t, err)
+		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10},
+				{nil},
+			})
+		require.Nil(t, err)
+		require.True(t, actual.Equal(expected),
+			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
+	})
 	t.Run("bool", func(t *testing.T) {
 		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool},
 			[][]interface{}{

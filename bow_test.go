@@ -273,6 +273,29 @@ func TestBow_NewSlice(t *testing.T) {
 	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
 }
 
+func TestBow_NewBowFromColNames(t *testing.T) {
+	t.Run("simple", func(t *testing.T) {
+		b, err := NewBowFromRowBasedInterfaces([]string{"time", "a", "b"}, []Type{Int64, Float64, Float64}, [][]interface{}{
+			{13, 3.9, 13.4},
+			{12, 2.9, 7.5},
+			{11, 2.8, 5.9},
+			{10, 2.4, 3.1},
+		})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces([]string{"time", "a"}, []Type{Int64, Float64}, [][]interface{}{
+			{13, 3.9},
+			{12, 2.9},
+			{11, 2.8},
+			{10, 2.4},
+		})
+		require.NoError(t, err)
+		newBow, err := b.NewBowFromColNames("time", "a")
+		assert.NoError(t, err)
+		assert.True(t, expected.Equal(newBow), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, newBow))
+
+	})
+}
+
 func TestBow_DropNil(t *testing.T) {
 	filledBow, _ := NewBowFromColumnBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
 		{100, 200, 300, 400},

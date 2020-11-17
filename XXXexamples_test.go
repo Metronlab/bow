@@ -17,7 +17,10 @@ func ExampleNewBow() {
 	}
 
 	fmt.Print(b)
+	b.Release()
+
 	// output:
+
 	//col1:int64  col2:float64  col3:bool
 	//1           1.1           true
 	//2           <nil>         <nil>
@@ -43,6 +46,7 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 	b.Release()
 
 	// output:
+
 	//time:int64  value:int64  valueFromJson:float64
 	//1           1            1.1
 	//<nil>       <nil>        <nil>

@@ -65,7 +65,8 @@ type Bow interface {
 	UnmarshalJSON([]byte) error
 
 	NewSlice(i, j int) Bow
-	NewValues(columns [][]interface{}) (bobow Bow, err error)
+	NewBowFromColNames(colNames ...string) (Bow, error)
+	NewValues(columns [][]interface{}) (Bow, error)
 	NewEmpty() Bow
 	DropNil(nilCols ...string) (Bow, error)
 	SortByCol(colName string) (Bow, error)
@@ -557,6 +558,24 @@ func (b *bow) NewSlice(i, j int) Bow {
 	return &bow{
 		Record: b.Record.NewSlice(int64(i), int64(j)),
 	}
+}
+
+func (b *bow) NewBowFromColNames(colNames ...string) (Bow, error) {
+	colsToInclude, err := selectCols(b, colNames)
+	if err != nil {
+		return nil, err
+	}
+
+	var newSeries []Series
+	for colIndex, col := range b.Schema().Fields() {
+		if colsToInclude[colIndex] {
+			newSeries = append(newSeries, Series{
+				Name:  col.Name,
+				Array: b.Record.Column(colIndex),
+			})
+		}
+	}
+	return NewBow(newSeries...)
 }
 
 func (b *bow) NumRows() int {
