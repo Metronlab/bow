@@ -34,3 +34,19 @@ func TestBow_UnmarshalJSON(t *testing.T) {
 
 	assert.True(t, b.Equal(b2test), fmt.Sprintf("have:\n%vexpect:\n%v", b2test, b))
 }
+
+func TestBow_EncodeBowToJSON(t *testing.T) {
+	inputBow, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Int64, Int64}, [][]interface{}{
+		{100, 200, 300},
+		{110, 220, 330},
+		{111, 222, 333},
+	})
+	require.NoError(t, err)
+
+	jsonInputBow, err := EncodeBowToJSON(inputBow)
+	assert.NoError(t, err)
+	var p []byte
+	n, err := jsonInputBow.Read(p)
+	assert.NoError(t, err)
+	fmt.Printf("p:%+v\nn:%+v\n", p, n)
+}

@@ -561,6 +561,10 @@ func (b *bow) NewSlice(i, j int) Bow {
 }
 
 func (b *bow) NewBowFromColNames(colNames ...string) (Bow, error) {
+	if len(colNames) == 0 {
+		return NewBow()
+	}
+
 	colsToInclude, err := selectCols(b, colNames)
 	if err != nil {
 		return nil, err
