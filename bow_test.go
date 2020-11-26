@@ -2,10 +2,9 @@ package bow
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestBow_SortByCol(t *testing.T) {
@@ -144,9 +143,8 @@ func TestBow_SortByCol(t *testing.T) {
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
 	t.Run("ERR: empty bow", func(t *testing.T) {
-		bobow, err := NewBow()
-		require.NoError(t, err)
-		_, err = bobow.SortByCol("time")
+		bobow := NewBowEmpty()
+		_, err := bobow.SortByCol("time")
 		assert.Error(t, err)
 	})
 	t.Run("ERR: missing column", func(t *testing.T) {
@@ -174,8 +172,7 @@ func TestBow_SortByCol(t *testing.T) {
 }
 
 func TestBow_Empty(t *testing.T) {
-	emptyBow, err := NewBow()
-	require.NoError(t, err)
+	emptyBow := NewBowEmpty()
 
 	if emptyBow.NumRows() != 0 || emptyBow.NumCols() != 0 {
 		emptyBow.Release()
@@ -189,7 +186,7 @@ func TestBow_AppendBows(t *testing.T) {
 
 	t.Run("no bow", func(t *testing.T) {
 		appended, err := AppendBows()
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		assert.Nil(t, appended)
 	})
 
@@ -275,8 +272,7 @@ func TestBow_NewSlice(t *testing.T) {
 
 func TestBow_NewBowFromColNames(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		b, err := NewBow()
-		require.NoError(t, err)
+		b := NewBowEmpty()
 
 		newBow, err := b.NewBowFromColNames()
 		assert.NoError(t, err)
@@ -295,8 +291,7 @@ func TestBow_NewBowFromColNames(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("without colNames", func(t *testing.T) {
-		expected, err := NewBow()
-		assert.NoError(t, err)
+		expected := NewBowEmpty()
 
 		newBow, err := b.NewBowFromColNames()
 		assert.NoError(t, err)

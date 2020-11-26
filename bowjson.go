@@ -13,112 +13,117 @@ func (b *bow) SetMarshalJSONRowBased(rowOriented bool) {
 	b.marshalJSONRowBased = rowOriented
 }
 
-type jsonColSchema struct {
+var (
+	ErrUnmarshalJSON = errors.New("could not unmarshal JSON to bow")
+	ErrEncodeBow     = errors.New("could not encode bow to JSON body")
+	ErrDecodeJSON    = errors.New("could not decode JSON to bow")
+)
+
+type jsonField struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
 
+type jsonSchema struct {
+	Fields []jsonField `json:"fields"`
+}
+
 type jsonRecord struct {
-	Schema struct {
-		Fields []jsonColSchema `json:"fields"`
-	} `json:"schema"`
-	Data []map[string]interface{} `json:"data"`
+	Schema jsonSchema               `json:"schema"`
+	Data   []map[string]interface{} `json:"data"`
 }
 
 func (b *bow) MarshalJSON() ([]byte, error) {
 	if !b.marshalJSONRowBased {
-		// it will be handled natively by arrow, today (24 oct 2019) still in arrow's internal packages
+		// it will be handled natively by arrow, today (26 nov 2020) still in arrow's internal packages
 		panic("bow: column based json marshaller not implemented")
 	}
+
 	rowBased := jsonRecord{}
 	for _, col := range b.Schema().Fields() {
-		rowBased.Schema.Fields = append(rowBased.Schema.Fields, jsonColSchema{
+		rowBased.Schema.Fields = append(rowBased.Schema.Fields, jsonField{
 			Name: col.Name,
 			Type: col.Type.Name(),
 		})
 	}
+
 	for row := range b.RowMapIter() {
 		if len(row) == 0 {
 			continue
 		}
 		rowBased.Data = append(rowBased.Data, row)
 	}
+
 	return json.Marshal(rowBased)
 }
 
-func (b *bow) UnmarshalJSON(data []byte) error {
-	jsonBow := jsonRecord{}
-	if err := json.Unmarshal(data, &jsonBow); err != nil {
-		return err
+func UnmarshalJSON(data []byte) (Bow, error) {
+	var rec jsonRecord
+	if err := json.Unmarshal(data, &rec); err != nil {
+		return nil, err
 	}
-	if jsonBow.Data != nil {
-		series := make([]Series, len(jsonBow.Schema.Fields))
-		i := 0
-		for _, colSchema := range jsonBow.Schema.Fields {
-			t := newTypeFromArrowName(colSchema.Type)
-			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Data), func() chan interface{} {
+
+	if rec.Schema.Fields == nil {
+		return NewBowEmpty(), nil
+	}
+
+	series := make([]Series, len(rec.Schema.Fields))
+	for i, f := range rec.Schema.Fields {
+		typ := newTypeFromArrowName(f.Type)
+		length := len(rec.Data)
+		buf, err := NewBufferFromInterfacesIter(
+			typ,
+			length,
+			func() chan interface{} {
 				cellsChan := make(chan interface{})
 				go func(cellsChan chan interface{}, colName string) {
-					for _, row := range jsonBow.Data {
+					for _, row := range rec.Data {
 						val, ok := row[colName]
 						if !ok {
 							cellsChan <- nil
 						} else {
 							_, ok = val.(float64)
-							if t == Int64 && ok {
+							if typ == Int64 && ok {
 								val = int64(val.(float64))
 							}
 							cellsChan <- val
 						}
 					}
 					close(cellsChan)
-				}(cellsChan, colSchema.Name)
+				}(cellsChan, f.Name)
+
 				return cellsChan
-			}())
-			if err != nil {
-				return err
-			}
-			series[i] = NewSeries(colSchema.Name, t, buf.Value, buf.Valid)
-			i++
-		}
-		tmpBow, err := NewBow(series...)
+			}(),
+		)
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("%v: %v", ErrUnmarshalJSON, err)
 		}
-		b.Record = tmpBow.(*bow).Record
-		return nil
+		series[i] = NewSeries(f.Name, typ, buf.Value, buf.Valid)
 	}
-	return errors.New("empty rows")
+
+	return NewBow(series...)
 }
 
-var (
-	ErrInvalidNewBow    = errors.New("could not create new Bow")
-	ErrEncodeInputBow   = errors.New("could not JSON encode input Bow")
-	ErrReadingResponse  = errors.New("could not read POST request response")
-	ErrDecodingResponse = errors.New("could not decode POST request response")
-)
-
-func EncodeBowToJSON(inputBow Bow) (io.Reader, error) {
-	inputBow.SetMarshalJSONRowBased(true)
-	requestBody, err := inputBow.MarshalJSON()
+func EncodeBowToJSONBody(b Bow) (io.Reader, error) {
+	b.SetMarshalJSONRowBased(true)
+	jsonBody, err := b.MarshalJSON()
 	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrEncodeInputBow, err)
+		return nil, fmt.Errorf("%v: %v", ErrEncodeBow, err)
 	}
-	fmt.Printf("requestBody:%+v\n", requestBody)
 
-	return bytes.NewReader(requestBody), nil
+	return bytes.NewReader(jsonBody), nil
 }
 
-func DecodeJSONToBow(r io.Reader, outputBow Bow) (Bow, error) {
-	respBody, err := ioutil.ReadAll(r)
+func DecodeJSONRespToBow(resp io.Reader) (Bow, error) {
+	respBytes, err := ioutil.ReadAll(resp)
 	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrReadingResponse, err)
+		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
 	}
 
-	var jsonOutputBow jsonRecord
-	err = json.Unmarshal(respBody, &jsonOutputBow)
+	var rec jsonRecord
+	err = json.Unmarshal(respBytes, &rec)
 	if err != nil {
-		return nil, fmt.Errorf("%v: %v", errors.New("unmarshal error"), err)
+		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
 	}
 
 	/*
@@ -140,25 +145,28 @@ func DecodeJSONToBow(r io.Reader, outputBow Bow) (Bow, error) {
 		    =============== =================
 	*/
 
-	for i, f := range jsonOutputBow.Schema.Fields {
+	for i, f := range rec.Schema.Fields {
+		if _, ok := mapArrowDataTypeNameType[f.Type]; ok {
+			continue
+		}
 		switch f.Type {
 		case "integer":
-			jsonOutputBow.Schema.Fields[i].Type = "int64"
+			rec.Schema.Fields[i].Type = "int64"
 		case "number":
-			jsonOutputBow.Schema.Fields[i].Type = "float64"
+			rec.Schema.Fields[i].Type = "float64"
 		case "boolean":
-			jsonOutputBow.Schema.Fields[i].Type = "bool"
+			rec.Schema.Fields[i].Type = "bool"
 		}
 	}
 
-	dec, err := json.Marshal(jsonOutputBow)
+	jsonRec, err := json.Marshal(rec)
 	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrDecodingResponse, err)
+		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
 	}
 
-	err = outputBow.UnmarshalJSON(dec)
+	outputBow, err := UnmarshalJSON(jsonRec)
 	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrInvalidNewBow, err)
+		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
 	}
 
 	return outputBow, nil

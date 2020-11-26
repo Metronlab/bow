@@ -17,8 +17,6 @@ func ExampleNewBow() {
 	}
 
 	fmt.Print(b)
-	b.Release()
-
 	// output:
 
 	//col1:int64  col2:float64  col3:bool
@@ -42,9 +40,8 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Print(b)
-	b.Release()
 
+	fmt.Print(b)
 	// output:
 
 	//time:int64  value:int64  valueFromJson:float64
@@ -73,11 +70,13 @@ func ExampleBow_MarshalJSON() {
 	if err != nil {
 		panic(err)
 	}
+
 	// pretty print json
 	var out bytes.Buffer
 	if err := json.Indent(&out, js, "", "\t"); err != nil {
 		panic(err)
 	}
+
 	fmt.Println(out.String())
 	//output:
 	//{

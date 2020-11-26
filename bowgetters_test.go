@@ -8,14 +8,14 @@ import (
 
 func TestBow_GetValue(t *testing.T) {
 	colNames := []string{"time", "value", "meta"}
-	types := []Type{Int64, Float64, String}
-	cols := [][]interface{}{
+	colTypes := []Type{Int64, Float64, String}
+	colData := [][]interface{}{
 		{1, 2, 3},
 		{1.1, 2.2, 3.3},
 		{"", "test", "3.3"},
 	}
 
-	b, err := NewBowFromColumnBasedInterfaces(colNames, types, cols)
+	b, err := NewBowFromColumnBasedInterfaces(colNames, colTypes, colData)
 	require.NoError(t, err)
 
 	assert.Equal(t, 3.3, b.GetValue(1, 2))
