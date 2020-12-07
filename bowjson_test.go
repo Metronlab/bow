@@ -1,7 +1,6 @@
 package bow
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -82,32 +81,6 @@ func TestJSON(t *testing.T) {
 			decodedBow := simpleBow
 			err = simpleBow.UnmarshalJSON(jsonB)
 			require.NoError(t, err)
-
-			assert.True(t, simpleBow.Equal(decodedBow),
-				fmt.Sprintf("have:\n%vexpect:\n%v", decodedBow, simpleBow))
-		})
-	})
-
-	t.Run("DecodeJSONRespToBow", func(t *testing.T) {
-		t.Run("empty", func(t *testing.T) {
-			emptyBow.SetMarshalJSONRowBased(true)
-			jsonBody, err := emptyBow.MarshalJSON()
-			assert.NoError(t, err)
-			jsonB := bytes.NewReader(jsonBody)
-
-			decodedBow, err := DecodeJSONRespToBow(jsonB)
-			assert.Error(t, err)
-			assert.Nil(t, decodedBow)
-		})
-
-		t.Run("simple", func(t *testing.T) {
-			simpleBow.SetMarshalJSONRowBased(true)
-			jsonBody, err := simpleBow.MarshalJSON()
-			assert.NoError(t, err)
-			jsonB := bytes.NewReader(jsonBody)
-
-			decodedBow, err := DecodeJSONRespToBow(jsonB)
-			assert.NoError(t, err)
 
 			assert.True(t, simpleBow.Equal(decodedBow),
 				fmt.Sprintf("have:\n%vexpect:\n%v", decodedBow, simpleBow))

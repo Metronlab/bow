@@ -3,19 +3,11 @@ package bow
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
-	"io/ioutil"
 )
 
 func (b *bow) SetMarshalJSONRowBased(rowOriented bool) {
 	b.marshalJSONRowBased = rowOriented
 }
-
-var (
-	ErrUnmarshalJSON = errors.New("could not unmarshal JSON to bow")
-	ErrDecodeJSON    = errors.New("could not decode JSON to bow")
-)
 
 type jsonField struct {
 	Name string `json:"name"`
@@ -56,61 +48,9 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 }
 
 func (b *bow) UnmarshalJSON(data []byte) error {
-	jsonBow := jsonRecord{}
-	if err := json.Unmarshal(data, &jsonBow); err != nil {
+	rec := jsonRecord{}
+	if err := json.Unmarshal(data, &rec); err != nil {
 		return err
-	}
-	if jsonBow.Data != nil {
-		series := make([]Series, len(jsonBow.Schema.Fields))
-		i := 0
-		for _, colSchema := range jsonBow.Schema.Fields {
-			t := newTypeFromArrowName(colSchema.Type)
-			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Data), func() chan interface{} {
-				cellsChan := make(chan interface{})
-				go func(cellsChan chan interface{}, colName string) {
-					for _, row := range jsonBow.Data {
-						val, ok := row[colName]
-						if !ok {
-							cellsChan <- nil
-						} else {
-							_, ok = val.(float64)
-							if t == Int64 && ok {
-								val = int64(val.(float64))
-							}
-							cellsChan <- val
-						}
-					}
-					close(cellsChan)
-				}(cellsChan, colSchema.Name)
-				return cellsChan
-			}())
-			if err != nil {
-				return err
-			}
-			series[i] = NewSeries(colSchema.Name, t, buf.Value, buf.Valid)
-			i++
-		}
-		tmpBow, err := NewBow(series...)
-		if err != nil {
-			return err
-		}
-		b.Record = tmpBow.(*bow).Record
-		return nil
-	}
-	return errors.New("empty rows")
-
-}
-
-func DecodeJSONRespToBow(resp io.Reader) (Bow, error) {
-	respBytes, err := ioutil.ReadAll(resp)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
-	}
-
-	var rec jsonRecord
-	err = json.Unmarshal(respBytes, &rec)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
 	}
 
 	/*
@@ -146,16 +86,43 @@ func DecodeJSONRespToBow(resp io.Reader) (Bow, error) {
 		}
 	}
 
-	jsonRec, err := json.Marshal(rec)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
+	if rec.Data != nil {
+		series := make([]Series, len(rec.Schema.Fields))
+		i := 0
+		for _, colSchema := range rec.Schema.Fields {
+			t := newTypeFromArrowName(colSchema.Type)
+			buf, err := NewBufferFromInterfacesIter(t, len(rec.Data), func() chan interface{} {
+				cellsChan := make(chan interface{})
+				go func(cellsChan chan interface{}, colName string) {
+					for _, row := range rec.Data {
+						val, ok := row[colName]
+						if !ok {
+							cellsChan <- nil
+						} else {
+							_, ok = val.(float64)
+							if t == Int64 && ok {
+								val = int64(val.(float64))
+							}
+							cellsChan <- val
+						}
+					}
+					close(cellsChan)
+				}(cellsChan, colSchema.Name)
+				return cellsChan
+			}())
+			if err != nil {
+				return err
+			}
+			series[i] = NewSeries(colSchema.Name, t, buf.Value, buf.Valid)
+			i++
+		}
+		tmpBow, err := NewBow(series...)
+		if err != nil {
+			return err
+		}
+		b.Record = tmpBow.(*bow).Record
+		return nil
 	}
+	return errors.New("empty rows")
 
-	outputBow := NewBowEmpty()
-	err = outputBow.UnmarshalJSON(jsonRec)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
-	}
-
-	return outputBow, nil
 }
