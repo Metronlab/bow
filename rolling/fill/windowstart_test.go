@@ -9,7 +9,7 @@ import (
 
 func TestIntervalPosition(t *testing.T) {
 	var interval int64 = 2
-	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
+	b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
 		{10, 13},
 	})
 
@@ -18,7 +18,7 @@ func TestIntervalPosition(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
 			{10, 12, 13},
 		})
 		assert.Nil(t, err)
@@ -30,7 +30,7 @@ func TestIntervalPosition(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
 			{9, 10, 11, 13},
 		})
 		assert.Nil(t, err)

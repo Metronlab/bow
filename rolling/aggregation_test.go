@@ -8,7 +8,7 @@ import (
 )
 
 func TestIntervalRolling_Aggregate(t *testing.T) {
-	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+	b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 		{10, 15, 16, 25, 29},
 		{1.0, 1.5, 1.6, 2.5, 2.9},
 	})
@@ -33,7 +33,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := bow.NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColBasedInterfaces(
 			[]string{timeCol, valueCol},
 			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
@@ -49,7 +49,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 			Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := bow.NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColBasedInterfaces(
 			[]string{valueCol, timeCol},
 			[]bow.Type{bow.Float64, bow.Int64},
 			[][]interface{}{
@@ -63,7 +63,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr.Rename("a"), valueAggr.Rename("b")).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := bow.NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColBasedInterfaces(
 			[]string{"a", "b"},
 			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
@@ -77,7 +77,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := bow.NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColBasedInterfaces(
 			[]string{timeCol},
 			[]bow.Type{bow.Int64},
 			[][]interface{}{
@@ -90,7 +90,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		aggregated, err := r.Aggregate(timeAggr, doubleAggr.Rename("double"), valueAggr).Bow()
 		assert.Nil(t, err)
 		assert.NotNil(t, aggregated)
-		expected, _ := bow.NewBowFromColumnBasedInterfaces(
+		expected, _ := bow.NewBowFromColBasedInterfaces(
 			[]string{timeCol, "double", valueCol},
 			[]bow.Type{bow.Int64, bow.Float64, bow.Float64},
 			[][]interface{}{
@@ -114,12 +114,12 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 }
 
 func TestWindow_UnsetInclusive(t *testing.T) {
-	inclusiveBow, err := bow.NewBowFromColumnBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
+	inclusiveBow, err := bow.NewBowFromColBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
 		[][]interface{}{
 			{1, 2},
 			{1, 2}})
 	assert.NoError(t, err)
-	exclusiveBow, err := bow.NewBowFromColumnBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
+	exclusiveBow, err := bow.NewBowFromColBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
 		[][]interface{}{
 			{1},
 			{1}})

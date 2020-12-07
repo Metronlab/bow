@@ -56,13 +56,13 @@ type Bow interface {
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
 
-	Equal(otherBow Bow) (equal bool)
+	Equal(other Bow) (equal bool)
 
 	SetMarshalJSONRowBased(rowOriented bool)
 	MarshalJSON() (buf []byte, err error)
 
-	NewSlice(i, j int) Bow
-	NewBowFromColNames(colNames ...string) (Bow, error)
+	Slice(i, j int) Bow
+	Select(colNames ...string) (Bow, error)
 	NewEmpty() Bow
 	DropNil(colNames ...string) (Bow, error)
 	SortByCol(colName string) (Bow, error)
@@ -81,8 +81,8 @@ type Bow interface {
 	NumRows() int
 	NumCols() int
 
-	IsColEmpty(colIndex int) (empty bool)
-	IsColSorted(colIndex int) (sorted bool)
+	IsColEmpty(colIndex int) bool
+	IsColSorted(colIndex int) bool
 }
 
 type bow struct {
@@ -133,23 +133,27 @@ func NewBow(series ...Series) (Bow, error) {
 	return &bow{Record: array.NewRecord(schema, arrays, nRows)}, nil
 }
 
-func NewBowFromColumnBasedInterfaces(colNames []string, colTypes []Type, colData [][]interface{}) (Bow, error) {
+// NewBowFromColBasedInterfaces returns an new Bow with:
+// - colNames contains the bow.Record fields names
+// - colTypes contains the bow.Record fields data types, and is not mandatory.
+//	 If nil, the types will be automatically seeked.
+// - colData contains the data to be store in bow.Record
+// - colNames and colData need to be of the same size
+func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colData) {
 		return nil, errors.New("bow: colNames and colData array lengths don't match")
 	}
 
 	if colTypes != nil && len(colNames) != len(colTypes) {
 		return nil, errors.New("bow: colNames and colTypes array lengths don't match")
+	} else if colTypes == nil {
+		colTypes = make([]Type, len(colNames))
 	}
 
 	var err error
 	series := make([]Series, len(colNames))
 	for i, name := range colNames {
-		if colTypes != nil {
-			series[i], err = NewSeriesFromInterfaces(name, colTypes[i], colData[i])
-		} else {
-			series[i], err = NewSeriesFromInterfaces(name, Unknown, colData[i])
-		}
+		series[i], err = NewSeriesFromInterfaces(name, colTypes[i], colData[i])
 		if err != nil {
 			return nil, err
 		}
@@ -158,19 +162,63 @@ func NewBowFromColumnBasedInterfaces(colNames []string, colTypes []Type, colData
 }
 
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowData [][]interface{}) (Bow, error) {
-	colBasedRows := make([][]interface{}, len(colNames))
-	for col := range colNames {
-		colBasedRows[col] = make([]interface{}, len(rowData))
-	}
-	for rowIndex, row := range rowData {
-		if len(colNames) < len(row) {
-			return nil, errors.New("bow: mismatch between colNames and rowData lengths")
+	series := make([]Series, len(colNames))
+	length := len(rowData)
+	for colIndex := 0; colIndex < len(colNames); colIndex++ {
+		var newArray array.Interface
+		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+		switch colTypes[colIndex] {
+		case Int64:
+			build := array.NewInt64Builder(mem)
+			for rowIndex := 0; rowIndex < length; rowIndex++ {
+				newVal, ok := ToInt64(rowData[rowIndex][colIndex])
+				if !ok {
+					build.AppendNull()
+				} else {
+					build.Append(newVal)
+				}
+			}
+			newArray = build.NewArray()
+		case Float64:
+			build := array.NewFloat64Builder(mem)
+			for rowIndex := 0; rowIndex < length; rowIndex++ {
+				newVal, ok := ToFloat64(rowData[rowIndex][colIndex])
+				if !ok {
+					build.AppendNull()
+				} else {
+					build.Append(newVal)
+				}
+			}
+			newArray = build.NewArray()
+		case String:
+			build := array.NewStringBuilder(mem)
+			for rowIndex := 0; rowIndex < length; rowIndex++ {
+				newVal, ok := ToString(rowData[rowIndex][colIndex])
+				if !ok {
+					build.AppendNull()
+				} else {
+					build.Append(newVal)
+				}
+			}
+			newArray = build.NewArray()
+		case Bool:
+			build := array.NewBooleanBuilder(mem)
+			for rowIndex := 0; rowIndex < length; rowIndex++ {
+				newVal, ok := ToBool(rowData[rowIndex][colIndex])
+				if !ok {
+					build.AppendNull()
+				} else {
+					build.Append(newVal)
+				}
+			}
+			newArray = build.NewArray()
 		}
-		for colIndex := range colNames {
-			colBasedRows[colIndex][rowIndex] = row[colIndex]
+		series[colIndex] = Series{
+			Name:  colNames[colIndex],
+			Array: newArray,
 		}
 	}
-	return NewBowFromColumnBasedInterfaces(colNames, colTypes, colBasedRows)
+	return NewBow(series...)
 }
 
 func AppendBows(bows ...Bow) (Bow, error) {
@@ -216,7 +264,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 }
 
 func (b *bow) NewEmpty() Bow {
-	return b.NewSlice(0, 0)
+	return b.Slice(0, 0)
 }
 
 // DropNil drops any row that contains a nil for any of `colNames`.
@@ -257,10 +305,10 @@ func (b *bow) DropNil(colNames ...string) (Bow, error) {
 	slices := make([]Bow, len(dropped)+1)
 	var curr int
 	for i, di := range dropped {
-		slices[i] = b.NewSlice(curr, di)
+		slices[i] = b.Slice(curr, di)
 		curr = di + 1
 	}
-	slices[len(dropped)] = b.NewSlice(curr, b.NumRows())
+	slices[len(dropped)] = b.Slice(curr, b.NumRows())
 
 	return AppendBows(slices...)
 }
@@ -535,13 +583,13 @@ func (b *bow) Equal(B2 Bow) bool {
 	return true
 }
 
-func (b *bow) NewSlice(i, j int) Bow {
+func (b *bow) Slice(i, j int) Bow {
 	return &bow{
 		Record: b.Record.NewSlice(int64(i), int64(j)),
 	}
 }
 
-func (b *bow) NewBowFromColNames(colNames ...string) (Bow, error) {
+func (b *bow) Select(colNames ...string) (Bow, error) {
 	if len(colNames) == 0 {
 		return NewBow()
 	}

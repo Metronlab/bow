@@ -26,7 +26,7 @@ func ExampleNewBow() {
 	//4           4             false
 }
 
-func ExampleNewBowFromColumnBasedInterfaces() {
+func ExampleNewBowFromColBasedInterfaces() {
 	columns := []string{"time", "value", "valueFromJson"}
 	ts := make([]Type, len(columns))
 	ts[0] = Int64
@@ -36,7 +36,7 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	b, err := NewBowFromColumnBasedInterfaces(columns, ts, rows)
+	b, err := NewBowFromColBasedInterfaces(columns, ts, rows)
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +60,7 @@ func ExampleBow_MarshalJSON() {
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	b, err := NewBowFromColumnBasedInterfaces(columns, ts, rows)
+	b, err := NewBowFromColBasedInterfaces(columns, ts, rows)
 	if err != nil {
 		panic(err)
 	}

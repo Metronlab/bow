@@ -15,7 +15,7 @@ func TestBow_GetValue(t *testing.T) {
 		{"", "test", "3.3"},
 	}
 
-	b, err := NewBowFromColumnBasedInterfaces(colNames, colTypes, colData)
+	b, err := NewBowFromColBasedInterfaces(colNames, colTypes, colData)
 	require.NoError(t, err)
 
 	assert.Equal(t, 3.3, b.GetValue(1, 2))

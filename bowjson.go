@@ -1,7 +1,6 @@
 package bow
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +14,6 @@ func (b *bow) SetMarshalJSONRowBased(rowOriented bool) {
 
 var (
 	ErrUnmarshalJSON = errors.New("could not unmarshal JSON to bow")
-	ErrEncodeBow     = errors.New("could not encode bow to JSON body")
 	ErrDecodeJSON    = errors.New("could not decode JSON to bow")
 )
 
@@ -102,16 +100,6 @@ func UnmarshalJSON(data []byte) (Bow, error) {
 	}
 
 	return NewBow(series...)
-}
-
-func EncodeBowToJSONBody(b Bow) (io.Reader, error) {
-	b.SetMarshalJSONRowBased(true)
-	jsonBody, err := b.MarshalJSON()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %v", ErrEncodeBow, err)
-	}
-
-	return bytes.NewReader(jsonBody), nil
 }
 
 func DecodeJSONRespToBow(resp io.Reader) (Bow, error) {

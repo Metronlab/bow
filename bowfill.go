@@ -48,7 +48,6 @@ func (b *bow) FillLinear(refColName string, toFillColName string) (Bow, error) {
 
 	var wg sync.WaitGroup
 	filledSeries := make([]Series, b.NumCols())
-	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
@@ -61,8 +60,8 @@ func (b *bow) FillLinear(refColName string, toFillColName string) (Bow, error) {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
-					valids := getValids(prevArray, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							prevToFill, rowPrev := b.GetPreviousFloat64(colIndex, rowIndex-1)
 							nextToFill, rowNext := b.GetNextFloat64(colIndex, rowIndex+1)
@@ -89,8 +88,8 @@ func (b *bow) FillLinear(refColName string, toFillColName string) (Bow, error) {
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
 					values := prevArray.Float64Values()
-					valids := getValids(prevArray, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							prevToFill, rowPrev := b.GetPreviousFloat64(colIndex, rowIndex-1)
 							nextToFill, rowNext := b.GetNextFloat64(colIndex, rowIndex+1)
@@ -154,7 +153,6 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 
 	var wg sync.WaitGroup
 	filledSeries := make([]Series, b.NumCols())
-	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
@@ -168,8 +166,8 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
 					values := prevArray.Int64Values()
-					valids := getValids(prevArray, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 							nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
@@ -185,8 +183,8 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
 					values := prevArray.Float64Values()
-					valids := getValids(prevArray, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 							nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
@@ -227,7 +225,6 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 
 	var wg sync.WaitGroup
 	filledSeries := make([]Series, b.NumCols())
-	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
@@ -240,9 +237,9 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 				switch typ {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]int64, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]int64, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, nextRow := b.GetNextValue(colIndex, rowIndex+1)
 							if nextRow > -1 {
@@ -258,9 +255,9 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 					newArray = build.NewArray()
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]float64, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]float64, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, nextRow := b.GetNextValue(colIndex, rowIndex+1)
 							if nextRow > -1 {
@@ -276,9 +273,9 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 					newArray = build.NewArray()
 				case Bool:
 					prevArray := array.NewBooleanData(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]bool, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]bool, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, nextRow := b.GetNextValue(colIndex, rowIndex+1)
 							if nextRow > -1 {
@@ -294,9 +291,9 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 					newArray = build.NewArray()
 				case String:
 					prevArray := array.NewStringData(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]string, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]string, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, nextRow := b.GetNextValue(colIndex, rowIndex+1)
 							if nextRow > -1 {
@@ -340,7 +337,6 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 
 	var wg sync.WaitGroup
 	filledSeries := make([]Series, b.NumCols())
-	length := b.NumRows()
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
@@ -353,9 +349,9 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 				switch typ {
 				case Int64:
 					prevArray := array.NewInt64Data(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]int64, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]int64, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, prevRow := b.GetPreviousValue(colIndex, rowIndex-1)
 							if prevRow > -1 {
@@ -371,9 +367,9 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 					newArray = build.NewArray()
 				case Float64:
 					prevArray := array.NewFloat64Data(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]float64, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]float64, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, prevRow := b.GetPreviousValue(colIndex, rowIndex-1)
 							if prevRow > -1 {
@@ -389,9 +385,9 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 					newArray = build.NewArray()
 				case Bool:
 					prevArray := array.NewBooleanData(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]bool, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]bool, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, prevRow := b.GetPreviousValue(colIndex, rowIndex-1)
 							if prevRow > -1 {
@@ -407,9 +403,9 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 					newArray = build.NewArray()
 				case String:
 					prevArray := array.NewStringData(prevData)
-					valids := getValids(prevArray, length)
-					values := make([]string, length)
-					for rowIndex := 0; rowIndex < length; rowIndex++ {
+					valids := getValids(prevArray, b.NumRows())
+					values := make([]string, b.NumRows())
+					for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 						if !valids[rowIndex] {
 							_, prevRow := b.GetPreviousValue(colIndex, rowIndex-1)
 							if prevRow > -1 {
