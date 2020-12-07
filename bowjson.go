@@ -55,51 +55,50 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rowBased)
 }
 
-func UnmarshalJSON(data []byte) (Bow, error) {
-	var rec jsonRecord
-	if err := json.Unmarshal(data, &rec); err != nil {
-		return nil, err
+func (b *bow) UnmarshalJSON(data []byte) error {
+	jsonBow := jsonRecord{}
+	if err := json.Unmarshal(data, &jsonBow); err != nil {
+		return err
 	}
-
-	if rec.Schema.Fields == nil {
-		return NewBowEmpty(), nil
-	}
-
-	series := make([]Series, len(rec.Schema.Fields))
-	for i, f := range rec.Schema.Fields {
-		typ := newTypeFromArrowName(f.Type)
-		length := len(rec.Data)
-		buf, err := NewBufferFromInterfacesIter(
-			typ,
-			length,
-			func() chan interface{} {
+	if jsonBow.Data != nil {
+		series := make([]Series, len(jsonBow.Schema.Fields))
+		i := 0
+		for _, colSchema := range jsonBow.Schema.Fields {
+			t := newTypeFromArrowName(colSchema.Type)
+			buf, err := NewBufferFromInterfacesIter(t, len(jsonBow.Data), func() chan interface{} {
 				cellsChan := make(chan interface{})
 				go func(cellsChan chan interface{}, colName string) {
-					for _, row := range rec.Data {
+					for _, row := range jsonBow.Data {
 						val, ok := row[colName]
 						if !ok {
 							cellsChan <- nil
 						} else {
 							_, ok = val.(float64)
-							if typ == Int64 && ok {
+							if t == Int64 && ok {
 								val = int64(val.(float64))
 							}
 							cellsChan <- val
 						}
 					}
 					close(cellsChan)
-				}(cellsChan, f.Name)
-
+				}(cellsChan, colSchema.Name)
 				return cellsChan
-			}(),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("%v: %v", ErrUnmarshalJSON, err)
+			}())
+			if err != nil {
+				return err
+			}
+			series[i] = NewSeries(colSchema.Name, t, buf.Value, buf.Valid)
+			i++
 		}
-		series[i] = NewSeries(f.Name, typ, buf.Value, buf.Valid)
+		tmpBow, err := NewBow(series...)
+		if err != nil {
+			return err
+		}
+		b.Record = tmpBow.(*bow).Record
+		return nil
 	}
+	return errors.New("empty rows")
 
-	return NewBow(series...)
 }
 
 func DecodeJSONRespToBow(resp io.Reader) (Bow, error) {
@@ -152,7 +151,8 @@ func DecodeJSONRespToBow(resp io.Reader) (Bow, error) {
 		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
 	}
 
-	outputBow, err := UnmarshalJSON(jsonRec)
+	outputBow := NewBowEmpty()
+	err = outputBow.UnmarshalJSON(jsonRec)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %v", ErrDecodeJSON, err)
 	}

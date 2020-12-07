@@ -70,18 +70,17 @@ func TestJSON(t *testing.T) {
 			jsonB, err := json.Marshal(emptyBow)
 			require.NoError(t, err)
 
-			decodedBow, err := UnmarshalJSON(jsonB)
-			require.NoError(t, err)
-
-			assert.True(t, emptyBow.Equal(decodedBow),
-				fmt.Sprintf("have:\n%vexpect:\n%v", decodedBow, emptyBow))
+			decodedBow := emptyBow
+			err = decodedBow.UnmarshalJSON(jsonB)
+			require.Error(t, err)
 		})
 
 		t.Run("simple", func(t *testing.T) {
 			jsonB, err := json.Marshal(simpleBow)
 			require.NoError(t, err)
 
-			decodedBow, err := UnmarshalJSON(jsonB)
+			decodedBow := simpleBow
+			err = simpleBow.UnmarshalJSON(jsonB)
 			require.NoError(t, err)
 
 			assert.True(t, simpleBow.Equal(decodedBow),
@@ -97,10 +96,8 @@ func TestJSON(t *testing.T) {
 			jsonB := bytes.NewReader(jsonBody)
 
 			decodedBow, err := DecodeJSONRespToBow(jsonB)
-			assert.NoError(t, err)
-
-			assert.True(t, emptyBow.Equal(decodedBow),
-				fmt.Sprintf("have:\n%vexpect:\n%v", decodedBow, emptyBow))
+			assert.Error(t, err)
+			assert.Nil(t, decodedBow)
 		})
 
 		t.Run("simple", func(t *testing.T) {

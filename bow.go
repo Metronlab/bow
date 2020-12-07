@@ -60,6 +60,7 @@ type Bow interface {
 
 	SetMarshalJSONRowBased(rowOriented bool)
 	MarshalJSON() (buf []byte, err error)
+	UnmarshalJSON(data []byte) error
 
 	Slice(i, j int) Bow
 	Select(colNames ...string) (Bow, error)
@@ -162,62 +163,68 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 }
 
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowData [][]interface{}) (Bow, error) {
+	var wg sync.WaitGroup
 	series := make([]Series, len(colNames))
 	length := len(rowData)
 	for colIndex := 0; colIndex < len(colNames); colIndex++ {
-		var newArray array.Interface
-		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-		switch colTypes[colIndex] {
-		case Int64:
-			build := array.NewInt64Builder(mem)
-			for rowIndex := 0; rowIndex < length; rowIndex++ {
-				newVal, ok := ToInt64(rowData[rowIndex][colIndex])
-				if !ok {
-					build.AppendNull()
-				} else {
-					build.Append(newVal)
+		wg.Add(1)
+		go func(colIndex int, colNames []string, wg *sync.WaitGroup) {
+			defer wg.Done()
+			var newArray array.Interface
+			mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+			switch colTypes[colIndex] {
+			case Int64:
+				build := array.NewInt64Builder(mem)
+				for rowIndex := 0; rowIndex < length; rowIndex++ {
+					newVal, ok := ToInt64(rowData[rowIndex][colIndex])
+					if !ok {
+						build.AppendNull()
+					} else {
+						build.Append(newVal)
+					}
 				}
-			}
-			newArray = build.NewArray()
-		case Float64:
-			build := array.NewFloat64Builder(mem)
-			for rowIndex := 0; rowIndex < length; rowIndex++ {
-				newVal, ok := ToFloat64(rowData[rowIndex][colIndex])
-				if !ok {
-					build.AppendNull()
-				} else {
-					build.Append(newVal)
+				newArray = build.NewArray()
+			case Float64:
+				build := array.NewFloat64Builder(mem)
+				for rowIndex := 0; rowIndex < length; rowIndex++ {
+					newVal, ok := ToFloat64(rowData[rowIndex][colIndex])
+					if !ok {
+						build.AppendNull()
+					} else {
+						build.Append(newVal)
+					}
 				}
-			}
-			newArray = build.NewArray()
-		case String:
-			build := array.NewStringBuilder(mem)
-			for rowIndex := 0; rowIndex < length; rowIndex++ {
-				newVal, ok := ToString(rowData[rowIndex][colIndex])
-				if !ok {
-					build.AppendNull()
-				} else {
-					build.Append(newVal)
+				newArray = build.NewArray()
+			case String:
+				build := array.NewStringBuilder(mem)
+				for rowIndex := 0; rowIndex < length; rowIndex++ {
+					newVal, ok := ToString(rowData[rowIndex][colIndex])
+					if !ok {
+						build.AppendNull()
+					} else {
+						build.Append(newVal)
+					}
 				}
-			}
-			newArray = build.NewArray()
-		case Bool:
-			build := array.NewBooleanBuilder(mem)
-			for rowIndex := 0; rowIndex < length; rowIndex++ {
-				newVal, ok := ToBool(rowData[rowIndex][colIndex])
-				if !ok {
-					build.AppendNull()
-				} else {
-					build.Append(newVal)
+				newArray = build.NewArray()
+			case Bool:
+				build := array.NewBooleanBuilder(mem)
+				for rowIndex := 0; rowIndex < length; rowIndex++ {
+					newVal, ok := ToBool(rowData[rowIndex][colIndex])
+					if !ok {
+						build.AppendNull()
+					} else {
+						build.Append(newVal)
+					}
 				}
+				newArray = build.NewArray()
 			}
-			newArray = build.NewArray()
-		}
-		series[colIndex] = Series{
-			Name:  colNames[colIndex],
-			Array: newArray,
-		}
+			series[colIndex] = Series{
+				Name:  colNames[colIndex],
+				Array: newArray,
+			}
+		}(colIndex, colNames, &wg)
 	}
+	wg.Wait()
 	return NewBow(series...)
 }
 
