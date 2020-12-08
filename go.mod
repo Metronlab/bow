@@ -2,8 +2,9 @@ module github.com/metronlab/bow
 
 go 1.13
 
+// github.com/apache/arrow/go/arrow apache-arrow-2.0.0
 require (
-	github.com/apache/arrow/go/arrow v0.0.0-20201126134648-2a5f92455ec4
+	github.com/apache/arrow/go/arrow v0.0.0-20201208083138-e58e60714469
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/stretchr/testify v1.4.0
