@@ -162,70 +162,22 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 	return NewBow(series...)
 }
 
+// NewBowFromRowBasedInterfaces returns a new bow from rowData
+// TODO: improve performance of this function
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowData [][]interface{}) (Bow, error) {
-	var wg sync.WaitGroup
-	series := make([]Series, len(colNames))
-	length := len(rowData)
-	for colIndex := 0; colIndex < len(colNames); colIndex++ {
-		wg.Add(1)
-		go func(colIndex int, colNames []string, wg *sync.WaitGroup) {
-			defer wg.Done()
-			var newArray array.Interface
-			mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-			switch colTypes[colIndex] {
-			case Int64:
-				build := array.NewInt64Builder(mem)
-				for rowIndex := 0; rowIndex < length; rowIndex++ {
-					newVal, ok := ToInt64(rowData[rowIndex][colIndex])
-					if !ok {
-						build.AppendNull()
-					} else {
-						build.Append(newVal)
-					}
-				}
-				newArray = build.NewArray()
-			case Float64:
-				build := array.NewFloat64Builder(mem)
-				for rowIndex := 0; rowIndex < length; rowIndex++ {
-					newVal, ok := ToFloat64(rowData[rowIndex][colIndex])
-					if !ok {
-						build.AppendNull()
-					} else {
-						build.Append(newVal)
-					}
-				}
-				newArray = build.NewArray()
-			case String:
-				build := array.NewStringBuilder(mem)
-				for rowIndex := 0; rowIndex < length; rowIndex++ {
-					newVal, ok := ToString(rowData[rowIndex][colIndex])
-					if !ok {
-						build.AppendNull()
-					} else {
-						build.Append(newVal)
-					}
-				}
-				newArray = build.NewArray()
-			case Bool:
-				build := array.NewBooleanBuilder(mem)
-				for rowIndex := 0; rowIndex < length; rowIndex++ {
-					newVal, ok := ToBool(rowData[rowIndex][colIndex])
-					if !ok {
-						build.AppendNull()
-					} else {
-						build.Append(newVal)
-					}
-				}
-				newArray = build.NewArray()
-			}
-			series[colIndex] = Series{
-				Name:  colNames[colIndex],
-				Array: newArray,
-			}
-		}(colIndex, colNames, &wg)
+	columnBasedRows := make([][]interface{}, len(colNames))
+	for column := range colNames {
+		columnBasedRows[column] = make([]interface{}, len(rowData))
 	}
-	wg.Wait()
-	return NewBow(series...)
+	for rowI, row := range rowData {
+		if len(colNames) < len(row) {
+			return nil, errors.New("bow: mismatch between columnsNames names and row len")
+		}
+		for colI := range colNames {
+			columnBasedRows[colI][rowI] = row[colI]
+		}
+	}
+	return NewBowFromColBasedInterfaces(colNames, colTypes, columnBasedRows)
 }
 
 func AppendBows(bows ...Bow) (Bow, error) {
