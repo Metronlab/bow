@@ -8,29 +8,82 @@ import (
 	"testing"
 )
 
-func TestBow_UnmarshalJSON(t *testing.T) {
-	columns := []string{"time", "value", "valueFromJson", "string"}
-	ts := make([]Type, len(columns))
-	ts[0] = Int64
-	rows := [][]interface{}{
-		{1, 1.2, json.Number("3"), nil},
-		{nil, 1, json.Number("1.2"), 3},
-		{json.Number("1.1"), nil, 2, 1.3},
-		{nil, "", "test", "string"},
-	}
+func TestJSON(t *testing.T) {
+	emptyBow := NewBowEmpty()
+	emptyBow.SetMarshalJSONRowBased(true)
 
-	b, err := NewBowFromColumnBasedInterfaces(columns, ts, rows)
+	simpleBow, err := NewBowFromRowBasedInterfaces(
+		[]string{"a", "b", "c"},
+		[]Type{Int64, Float64, Bool},
+		[][]interface{}{
+			{100, 200., false},
+			{110, 220., true},
+			{111, 222., false},
+		})
 	require.NoError(t, err)
+	simpleBow.SetMarshalJSONRowBased(true)
 
-	b.SetMarshalJSONRowBased(true)
-	js, err := json.Marshal(b)
-	require.NoError(t, err)
+	t.Run("MarshalJSON", func(t *testing.T) {
+		t.Run("empty", func(t *testing.T) {
+			jsonB, err := emptyBow.MarshalJSON()
+			require.NoError(t, err)
 
-	b2test, err := NewBow()
-	require.NoError(t, err)
+			rec := jsonRecord{}
+			err = json.Unmarshal(jsonB, &rec)
+			require.NoError(t, err)
 
-	err = json.Unmarshal(js, &b2test)
-	require.NoError(t, err)
+			expected := jsonRecord{}
+			assert.Equal(t, expected, rec)
+		})
 
-	assert.True(t, b.Equal(b2test), fmt.Sprintf("have:\n%vexpect:\n%v", b2test, b))
+		t.Run("simple", func(t *testing.T) {
+			jsonB, err := simpleBow.MarshalJSON()
+			require.NoError(t, err)
+
+			rec := jsonRecord{}
+			err = json.Unmarshal(jsonB, &rec)
+			require.NoError(t, err)
+
+			expected := jsonRecord{
+				Schema: jsonSchema{
+					Fields: []jsonField{
+						{Name: "a", Type: "int64"},
+						{Name: "b", Type: "float64"},
+						{Name: "c", Type: "bool"},
+					},
+				},
+				Data: []map[string]interface{}{
+					{"a": 100., "b": 200., "c": false},
+					{"a": 110., "b": 220., "c": true},
+					{"a": 111., "b": 222., "c": false},
+				},
+			}
+
+			assert.Equal(t, expected, rec)
+
+		})
+	})
+
+	t.Run("UnmarshalJSON", func(t *testing.T) {
+		t.Run("empty", func(t *testing.T) {
+			jsonB, err := json.Marshal(emptyBow)
+			require.NoError(t, err)
+
+			decodedBow := emptyBow
+			err = decodedBow.UnmarshalJSON(jsonB)
+			require.Error(t, err)
+		})
+
+		t.Run("simple", func(t *testing.T) {
+			jsonB, err := json.Marshal(simpleBow)
+			require.NoError(t, err)
+
+			decodedBow := simpleBow
+			err = simpleBow.UnmarshalJSON(jsonB)
+			require.NoError(t, err)
+
+			assert.True(t, simpleBow.Equal(decodedBow),
+				fmt.Sprintf("have:\n%vexpect:\n%v", decodedBow, simpleBow))
+		})
+	})
 }

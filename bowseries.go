@@ -5,7 +5,7 @@ import (
 	"github.com/apache/arrow/go/arrow/memory"
 )
 
-// A Series is simply a named Apache Arrow array, which is immutable
+// A Series is simply a named Apache Arrow array.Interface, which is immutable
 type Series struct {
 	Name  string
 	Array array.Interface

@@ -9,14 +9,9 @@ import (
 
 func TestOuterJoin_empty_bows(t *testing.T) {
 	t.Run("two empty bows", func(t *testing.T) {
-		bow1, err := NewBow()
-		require.NoError(t, err)
-
-		bow2, err := NewBow()
-		require.NoError(t, err)
-
-		expected, err := NewBow()
-		require.NoError(t, err)
+		bow1 := NewBowEmpty()
+		bow2 := NewBowEmpty()
+		expected := NewBowEmpty()
 
 		result := bow1.OuterJoin(bow2)
 		assert.EqualValues(t, expected.String(), result.String())
@@ -33,21 +28,17 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 				{4, 4.4, 5},
 			})
 		require.NoError(t, err)
-		defer bow1.Release()
 
-		bow2, err := NewBow()
-		require.NoError(t, err)
+		bow2 := NewBowEmpty()
 
 		expected := bow1
 
 		result := bow1.OuterJoin(bow2)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 
 	t.Run("empty left bow", func(t *testing.T) {
-		bow1, err := NewBow()
-		require.NoError(t, err)
+		bow1 := NewBowEmpty()
 
 		bow2, err := NewBowFromRowBasedInterfaces(
 			[]string{"index1", "index2", "col1"},
@@ -59,12 +50,10 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 				{4, 4.4, 5},
 			})
 		require.NoError(t, err)
-		defer bow2.Release()
 
 		expected := bow2
 
 		result := bow1.OuterJoin(bow2)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 
@@ -86,7 +75,6 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 				{4, 4.4, 5},
 			})
 		require.NoError(t, err)
-		defer bow2.Release()
 
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"index1", "index2", "col1", "col2"},
@@ -98,10 +86,8 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 				{4, 4.4, nil, 5},
 			})
 		require.NoError(t, err)
-		defer expected.Release()
 
 		result := bow1.OuterJoin(bow2)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 
@@ -123,7 +109,6 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 				{4, 4.4, 5},
 			})
 		require.NoError(t, err)
-		defer bow2.Release()
 
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"index1", "index2", "col2", "col1"},
@@ -135,10 +120,8 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 				{4, 4.4, 5, nil},
 			})
 		require.NoError(t, err)
-		defer expected.Release()
 
 		result := bow2.OuterJoin(bow1)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 
@@ -164,7 +147,6 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 		require.NoError(t, err)
 
 		result := bow1.OuterJoin(bow2)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 }
@@ -179,7 +161,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{13, 3},
 			})
 		require.NoError(t, err)
-		defer bow1.Release()
 
 		bow2, err := NewBowFromRowBasedInterfaces([]string{"a", "c"},
 			[]Type{Int64, Int64}, [][]interface{}{
@@ -189,7 +170,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{14, 3},
 			})
 		require.NoError(t, err)
-		defer bow2.Release()
 
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"},
 			[]Type{Int64, Int64, Int64}, [][]interface{}{
@@ -200,10 +180,8 @@ func TestOuterJoin_simple(t *testing.T) {
 				{14, nil, 3},
 			})
 		require.NoError(t, err)
-		defer expected.Release()
 
 		result := bow1.OuterJoin(bow2)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 
@@ -217,7 +195,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{18, 12, -3},
 			})
 		require.NoError(t, err)
-		defer bow1.Release()
 
 		bow2, err := NewBowFromRowBasedInterfaces([]string{"a", "d", "e", "f"},
 			[]Type{Int64, Int64, Int64, Int64}, [][]interface{}{
@@ -227,7 +204,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{42, nil, 4, 42},
 			})
 		require.NoError(t, err)
-		defer bow2.Release()
 
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e", "f"},
 			[]Type{Int64, Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
@@ -239,10 +215,8 @@ func TestOuterJoin_simple(t *testing.T) {
 				{42, nil, nil, nil, 4, 42},
 			})
 		require.NoError(t, err)
-		defer expected.Release()
 
 		result := bow1.OuterJoin(bow2)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 
@@ -257,7 +231,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{4, 4.4, 5},
 			})
 		require.NoError(t, err)
-		defer bow1.Release()
 
 		bow2, err := NewBowFromRowBasedInterfaces(
 			[]string{"index1", "index2", "col2"},
@@ -268,7 +241,6 @@ func TestOuterJoin_simple(t *testing.T) {
 				{5, 4.4, 4},
 			})
 		require.NoError(t, err)
-		defer bow2.Release()
 
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"index1", "index2", "col1", "col2"},
@@ -283,10 +255,8 @@ func TestOuterJoin_simple(t *testing.T) {
 				{5, 4.4, nil, 4},
 			})
 		require.NoError(t, err)
-		defer expected.Release()
 
 		result := bow1.OuterJoin(bow2)
-		defer result.Release()
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 }
@@ -308,7 +278,6 @@ func TestOuterJoin_advanced(t *testing.T) {
 			{nil, nil, nil, nil, nil},
 		})
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBowFromRowBasedInterfaces([]string{"col4", "index1", "index2", "col5"},
 		[]Type{Int64, Int64, Float64, Int64}, [][]interface{}{
@@ -323,7 +292,6 @@ func TestOuterJoin_advanced(t *testing.T) {
 			{0, 0, 0.0, 0},
 		})
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	expected, err := NewBowFromRowBasedInterfaces([]string{"index1", "col1", "col2", "index2", "col3", "col4", "col5"},
 		[]Type{Int64, Int64, Int64, Float64, Int64, Int64, Int64}, [][]interface{}{
@@ -344,10 +312,8 @@ func TestOuterJoin_advanced(t *testing.T) {
 			{-5, nil, nil, 30.0, nil, 40, 6},
 		})
 	require.NoError(t, err)
-	defer expected.Release()
 
 	result := bow1.OuterJoin(bow2)
-	defer result.Release()
 	assert.EqualValues(t, expected.String(), result.String())
 }
 
@@ -362,7 +328,6 @@ func TestOuterJoin_NoCommonRows(t *testing.T) {
 			{4, 4.4, 5},
 		})
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBowFromRowBasedInterfaces(
 		[]string{"index1", "col2"},
@@ -370,7 +335,6 @@ func TestOuterJoin_NoCommonRows(t *testing.T) {
 			{10, 10},
 		})
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	expected, err := NewBowFromRowBasedInterfaces(
 		[]string{"index1", "index2", "col1", "col2"},
@@ -383,10 +347,8 @@ func TestOuterJoin_NoCommonRows(t *testing.T) {
 			{10, nil, nil, 10},
 		})
 	require.NoError(t, err)
-	defer expected.Release()
 
 	result := bow1.OuterJoin(bow2)
-	defer result.Release()
 	assert.EqualValues(t, expected.String(), result.String())
 }
 
@@ -401,7 +363,6 @@ func TestOuterJoin_NonComplyingType(t *testing.T) {
 			{4, 4.4, 5},
 		})
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBowFromRowBasedInterfaces(
 		[]string{"index1"},
@@ -409,7 +370,6 @@ func TestOuterJoin_NonComplyingType(t *testing.T) {
 			{1},
 		})
 	require.NoError(t, err)
-	defer bow2.Release()
 	defer func() {
 		if r := recover(); r == nil ||
 			r.(error).Error() != "bow: left and right bow on join columns are of incompatible types: index1" {
@@ -431,7 +391,6 @@ func TestOuterJoin_NoCommonColumns(t *testing.T) {
 			{4, 4.4, 5},
 		})
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBowFromRowBasedInterfaces(
 		[]string{"index3"},
@@ -439,7 +398,6 @@ func TestOuterJoin_NoCommonColumns(t *testing.T) {
 			{1.1},
 		})
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	expected, err := NewBowFromRowBasedInterfaces(
 		[]string{"index1", "index2", "col1", "index3"},
@@ -452,10 +410,8 @@ func TestOuterJoin_NoCommonColumns(t *testing.T) {
 			{nil, nil, nil, 1.1},
 		})
 	require.NoError(t, err)
-	defer expected.Release()
 
 	result := bow1.OuterJoin(bow2)
-	defer result.Release()
 	assert.EqualValues(t, expected.String(), result.String())
 }
 
@@ -470,7 +426,6 @@ func TestInnerJoin(t *testing.T) {
 			{4, 4.4, 5},
 		})
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBowFromRowBasedInterfaces(
 		[]string{"index1", "index2", "col2"},
@@ -481,7 +436,6 @@ func TestInnerJoin(t *testing.T) {
 			{5, 4.4, 4},
 		})
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	expected, err := NewBowFromRowBasedInterfaces(
 		[]string{"index1", "index2", "col1", "col2"},
@@ -490,10 +444,8 @@ func TestInnerJoin(t *testing.T) {
 			{1, 1.1, nil, 1},
 		})
 	require.NoError(t, err)
-	defer expected.Release()
 
 	result := bow1.InnerJoin(bow2)
-	defer result.Release()
 	assert.EqualValues(t, expected.String(), result.String())
 }
 
@@ -506,7 +458,6 @@ func TestInnerJoin_timeSeries_like(t *testing.T) {
 			{13, 3},
 		})
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBowFromRowBasedInterfaces([]string{"a", "c"},
 		[]Type{Int64, Int64}, [][]interface{}{
@@ -516,7 +467,6 @@ func TestInnerJoin_timeSeries_like(t *testing.T) {
 			{14, 3},
 		})
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"},
 		[]Type{Int64, Int64, Int64}, [][]interface{}{
@@ -525,10 +475,8 @@ func TestInnerJoin_timeSeries_like(t *testing.T) {
 			{13, 3, 2},
 		})
 	require.NoError(t, err)
-	defer expected.Release()
 
 	result := bow1.InnerJoin(bow2)
-	defer result.Release()
 	assert.EqualValues(t, expected.String(), result.String())
 }
 
@@ -539,14 +487,12 @@ func TestInnerJoin_NoResultingRows(t *testing.T) {
 		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 	)
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBow(
 		NewSeries("index1", Int64, []int64{10}, nil),
 		NewSeries("col2", Int64, []int64{10}, nil),
 	)
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	expected, err := NewBow(
 		NewSeries("index1", Int64, []int64{}, nil),
@@ -555,10 +501,8 @@ func TestInnerJoin_NoResultingRows(t *testing.T) {
 		NewSeries("col2", Int64, []int64{}, nil),
 	)
 	require.NoError(t, err)
-	defer expected.Release()
 
 	result := bow1.InnerJoin(bow2)
-	defer result.Release()
 	assert.EqualValues(t, expected.String(), result.String())
 }
 
@@ -569,13 +513,11 @@ func TestInnerJoin_NonComplyingTypes(t *testing.T) {
 		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 	)
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBow(
 		NewSeries("index1", Float64, []float64{1}, nil),
 	)
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	defer func() {
 		if r := recover(); r == nil ||
@@ -594,13 +536,11 @@ func TestInnerJoin_NoCommonColumns(t *testing.T) {
 		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 	)
 	require.NoError(t, err)
-	defer bow1.Release()
 
 	bow2, err := NewBow(
 		NewSeries("index3", Float64, []float64{1.1}, nil),
 	)
 	require.NoError(t, err)
-	defer bow2.Release()
 
 	expected, err := NewBow(
 		NewSeries("index1", Int64, []int64{}, nil),
@@ -609,9 +549,7 @@ func TestInnerJoin_NoCommonColumns(t *testing.T) {
 		NewSeries("index3", Float64, []float64{}, []bool{}),
 	)
 	require.NoError(t, err)
-	defer expected.Release()
 
 	result := bow1.InnerJoin(bow2)
-	defer result.Release()
 	assert.EqualValues(t, expected.String(), result.String())
 }
