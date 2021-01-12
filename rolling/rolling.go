@@ -196,7 +196,7 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *Window, err error
 	if lastIndex == -1 {
 		b = it.bow.NewEmpty()
 	} else {
-		b = it.bow.NewSlice(firstIndex, lastIndex+1)
+		b = it.bow.Slice(firstIndex, lastIndex+1)
 	}
 	return windowIndex, &Window{
 		FirstIndex:          firstIndex,

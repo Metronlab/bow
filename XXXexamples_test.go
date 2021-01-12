@@ -18,6 +18,7 @@ func ExampleNewBow() {
 
 	fmt.Print(b)
 	// output:
+
 	//col1:int64  col2:float64  col3:bool
 	//1           1.1           true
 	//2           <nil>         <nil>
@@ -25,7 +26,7 @@ func ExampleNewBow() {
 	//4           4             false
 }
 
-func ExampleNewBowFromColumnBasedInterfaces() {
+func ExampleNewBowFromColBasedInterfaces() {
 	columns := []string{"time", "value", "valueFromJson"}
 	ts := make([]Type, len(columns))
 	ts[0] = Int64
@@ -35,14 +36,14 @@ func ExampleNewBowFromColumnBasedInterfaces() {
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	b, err := NewBowFromColumnBasedInterfaces(columns, ts, rows)
+	b, err := NewBowFromColBasedInterfaces(columns, ts, rows)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Print(b)
-	b.Release()
 
+	fmt.Print(b)
 	// output:
+
 	//time:int64  value:int64  valueFromJson:float64
 	//1           1            1.1
 	//<nil>       <nil>        <nil>
@@ -59,7 +60,7 @@ func ExampleBow_MarshalJSON() {
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	b, err := NewBowFromColumnBasedInterfaces(columns, ts, rows)
+	b, err := NewBowFromColBasedInterfaces(columns, ts, rows)
 	if err != nil {
 		panic(err)
 	}
@@ -69,11 +70,13 @@ func ExampleBow_MarshalJSON() {
 	if err != nil {
 		panic(err)
 	}
+
 	// pretty print json
 	var out bytes.Buffer
 	if err := json.Indent(&out, js, "", "\t"); err != nil {
 		panic(err)
 	}
+
 	fmt.Println(out.String())
 	//output:
 	//{

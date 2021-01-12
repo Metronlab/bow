@@ -40,6 +40,21 @@ func TestWeightedAverageStep(t *testing.T) {
 			}(),
 		},
 		{
+			Name:      "float only nil",
+			TestedBow: nilBow,
+			ExpectedBow: func() bow.Bow {
+				b, err := bow.NewBowFromRowBasedInterfaces(
+					[]string{"time", "value"},
+					[]bow.Type{bow.Int64, bow.Float64},
+					[][]interface{}{
+						{10, nil},
+						{20, nil},
+					})
+				assert.NoError(t, err)
+				return b
+			}(),
+		},
+		{
 			Name:      "sparse bool",
 			TestedBow: sparseBoolBow,
 			ExpectedBow: func() bow.Bow {

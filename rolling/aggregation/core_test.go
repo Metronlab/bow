@@ -17,6 +17,14 @@ var (
 		bow.NewSeries(tc, bow.Int64, []int64{}, nil),
 		bow.NewSeries(vc, bow.Float64, []float64{}, nil),
 	)
+	nilBow, _ = bow.NewBowFromRowBasedInterfaces(
+		[]string{tc, vc},
+		[]bow.Type{bow.Int64, bow.Float64},
+		[][]interface{}{
+			{10, nil},
+			{11, nil},
+			{20, nil},
+		})
 	sparseFloatBow, _ = bow.NewBowFromRowBasedInterfaces(
 		[]string{tc, vc},
 		[]bow.Type{bow.Int64, bow.Float64},

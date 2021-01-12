@@ -15,7 +15,7 @@ const (
 
 func TestStepPrevious(t *testing.T) {
 	t.Run("no options", func(t *testing.T) {
-		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 13},
 			{1.0, 1.3},
 		})
@@ -23,7 +23,7 @@ func TestStepPrevious(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 12, 13},
 			{1.0, 1.0, 1.3},
 		})
@@ -33,7 +33,7 @@ func TestStepPrevious(t *testing.T) {
 	})
 
 	t.Run("bool", func(t *testing.T) {
-		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
+		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
 			{10, 13},
 			{true, false},
 		})
@@ -41,7 +41,7 @@ func TestStepPrevious(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
 			{10, 12, 13},
 			{true, true, false},
 		})
@@ -51,7 +51,7 @@ func TestStepPrevious(t *testing.T) {
 	})
 
 	t.Run("string", func(t *testing.T) {
-		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
+		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
 			{10, 13},
 			{"test", "test2"},
 		})
@@ -59,7 +59,7 @@ func TestStepPrevious(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
 			{10, 12, 13},
 			{"test", "test", "test2"},
 		})
@@ -69,7 +69,7 @@ func TestStepPrevious(t *testing.T) {
 	})
 
 	t.Run("with offset", func(t *testing.T) {
-		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 13},
 			{1.0, 1.3},
 		})
@@ -77,7 +77,7 @@ func TestStepPrevious(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{9, 10, 11, 13},
 			{nil, 1.0, 1.0, 1.3},
 		})
@@ -87,7 +87,7 @@ func TestStepPrevious(t *testing.T) {
 	})
 
 	t.Run("with nils", func(t *testing.T) {
-		b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 11, 13, 15},
 			{1.0, nil, nil, 1.5},
 		})
@@ -95,7 +95,7 @@ func TestStepPrevious(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 11, 12, 13, 14, 15},
 			{1.0, nil, 1.0, nil, 1.0, 1.5},
 		})

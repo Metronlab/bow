@@ -8,15 +8,15 @@ import (
 )
 
 func (b *bow) GetRow(rowIndex int) map[string]interface{} {
-	m := map[string]interface{}{}
+	row := map[string]interface{}{}
 	for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
 		val := b.GetValue(colIndex, rowIndex)
 		if val == nil {
 			continue
 		}
-		m[b.Schema().Field(colIndex).Name] = val
+		row[b.Schema().Field(colIndex).Name] = val
 	}
-	return m
+	return row
 }
 
 func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
@@ -57,67 +57,67 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 	return nil
 }
 
-func (b *bow) GetNextValues(col1, col2, row int) (interface{}, interface{}, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetNextValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return nil, nil, -1
 	}
 
-	for row >= 0 && row < b.NumRows() {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
-		v1, row = b.GetNextValue(col1, row)
-		v2, row2 := b.GetNextValue(col2, row)
-		if row == row2 {
-			return v1, v2, row
+		v1, rowIndex = b.GetNextValue(colIndex1, rowIndex)
+		v2, row2 := b.GetNextValue(colIndex2, rowIndex)
+		if rowIndex == row2 {
+			return v1, v2, rowIndex
 		}
 
-		row++
+		rowIndex++
 	}
 	return nil, nil, -1
 }
 
-func (b *bow) GetNextValue(col, row int) (interface{}, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetNextValue(colIndex, rowIndex int) (interface{}, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return nil, -1
 	}
 
-	for row < b.NumRows() {
-		value := b.GetValue(col, row)
+	for rowIndex < b.NumRows() {
+		value := b.GetValue(colIndex, rowIndex)
 		if value != nil {
-			return value, row
+			return value, rowIndex
 		}
-		row++
+		rowIndex++
 	}
 	return nil, -1
 }
 
-func (b *bow) GetPreviousValues(col1, col2, row int) (interface{}, interface{}, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetPreviousValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return nil, nil, -1
 	}
 
-	for row >= 0 && row < b.NumRows() {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
-		v1, row = b.GetPreviousValue(col1, row)
-		v2, row2 := b.GetPreviousValue(col2, row)
-		if row == row2 {
-			return v1, v2, row
+		v1, rowIndex = b.GetPreviousValue(colIndex1, rowIndex)
+		v2, row2 := b.GetPreviousValue(colIndex2, rowIndex)
+		if rowIndex == row2 {
+			return v1, v2, rowIndex
 		}
-		row--
+		rowIndex--
 	}
 	return nil, nil, -1
 }
 
-func (b *bow) GetPreviousValue(col, row int) (interface{}, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetPreviousValue(colIndex, rowIndex int) (interface{}, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return nil, -1
 	}
 
-	for row >= 0 {
-		value := b.GetValue(col, row)
+	for rowIndex >= 0 {
+		value := b.GetValue(colIndex, rowIndex)
 		if value != nil {
-			return value, row
+			return value, rowIndex
 		}
-		row--
+		rowIndex--
 	}
 	return nil, -1
 }
@@ -144,32 +144,32 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 	}
 }
 
-func (b *bow) GetNextInt64(col, row int) (int64, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetNextInt64(colIndex, rowIndex int) (int64, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return 0., -1
 	}
 
-	for row < b.NumRows() {
-		value, ok := b.GetInt64(col, row)
+	for rowIndex < b.NumRows() {
+		value, ok := b.GetInt64(colIndex, rowIndex)
 		if ok {
-			return value, row
+			return value, rowIndex
 		}
-		row++
+		rowIndex++
 	}
 	return 0., -1
 }
 
-func (b *bow) GetPreviousInt64(col, row int) (int64, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetPreviousInt64(colIndex, rowIndex int) (int64, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return 0., -1
 	}
 
-	for row >= 0 {
-		value, ok := b.GetInt64(col, row)
+	for rowIndex >= 0 {
+		value, ok := b.GetInt64(colIndex, rowIndex)
 		if ok {
-			return value, row
+			return value, rowIndex
 		}
-		row--
+		rowIndex--
 	}
 	return 0., -1
 }
@@ -205,70 +205,70 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 	}
 }
 
-func (b *bow) GetNextFloat64s(col1, col2, row int) (float64, float64, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (float64, float64, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return 0., 0., -1
 	}
 
-	for row >= 0 && row < b.NumRows() {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 float64
-		v1, row = b.GetNextFloat64(col1, row)
-		v2, row2 := b.GetNextFloat64(col2, row)
-		if row == row2 {
-			return v1, v2, row
+		v1, rowIndex = b.GetNextFloat64(colIndex1, rowIndex)
+		v2, row2 := b.GetNextFloat64(colIndex2, rowIndex)
+		if rowIndex == row2 {
+			return v1, v2, rowIndex
 		}
 
-		row++
+		rowIndex++
 	}
 
 	return 0., 0., -1
 }
 
-func (b *bow) GetNextFloat64(col, row int) (float64, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetNextFloat64(colIndex, rowIndex int) (float64, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return 0., -1
 	}
 
-	for row < b.NumRows() {
-		value, ok := b.GetFloat64(col, row)
+	for rowIndex < b.NumRows() {
+		value, ok := b.GetFloat64(colIndex, rowIndex)
 		if ok {
-			return value, row
+			return value, rowIndex
 		}
-		row++
+		rowIndex++
 	}
 	return 0., -1
 }
 
-func (b *bow) GetPreviousFloat64s(col1, col2, row int) (float64, float64, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (float64, float64, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return 0., 0., -1
 	}
 
-	for row >= 0 && row < b.NumRows() {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 float64
-		v1, row = b.GetPreviousFloat64(col1, row)
-		v2, row2 := b.GetPreviousFloat64(col2, row)
-		if row == row2 {
-			return v1, v2, row
+		v1, rowIndex = b.GetPreviousFloat64(colIndex1, rowIndex)
+		v2, row2 := b.GetPreviousFloat64(colIndex2, rowIndex)
+		if rowIndex == row2 {
+			return v1, v2, rowIndex
 		}
 
-		row--
+		rowIndex--
 	}
 
 	return 0., 0., -1
 }
 
-func (b *bow) GetPreviousFloat64(col, row int) (float64, int) {
-	if row < 0 || row >= b.NumRows() {
+func (b *bow) GetPreviousFloat64(colIndex, rowIndex int) (float64, int) {
+	if rowIndex < 0 || rowIndex >= b.NumRows() {
 		return 0., -1
 	}
 
-	for row >= 0 {
-		value, ok := b.GetFloat64(col, row)
+	for rowIndex >= 0 {
+		value, ok := b.GetFloat64(colIndex, rowIndex)
 		if ok {
-			return value, row
+			return value, rowIndex
 		}
-		row--
+		rowIndex--
 	}
 	return 0., -1
 }
