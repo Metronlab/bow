@@ -76,7 +76,7 @@ func benchmarkBow(b *testing.B) {
 
 		b.Run("columns -> bow", func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				benchBow, _ = bow.NewBowFromColumnBasedInterfaces(
+				benchBow, _ = bow.NewBowFromColBasedInterfaces(
 					[]string{"time", "value"},
 					[]bow.Type{bow.Int64, bow.Float64},
 					columns,

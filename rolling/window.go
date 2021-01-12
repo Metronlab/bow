@@ -17,6 +17,6 @@ func (w Window) UnsetInclusive() Window {
 	}
 	cp := w
 	cp.IsInclusive = false
-	cp.Bow = cp.Bow.NewSlice(0, cp.Bow.NumRows()-1)
+	cp.Bow = cp.Bow.Slice(0, cp.Bow.NumRows()-1)
 	return cp
 }

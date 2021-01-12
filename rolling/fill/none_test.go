@@ -10,7 +10,7 @@ import (
 
 func TestNone(t *testing.T) {
 	var interval int64 = 2
-	b, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+	b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 		{10, 13},
 		{1.0, 1.3},
 	})
@@ -20,7 +20,7 @@ func TestNone(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol), None(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 12, 13},
 			{1.0, nil, 1.3},
 		})
@@ -34,7 +34,7 @@ func TestNone(t *testing.T) {
 		filled, err := r.
 			Fill(WindowStart(timeCol), None(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColumnBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{9, 10, 11, 13},
 			{nil, 1.0, nil, 1.3},
 		})

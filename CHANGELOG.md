@@ -1,10 +1,21 @@
-v0.7.1 [2020-09-14]
+v0.7.3 [2021-01-12]
+-------------------
+
+- New functions:
+    - NewBowEmpty
+    - NewBowFromColNames
+    - EncodeBowToJSONBody
+    - DecodeJSONRespToBow
+- New aggregation tests
+- Minor code refactoring
+
+v0.7.2 [2020-09-14]
 -------------------
 
 ### Bugfixes
 - OuterJoin: support of bow without rows returning correct schema
 
-v0.7.0 [2020-08-03]
+v0.7.1 [2020-08-03]
 -------------------
 
 ### Features
