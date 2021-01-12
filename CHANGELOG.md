@@ -1,3 +1,14 @@
+v0.7.3 [2021-01-12]
+-------------------
+
+- New functions:
+    - NewBowEmpty
+    - NewBowFromColNames
+    - EncodeBowToJSONBody
+    - DecodeJSONRespToBow
+- New aggregation tests
+- Minor code refactoring
+
 v0.7.2 [2020-09-14]
 -------------------
 
