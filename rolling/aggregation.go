@@ -21,6 +21,7 @@ type ColumnAggregation interface {
 	Func() ColumnAggregationFunc
 	Transform(...transform.Transform) ColumnAggregation
 	Transforms() []transform.Transform
+	GetReturnType(inputType bow.Type, iterator bow.Type) bow.Type
 }
 
 type columnAggregation struct {
@@ -47,6 +48,20 @@ func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow
 
 type ColumnAggregationConstruct func(col string) ColumnAggregation
 type ColumnAggregationFunc func(col int, w Window) (interface{}, error)
+
+func (a *columnAggregation) GetReturnType(input, iterator bow.Type) (typ bow.Type) {
+	switch a.Type() {
+	case bow.Int64, bow.Float64, bow.Bool, bow.String:
+		typ = a.Type()
+	case bow.InputDependent:
+		typ = input
+	case bow.IteratorDependent:
+		typ = iterator
+	default:
+		panic(fmt.Sprintf("invalid return type %s", a.Type()))
+	}
+	return
+}
 
 func (a *columnAggregation) InputIndex() int {
 	return a.inputIndex
