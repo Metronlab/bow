@@ -298,3 +298,21 @@ func (b *bow) GetColumnIndex(colName string) (int, error) {
 func (b *bow) getColumnIndexUnsafe(colName string) int {
 	return b.Schema().FieldIndices(colName)[0]
 }
+
+// FindFirst return the row index of provided value's first occurence in the dataset.
+// Return -1 when value is not found.
+func (b *bow) FindFirst(colIndex int, value interface{}) int {
+	value = b.GetType(colIndex).Convert(value)
+
+	for row := 0; row < b.NumRows(); {
+		res, resRow := b.GetNextValue(colIndex, row)
+		if resRow == -1 {
+			break
+		}
+		if res == value {
+			return resRow
+		}
+		row = resRow + 1
+	}
+	return -1
+}
