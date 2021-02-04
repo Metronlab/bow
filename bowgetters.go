@@ -299,7 +299,7 @@ func (b *bow) getColumnIndexUnsafe(colName string) int {
 	return b.Schema().FieldIndices(colName)[0]
 }
 
-// FindFirst return the row index of provided value's first occurence in the dataset.
+// FindFirst return the row index of provided value's first occurrence in the dataset.
 // Return -1 when value is not found.
 func (b *bow) FindFirst(colIndex int, value interface{}) int {
 	value = b.GetType(colIndex).Convert(value)
