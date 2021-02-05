@@ -1,8 +1,10 @@
 package bow
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBow_IsColSorted(t *testing.T) {
@@ -61,5 +63,34 @@ func TestBow_IsColSorted(t *testing.T) {
 		assert.False(t, sorted)
 		sorted = stringBobow.IsColSorted(1)
 		assert.False(t, sorted)
+	})
+}
+
+func TestBow_IsEmpty(t *testing.T) {
+	t.Run("not an empty bow", func(t *testing.T) {
+		b, err := NewBowFromRowBasedInterfaces([]string{"str", "nbr"}, []Type{String, Float64}, [][]interface{}{
+			{"one", 1.0},
+			{"two", 2.0},
+			{"three", 3.0},
+		})
+		require.NoError(t, err)
+		assert.False(t, b.IsEmpty())
+	})
+
+	t.Run("new bow empty", func(t *testing.T) {
+		b := NewBowEmpty()
+		assert.True(t, b.IsEmpty())
+	})
+
+	t.Run("empty bow from existing", func(t *testing.T) {
+		original, err := NewBowFromRowBasedInterfaces([]string{"str", "nbr"}, []Type{String, Float64}, [][]interface{}{
+			{"one", 1.0},
+			{"two", 2.0},
+			{"three", 3.0},
+		})
+		require.NoError(t, err)
+
+		b := original.NewEmpty()
+		assert.True(t, b.IsEmpty())
 	})
 }

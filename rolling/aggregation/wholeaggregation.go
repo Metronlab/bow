@@ -69,7 +69,7 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 
 		typ := aggr.GetReturnType(b.GetType(aggr.InputIndex()), b.GetType(aggr.InputIndex()))
 
-		if b.NumRows() == 0 {
+		if b.IsEmpty() {
 			buf := bow.NewBuffer(0, typ, true)
 			seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 			continue
