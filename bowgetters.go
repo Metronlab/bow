@@ -301,18 +301,16 @@ func (b *bow) getColumnIndexUnsafe(colName string) int {
 
 // FindFirst return the row index of provided value's first occurrence in the dataset.
 // Return -1 when value is not found.
-func (b *bow) FindFirst(colIndex int, value interface{}) int {
-	value = b.GetType(colIndex).Convert(value)
+func (b *bow) FindFirst(colIndex int, value interface{}) (rowIndex int) {
+	var rowValue interface{}
 
+	valueToFind := b.GetType(colIndex).Convert(value)
 	for row := 0; row < b.NumRows(); {
-		res, resRow := b.GetNextValue(colIndex, row)
-		if resRow == -1 {
-			break
+		rowValue, rowIndex = b.GetNextValue(colIndex, row)
+		if rowIndex == -1 || rowValue == valueToFind {
+			return
 		}
-		if res == value {
-			return resRow
-		}
-		row = resRow + 1
+		row = rowIndex + 1
 	}
 	return -1
 }

@@ -47,7 +47,7 @@ type Bow interface {
 	GetPreviousFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
 	GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 
-	FindFirst(colIndex int, value interface{}) int
+	FindFirst(colIndex int, value interface{}) (rowIndex int)
 
 	// Setters
 	SetColName(colIndex int, newName string) (Bow, error)
