@@ -54,13 +54,13 @@ func ExampleBow_MarshalJSON() {
 	columns := []string{"time", "value", "valueFromJson"}
 	ts := make([]Type, len(columns))
 	ts[0] = Int64
-	rows := [][]interface{}{
+	cols := [][]interface{}{
 		{1, 1.2, json.Number("3")},
 		{1, json.Number("1.2"), 3},
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	b, err := NewBowFromColBasedInterfaces(columns, ts, rows)
+	b, err := NewBowFromColBasedInterfaces(columns, ts, cols)
 	if err != nil {
 		panic(err)
 	}
@@ -79,34 +79,38 @@ func ExampleBow_MarshalJSON() {
 
 	fmt.Println(out.String())
 	//output:
-	//{
-	//	"schema": {
-	//		"fields": [
-	//			{
-	//				"name": "time",
-	//				"type": "int64"
-	//			},
-	//			{
-	//				"name": "value",
-	//				"type": "int64"
-	//			},
-	//			{
-	//				"name": "valueFromJson",
-	//				"type": "float64"
-	//			}
-	//		]
-	//	},
-	//	"data": [
-	//		{
-	//			"time": 1,
-	//			"value": 1,
-	//			"valueFromJson": 1.1
-	//		},
-	//		{
-	//			"time": 3,
-	//			"value": 3,
-	//			"valueFromJson": 1.3
-	//		}
-	//	]
-	//}
+	// {
+	// 	"schema": {
+	// 		"fields": [
+	// 			{
+	// 				"name": "time",
+	// 				"type": "int64"
+	// 			},
+	// 			{
+	// 				"name": "value",
+	// 				"type": "int64"
+	// 			},
+	// 			{
+	// 				"name": "valueFromJson",
+	// 				"type": "float64"
+	// 			}
+	// 		]
+	// 	},
+	// 	"data": [
+	// 		{
+	// 			"time": 1,
+	// 			"value": 1,
+	// 			"valueFromJson": 1.1
+	// 		},
+	// 		{
+	// 			"time": 1,
+	// 			"valueFromJson": 2
+	// 		},
+	// 		{
+	// 			"time": 3,
+	// 			"value": 3,
+	// 			"valueFromJson": 1.3
+	// 		}
+	// 	]
+	// }
 }

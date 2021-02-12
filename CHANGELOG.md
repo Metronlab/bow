@@ -1,3 +1,15 @@
+v0.8.0 [2021-02-12]
+-------------------
+
+- New functions:
+    - IsEmpty
+    - FindFirst
+    - IsSupported
+    - GetReturnType
+- Adding strong typing support
+- Refactoring Bow's logic to return a valid schema instead of nil when no data is found
+- Fixing tests
+
 v0.7.3 [2021-01-12]
 -------------------
 
@@ -34,7 +46,7 @@ v0.6.1 [2020-04-22]
 - bump arrow to apache-arrow-0.17.0
 
 #### Known issues
-arrow now allow several column with same name introducing new panics in bow if the case happen. 
+arrow now allow several column with same name introducing new panics in bow if the case happen.
 [corresponding issue](https://github.com/Metronlab/bow/issues/12)
 
 v0.6.0 [2020-04-22]
