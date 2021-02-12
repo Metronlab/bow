@@ -8,7 +8,7 @@ import (
 func Mode(col string) rolling.ColumnAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.InputDependent,
 		func(col int, w rolling.Window) (interface{}, error) {
-			if w.Bow.NumRows() == 0 {
+			if w.Bow.IsEmpty() {
 				return nil, nil
 			}
 

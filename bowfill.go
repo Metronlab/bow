@@ -2,10 +2,11 @@ package bow
 
 import (
 	"fmt"
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
 	"math"
 	"sync"
+
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
 )
 
 // FillLinear fills the column toFillCol using the Linear interpolation method according
@@ -29,6 +30,9 @@ func (b *bow) FillLinear(refColName string, toFillColName string) (Bow, error) {
 		return nil, err
 	}
 
+	if b.IsColEmpty(refIndex) {
+		return b, nil
+	}
 	sorted := b.IsColSorted(refIndex)
 	if !sorted {
 		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refColName)
