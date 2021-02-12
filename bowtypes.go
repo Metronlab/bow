@@ -79,13 +79,6 @@ func (t Type) Convert(i interface{}) interface{} {
 	return nil
 }
 
-// IsSupported ensures that the type is currently supported by Bow
-// and match a convertible concrete type.
-func (t Type) IsSupported() bool {
-	_, ok := mapTypeArrowDataType[t]
-	return ok
-}
-
 func (t Type) String() string {
 	at, ok := mapTypeArrowDataType[t]
 	if !ok {

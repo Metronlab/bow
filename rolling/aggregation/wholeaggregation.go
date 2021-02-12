@@ -3,7 +3,6 @@ package aggregation
 import (
 	"errors"
 	"fmt"
-
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 )
@@ -67,9 +66,18 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 			}
 		}
 
-		typ := aggr.GetReturnType(b.GetType(aggr.InputIndex()), b.GetType(aggr.InputIndex()))
+		var typ bow.Type
 
-		if b.IsEmpty() {
+		switch aggr.Type() {
+		case bow.Int64, bow.Float64, bow.Bool, bow.String:
+			typ = aggr.Type()
+		case bow.InputDependent, bow.IteratorDependent: // no iterator involved
+			typ = b.GetType(aggr.InputIndex())
+		default:
+			return nil, fmt.Errorf("invalid return type %s", aggr.Type())
+		}
+
+		if b.NumRows() == 0 {
 			buf := bow.NewBuffer(0, typ, true)
 			seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 			continue
