@@ -59,8 +59,8 @@ func ExampleBow_MarshalJSON() {
 		{1, json.Number("1.2"), 3},
 		{json.Number("1.1"), 2, 1.3},
 	}
-
-	b, err := NewBowFromColBasedInterfaces(columns, ts, cols)
+  
+  b, err := NewBowFromColBasedInterfaces(columns, ts, cols)
 	if err != nil {
 		panic(err)
 	}
