@@ -3,12 +3,13 @@ package bow
 import (
 	"errors"
 	"fmt"
-	"github.com/apache/arrow/go/arrow/memory"
 	"reflect"
 	"sort"
 	"strings"
 	"sync"
 	"text/tabwriter"
+
+	"github.com/apache/arrow/go/arrow/memory"
 
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
@@ -45,6 +46,8 @@ type Bow interface {
 	GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 	GetPreviousFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
 	GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
+
+	FindFirst(colIndex int, value interface{}) (rowIndex int)
 
 	// Setters
 	SetColName(colIndex int, newName string) (Bow, error)
@@ -84,6 +87,7 @@ type Bow interface {
 
 	IsColEmpty(colIndex int) bool
 	IsColSorted(colIndex int) bool
+	IsEmpty() bool
 }
 
 type bow struct {
@@ -285,7 +289,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		return nil, fmt.Errorf("bow: function SortByCol: column to sort by not found")
 	}
 
-	if b.NumRows() == 0 {
+	if b.IsEmpty() {
 		return b, nil
 	}
 

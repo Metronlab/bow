@@ -2,10 +2,11 @@ package aggregation
 
 import (
 	"fmt"
-	"github.com/metronlab/bow"
-	"github.com/metronlab/bow/rolling"
 	"math/rand"
 	"testing"
+
+	"github.com/metronlab/bow"
+	"github.com/metronlab/bow/rolling"
 )
 
 // BenchSize of 1e8 triggers out of memory on a 16Go mem computer
@@ -18,7 +19,7 @@ func NoErr(b *testing.B, err error) {
 }
 
 func BenchmarkBow(b *testing.B) {
-	for _, BenchSize = range []int64{1e3, 1e5, 1e7} {
+	for _, BenchSize = range []int64{1, 1e3, 1e5, 1e7} {
 		b.Run(fmt.Sprintf("Size %d", BenchSize), benchmarkBow)
 	}
 }
