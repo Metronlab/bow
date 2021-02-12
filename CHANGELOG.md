@@ -1,3 +1,15 @@
+v0.8.0 [2021-02-12]
+-------------------
+
+- New functions:
+    - IsEmpty
+    - FindFirst
+    - IsSupported
+    - GetReturnType
+- Adding strong typing support
+- Refactoring Bow's logic to return a valid schema instead of nil when no data is found
+- Fixing test ExampleBow_MarshalJSON
+
 v0.7.3 [2021-01-12]
 -------------------
 
