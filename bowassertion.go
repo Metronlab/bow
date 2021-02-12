@@ -78,3 +78,8 @@ func (b *bow) IsColEmpty(colIndex int) bool {
 	}
 	return rowIndex == arr.Len()
 }
+
+// IsEmpty returns true if the dataframe contains no data, false otherwise.
+func (b *bow) IsEmpty() bool {
+	return b.NumRows() == 0
+}
