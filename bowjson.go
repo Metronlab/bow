@@ -29,9 +29,7 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 		panic("bow: column based json marshaller not implemented")
 	}
 
-	rowBased := jsonRecord{
-		Data: make([]map[string]interface{}, 0, b.NumRows()),
-	}
+	rowBased := jsonRecord{}
 	for _, col := range b.Schema().Fields() {
 		rowBased.Schema.Fields = append(rowBased.Schema.Fields, jsonField{
 			Name: col.Name,

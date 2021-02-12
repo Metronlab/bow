@@ -3,10 +3,9 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestJSON(t *testing.T) {
@@ -29,10 +28,12 @@ func TestJSON(t *testing.T) {
 			jsonB, err := emptyBow.MarshalJSON()
 			require.NoError(t, err)
 
-			cp := emptyBow
-			err = cp.UnmarshalJSON(jsonB)
+			rec := jsonRecord{}
+			err = json.Unmarshal(jsonB, &rec)
 			require.NoError(t, err)
-			assert.True(t, emptyBow.Equal(cp), "have:\n%vexpect:\n", cp, emptyBow)
+
+			expected := jsonRecord{}
+			assert.Equal(t, expected, rec)
 		})
 
 		t.Run("simple", func(t *testing.T) {
@@ -70,7 +71,7 @@ func TestJSON(t *testing.T) {
 
 			decodedBow := emptyBow
 			err = decodedBow.UnmarshalJSON(jsonB)
-			require.NoError(t, err)
+			require.Error(t, err)
 		})
 
 		t.Run("simple", func(t *testing.T) {
