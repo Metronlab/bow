@@ -17,10 +17,10 @@ func BenchmarkJoin(b *testing.B) {
 			1.1, 2.2, 3.3, 4., 6.,
 		}, nil),
 	)
-	defer bow1.Release()
 	if err != nil {
 		panic(err)
 	}
+	defer bow1.Release()
 
 	bow2, err := NewBow(
 		NewSeries("index", Int64, []int64{
@@ -34,10 +34,10 @@ func BenchmarkJoin(b *testing.B) {
 			1.1, 2.2, 3.3, 4., 6.,
 		}, nil),
 	)
-	defer bow2.Release()
 	if err != nil {
 		panic(err)
 	}
+	defer bow2.Release()
 
 	b.ResetTimer()
 	b.Run("Inner", func(b *testing.B) {

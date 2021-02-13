@@ -9,45 +9,51 @@ import (
 	"github.com/apache/arrow/go/arrow/memory"
 )
 
-// FillLinear fills the column toFillCol using the Linear interpolation method according
-// to the reference column refCol, which has to be sorted, and returns a new Bow.
-// Fills values only for int64 and float64 numeric types.
-func (b *bow) FillLinear(refColName string, toFillColName string) (Bow, error) {
-	if refColName == toFillColName {
-		err := fmt.Errorf("bow: FillLinear: reference and column to fill are equal")
-		return nil, err
-	}
+// FillLinear fills the column toFillColName using the Linear interpolation method according
+// to the reference column refColName, which has to be sorted.
+// Fills only int64 and float64 types.
+func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	refIndex, err := b.GetColumnIndex(refColName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"bow: FillLinear: error with refColName: %w", err)
+	}
+
+	toFillIndex, err := b.GetColumnIndex(toFillColName)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"bow: FillLinear: error with toFillColName: %w", err)
+	}
+
+	if refIndex == toFillIndex {
+		return nil, fmt.Errorf(
+			"bow: FillLinear: refColName and toFillColName are equal")
 	}
 
 	switch b.GetType(refIndex) {
 	case Int64:
 	case Float64:
 	default:
-		err := fmt.Errorf("bow: FillLinear: reference column (refColName) '%s' is of type '%s'", refColName, b.GetType(refIndex))
-		return nil, err
+		return nil, fmt.Errorf(
+			"bow: FillLinear: refColName '%s' is of type '%s'",
+			refColName, b.GetType(refIndex))
 	}
 
-	if b.IsColEmpty(refIndex) {
+	if b.NumRows() <= 3 {
 		return b, nil
 	}
-	sorted := b.IsColSorted(refIndex)
-	if !sorted {
-		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refColName)
-	}
-	toFillIndex, err := b.GetColumnIndex(toFillColName)
-	if err != nil {
-		return nil, err
+	if !b.IsColSorted(refIndex) {
+		return nil, fmt.Errorf(
+			"bow: FillLinear: column '%s' is empty or not sorted", refColName)
 	}
 
 	switch b.GetType(toFillIndex) {
 	case Int64:
 	case Float64:
 	default:
-		err := fmt.Errorf("bow: FillLinear: column '%s' is of type '%s'", toFillColName, b.GetType(toFillIndex))
-		return nil, err
+		return nil, fmt.Errorf(
+			"bow: FillLinear: toFillColName '%s' is of type '%s'",
+			toFillColName, b.GetType(toFillIndex))
 	}
 
 	var wg sync.WaitGroup
@@ -133,24 +139,30 @@ func (b *bow) FillLinear(refColName string, toFillColName string) (Bow, error) {
 	return NewBow(filledSeries...)
 }
 
-// FillMean fills any row that contains a nil for any of `nilCols`
-// by the mean between the previous and the next values and returns a new Bow.
-// Fills values only for int64 and float64 numeric types.
-// (`colNames` defaults to all columns)
+// FillMean fills nil values of `colNames` columns (`colNames` defaults to all columns)
+// with the mean between the previous and the next values of the same column.
+// Fills only int64 and float64 types.
 func (b *bow) FillMean(colNames ...string) (Bow, error) {
-	toFill, err := selectCols(b, colNames)
+	toFillCols, err := selectCols(b, colNames)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"bow: FillMean error selecting columns [%s] on bow schema [%s]: %w",
+			colNames, b.Schema().String(), err)
+	}
+
+	if b.NumRows() <= 3 {
+		return b, nil
 	}
 
 	for colIndex, col := range b.Schema().Fields() {
-		if toFill[colIndex] {
+		if toFillCols[colIndex] {
 			switch b.GetType(colIndex) {
 			case Int64:
 			case Float64:
 			default:
-				err = fmt.Errorf("fill mean type error: column '%s' is of type '%s'", col.Name, b.GetType(colIndex))
-				return nil, err
+				return nil, fmt.Errorf(
+					"bow: FillMean type error: column '%s' is of type '%s'",
+					col.Name, b.GetType(colIndex))
 			}
 		}
 	}
@@ -162,7 +174,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			typ := b.GetType(colIndex)
-			if toFill[colIndex] {
+			if toFillCols[colIndex] {
 				var newArray array.Interface
 				prevData := b.Record.Column(colIndex).Data()
 				pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
@@ -218,13 +230,18 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	return NewBow(filledSeries...)
 }
 
-// FillNext fills any row that contains a nil for any of `nilCols`
-// using NOCB (Next Obs. Carried Backward) method and returns a new Bow.
-// (`colNames` defaults to all columns)
+// FillNext fills nil values of `colNames` columns (`colNames` defaults to all columns)
+// using NOCB (Next Obs. Carried Backward) method.
 func (b *bow) FillNext(colNames ...string) (Bow, error) {
-	toFill, err := selectCols(b, colNames)
+	toFillCols, err := selectCols(b, colNames)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"bow: FillNext error selecting columns [%s] on bow schema [%s]: %w",
+			colNames, b.Schema().String(), err)
+	}
+
+	if b.NumRows() <= 3 {
+		return b, nil
 	}
 
 	var wg sync.WaitGroup
@@ -234,7 +251,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			typ := b.GetType(colIndex)
-			if toFill[colIndex] {
+			if toFillCols[colIndex] {
 				var newArray array.Interface
 				prevData := b.Record.Column(colIndex).Data()
 				pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
@@ -330,13 +347,18 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 	return NewBow(filledSeries...)
 }
 
-// FillPrevious fills any row that contains a nil for any of `nilCols`
+// FillPrevious fills nil values of `colNames` columns (`colNames` defaults to all columns)
 // using LOCF (Last Obs. Carried Forward) method and returns a new Bow.
-// (`colNames` defaults to all columns)
 func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
-	toFill, err := selectCols(b, colNames)
+	toFillCols, err := selectCols(b, colNames)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"bow: FillPrevious error selecting columns [%s] on bow schema [%s]: %w",
+			colNames, b.Schema().String(), err)
+	}
+
+	if b.NumRows() <= 3 {
+		return b, nil
 	}
 
 	var wg sync.WaitGroup
@@ -346,7 +368,7 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			typ := b.GetType(colIndex)
-			if toFill[colIndex] {
+			if toFillCols[colIndex] {
 				var newArray array.Interface
 				prevData := b.Record.Column(colIndex).Data()
 				pool := memory.NewCheckedAllocator(memory.NewGoAllocator())

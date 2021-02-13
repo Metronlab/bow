@@ -30,10 +30,11 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("float64 with first column sorted", func(t *testing.T) {
-		bow, err := NewRandomBow(Rows(100), Cols(50), DataType(Float64), RefCol(0))
+		bow, err := NewRandomBow(Rows(8), Cols(2), DataType(Float64), RefCol(0))
 		assert.Nil(t, err)
-		assert.Equal(t, 100, bow.NumRows())
-		assert.Equal(t, 50, bow.NumCols())
+
+		assert.Equal(t, 8, bow.NumRows())
+		assert.Equal(t, 2, bow.NumCols())
 		assert.Equal(t, Float64, bow.GetType(0))
 		sorted := bow.IsColSorted(0)
 		assert.True(t, sorted)

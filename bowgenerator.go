@@ -1,10 +1,11 @@
 package bow
 
 import (
+	crand "crypto/rand"
 	"fmt"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
-	"math/rand"
+	"math/big"
 	"strconv"
 )
 
@@ -85,7 +86,7 @@ func NewRandomBow(options ...Option) (Bow, error) {
 	return NewBow(series...)
 }
 
-func newSortedRandomSeries(name string, typ Type, size int, ascSort bool) Series {
+func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Series {
 	var newArray array.Interface
 	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	newBuf := NewBuffer(size, typ, true)
@@ -95,14 +96,14 @@ func newSortedRandomSeries(name string, typ Type, size int, ascSort bool) Series
 		defer b.Release()
 		var base int64
 		for row := 0; row < size; row++ {
-			if ascSort {
+			if descSort {
 				newValue, _ := ToInt64(randomIncreasingNumber(typ, base))
 				newBuf.SetOrDrop(row, newValue)
-				base += 100
+				base -= 100
 			} else {
 				newValue, _ := ToInt64(randomDecreasingNumber(typ, base))
 				newBuf.SetOrDrop(row, newValue)
-				base -= 100
+				base += 100
 			}
 		}
 		b.AppendValues(newBuf.Value.([]int64), newBuf.Valid)
@@ -112,14 +113,14 @@ func newSortedRandomSeries(name string, typ Type, size int, ascSort bool) Series
 		defer b.Release()
 		var base float64
 		for row := 0; row < size; row++ {
-			if ascSort {
+			if descSort {
 				newValue, _ := ToFloat64(randomIncreasingNumber(typ, base))
 				newBuf.SetOrDrop(row, newValue)
-				base += 100
+				base -= 100
 			} else {
 				newValue, _ := ToFloat64(randomDecreasingNumber(typ, base))
 				newBuf.SetOrDrop(row, newValue)
-				base -= 100
+				base += 100
 			}
 		}
 		b.AppendValues(newBuf.Value.([]float64), newBuf.Valid)
@@ -137,10 +138,16 @@ func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
 		newBuf.SetOrDrop(row, randomNumber(typ))
 	}
 	if missingData {
-		nils := rand.Intn(int(size))
-		for j := 0; j < nils; j++ {
-			nils2 := rand.Intn(int(size))
-			newBuf.SetOrDrop(nils2, nil)
+		nils, err := crand.Int(crand.Reader, big.NewInt(int64(size)))
+		if err != nil {
+			panic(err)
+		}
+		for j := 0; j < int(nils.Int64()); j++ {
+			nils2, err := crand.Int(crand.Reader, big.NewInt(int64(size)))
+			if err != nil {
+				panic(err)
+			}
+			newBuf.SetOrDrop(int(nils2.Int64()), nil)
 		}
 	}
 	var newArray array.Interface
@@ -160,17 +167,6 @@ func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
 	return Series{
 		Name:  name,
 		Array: newArray,
-	}
-}
-
-func randomNumber(typ Type) interface{} {
-	switch typ {
-	case Int64:
-		return rand.Int63() % 100
-	case Float64:
-		return rand.Float64() * 100
-	default:
-		panic("unsupported data type")
 	}
 }
 
@@ -199,6 +195,21 @@ func randomDecreasingNumber(typ Type, base interface{}) interface{} {
 		base, _ := ToFloat64(base)
 		add, _ := ToFloat64(randomNumber(Float64))
 		return base - add
+	default:
+		panic("unsupported data type")
+	}
+}
+
+func randomNumber(typ Type) interface{} {
+	n, err := crand.Int(crand.Reader, big.NewInt(100))
+	if err != nil {
+		panic(err)
+	}
+	switch typ {
+	case Int64:
+		return n.Int64()
+	case Float64:
+		return float64(n.Int64()) + 0.5
 	default:
 		panic("unsupported data type")
 	}
