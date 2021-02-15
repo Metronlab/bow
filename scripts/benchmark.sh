@@ -13,8 +13,6 @@ echo
 echo "Running benchstat on /tmp/benchmarkResults.new.txt"
 benchstat /tmp/benchmarkResults.new.txt
 
-bash ./scripts/benchstat.sh "/tmp/benchmarkResults.master.old.txt" "/tmp/benchmarkResults.new.txt"
-
 if [ -n "$CI" ]; then
   echo
   echo "CI detected - running in comparison mode"

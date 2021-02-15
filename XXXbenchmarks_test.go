@@ -6,10 +6,8 @@ import (
 )
 
 const (
-	//maxRows = 1250000
-	maxRows = 10
-	//maxRowsJoin = 5120
-	maxRowsJoin = 10
+	maxRows     = 1250000
+	maxRowsJoin = 5120
 	maxCols     = 2
 )
 
