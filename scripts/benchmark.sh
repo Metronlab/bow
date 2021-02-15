@@ -6,12 +6,18 @@ set -o pipefail
 : ${PKG:=./...}
 : ${TIMEOUT:="1h"}
 
+: ${BENCH_RESULTS_DIR:=/tmp/benchmarks}
+: ${BENCH_RESULTS_NEW:=/tmp/benchmarks/results.new.txt}
+: ${BENCH_RESULTS_OLD:=/tmp/benchmarks/results.master.old.txt}
+
+mkdir -p ${BENCH_RESULTS_DIR}
+
 echo "Running benchmarks"
-go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee /tmp/benchmarkResults.new.txt
+go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee ${BENCH_RESULTS_NEW}
 
 echo
-echo "Running benchstat on /tmp/benchmarkResults.new.txt"
-benchstat /tmp/benchmarkResults.new.txt
+printf "Running benchstat on %s" ${BENCH_RESULTS_NEW}
+benchstat ${BENCH_RESULTS_NEW}
 
 if [ -n "$CI" ]; then
   echo
@@ -21,8 +27,8 @@ if [ -n "$CI" ]; then
   git checkout -q -f master
   echo
   echo "Running benchmarks on master branch"
-  go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee /tmp/benchmarkResults.master.old.txt || echo "Benchmark on master failed"
+  go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee ${BENCH_RESULTS_OLD} || echo "Benchmark on master failed"
 
   git checkout -q -f "$CIRCLE_SHA1"
-  bash ./scripts/benchstat.sh "/tmp/benchmarkResults.master.old.txt" "/tmp/benchmarkResults.new.txt"
+  bash ./scripts/benchstat.sh ${BENCH_RESULTS_OLD} ${BENCH_RESULTS_NEW}
 fi

@@ -6,9 +6,15 @@ import (
 )
 
 const (
-	maxRows     = 1250000
-	maxRowsJoin = 5120
-	maxCols     = 32
+	/*
+		maxRows     = 1250000
+		maxRowsJoin = 5120
+		maxCols     = 32
+	*/
+
+	maxRows     = 10
+	maxRowsJoin = 10
+	maxCols     = 2
 )
 
 func BenchmarkJoin(b *testing.B) {
