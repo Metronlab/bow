@@ -5,8 +5,16 @@ import (
 	"testing"
 )
 
+const (
+	//maxRows = 1250000
+	maxRows = 10
+	//maxRowsJoin = 5120
+	maxRowsJoin = 10
+	maxCols     = 2
+)
+
 func BenchmarkJoin(b *testing.B) {
-	for rows := 10; rows <= 5120; rows *= 2 {
+	for rows := 10; rows <= maxRowsJoin; rows *= 2 {
 		for typ := Float64; typ <= Int64; typ++ {
 			b.Run(fmt.Sprintf("%dx%d_%v_Inner", rows, 2, typ), func(b *testing.B) {
 				benchInnerJoin(rows, typ, b)
@@ -79,8 +87,8 @@ func benchOuterJoin(rows int, typ Type, b *testing.B) {
 }
 
 func BenchmarkBow_Fill(b *testing.B) {
-	for cols := 2; cols <= 32; cols *= 4 {
-		for rows := 10; rows <= 1250000; rows *= 50 {
+	for cols := 2; cols <= maxCols; cols *= 4 {
+		for rows := 10; rows <= maxRows; rows *= 50 {
 			for typ := Float64; typ <= Int64; typ++ {
 				b.Run(fmt.Sprintf("%dx%d_%v_Previous", rows, cols, typ), func(b *testing.B) {
 					benchFillPrevious(rows, cols, typ, b)
@@ -181,7 +189,7 @@ func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
 }
 
 func BenchmarkBow_IsColSorted(b *testing.B) {
-	for rows := 10; rows <= 1250000; rows *= 50 {
+	for rows := 10; rows <= maxRows; rows *= 50 {
 		for typ := Float64; typ <= Int64; typ++ {
 			b.Run(fmt.Sprintf("%dx1_%v_Sorted", rows, typ), func(b *testing.B) {
 				data, err := NewRandomBow(
@@ -232,7 +240,7 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 }
 
 func BenchmarkMarshalJSON(b *testing.B) {
-	for rows := 10; rows <= 1250000; rows *= 50 {
+	for rows := 10; rows <= maxRows; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
 			data, err := NewRandomBow(
 				Rows(rows),
@@ -260,7 +268,7 @@ func BenchmarkMarshalJSON(b *testing.B) {
 }
 
 func BenchmarkUnmarshalJSON(b *testing.B) {
-	for rows := 10; rows <= 1250000; rows *= 50 {
+	for rows := 10; rows <= maxRows; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
 			data, err := NewRandomBow(
 				Rows(rows),

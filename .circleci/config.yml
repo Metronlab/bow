@@ -57,9 +57,8 @@ jobs: # basic units of work in a run
       - run:
           name: RUN TESTS
           command: |
-            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            go test ${PKG} -v -race -cover -covermode=atomic -coverprofile=${COVER_RESULTS}/coverage.cover -timeout 30s \
-              | tee ${TEST_RESULTS}/go-test.out
+            go get github.com/jstemmer/go-junit-report
+            bash -e ./scripts/test.sh
 
       - run:
           name: RUN BENCHMARKS
