@@ -63,6 +63,7 @@ jobs: # basic units of work in a run
 
       - run:
           name: RUN BENCHMARKS
+          no_output_timeout: 1h
           command: |
             go get golang.org/x/perf/cmd/benchstat
             bash -e ./scripts/benchmark.sh
