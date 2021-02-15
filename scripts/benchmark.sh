@@ -24,5 +24,5 @@ if [ -n "$CI" ]; then
   cat $old_bench_master_file
 
   git checkout -q -f "$CIRCLE_SHA1"
-  bash -c tools/script/benchstat.sh "$old_bench_master_file" "$new_bench_file"
+  bash -c ./scripts/benchstat.sh "$old_bench_master_file" "$new_bench_file"
 fi
