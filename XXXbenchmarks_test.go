@@ -1,150 +1,293 @@
 package bow
 
 import (
+	"fmt"
 	"testing"
 )
 
 func BenchmarkJoin(b *testing.B) {
-	bow1, err := NewBow(
-		NewSeries("index", Int64, []int64{
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-		}, nil),
-		NewSeries("col1", Float64, []float64{
-			1.1, 2.2, 3.3, 4., 6.,
-			1.1, 2.2, 3.3, 4., 6.,
-			1.1, 2.2, 3.3, 4., 6.,
-		}, nil),
-	)
-	if err != nil {
-		panic(err)
-	}
-	defer bow1.Release()
-
-	bow2, err := NewBow(
-		NewSeries("index", Int64, []int64{
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-			1, 2, 3, 4, 5,
-		}, nil),
-		NewSeries("col2", Float64, []float64{
-			1.1, 2.2, 3.3, 4., 6.,
-			1.1, 2.2, 3.3, 4., 6.,
-			1.1, 2.2, 3.3, 4., 6.,
-		}, nil),
-	)
-	if err != nil {
-		panic(err)
-	}
-	defer bow2.Release()
-
-	b.ResetTimer()
-	b.Run("Inner", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			bow3 := bow1.InnerJoin(bow2)
-			bow3.Release()
+	for rows := 10; rows <= 5120; rows *= 2 {
+		for typ := Float64; typ <= Int64; typ++ {
+			b.Run(fmt.Sprintf("%dx%d_%v_Inner", rows, 2, typ), func(b *testing.B) {
+				benchInnerJoin(rows, typ, b)
+			})
+			b.Run(fmt.Sprintf("%dx%d_%v_Outer", rows, 2, typ), func(b *testing.B) {
+				benchOuterJoin(rows, typ, b)
+			})
 		}
-	})
-	b.Run("Outer", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			bow3 := bow1.OuterJoin(bow2)
-			bow3.Release()
-		}
-	})
+	}
 }
 
-const (
-	rows = 10000
-	cols = 100
-)
-
-func BenchmarkFill(b *testing.B) {
-	bowInt, err := NewRandomBow(Rows(rows), Cols(cols), DataType(Int64), MissingData(true))
+func benchInnerJoin(rows int, typ Type, b *testing.B) {
+	leftBow, err := NewRandomBow(
+		Rows(rows),
+		Cols(2),
+		DataType(typ),
+		MissingData(true),
+		RefCol(0, false),
+		ColNames([]string{"A", "B"}))
 	if err != nil {
-		panic("bow generator error")
+		panic(err)
 	}
-	bowFloat, err := NewRandomBow(Rows(rows), Cols(cols), DataType(Float64), MissingData(true))
+	rightBow, err := NewRandomBow(
+		Rows(rows),
+		Cols(2),
+		DataType(typ),
+		MissingData(true),
+		RefCol(0, false),
+		ColNames([]string{"A", "C"}))
 	if err != nil {
-		panic("bow generator error")
+		panic(err)
 	}
-	bowIntRef, err := NewRandomBow(Rows(rows), Cols(cols), DataType(Int64), MissingData(true), RefCol(3))
-	if err != nil {
-		panic("bow generator error")
-	}
-	bowFloatRef, err := NewRandomBow(Rows(rows), Cols(cols), DataType(Float64), MissingData(true), RefCol(3))
-	if err != nil {
-		panic("bow generator error")
-	}
-	defer bowInt.Release()
-	defer bowFloat.Release()
-	defer bowIntRef.Release()
-	defer bowFloatRef.Release()
 
 	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		joined := leftBow.InnerJoin(rightBow)
+		joined.Release()
+	}
+}
 
-	b.Run("Next_Int", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowInt.FillNext()
-			if err != nil {
-				panic("fill error")
+func benchOuterJoin(rows int, typ Type, b *testing.B) {
+	leftBow, err := NewRandomBow(
+		Rows(rows),
+		Cols(2),
+		DataType(typ),
+		MissingData(true),
+		RefCol(0, false),
+		ColNames([]string{"A", "B"}))
+	if err != nil {
+		panic(err)
+	}
+	rightBow, err := NewRandomBow(
+		Rows(rows),
+		Cols(2),
+		DataType(typ),
+		MissingData(true),
+		RefCol(0, false),
+		ColNames([]string{"A", "C"}))
+	if err != nil {
+		panic(err)
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		joined := leftBow.OuterJoin(rightBow)
+		joined.Release()
+	}
+	leftBow.Release()
+	rightBow.Release()
+}
+
+func BenchmarkBow_Fill(b *testing.B) {
+	for cols := 2; cols <= 32; cols *= 4 {
+		for rows := 10; rows <= 1250000; rows *= 50 {
+			for typ := Float64; typ <= Int64; typ++ {
+				b.Run(fmt.Sprintf("%dx%d_%v_Previous", rows, cols, typ), func(b *testing.B) {
+					benchFillPrevious(rows, cols, typ, b)
+				})
+				b.Run(fmt.Sprintf("%dx%d_%v_Next", rows, cols, typ), func(b *testing.B) {
+					benchFillNext(rows, cols, typ, b)
+				})
+				b.Run(fmt.Sprintf("%dx%d_%v_Mean", rows, cols, typ), func(b *testing.B) {
+					benchFillMean(rows, cols, typ, b)
+				})
+				b.Run(fmt.Sprintf("%dx%d_%v_Linear", rows, cols, typ), func(b *testing.B) {
+					benchFillLinear(rows, cols, typ, b)
+				})
 			}
 		}
-	})
-	b.Run("Next_Float", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowFloat.FillNext()
-			if err != nil {
-				panic("fill error")
-			}
+	}
+}
+
+func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewRandomBow(
+		Rows(rows),
+		Cols(cols),
+		DataType(typ),
+		MissingData(true))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		filled, err := data.FillPrevious()
+		if err != nil {
+			panic(err)
 		}
-	})
-	b.Run("Previous_Int", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowInt.FillPrevious()
-			if err != nil {
-				panic("fill error")
-			}
+		filled.Release()
+	}
+	data.Release()
+}
+
+func benchFillNext(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewRandomBow(
+		Rows(rows),
+		Cols(cols),
+		DataType(typ),
+		MissingData(true))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		filled, err := data.FillNext()
+		if err != nil {
+			panic(err)
 		}
-	})
-	b.Run("Previous_Float", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowFloat.FillPrevious()
-			if err != nil {
-				panic("fill error")
-			}
+		filled.Release()
+	}
+	data.Release()
+}
+
+func benchFillMean(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewRandomBow(
+		Rows(rows),
+		Cols(cols),
+		DataType(typ),
+		MissingData(true))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		filled, err := data.FillMean()
+		if err != nil {
+			panic(err)
 		}
-	})
-	b.Run("Mean_Int", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowInt.FillMean()
-			if err != nil {
-				panic("fill error")
-			}
+		filled.Release()
+	}
+	data.Release()
+}
+
+func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewRandomBow(
+		Rows(rows),
+		Cols(cols),
+		DataType(typ),
+		MissingData(true),
+		RefCol(0, false))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		filled, err := data.FillLinear("0", "1")
+		if err != nil {
+			panic(err)
 		}
-	})
-	b.Run("Mean_Float", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowFloat.FillMean()
-			if err != nil {
-				panic("fill error")
-			}
+		filled.Release()
+	}
+	data.Release()
+}
+
+func BenchmarkBow_IsColSorted(b *testing.B) {
+	for rows := 10; rows <= 1250000; rows *= 50 {
+		for typ := Float64; typ <= Int64; typ++ {
+			b.Run(fmt.Sprintf("%dx1_%v_Sorted", rows, typ), func(b *testing.B) {
+				data, err := NewRandomBow(
+					Rows(rows),
+					Cols(1),
+					DataType(typ),
+					RefCol(0, false))
+				if err != nil {
+					panic(err)
+				}
+				b.ResetTimer()
+				for n := 0; n < b.N; n++ {
+					_, _ = data.IsColSorted(0)
+				}
+				data.Release()
+			})
+			b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted", rows, typ), func(b *testing.B) {
+				data, err := NewRandomBow(
+					Rows(rows),
+					Cols(1),
+					DataType(typ))
+				if err != nil {
+					panic(err)
+				}
+				b.ResetTimer()
+				for n := 0; n < b.N; n++ {
+					_, _ = data.IsColSorted(0)
+				}
+				data.Release()
+			})
+			b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted_With_Missing_Data", rows, typ), func(b *testing.B) {
+				data, err := NewRandomBow(
+					Rows(rows),
+					Cols(1),
+					DataType(typ),
+					MissingData(true))
+				if err != nil {
+					panic(err)
+				}
+				b.ResetTimer()
+				for n := 0; n < b.N; n++ {
+					_, _ = data.IsColSorted(0)
+				}
+				data.Release()
+			})
 		}
-	})
-	b.Run("Linear_Int", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowIntRef.FillLinear("3", "6")
+	}
+}
+
+func BenchmarkMarshalJSON(b *testing.B) {
+	for rows := 10; rows <= 1250000; rows *= 50 {
+		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
+			data, err := NewRandomBow(
+				Rows(rows),
+				Cols(4),
+				DataTypes([]Type{Int64, Float64, String, Bool}),
+				MissingData(true),
+				RefCol(0, false),
+				ColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
-				panic("fill error")
+				panic(err)
 			}
-		}
-	})
-	b.Run("Linear_Float", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err = bowFloatRef.FillLinear("3", "6")
+
+			data.SetMarshalJSONRowBased(true)
+
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_, err := data.MarshalJSON()
+				if err != nil {
+					panic(err)
+				}
+			}
+			data.Release()
+		})
+	}
+}
+
+func BenchmarkUnmarshalJSON(b *testing.B) {
+	for rows := 10; rows <= 1250000; rows *= 50 {
+		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
+			data, err := NewRandomBow(
+				Rows(rows),
+				Cols(4),
+				DataTypes([]Type{Int64, Float64, String, Bool}),
+				MissingData(true),
+				RefCol(0, false),
+				ColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
-				panic("fill error")
+				panic(err)
 			}
-		}
-	})
+
+			data.SetMarshalJSONRowBased(true)
+			var j []byte
+
+			j, err = data.MarshalJSON()
+			if err != nil {
+				panic(err)
+			}
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				err := NewBowEmpty().UnmarshalJSON(j)
+				if err != nil {
+					panic(err)
+				}
+			}
+			data.Release()
+		})
+	}
 }

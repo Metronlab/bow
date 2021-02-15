@@ -39,10 +39,12 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			refColName, b.GetType(refIndex))
 	}
 
-	if b.NumRows() <= 3 {
-		return b, nil
+	sorted, err := b.IsColSorted(refIndex)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"bow: FillLinear: %w", err)
 	}
-	if !b.IsColSorted(refIndex) {
+	if !sorted {
 		return nil, fmt.Errorf(
 			"bow: FillLinear: column '%s' is empty or not sorted", refColName)
 	}
@@ -150,10 +152,6 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			colNames, b.Schema().String(), err)
 	}
 
-	if b.NumRows() <= 3 {
-		return b, nil
-	}
-
 	for colIndex, col := range b.Schema().Fields() {
 		if toFillCols[colIndex] {
 			switch b.GetType(colIndex) {
@@ -238,10 +236,6 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 		return nil, fmt.Errorf(
 			"bow: FillNext error selecting columns [%s] on bow schema [%s]: %w",
 			colNames, b.Schema().String(), err)
-	}
-
-	if b.NumRows() <= 3 {
-		return b, nil
 	}
 
 	var wg sync.WaitGroup
@@ -355,10 +349,6 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 		return nil, fmt.Errorf(
 			"bow: FillPrevious error selecting columns [%s] on bow schema [%s]: %w",
 			colNames, b.Schema().String(), err)
-	}
-
-	if b.NumRows() <= 3 {
-		return b, nil
 	}
 
 	var wg sync.WaitGroup

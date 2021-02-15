@@ -30,25 +30,51 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("float64 with first column sorted", func(t *testing.T) {
-		bow, err := NewRandomBow(Rows(8), Cols(2), DataType(Float64), RefCol(0))
+		bow, err := NewRandomBow(Rows(8), Cols(2), DataType(Float64), RefCol(0, false))
 		assert.Nil(t, err)
 
 		assert.Equal(t, 8, bow.NumRows())
 		assert.Equal(t, 2, bow.NumCols())
 		assert.Equal(t, Float64, bow.GetType(0))
-		sorted := bow.IsColSorted(0)
+		assert.Equal(t, Float64, bow.GetType(1))
+		sorted, err := bow.IsColSorted(0)
+		assert.Nil(t, err)
 		assert.True(t, sorted)
 	})
 
 	t.Run("descending sort on last column", func(t *testing.T) {
-		bow, err := NewRandomBow(RefCol(9), DescSort(true))
+		bow, err := NewRandomBow(RefCol(9, true))
 		assert.Nil(t, err)
-		sorted := bow.IsColSorted(9)
+		sorted, err := bow.IsColSorted(9)
+		assert.Nil(t, err)
 		assert.True(t, sorted)
 	})
 
-	t.Run("unsupported data type", func(t *testing.T) {
-		_, err := NewRandomBow(DataType(String))
-		assert.Error(t, err)
+	t.Run("custom names and types", func(t *testing.T) {
+		bow, err := NewRandomBow(
+			Cols(4),
+			ColNames([]string{"A", "B", "C", "D"}),
+			DataTypes([]Type{Int64, Float64, String, Bool}),
+			RefCol(0, true),
+		)
+		assert.Nil(t, err)
+
+		sorted, err := bow.IsColSorted(0)
+		assert.Nil(t, err)
+		assert.True(t, sorted)
+
+		n, _ := bow.GetName(0)
+		assert.Equal(t, "A", n)
+		n, _ = bow.GetName(1)
+		assert.Equal(t, "B", n)
+		n, _ = bow.GetName(2)
+		assert.Equal(t, "C", n)
+		n, _ = bow.GetName(3)
+		assert.Equal(t, "D", n)
+
+		assert.Equal(t, Int64, bow.GetType(0))
+		assert.Equal(t, Float64, bow.GetType(1))
+		assert.Equal(t, String, bow.GetType(2))
+		assert.Equal(t, Bool, bow.GetType(3))
 	})
 }
