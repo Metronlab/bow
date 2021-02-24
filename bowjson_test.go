@@ -10,37 +10,40 @@ import (
 )
 
 func TestJSON(t *testing.T) {
-	emptyBow := NewBowEmpty()
-	emptyBow.SetMarshalJSONRowBased(true)
-
-	simpleBow, err := NewBowFromRowBasedInterfaces(
-		[]string{"a", "b", "c"},
-		[]Type{Int64, Float64, Bool},
-		[][]interface{}{
-			{100, 200., false},
-			{110, 220., true},
-			{111, 222., false},
-		})
-	require.NoError(t, err)
-	simpleBow.SetMarshalJSONRowBased(true)
-
 	t.Run("MarshalJSON", func(t *testing.T) {
 		t.Run("empty", func(t *testing.T) {
-			jsonB, err := emptyBow.MarshalJSON()
+			b := NewBowEmpty()
+
+			jsonB, err := b.MarshalJSON()
 			require.NoError(t, err)
 
-			cp := emptyBow
-			err = cp.UnmarshalJSON(jsonB)
+			jsonRec := jsonRecord{}
+			err = json.Unmarshal(jsonB, &jsonRec)
 			require.NoError(t, err)
-			assert.True(t, emptyBow.Equal(cp), "have:\n%vexpect:\n", cp, emptyBow)
+
+			expected := jsonRecord{
+				Schema: jsonSchema{},
+				Data:   []map[string]interface{}{},
+			}
+			assert.Equal(t, expected, jsonRec)
 		})
 
 		t.Run("simple", func(t *testing.T) {
-			jsonB, err := simpleBow.MarshalJSON()
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c"},
+				[]Type{Int64, Float64, Bool},
+				[][]interface{}{
+					{100, 200., false},
+					{110, 220., true},
+					{111, 222., false},
+				})
 			require.NoError(t, err)
 
-			rec := jsonRecord{}
-			err = json.Unmarshal(jsonB, &rec)
+			jsonB, err := b.MarshalJSON()
+			require.NoError(t, err)
+
+			jsonRec := jsonRecord{}
+			err = json.Unmarshal(jsonB, &jsonRec)
 			require.NoError(t, err)
 
 			expected := jsonRecord{
@@ -57,32 +60,45 @@ func TestJSON(t *testing.T) {
 					{"a": 111., "b": 222., "c": false},
 				},
 			}
-
-			assert.Equal(t, expected, rec)
-
+			assert.Equal(t, expected, jsonRec)
 		})
 	})
 
 	t.Run("UnmarshalJSON", func(t *testing.T) {
 		t.Run("empty", func(t *testing.T) {
-			jsonB, err := json.Marshal(emptyBow)
+			b := NewBowEmpty()
+
+			jsonB, err := json.Marshal(b)
 			require.NoError(t, err)
 
-			decodedBow := emptyBow
-			err = decodedBow.UnmarshalJSON(jsonB)
+			bCopy := b
+			err = bCopy.UnmarshalJSON(jsonB)
 			require.NoError(t, err)
+
+			assert.True(t, b.Equal(bCopy),
+				fmt.Sprintf("have:\n%vexpect:\n%v", bCopy, b))
 		})
 
 		t.Run("simple", func(t *testing.T) {
-			jsonB, err := json.Marshal(simpleBow)
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c"},
+				[]Type{Int64, Float64, Bool},
+				[][]interface{}{
+					{100, 200., false},
+					{110, 220., true},
+					{111, 222., false},
+				})
 			require.NoError(t, err)
 
-			decodedBow := simpleBow
-			err = simpleBow.UnmarshalJSON(jsonB)
+			jsonB, err := json.Marshal(b)
 			require.NoError(t, err)
 
-			assert.True(t, simpleBow.Equal(decodedBow),
-				fmt.Sprintf("have:\n%vexpect:\n%v", decodedBow, simpleBow))
+			bCopy := b
+			err = b.UnmarshalJSON(jsonB)
+			require.NoError(t, err)
+
+			assert.True(t, b.Equal(bCopy),
+				fmt.Sprintf("have:\n%vexpect:\n%v", bCopy, b))
 		})
 	})
 }

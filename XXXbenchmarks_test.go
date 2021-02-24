@@ -257,8 +257,6 @@ func BenchmarkMarshalJSON(b *testing.B) {
 				panic(err)
 			}
 
-			data.SetMarshalJSONRowBased(true)
-
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
 				_, err := data.MarshalJSON()
@@ -285,7 +283,6 @@ func BenchmarkUnmarshalJSON(b *testing.B) {
 				panic(err)
 			}
 
-			data.SetMarshalJSONRowBased(true)
 			var j []byte
 
 			j, err = data.MarshalJSON()

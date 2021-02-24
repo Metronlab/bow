@@ -62,7 +62,6 @@ type Bow interface {
 
 	Equal(other Bow) (equal bool)
 
-	SetMarshalJSONRowBased(rowOriented bool)
 	MarshalJSON() (buf []byte, err error)
 	UnmarshalJSON(data []byte) error
 
@@ -92,7 +91,6 @@ type Bow interface {
 }
 
 type bow struct {
-	marshalJSONRowBased bool
 	array.Record
 }
 
