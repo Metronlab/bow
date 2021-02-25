@@ -35,19 +35,11 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			refColName, b.GetType(refIndex))
 	}
 
-	empty, err := b.IsColEmpty(refIndex)
-	if err != nil {
-		return nil, fmt.Errorf("bow: FillLinear: %w", err)
-	}
-	if empty {
+	if b.IsColEmpty(refIndex) {
 		return b, nil
 	}
 
-	sorted, err := b.IsColSorted(refIndex)
-	if err != nil {
-		return nil, fmt.Errorf("bow: FillLinear: %w", err)
-	}
-	if !sorted {
+	if !b.IsColSorted(refIndex) {
 		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refColName)
 	}
 

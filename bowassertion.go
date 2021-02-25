@@ -1,28 +1,23 @@
 package bow
 
 import (
-	"fmt"
 	"github.com/apache/arrow/go/arrow/array"
 )
 
 const (
-	OrderUndefined = iota
-	OrderASC
-	OrderDESC
+	orderUndefined = iota
+	orderASC
+	orderDESC
 )
 
 // IsColSorted returns a boolean whether the column colIndex is sorted or not, skipping nil values.
 // An empty column or an unsupported data type returns false.
-func (b *bow) IsColSorted(colIndex int) (bool, error) {
-	empty, err := b.IsColEmpty(colIndex)
-	if err != nil {
-		return false, fmt.Errorf("IsColSorted: %w", err)
-	}
-	if empty {
-		return false, nil
+func (b *bow) IsColSorted(colIndex int) bool {
+	if b.IsColEmpty(colIndex) {
+		return false
 	}
 	var rowIndex int
-	var order = OrderUndefined
+	var order = orderUndefined
 
 	switch b.GetType(colIndex) {
 	case Int64:
@@ -37,16 +32,16 @@ func (b *bow) IsColSorted(colIndex int) (bool, error) {
 		for rowIndex < len(values) {
 			if arr.IsValid(rowIndex) {
 				next = values[rowIndex]
-				if order == OrderUndefined {
+				if order == orderUndefined {
 					if curr < next {
-						order = OrderASC
+						order = orderASC
 					} else if curr > next {
-						order = OrderDESC
+						order = orderDESC
 					}
 				}
-				if order == OrderASC && next < curr ||
-					order == OrderDESC && next > curr {
-					return false, nil
+				if order == orderASC && next < curr ||
+					order == orderDESC && next > curr {
+					return false
 				}
 				curr = next
 			}
@@ -64,38 +59,34 @@ func (b *bow) IsColSorted(colIndex int) (bool, error) {
 		for rowIndex < len(values) {
 			if arr.IsValid(rowIndex) {
 				next = values[rowIndex]
-				if order == OrderUndefined {
+				if order == orderUndefined {
 					if curr < next {
-						order = OrderASC
+						order = orderASC
 					} else if curr > next {
-						order = OrderDESC
+						order = orderDESC
 					}
 				}
-				if order == OrderASC && next < curr ||
-					order == OrderDESC && next > curr {
-					return false, nil
+				if order == orderASC && next < curr ||
+					order == orderDESC && next > curr {
+					return false
 				}
 				curr = next
 			}
 			rowIndex++
 		}
 	default:
-		return false, nil
+		return false
 	}
-	return true, nil
+	return true
 }
 
-func (b *bow) IsColEmpty(colIndex int) (bool, error) {
-	if _, err := b.GetName(colIndex); err != nil {
-		return false, fmt.Errorf("IsColEmpty: invalid colIndex: %w", err)
-	}
-
+func (b *bow) IsColEmpty(colIndex int) bool {
 	var rowIndex int
 	arr := b.Column(colIndex)
 	for rowIndex < arr.Len() && arr.IsNull(rowIndex) {
 		rowIndex++
 	}
-	return rowIndex == arr.Len(), nil
+	return rowIndex == arr.Len()
 }
 
 // IsEmpty returns true if the dataframe contains no data, false otherwise.

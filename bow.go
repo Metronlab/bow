@@ -85,8 +85,8 @@ type Bow interface {
 	NumRows() int
 	NumCols() int
 
-	IsColEmpty(colIndex int) (bool, error)
-	IsColSorted(colIndex int) (bool, error)
+	IsColEmpty(colIndex int) bool
+	IsColSorted(colIndex int) bool
 	IsEmpty() bool
 }
 

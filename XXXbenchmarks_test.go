@@ -206,7 +206,7 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				}
 				b.ResetTimer()
 				for n := 0; n < b.N; n++ {
-					_, _ = data.IsColSorted(0)
+					_ = data.IsColSorted(0)
 				}
 				data.Release()
 			})
@@ -220,7 +220,7 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				}
 				b.ResetTimer()
 				for n := 0; n < b.N; n++ {
-					_, _ = data.IsColSorted(0)
+					_ = data.IsColSorted(0)
 				}
 				data.Release()
 			})
@@ -235,7 +235,7 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				}
 				b.ResetTimer()
 				for n := 0; n < b.N; n++ {
-					_, _ = data.IsColSorted(0)
+					_ = data.IsColSorted(0)
 				}
 				data.Release()
 			})

@@ -37,16 +37,14 @@ func TestGenerator(t *testing.T) {
 		assert.Equal(t, 2, bow.NumCols())
 		assert.Equal(t, Float64, bow.GetType(0))
 		assert.Equal(t, Float64, bow.GetType(1))
-		sorted, err := bow.IsColSorted(0)
-		assert.Nil(t, err)
+		sorted := bow.IsColSorted(0)
 		assert.True(t, sorted)
 	})
 
 	t.Run("descending sort on last column", func(t *testing.T) {
 		bow, err := NewRandomBow(RefCol(9, true))
 		assert.Nil(t, err)
-		sorted, err := bow.IsColSorted(9)
-		assert.Nil(t, err)
+		sorted := bow.IsColSorted(9)
 		assert.True(t, sorted)
 	})
 
@@ -59,8 +57,7 @@ func TestGenerator(t *testing.T) {
 		)
 		assert.Nil(t, err)
 
-		sorted, err := bow.IsColSorted(0)
-		assert.Nil(t, err)
+		sorted := bow.IsColSorted(0)
 		assert.True(t, sorted)
 
 		n, _ := bow.GetName(0)
