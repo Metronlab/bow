@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-type randomBowOptions struct {
+type genBowOptions struct {
 	Rows        int
 	Cols        int
 	DataType    Type
@@ -22,60 +22,61 @@ type randomBowOptions struct {
 }
 
 // Option is a type used for self-referential functions
-type Option func(*randomBowOptions)
+type Option func(*genBowOptions)
 
-// Rows sets the number of rows for NewRandomBow
-func Rows(rows int) Option {
-	return func(f *randomBowOptions) {
+// GenRows sets the number of rows for NewGenBow
+func GenRows(rows int) Option {
+	return func(f *genBowOptions) {
 		if rows < 1 {
-			panic("NewRandomBow: Rows must be positive")
+			panic("NewGenBow: GenRows must be positive")
 		}
 		f.Rows = rows
 	}
 }
 
-// Cols sets the number of columns for NewRandomBow
-func Cols(cols int) Option {
-	return func(f *randomBowOptions) {
+// GenCols sets the number of columns for NewGenBow
+func GenCols(cols int) Option {
+	return func(f *genBowOptions) {
 		if cols < 1 {
-			panic("NewRandomBow: Cols must be positive")
+			panic("NewGenBow: GenCols must be positive")
 		}
 		f.Cols = cols
 	}
 }
 
-// DataType sets a unique data type for every columns of the NewRandomBow
-func DataType(dataType Type) Option { return func(f *randomBowOptions) { f.DataType = dataType } }
+// GenDataType sets a unique data type for every columns of the NewGenBow
+func GenDataType(dataType Type) Option { return func(f *genBowOptions) { f.DataType = dataType } }
 
-// ColNames sets the name of each column of the NewRandomBow
-func ColNames(colNames []string) Option { return func(f *randomBowOptions) { f.ColNames = colNames } }
+// GenColNames sets the name of each column of the NewGenBow
+func GenColNames(colNames []string) Option { return func(f *genBowOptions) { f.ColNames = colNames } }
 
-// DataTypes sets the data types of each column of the NewRandomBow
-func DataTypes(dataTypes []Type) Option { return func(f *randomBowOptions) { f.DataTypes = dataTypes } }
+// GenDataTypes sets the data types of each column of the NewGenBow
+func GenDataTypes(dataTypes []Type) Option { return func(f *genBowOptions) { f.DataTypes = dataTypes } }
 
-// MissingData defines if the NewRandomBow includes missing data at random rows in every columns except RefCol
-func MissingData(hasMissingData bool) Option {
-	return func(f *randomBowOptions) { f.MissingData = hasMissingData }
+// GenMissingData defines if the NewGenBow includes missing data at random rows in every columns except GenRefCol
+func GenMissingData(hasMissingData bool) Option {
+	return func(f *genBowOptions) { f.MissingData = hasMissingData }
 }
 
-// RefCol defines the index of a reference column, which does not include missing data and is sorted for every type except bool
-func RefCol(refCol int, descSort bool) Option {
-	return func(f *randomBowOptions) {
+// GenRefCol defines the index of a reference column,
+// which does not include missing data and is sorted for every type except bool
+func GenRefCol(refCol int, descSort bool) Option {
+	return func(f *genBowOptions) {
 		f.RefCol = refCol
 		f.DescSort = descSort
 	}
 }
 
-// NewRandomBow generates a new random bow filled with the following options:
-// Rows(rows int): number of rows (default 10)
-// Cols(cols int): number of columns (default 10)
-// DataType(typ Type): data type (default Int64)
-// MissingData(missing bool): enable random missing data (default false)
-// RefCol(refCol int, descSort bool): defines the index of a reference column and its sorting order,
+// NewGenBow generates a new random bow filled with the following options:
+// GenRows(rows int): number of rows (default 10)
+// GenCols(cols int): number of columns (default 10)
+// GenDataType(typ Type): data type (default Int64)
+// GenMissingData(missing bool): enable random missing data (default false)
+// GenRefCol(refCol int, descSort bool): defines the index of a reference column and its sorting order,
 // which does not include missing data and is sorted (default refCol = -1 (no column) and descSort = false)
-func NewRandomBow(options ...Option) (Bow, error) {
+func NewGenBow(options ...Option) (Bow, error) {
 	// Set default options
-	f := &randomBowOptions{
+	f := &genBowOptions{
 		Rows:     10,
 		Cols:     10,
 		DataType: Unknown,
@@ -87,9 +88,9 @@ func NewRandomBow(options ...Option) (Bow, error) {
 
 	if len(f.DataTypes) > 0 {
 		if f.DataType != Unknown {
-			return nil, fmt.Errorf("NewRandomBow: either DataType or DataTypes must be set")
+			return nil, fmt.Errorf("NewGenBow: either GenDataType or GenDataTypes must be set")
 		} else if len(f.DataTypes) != f.Cols {
-			return nil, fmt.Errorf("NewRandomBow: DataTypes array length must be equal to Cols")
+			return nil, fmt.Errorf("NewGenBow: GenDataTypes array length must be equal to GenCols")
 		}
 	} else {
 		if f.DataType == Unknown {
@@ -101,7 +102,7 @@ func NewRandomBow(options ...Option) (Bow, error) {
 	}
 
 	if len(f.ColNames) > 0 && len(f.ColNames) != f.Cols {
-		return nil, fmt.Errorf("NewRandomBow: ColNames array length must be equal to Cols")
+		return nil, fmt.Errorf("NewGenBow: GenColNames array length must be equal to GenCols")
 	} else if len(f.ColNames) == 0 {
 		for i := 0; i < f.Cols; i++ {
 			f.ColNames = append(f.ColNames, strconv.Itoa(i))
@@ -109,10 +110,10 @@ func NewRandomBow(options ...Option) (Bow, error) {
 	}
 
 	if f.RefCol > f.Cols-1 {
-		return nil, fmt.Errorf("NewRandomBow: RefCol is out of range")
+		return nil, fmt.Errorf("NewGenBow: GenRefCol is out of range")
 	}
 	if f.RefCol > -1 && f.DataTypes[f.RefCol] == Bool {
-		return nil, fmt.Errorf("NewRandomBow: RefCol cannot be of type Bool")
+		return nil, fmt.Errorf("NewGenBow: GenRefCol cannot be of type Bool")
 	}
 
 	series := make([]Series, f.Cols)

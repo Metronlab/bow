@@ -31,23 +31,23 @@ func BenchmarkJoin(b *testing.B) {
 }
 
 func benchInnerJoin(rows int, typ Type, b *testing.B) {
-	leftBow, err := NewRandomBow(
-		Rows(rows),
-		Cols(2),
-		DataType(typ),
-		MissingData(true),
-		RefCol(0, false),
-		ColNames([]string{"A", "B"}))
+	leftBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "B"}))
 	if err != nil {
 		panic(err)
 	}
-	rightBow, err := NewRandomBow(
-		Rows(rows),
-		Cols(2),
-		DataType(typ),
-		MissingData(true),
-		RefCol(0, false),
-		ColNames([]string{"A", "C"}))
+	rightBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "C"}))
 	if err != nil {
 		panic(err)
 	}
@@ -60,23 +60,23 @@ func benchInnerJoin(rows int, typ Type, b *testing.B) {
 }
 
 func benchOuterJoin(rows int, typ Type, b *testing.B) {
-	leftBow, err := NewRandomBow(
-		Rows(rows),
-		Cols(2),
-		DataType(typ),
-		MissingData(true),
-		RefCol(0, false),
-		ColNames([]string{"A", "B"}))
+	leftBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "B"}))
 	if err != nil {
 		panic(err)
 	}
-	rightBow, err := NewRandomBow(
-		Rows(rows),
-		Cols(2),
-		DataType(typ),
-		MissingData(true),
-		RefCol(0, false),
-		ColNames([]string{"A", "C"}))
+	rightBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "C"}))
 	if err != nil {
 		panic(err)
 	}
@@ -112,11 +112,11 @@ func BenchmarkBow_Fill(b *testing.B) {
 }
 
 func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewRandomBow(
-		Rows(rows),
-		Cols(cols),
-		DataType(typ),
-		MissingData(true))
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true))
 	if err != nil {
 		panic(err)
 	}
@@ -132,11 +132,11 @@ func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
 }
 
 func benchFillNext(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewRandomBow(
-		Rows(rows),
-		Cols(cols),
-		DataType(typ),
-		MissingData(true))
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true))
 	if err != nil {
 		panic(err)
 	}
@@ -152,11 +152,11 @@ func benchFillNext(rows, cols int, typ Type, b *testing.B) {
 }
 
 func benchFillMean(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewRandomBow(
-		Rows(rows),
-		Cols(cols),
-		DataType(typ),
-		MissingData(true))
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true))
 	if err != nil {
 		panic(err)
 	}
@@ -172,12 +172,12 @@ func benchFillMean(rows, cols int, typ Type, b *testing.B) {
 }
 
 func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewRandomBow(
-		Rows(rows),
-		Cols(cols),
-		DataType(typ),
-		MissingData(true),
-		RefCol(0, false))
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false))
 	if err != nil {
 		panic(err)
 	}
@@ -196,11 +196,11 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 	for rows := 10; rows <= maxRows; rows *= 50 {
 		for typ := Float64; typ <= Int64; typ++ {
 			b.Run(fmt.Sprintf("%dx1_%v_Sorted", rows, typ), func(b *testing.B) {
-				data, err := NewRandomBow(
-					Rows(rows),
-					Cols(1),
-					DataType(typ),
-					RefCol(0, false))
+				data, err := NewGenBow(
+					GenRows(rows),
+					GenCols(1),
+					GenDataType(typ),
+					GenRefCol(0, false))
 				if err != nil {
 					panic(err)
 				}
@@ -211,10 +211,10 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				data.Release()
 			})
 			b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted", rows, typ), func(b *testing.B) {
-				data, err := NewRandomBow(
-					Rows(rows),
-					Cols(1),
-					DataType(typ))
+				data, err := NewGenBow(
+					GenRows(rows),
+					GenCols(1),
+					GenDataType(typ))
 				if err != nil {
 					panic(err)
 				}
@@ -225,11 +225,11 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				data.Release()
 			})
 			b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted_With_Missing_Data", rows, typ), func(b *testing.B) {
-				data, err := NewRandomBow(
-					Rows(rows),
-					Cols(1),
-					DataType(typ),
-					MissingData(true))
+				data, err := NewGenBow(
+					GenRows(rows),
+					GenCols(1),
+					GenDataType(typ),
+					GenMissingData(true))
 				if err != nil {
 					panic(err)
 				}
@@ -246,13 +246,13 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 func BenchmarkMarshalJSON(b *testing.B) {
 	for rows := 10; rows <= maxRows; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
-			data, err := NewRandomBow(
-				Rows(rows),
-				Cols(4),
-				DataTypes([]Type{Int64, Float64, String, Bool}),
-				MissingData(true),
-				RefCol(0, false),
-				ColNames([]string{"int64", "float64", "bool", "string"}))
+			data, err := NewGenBow(
+				GenRows(rows),
+				GenCols(4),
+				GenDataTypes([]Type{Int64, Float64, String, Bool}),
+				GenMissingData(true),
+				GenRefCol(0, false),
+				GenColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
 				panic(err)
 			}
@@ -272,13 +272,13 @@ func BenchmarkMarshalJSON(b *testing.B) {
 func BenchmarkUnmarshalJSON(b *testing.B) {
 	for rows := 10; rows <= maxRows; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
-			data, err := NewRandomBow(
-				Rows(rows),
-				Cols(4),
-				DataTypes([]Type{Int64, Float64, String, Bool}),
-				MissingData(true),
-				RefCol(0, false),
-				ColNames([]string{"int64", "float64", "bool", "string"}))
+			data, err := NewGenBow(
+				GenRows(rows),
+				GenCols(4),
+				GenDataTypes([]Type{Int64, Float64, String, Bool}),
+				GenMissingData(true),
+				GenRefCol(0, false),
+				GenColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
 				panic(err)
 			}

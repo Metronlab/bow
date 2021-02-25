@@ -9,7 +9,7 @@ import (
 
 func TestGenerator(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
-		bow, err := NewRandomBow()
+		bow, err := NewGenBow()
 		assert.Nil(t, err)
 		assert.Equal(t, 10, bow.NumRows())
 		assert.Equal(t, 10, bow.NumCols())
@@ -22,7 +22,7 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("with missing data", func(t *testing.T) {
-		bow, err := NewRandomBow(MissingData(true))
+		bow, err := NewGenBow(GenMissingData(true))
 		assert.Nil(t, err)
 		bow2, err := bow.DropNil()
 		assert.Nil(t, err)
@@ -30,7 +30,7 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("float64 with first column sorted", func(t *testing.T) {
-		bow, err := NewRandomBow(Rows(8), Cols(2), DataType(Float64), RefCol(0, false))
+		bow, err := NewGenBow(GenRows(8), GenCols(2), GenDataType(Float64), GenRefCol(0, false))
 		assert.Nil(t, err)
 
 		assert.Equal(t, 8, bow.NumRows())
@@ -42,18 +42,18 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("descending sort on last column", func(t *testing.T) {
-		bow, err := NewRandomBow(RefCol(9, true))
+		bow, err := NewGenBow(GenRefCol(9, true))
 		assert.Nil(t, err)
 		sorted := bow.IsColSorted(9)
 		assert.True(t, sorted)
 	})
 
 	t.Run("custom names and types", func(t *testing.T) {
-		bow, err := NewRandomBow(
-			Cols(4),
-			ColNames([]string{"A", "B", "C", "D"}),
-			DataTypes([]Type{Int64, Float64, String, Bool}),
-			RefCol(0, true),
+		bow, err := NewGenBow(
+			GenCols(4),
+			GenColNames([]string{"A", "B", "C", "D"}),
+			GenDataTypes([]Type{Int64, Float64, String, Bool}),
+			GenRefCol(0, true),
 		)
 		assert.Nil(t, err)
 
