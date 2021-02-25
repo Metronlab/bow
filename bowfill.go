@@ -15,38 +15,40 @@ import (
 func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	refIndex, err := b.GetColumnIndex(refColName)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"bow: FillLinear: error with refColName: %w", err)
+		return nil, fmt.Errorf("bow: FillLinear: error with refColName: %w", err)
 	}
 
 	toFillIndex, err := b.GetColumnIndex(toFillColName)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"bow: FillLinear: error with toFillColName: %w", err)
+		return nil, fmt.Errorf("bow: FillLinear: error with toFillColName: %w", err)
 	}
 
 	if refIndex == toFillIndex {
-		return nil, fmt.Errorf(
-			"bow: FillLinear: refColName and toFillColName are equal")
+		return nil, fmt.Errorf("bow: FillLinear: refColName and toFillColName are equal")
 	}
 
 	switch b.GetType(refIndex) {
 	case Int64:
 	case Float64:
 	default:
-		return nil, fmt.Errorf(
-			"bow: FillLinear: refColName '%s' is of type '%s'",
+		return nil, fmt.Errorf("bow: FillLinear: refColName '%s' is of type '%s'",
 			refColName, b.GetType(refIndex))
+	}
+
+	empty, err := b.IsColEmpty(refIndex)
+	if err != nil {
+		return nil, fmt.Errorf("bow: FillLinear: %w", err)
+	}
+	if empty {
+		return b, nil
 	}
 
 	sorted, err := b.IsColSorted(refIndex)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"bow: FillLinear: %w", err)
+		return nil, fmt.Errorf("bow: FillLinear: %w", err)
 	}
 	if !sorted {
-		return nil, fmt.Errorf(
-			"bow: FillLinear: column '%s' is empty or not sorted", refColName)
+		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refColName)
 	}
 
 	switch b.GetType(toFillIndex) {
