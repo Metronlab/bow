@@ -11,14 +11,14 @@ import (
 )
 
 type genBowOptions struct {
-	Rows        int
-	Cols        int
-	DataType    Type
-	ColNames    []string
-	DataTypes   []Type
-	MissingData bool
-	RefCol      int
-	DescSort    bool
+	rows        int
+	cols        int
+	dataType    Type
+	colNames    []string
+	dataTypes   []Type
+	missingData bool
+	refCol      int
+	descSort    bool
 }
 
 // Option is a type used for self-referential functions
@@ -30,7 +30,7 @@ func GenRows(rows int) Option {
 		if rows < 1 {
 			panic("NewGenBow: GenRows must be positive")
 		}
-		f.Rows = rows
+		f.rows = rows
 	}
 }
 
@@ -40,30 +40,30 @@ func GenCols(cols int) Option {
 		if cols < 1 {
 			panic("NewGenBow: GenCols must be positive")
 		}
-		f.Cols = cols
+		f.cols = cols
 	}
 }
 
 // GenDataType sets a unique data type for every columns of the NewGenBow
-func GenDataType(dataType Type) Option { return func(f *genBowOptions) { f.DataType = dataType } }
+func GenDataType(dataType Type) Option { return func(f *genBowOptions) { f.dataType = dataType } }
 
 // GenColNames sets the name of each column of the NewGenBow
-func GenColNames(colNames []string) Option { return func(f *genBowOptions) { f.ColNames = colNames } }
+func GenColNames(colNames []string) Option { return func(f *genBowOptions) { f.colNames = colNames } }
 
 // GenDataTypes sets the data types of each column of the NewGenBow
-func GenDataTypes(dataTypes []Type) Option { return func(f *genBowOptions) { f.DataTypes = dataTypes } }
+func GenDataTypes(dataTypes []Type) Option { return func(f *genBowOptions) { f.dataTypes = dataTypes } }
 
 // GenMissingData defines if the NewGenBow includes missing data at random rows in every columns except GenRefCol
 func GenMissingData(hasMissingData bool) Option {
-	return func(f *genBowOptions) { f.MissingData = hasMissingData }
+	return func(f *genBowOptions) { f.missingData = hasMissingData }
 }
 
 // GenRefCol defines the index of a reference column,
 // which does not include missing data and is sorted for every type except bool
 func GenRefCol(refCol int, descSort bool) Option {
 	return func(f *genBowOptions) {
-		f.RefCol = refCol
-		f.DescSort = descSort
+		f.refCol = refCol
+		f.descSort = descSort
 	}
 }
 
@@ -77,51 +77,51 @@ func GenRefCol(refCol int, descSort bool) Option {
 func NewGenBow(options ...Option) (Bow, error) {
 	// Set default options
 	f := &genBowOptions{
-		Rows:     10,
-		Cols:     10,
-		DataType: Unknown,
-		RefCol:   -1,
+		rows:     10,
+		cols:     10,
+		dataType: Unknown,
+		refCol:   -1,
 	}
 	for _, option := range options {
 		option(f)
 	}
 
-	if len(f.DataTypes) > 0 {
-		if f.DataType != Unknown {
+	if len(f.dataTypes) > 0 {
+		if f.dataType != Unknown {
 			return nil, fmt.Errorf("NewGenBow: either GenDataType or GenDataTypes must be set")
-		} else if len(f.DataTypes) != f.Cols {
+		} else if len(f.dataTypes) != f.cols {
 			return nil, fmt.Errorf("NewGenBow: GenDataTypes array length must be equal to GenCols")
 		}
 	} else {
-		if f.DataType == Unknown {
-			f.DataType = Int64
+		if f.dataType == Unknown {
+			f.dataType = Int64
 		}
-		for i := 0; i < f.Cols; i++ {
-			f.DataTypes = append(f.DataTypes, f.DataType)
+		for i := 0; i < f.cols; i++ {
+			f.dataTypes = append(f.dataTypes, f.dataType)
 		}
 	}
 
-	if len(f.ColNames) > 0 && len(f.ColNames) != f.Cols {
+	if len(f.colNames) > 0 && len(f.colNames) != f.cols {
 		return nil, fmt.Errorf("NewGenBow: GenColNames array length must be equal to GenCols")
-	} else if len(f.ColNames) == 0 {
-		for i := 0; i < f.Cols; i++ {
-			f.ColNames = append(f.ColNames, strconv.Itoa(i))
+	} else if len(f.colNames) == 0 {
+		for i := 0; i < f.cols; i++ {
+			f.colNames = append(f.colNames, strconv.Itoa(i))
 		}
 	}
 
-	if f.RefCol > f.Cols-1 {
+	if f.refCol > f.cols-1 {
 		return nil, fmt.Errorf("NewGenBow: GenRefCol is out of range")
 	}
-	if f.RefCol > -1 && f.DataTypes[f.RefCol] == Bool {
+	if f.refCol > -1 && f.dataTypes[f.refCol] == Bool {
 		return nil, fmt.Errorf("NewGenBow: GenRefCol cannot be of type Bool")
 	}
 
-	series := make([]Series, f.Cols)
+	series := make([]Series, f.cols)
 	for i := range series {
-		if i == f.RefCol {
-			series[i] = newSortedRandomSeries(f.ColNames[i], f.DataTypes[i], f.Rows, f.DescSort)
+		if i == f.refCol {
+			series[i] = newSortedRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.descSort)
 		} else {
-			series[i] = newRandomSeries(f.ColNames[i], f.DataTypes[i], f.Rows, f.MissingData)
+			series[i] = newRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.missingData)
 		}
 	}
 	return NewBow(series...)
