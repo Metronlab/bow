@@ -20,24 +20,29 @@ type JSONBow struct {
 }
 
 func (b *bow) MarshalJSON() ([]byte, error) {
-	jsonB := JSONBow{
+	return json.Marshal(NewJSONBow(b))
+}
+
+func NewJSONBow(b Bow) (res JSONBow) {
+	res = JSONBow{
 		Data: make([]map[string]interface{}, 0, b.NumRows()),
 	}
 	for _, col := range b.Schema().Fields() {
-		jsonB.Schema.Fields = append(jsonB.Schema.Fields, JSONField{
-			Name: col.Name,
-			Type: col.Type.Name(),
-		})
+		res.Schema.Fields = append(
+			res.Schema.Fields,
+			JSONField{
+				Name: col.Name,
+				Type: col.Type.Name(),
+			})
 	}
 
 	for row := range b.RowMapIter() {
 		if len(row) == 0 {
 			continue
 		}
-		jsonB.Data = append(jsonB.Data, row)
+		res.Data = append(res.Data, row)
 	}
-
-	return json.Marshal(jsonB)
+	return
 }
 
 func (b *bow) UnmarshalJSON(data []byte) error {
