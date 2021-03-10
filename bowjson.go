@@ -24,6 +24,10 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 }
 
 func NewJSONBow(b Bow) (res JSONBow) {
+	if b == nil {
+		return
+	}
+
 	res = JSONBow{
 		Data: make([]map[string]interface{}, 0, b.NumRows()),
 	}
