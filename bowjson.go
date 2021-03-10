@@ -5,17 +5,17 @@ import (
 	"fmt"
 )
 
-type jsonField struct {
+type JSONField struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
 
-type jsonSchema struct {
-	Fields []jsonField `json:"fields"`
+type JSONSchema struct {
+	Fields []JSONField `json:"fields"`
 }
 
 type JSONBow struct {
-	Schema jsonSchema               `json:"schema"`
+	Schema JSONSchema               `json:"schema"`
 	Data   []map[string]interface{} `json:"data"`
 }
 
@@ -24,7 +24,7 @@ func (b *bow) MarshalJSON() ([]byte, error) {
 		Data: make([]map[string]interface{}, 0, b.NumRows()),
 	}
 	for _, col := range b.Schema().Fields() {
-		jsonB.Schema.Fields = append(jsonB.Schema.Fields, jsonField{
+		jsonB.Schema.Fields = append(jsonB.Schema.Fields, JSONField{
 			Name: col.Name,
 			Type: col.Type.Name(),
 		})
