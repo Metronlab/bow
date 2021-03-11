@@ -22,7 +22,7 @@ func TestJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			expected := JSONBow{
-				Schema: JSONSchema{},
+				Schema: jsonSchema{},
 				Data:   []map[string]interface{}{},
 			}
 			assert.Equal(t, expected, jsonB)
@@ -47,8 +47,8 @@ func TestJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			expected := JSONBow{
-				Schema: JSONSchema{
-					Fields: []JSONField{
+				Schema: jsonSchema{
+					Fields: []jsonField{
 						{Name: "a", Type: "int64"},
 						{Name: "b", Type: "float64"},
 						{Name: "c", Type: "bool"},

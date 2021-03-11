@@ -5,17 +5,17 @@ import (
 	"fmt"
 )
 
-type JSONField struct {
+type jsonField struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
 
-type JSONSchema struct {
-	Fields []JSONField `json:"fields"`
+type jsonSchema struct {
+	Fields []jsonField `json:"fields"`
 }
 
 type JSONBow struct {
-	Schema JSONSchema               `json:"schema"`
+	Schema jsonSchema               `json:"schema"`
 	Data   []map[string]interface{} `json:"data"`
 }
 
@@ -34,7 +34,7 @@ func NewJSONBow(b Bow) (res JSONBow) {
 	for _, col := range b.Schema().Fields() {
 		res.Schema.Fields = append(
 			res.Schema.Fields,
-			JSONField{
+			jsonField{
 				Name: col.Name,
 				Type: col.Type.Name(),
 			})
