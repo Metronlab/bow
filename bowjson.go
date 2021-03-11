@@ -67,16 +67,8 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	if len(jsonB.Schema.Fields) == 0 {
 		b.Record = NewBowEmpty().(*bow).Record
-		fmt.Printf("bow.NewValues: empty fields\nb:\n%+v\n", b)
 		return nil
 	}
-	if jsonB.Data == nil || len(jsonB.Data) == 0 {
-		tmpBow := b.Slice(0, 0)
-		b.Record = tmpBow.(*bow).Record
-		fmt.Printf("bow.NewValues: no data\ntmpBow:\n%+v\nb:\n%+v\n", tmpBow, b)
-		return nil
-	}
-	fmt.Printf("bow.NewValues: normal\njsonB:\n%+v\n", jsonB)
 
 	/*
 			Convert back json_table data types to bow data types
@@ -114,27 +106,33 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	series := make([]Series, len(jsonB.Schema.Fields))
 	for i, field := range jsonB.Schema.Fields {
 		t := newTypeFromArrowName(field.Type)
-		buf, err := NewBufferFromInterfacesIter(t, len(jsonB.Data), func() chan interface{} {
-			cellsChan := make(chan interface{})
-			go func(cellsChan chan interface{}, colName string) {
-				for _, row := range jsonB.Data {
-					val, ok := row[colName]
-					if !ok {
-						cellsChan <- nil
-					} else {
-						_, ok = val.(float64)
-						if t == Int64 && ok {
-							val = int64(val.(float64))
+		var buf Buffer
+		if jsonB.Data == nil {
+			buf = NewBuffer(0, t, true)
+		} else {
+			var err error
+			buf, err = NewBufferFromInterfacesIter(t, len(jsonB.Data), func() chan interface{} {
+				cellsChan := make(chan interface{})
+				go func(cellsChan chan interface{}, colName string) {
+					for _, row := range jsonB.Data {
+						val, ok := row[colName]
+						if !ok {
+							cellsChan <- nil
+						} else {
+							_, ok = val.(float64)
+							if t == Int64 && ok {
+								val = int64(val.(float64))
+							}
+							cellsChan <- val
 						}
-						cellsChan <- val
 					}
-				}
-				close(cellsChan)
-			}(cellsChan, field.Name)
-			return cellsChan
-		}())
-		if err != nil {
-			return err
+					close(cellsChan)
+				}(cellsChan, field.Name)
+				return cellsChan
+			}())
+			if err != nil {
+				return err
+			}
 		}
 		series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 	}
