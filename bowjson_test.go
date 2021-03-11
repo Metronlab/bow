@@ -100,5 +100,23 @@ func TestJSON(t *testing.T) {
 			assert.True(t, b.Equal(bCopy),
 				fmt.Sprintf("have:\n%vexpect:\n%v", bCopy, b))
 		})
+
+		t.Run("simple no data", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c"},
+				[]Type{Int64, Float64, Bool},
+				[][]interface{}{})
+			require.NoError(t, err)
+
+			byteB, err := json.Marshal(b)
+			require.NoError(t, err)
+
+			bCopy := b
+			err = b.UnmarshalJSON(byteB)
+			require.NoError(t, err)
+
+			assert.True(t, b.Equal(bCopy),
+				fmt.Sprintf("have:\n%vexpect:\n%v", bCopy, b))
+		})
 	})
 }

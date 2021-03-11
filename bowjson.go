@@ -67,13 +67,16 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	if len(jsonB.Schema.Fields) == 0 {
 		b.Record = NewBowEmpty().(*bow).Record
+		fmt.Printf("bow.NewValues: empty fields\nb:\n%+v\n", b)
 		return nil
 	}
 	if jsonB.Data == nil || len(jsonB.Data) == 0 {
 		tmpBow := b.Slice(0, 0)
 		b.Record = tmpBow.(*bow).Record
+		fmt.Printf("bow.NewValues: no data\ntmpBow:\n%+v\nb:\n%+v\n", tmpBow, b)
 		return nil
 	}
+	fmt.Printf("bow.NewValues: normal\njsonB:\n%+v\n", jsonB)
 
 	/*
 			Convert back json_table data types to bow data types
