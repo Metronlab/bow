@@ -17,11 +17,11 @@ func TestJSON(t *testing.T) {
 			byteB, err := json.Marshal(b)
 			require.NoError(t, err)
 
-			jsonB := jsonRecord{}
+			jsonB := JSONBow{}
 			err = json.Unmarshal(byteB, &jsonB)
 			require.NoError(t, err)
 
-			expected := jsonRecord{
+			expected := JSONBow{
 				Schema: jsonSchema{},
 				Data:   []map[string]interface{}{},
 			}
@@ -42,11 +42,11 @@ func TestJSON(t *testing.T) {
 			byteB, err := json.Marshal(b)
 			require.NoError(t, err)
 
-			jsonB := jsonRecord{}
+			jsonB := JSONBow{}
 			err = json.Unmarshal(byteB, &jsonB)
 			require.NoError(t, err)
 
-			expected := jsonRecord{
+			expected := JSONBow{
 				Schema: jsonSchema{
 					Fields: []jsonField{
 						{Name: "a", Type: "int64"},

@@ -14,34 +14,43 @@ type jsonSchema struct {
 	Fields []jsonField `json:"fields"`
 }
 
-type jsonRecord struct {
+type JSONBow struct {
 	Schema jsonSchema               `json:"schema"`
 	Data   []map[string]interface{} `json:"data"`
 }
 
 func (b bow) MarshalJSON() ([]byte, error) {
-	rowBased := jsonRecord{
+	return json.Marshal(NewJSONBow(&b))
+}
+
+func NewJSONBow(b Bow) (res JSONBow) {
+	if b == nil {
+		return
+	}
+
+	res = JSONBow{
 		Data: make([]map[string]interface{}, 0, b.NumRows()),
 	}
 	for _, col := range b.Schema().Fields() {
-		rowBased.Schema.Fields = append(rowBased.Schema.Fields, jsonField{
-			Name: col.Name,
-			Type: col.Type.Name(),
-		})
+		res.Schema.Fields = append(
+			res.Schema.Fields,
+			jsonField{
+				Name: col.Name,
+				Type: col.Type.Name(),
+			})
 	}
 
 	for row := range b.RowMapIter() {
 		if len(row) == 0 {
 			continue
 		}
-		rowBased.Data = append(rowBased.Data, row)
+		res.Data = append(res.Data, row)
 	}
-
-	return json.Marshal(rowBased)
+	return
 }
 
 func (b *bow) UnmarshalJSON(data []byte) error {
-	jsonB := jsonRecord{}
+	jsonB := JSONBow{}
 	if err := json.Unmarshal(data, &jsonB); err != nil {
 		return fmt.Errorf("bow.UnmarshalJSON: %w", err)
 	}
@@ -51,10 +60,11 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+
 }
 
-// NewValuesFromJSON replaces b values by a filled jsonRecord struct
-func (b *bow) NewValuesFromJSON(jsonB jsonRecord) error {
+// NewValuesFromJSON replaces b values by a filled JSONBow struct
+func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	if len(jsonB.Schema.Fields) == 0 {
 		b.Record = NewBowEmpty().(*bow).Record
 		return nil
@@ -62,7 +72,6 @@ func (b *bow) NewValuesFromJSON(jsonB jsonRecord) error {
 
 	/*
 			Convert back json_table data types to bow data types
-
 			From pandas / io / json / _table_schema.py / as_json_table_type(x: DtypeObj) -> str:
 		    This table shows the relationship between NumPy / pandas dtypes,
 		    and Table Schema dtypes.
