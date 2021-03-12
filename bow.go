@@ -64,6 +64,7 @@ type Bow interface {
 
 	MarshalJSON() (buf []byte, err error)
 	UnmarshalJSON(data []byte) error
+	NewValuesFromJSON(jsonB JSONBow) error
 
 	Slice(i, j int) Bow
 	Select(colNames ...string) (Bow, error)

@@ -10,12 +10,12 @@ type jsonField struct {
 	Type string `json:"type"`
 }
 
-type jsonSchema struct {
+type JSONSchema struct {
 	Fields []jsonField `json:"fields"`
 }
 
 type JSONBow struct {
-	Schema jsonSchema               `json:"schema"`
+	Schema JSONSchema               `json:"schema"`
 	Data   []map[string]interface{} `json:"data"`
 }
 
