@@ -14,14 +14,14 @@ func TestJSON(t *testing.T) {
 		t.Run("empty", func(t *testing.T) {
 			b := NewBowEmpty()
 
-			byteB, err := b.MarshalJSON()
+			byteB, err := json.Marshal(b)
 			require.NoError(t, err)
 
-			jsonB := JSONBow{}
+			jsonB := jsonRecord{}
 			err = json.Unmarshal(byteB, &jsonB)
 			require.NoError(t, err)
 
-			expected := JSONBow{
+			expected := jsonRecord{
 				Schema: jsonSchema{},
 				Data:   []map[string]interface{}{},
 			}
@@ -39,14 +39,14 @@ func TestJSON(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			byteB, err := b.MarshalJSON()
+			byteB, err := json.Marshal(b)
 			require.NoError(t, err)
 
-			jsonB := JSONBow{}
+			jsonB := jsonRecord{}
 			err = json.Unmarshal(byteB, &jsonB)
 			require.NoError(t, err)
 
-			expected := JSONBow{
+			expected := jsonRecord{
 				Schema: jsonSchema{
 					Fields: []jsonField{
 						{Name: "a", Type: "int64"},
@@ -72,7 +72,7 @@ func TestJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			bCopy := b
-			err = bCopy.UnmarshalJSON(byteB)
+			err = json.Unmarshal(byteB, bCopy)
 			require.NoError(t, err)
 
 			assert.True(t, b.Equal(bCopy),
@@ -94,7 +94,7 @@ func TestJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			bCopy := b
-			err = b.UnmarshalJSON(byteB)
+			err = json.Unmarshal(byteB, bCopy)
 			require.NoError(t, err)
 
 			assert.True(t, b.Equal(bCopy),
@@ -112,7 +112,7 @@ func TestJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			bCopy := b
-			err = b.UnmarshalJSON(byteB)
+			err = json.Unmarshal(byteB, bCopy)
 			require.NoError(t, err)
 
 			assert.True(t, b.Equal(bCopy),

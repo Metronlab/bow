@@ -14,43 +14,34 @@ type jsonSchema struct {
 	Fields []jsonField `json:"fields"`
 }
 
-type JSONBow struct {
+type jsonRecord struct {
 	Schema jsonSchema               `json:"schema"`
 	Data   []map[string]interface{} `json:"data"`
 }
 
-func (b *bow) MarshalJSON() ([]byte, error) {
-	return json.Marshal(NewJSONBow(b))
-}
-
-func NewJSONBow(b Bow) (res JSONBow) {
-	if b == nil {
-		return
-	}
-
-	res = JSONBow{
+func (b bow) MarshalJSON() ([]byte, error) {
+	rowBased := jsonRecord{
 		Data: make([]map[string]interface{}, 0, b.NumRows()),
 	}
 	for _, col := range b.Schema().Fields() {
-		res.Schema.Fields = append(
-			res.Schema.Fields,
-			jsonField{
-				Name: col.Name,
-				Type: col.Type.Name(),
-			})
+		rowBased.Schema.Fields = append(rowBased.Schema.Fields, jsonField{
+			Name: col.Name,
+			Type: col.Type.Name(),
+		})
 	}
 
 	for row := range b.RowMapIter() {
 		if len(row) == 0 {
 			continue
 		}
-		res.Data = append(res.Data, row)
+		rowBased.Data = append(rowBased.Data, row)
 	}
-	return
+
+	return json.Marshal(rowBased)
 }
 
 func (b *bow) UnmarshalJSON(data []byte) error {
-	jsonB := JSONBow{}
+	jsonB := jsonRecord{}
 	if err := json.Unmarshal(data, &jsonB); err != nil {
 		return fmt.Errorf("bow.UnmarshalJSON: %w", err)
 	}
@@ -60,11 +51,10 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-
 }
 
-// NewValuesFromJSON replaces b values by a filled JSONBow struct
-func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
+// NewValuesFromJSON replaces b values by a filled jsonRecord struct
+func (b *bow) NewValuesFromJSON(jsonB jsonRecord) error {
 	if len(jsonB.Schema.Fields) == 0 {
 		b.Record = NewBowEmpty().(*bow).Record
 		return nil
