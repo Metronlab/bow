@@ -1,3 +1,8 @@
+v0.8.1 [UNRELEASED]
+-------------------
+
+- rolling inclusive window with duplicated indexes now correctly iterate keeping windowing integrity
+
 v0.8.0 [2021-02-12]
 -------------------
 
