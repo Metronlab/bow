@@ -152,8 +152,8 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 func TestIntervalRolling_iterate(t *testing.T) {
 	var interval int64 = 5
 	b := newIntervalRollingTestBow([][]interface{}{
-		{12, 15, 16, 25, 29},
-		{1.2, 1.5, 1.6, 2.5, 2.9},
+		{12, 15, 16, 25, 25, 29}, // 25 is a duplicated index on ref column
+		{1.2, 1.5, 1.6, 2.5, 3.5, 2.9},
 	})
 
 	t.Run("no option", func(t *testing.T) {
@@ -166,7 +166,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 			{0, 10, 15, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 15, 20, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
 			{2, 20, 25, 3, emptyCols},
-			{3, 25, 30, 3, [][]interface{}{{25, 29}, {2.5, 2.9}}},
+			{3, 25, 30, 3, [][]interface{}{{25, 25, 29}, {2.5, 3.5, 2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
@@ -188,7 +188,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 			{0, 10, 15, 0, [][]interface{}{{12, 15}, {1.2, 1.5}}},
 			{1, 15, 20, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
 			{2, 20, 25, 3, [][]interface{}{{25}, {2.5}}},
-			{3, 25, 30, 3, [][]interface{}{{25, 29}, {2.5, 2.9}}},
+			{3, 25, 30, 3, [][]interface{}{{25, 25, 29}, {2.5, 3.5, 2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
@@ -209,8 +209,8 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		expected := []testWindow{
 			{0, 11, 16, 0, [][]interface{}{{12, 15}, {1.2, 1.5}}},
 			{1, 16, 21, 2, [][]interface{}{{16}, {1.6}}},
-			{2, 21, 26, 3, [][]interface{}{{25}, {2.5}}},
-			{3, 26, 31, 4, [][]interface{}{{29}, {2.9}}},
+			{2, 21, 26, 3, [][]interface{}{{25, 25}, {2.5, 3.5}}},
+			{3, 26, 31, 5, [][]interface{}{{29}, {2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
@@ -231,8 +231,8 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		expected := []testWindow{
 			{0, 12, 17, 0, [][]interface{}{{12, 15, 16}, {1.2, 1.5, 1.6}}},
 			{1, 17, 22, 3, emptyCols},
-			{2, 22, 27, 3, [][]interface{}{{25}, {2.5}}},
-			{3, 27, 32, 4, [][]interface{}{{29}, {2.9}}},
+			{2, 22, 27, 3, [][]interface{}{{25, 25}, {2.5, 3.5}}},
+			{3, 27, 32, 5, [][]interface{}{{29}, {2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
@@ -254,8 +254,8 @@ func TestIntervalRolling_iterate(t *testing.T) {
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
 			{2, 18, 23, 3, emptyCols},
-			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
-			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
+			{3, 23, 28, 3, [][]interface{}{{25, 25}, {2.5, 3.5}}},
+			{4, 28, 33, 5, [][]interface{}{{29}, {2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
@@ -277,8 +277,8 @@ func TestIntervalRolling_iterate(t *testing.T) {
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
 			{2, 18, 23, 3, emptyCols},
-			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
-			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
+			{3, 23, 28, 3, [][]interface{}{{25, 25}, {2.5, 3.5}}},
+			{4, 28, 33, 5, [][]interface{}{{29}, {2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
@@ -300,7 +300,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 			{0, 10, 15, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 15, 20, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
 			{2, 20, 25, 3, emptyCols},
-			{3, 25, 30, 3, [][]interface{}{{25, 29}, {2.5, 2.9}}},
+			{3, 25, 30, 3, [][]interface{}{{25, 25, 29}, {2.5, 3.5, 2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
@@ -322,8 +322,8 @@ func TestIntervalRolling_iterate(t *testing.T) {
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
 			{1, 13, 18, 1, [][]interface{}{{15, 16}, {1.5, 1.6}}},
 			{2, 18, 23, 3, emptyCols},
-			{3, 23, 28, 3, [][]interface{}{{25}, {2.5}}},
-			{4, 28, 33, 4, [][]interface{}{{29}, {2.9}}},
+			{3, 23, 28, 3, [][]interface{}{{25, 25}, {2.5, 3.5}}},
+			{4, 28, 33, 5, [][]interface{}{{29}, {2.9}}},
 		}
 
 		for i := 0; iter.HasNext(); i++ {
