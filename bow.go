@@ -16,10 +16,11 @@ import (
 )
 
 // Bow is a wrapper of Apache Arrow array.Record interface.
-// It was not implemented as a facade shadowing arrow
+// It was not implemented as a facade shadowing Arrow
 // in order to expose low level Arrow decisions to Bow users
-// while arrow is in beta
+// while Arrow is in beta.
 type Bow interface {
+
 	// Implements Stringer interface
 	String() string
 
@@ -61,9 +62,9 @@ type Bow interface {
 
 	Equal(other Bow) (equal bool)
 
-	SetMarshalJSONRowBased(rowOriented bool)
 	MarshalJSON() (buf []byte, err error)
 	UnmarshalJSON(data []byte) error
+	NewValuesFromJSON(jsonB JSONBow) error
 
 	Slice(i, j int) Bow
 	Select(colNames ...string) (Bow, error)
@@ -75,7 +76,7 @@ type Bow interface {
 	FillPrevious(colNames ...string) (Bow, error)
 	FillNext(colNames ...string) (Bow, error)
 	FillMean(colNames ...string) (Bow, error)
-	FillLinear(refColName string, toFillColName string) (Bow, error)
+	FillLinear(refColName, toFillColName string) (Bow, error)
 
 	// Exposed from arrow.Record
 	Release()
@@ -91,7 +92,6 @@ type Bow interface {
 }
 
 type bow struct {
-	marshalJSONRowBased bool
 	array.Record
 }
 
@@ -138,7 +138,7 @@ func NewBow(series ...Series) (Bow, error) {
 	return &bow{Record: array.NewRecord(schema, arrays, nRows)}, nil
 }
 
-// NewBowFromColBasedInterfaces returns an new Bow with:
+// NewBowFromColBasedInterfaces returns a new Bow with:
 // - colNames contains the bow.Record fields names
 // - colTypes contains the bow.Record fields data types, and is not mandatory.
 //	 If nil, the types will be automatically seeked.

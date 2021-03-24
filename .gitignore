@@ -30,3 +30,5 @@ mocks
 
 # GENERAL PURPOSE
 vendor
+
+/benchmarkResults.*.txt

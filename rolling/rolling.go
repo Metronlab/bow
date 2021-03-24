@@ -87,7 +87,7 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Opti
 		}
 	}
 
-	numWins, err := numWindows(b, column, start, interval, options.Offset)
+	numWins, err := numWindows(b, column, start, interval)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func (it *intervalRollingIterator) NumWindows() (int, error) {
 	return it.numWindows, it.err
 }
 
-func numWindows(b bow.Bow, column int, start, interval, offset int64) (int, error) {
+func numWindows(b bow.Bow, column int, start, interval int64) (int, error) {
 	nrows := b.NumRows()
 	if nrows == 0 {
 		return nrows, nil

@@ -9,14 +9,17 @@ import (
 
 func TestBow_IsColSorted(t *testing.T) {
 	t.Run("int64", func(t *testing.T) {
-		intBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
-			{-2, 1, nil, nil, -8},
-			{0, nil, 3, 4, 0},
-			{1, nil, nil, 120, nil},
-			{10, 4, 10, 10, -5},
-			{13, nil, nil, nil, nil},
-			{20, 6, 30, 400, -10},
-		})
+		intBobow, _ := NewBowFromRowBasedInterfaces(
+			[]string{"a", "b", "c", "d", "e"},
+			[]Type{Int64, Int64, Int64, Int64, Int64},
+			[][]interface{}{
+				{-2, 1, nil, nil, -8},
+				{0, nil, 3, 4, 0},
+				{1, nil, nil, 120, nil},
+				{10, 4, 10, 10, -5},
+				{13, nil, nil, nil, nil},
+				{20, 6, 30, 400, -10},
+			})
 		sorted := intBobow.IsColSorted(0)
 		assert.True(t, sorted)
 		sorted = intBobow.IsColSorted(1)

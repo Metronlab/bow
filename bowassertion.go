@@ -1,6 +1,14 @@
 package bow
 
-import "github.com/apache/arrow/go/arrow/array"
+import (
+	"github.com/apache/arrow/go/arrow/array"
+)
+
+const (
+	orderUndefined = iota
+	orderASC
+	orderDESC
+)
 
 // IsColSorted returns a boolean whether the column colIndex is sorted or not, skipping nil values.
 // An empty column or an unsupported data type returns false.
@@ -9,7 +17,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		return false
 	}
 	var rowIndex int
-	var order int8
+	var order = orderUndefined
 
 	switch b.GetType(colIndex) {
 	case Int64:
@@ -24,14 +32,15 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		for rowIndex < len(values) {
 			if arr.IsValid(rowIndex) {
 				next = values[rowIndex]
-				if order == 0 {
-					if curr > next {
-						order = -1
-					} else if curr < next {
-						order = 1
+				if order == orderUndefined {
+					if curr < next {
+						order = orderASC
+					} else if curr > next {
+						order = orderDESC
 					}
 				}
-				if order == -1 && next > curr || order == 1 && next < curr {
+				if order == orderASC && next < curr ||
+					order == orderDESC && next > curr {
 					return false
 				}
 				curr = next
@@ -50,14 +59,15 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		for rowIndex < len(values) {
 			if arr.IsValid(rowIndex) {
 				next = values[rowIndex]
-				if order == 0 {
-					if curr > next {
-						order = -1
-					} else if curr < next {
-						order = 1
+				if order == orderUndefined {
+					if curr < next {
+						order = orderASC
+					} else if curr > next {
+						order = orderDESC
 					}
 				}
-				if order == -1 && next > curr || order == 1 && next < curr {
+				if order == orderASC && next < curr ||
+					order == orderDESC && next > curr {
 					return false
 				}
 				curr = next
