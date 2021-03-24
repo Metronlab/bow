@@ -173,6 +173,9 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *Window, err error
 		}
 
 		if ref == end {
+			if isInclusive {
+				break
+			}
 			if !it.options.Inclusive {
 				break
 			}
