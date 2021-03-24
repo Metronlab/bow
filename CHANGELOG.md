@@ -20,6 +20,9 @@ v0.9.0 [2021-03-24]
 - New Functions:
     - NewValuesFromJSON
 
+- Bug fix:
+  - Rolling inclusive window with duplicated indexes now correctly iterate keeping windowing integrity
+
 v0.8.0 [2021-02-12]
 -------------------
 
