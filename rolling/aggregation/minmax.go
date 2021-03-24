@@ -14,7 +14,7 @@ func Min(col string) rolling.ColumnAggregation {
 
 			var min interface{}
 			for i := 0; i < w.Bow.NumRows(); i++ {
-				value, ok := w.Bow.GetFloat64(col, int(i))
+				value, ok := w.Bow.GetFloat64(col, i)
 				if !ok {
 					continue
 				}
@@ -39,7 +39,7 @@ func Max(col string) rolling.ColumnAggregation {
 
 			var min interface{}
 			for i := 0; i < w.Bow.NumRows(); i++ {
-				value, ok := w.Bow.GetFloat64(col, int(i))
+				value, ok := w.Bow.GetFloat64(col, i)
 				if !ok {
 					continue
 				}

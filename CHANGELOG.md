@@ -1,3 +1,28 @@
+v0.9.0 [2021-03-24]
+-------------------
+
+- General:
+    - Fix typos
+    - Improve robustness and code clarity of functions IsColEmpty, IsColSorted and FillLinear with better error management
+    - Remove unused variables
+    - Remove bow.marshalJSONRowBased
+    
+- Bow Generator:
+    - Improve randomness of values
+    - Added support for String and Bool data types
+    - New ColNames and DataTypes options for more flexibility
+    - Improve user experience with better error management
+
+- Benchmarks improvements:
+    - Added new test cases
+    - Added usage of benchstat on the CircleCI pipeline to compare benchmark results with master branch
+
+- New Functions:
+    - NewValuesFromJSON
+
+- Bug fix:
+  - Rolling inclusive window with duplicated indexes now correctly iterate keeping windowing integrity
+
 v0.8.0 [2021-02-12]
 -------------------
 

@@ -30,7 +30,7 @@ func benchmarkBow(b *testing.B) {
 
 	{
 		var Rows [][]interface{}
-		b.Run("Creating 'Rows' oriented [][]interface{}", func(b *testing.B) {
+		b.Run("Creating 'GenRows' oriented [][]interface{}", func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Rows = make([][]interface{}, BenchSize)
 				rand.Seed(42)

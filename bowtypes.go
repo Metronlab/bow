@@ -7,7 +7,7 @@ import (
 type Type int
 
 // How to add a Type:
-// - Seek corresponding arrow.DataType and add it in `mapArrowTTypes`
+// - Seek corresponding arrow.GenDataType and add it in `mapArrowTTypes`
 // - add a convert function with desired logic and add case in other conversion func
 // - add necessary case in buffer file
 // - complete GetValue bow method

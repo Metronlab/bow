@@ -53,15 +53,23 @@ jobs: # basic units of work in a run
             echo >&2 "Unformatted files:"
             echo >&2 ${UNFORMATED}
             exit 1
+
       - run:
           name: RUN TESTS
           command: |
-            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            go test ${PKG} -v -race -cover -covermode=atomic -coverprofile=${COVER_RESULTS}/coverage.cover -timeout 30s \
-              | tee ${TEST_RESULTS}/go-test.out
+            go get github.com/jstemmer/go-junit-report
+            bash -e ./scripts/test.sh
+
       - run:
-          name: BENCHMARKS
-          command: go test ./... -run=XXX -bench=. -benchmem
+          name: RUN BENCHMARKS
+          no_output_timeout: 1h
+          command: |
+            go get golang.org/x/perf/cmd/benchstat
+            bash -e ./scripts/benchmark.sh
+
+      - store_artifacts:
+          path: /tmp/benchmarks
+
       - save_cache: # Store cache in the /go/pkg directory
           key: v1-pkg-cache
           paths:

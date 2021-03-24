@@ -65,7 +65,6 @@ func ExampleBow_MarshalJSON() {
 		panic(err)
 	}
 
-	b.SetMarshalJSONRowBased(true)
 	js, err := b.MarshalJSON()
 	if err != nil {
 		panic(err)

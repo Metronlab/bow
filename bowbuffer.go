@@ -6,10 +6,6 @@ import (
 	"fmt"
 )
 
-const (
-	ErrBufferOverload = "bow: buffer cannot contains all data being sent in channel"
-)
-
 type Buffer struct {
 	Value interface{}
 	Valid []bool
