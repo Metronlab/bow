@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"text/tabwriter"
+	"time"
 
 	"github.com/apache/arrow/go/arrow/memory"
 
@@ -442,6 +444,10 @@ func dedupStrings(s []string) []string {
 	return s[:writeIndex]
 }
 
+func timeFromMillisecond(millisecond int64) time.Time {
+	return time.Unix(millisecond/1e3, millisecond%1e3*1e6).UTC()
+}
+
 func (b *bow) String() string {
 	if b.NumCols() == 0 {
 		return ""
@@ -455,7 +461,17 @@ func (b *bow) String() string {
 	formatRow := func(getCellStr func(colIndex int) string) {
 		var cells []string
 		for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
-			cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
+			if b.Schema().Field(colIndex).Name == "time" && b.GetType(colIndex) == Int64 {
+				i, err := strconv.Atoi(getCellStr(colIndex))
+				if err != nil {
+					cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
+				} else {
+					t := timeFromMillisecond(int64(i))
+					cells = append(cells, fmt.Sprintf("%v", t.Format(time.RFC3339)))
+				}
+			} else {
+				cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
+			}
 		}
 		_, err := fmt.Fprintln(w, strings.Join(cells, "\t"))
 		if err != nil {

@@ -1,7 +1,6 @@
 package rolling
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/metronlab/bow"
@@ -109,33 +108,36 @@ func (a *columnAggregation) NeedInclusive() bool {
 
 // Aggregate each column using a ColumnAggregation
 func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling {
-	const logPrefix = "aggregate: "
-
 	if it.err != nil {
 		return it
 	}
-	it2 := *it
 
-	newIntervalCol, aggrs, err := it2.indexedAggrs(aggrs)
+	fmt.Printf("rolling.Aggregate BEFORE: %+v\n", it)
+
+	itTmp := *it
+
+	newIntervalCol, aggrs, err := itTmp.indexedAggrs(aggrs)
 	if err != nil {
-		return it2.setError(errors.New(logPrefix + err.Error()))
+		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	seriess, err := it2.aggrWindows(aggrs)
+	seriesSlice, err := itTmp.aggrWindows(aggrs)
 	if err != nil {
-		return it2.setError(errors.New(logPrefix + err.Error()))
+		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	b, err := bow.NewBow(seriess...)
+	b, err := bow.NewBow(seriesSlice...)
 	if err != nil {
-		return it2.setError(errors.New(logPrefix + err.Error()))
+		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	newIt, err := IntervalRollingForIndex(b, newIntervalCol, it2.interval, it2.options)
+	itNew, err := IntervalRollingForIndex(b, newIntervalCol, itTmp.interval, itTmp.options)
 	if err != nil {
-		return it2.setError(errors.New(logPrefix + err.Error()))
+		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
-	return newIt
+
+	fmt.Printf("rolling.Aggregate AFTER: %+v\n", itNew)
+	return itNew
 }
 
 func (it *intervalRollingIterator) indexedAggrs(aggrs []ColumnAggregation) (int, []ColumnAggregation, error) {
@@ -184,11 +186,12 @@ func (it *intervalRollingIterator) validateAggr(aggr ColumnAggregation, newIndex
 
 // For each column aggregation, gives a series with each point resulting from a window aggregation.
 func (it *intervalRollingIterator) aggrWindows(aggrs []ColumnAggregation) ([]bow.Series, error) {
-	seriess := make([]bow.Series, len(aggrs))
-	for writeColIndex, aggr := range aggrs {
-		it2 := *it
+	seriesSlice := make([]bow.Series, len(aggrs))
 
-		buf, outputType, err := it2.windowsAggrBuffer(writeColIndex, aggr)
+	for writeColIndex, aggr := range aggrs {
+		itTmp := *it
+
+		buf, outputType, err := itTmp.windowsAggrBuffer(writeColIndex, aggr)
 		if err != nil {
 			return nil, err
 		}
@@ -196,16 +199,16 @@ func (it *intervalRollingIterator) aggrWindows(aggrs []ColumnAggregation) ([]bow
 		name := aggr.OutputName()
 		if name == "" {
 			var err error
-			name, err = it2.bow.GetName(aggr.InputIndex())
+			name, err = itTmp.bow.GetName(aggr.InputIndex())
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		seriess[writeColIndex] = bow.NewSeries(name, outputType, buf.Value, buf.Valid)
+		seriesSlice[writeColIndex] = bow.NewSeries(name, outputType, buf.Value, buf.Valid)
 	}
 
-	return seriess, nil
+	return seriesSlice, nil
 }
 
 func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAggregation) (*bow.Buffer, bow.Type, error) {
@@ -255,6 +258,8 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 
 		buf.SetOrDrop(winIndex, val)
 	}
+
+	fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v", colIndex, typ.String(), buf)
 
 	return &buf, typ, nil
 }
