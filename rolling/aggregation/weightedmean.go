@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
+	"time"
 )
+
+func timeFromMillisecond(millisecond int64) time.Time {
+	return time.Unix(millisecond/1e3, millisecond%1e3*1e6).UTC()
+}
 
 func WeightedAverageStep(col string) rolling.ColumnAggregation {
 	integralFunc := IntegralStep(col).Func()
@@ -15,7 +20,9 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 				return v, err
 			}
 
-			fmt.Printf("WeightedAverageStep col%d\nw:%+v\nRES:%f/%f=%f\n", col, w, v.(float64), float64(w.End-w.Start), v.(float64)/float64(w.End-w.Start))
+			fmt.Printf("WeightedAverageStep col%d\nw:%+v\nStart:%s End:%s\nRES:%f/%f=%f\n",
+				col, w, timeFromMillisecond(w.Start), timeFromMillisecond(w.End),
+				v.(float64), float64(w.End-w.Start), v.(float64)/float64(w.End-w.Start))
 			return v.(float64) / float64(w.End-w.Start), nil
 		})
 }

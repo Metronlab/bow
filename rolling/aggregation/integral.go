@@ -1,6 +1,7 @@
 package aggregation
 
 import (
+	"fmt"
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 )
@@ -45,6 +46,7 @@ func IntegralStep(col string) rolling.ColumnAggregation {
 			}
 			var sum float64
 			var ok bool
+			fmt.Printf("IntegralStep:\n%v\n", w.Bow)
 			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, 0)
 			for rowIndex >= 0 {
 				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, rowIndex+1)
@@ -53,6 +55,8 @@ func IntegralStep(col string) rolling.ColumnAggregation {
 				}
 
 				sum += v0 * (t1 - t0)
+				fmt.Printf("t0:%f v0:%f rowIndex:%d\nt1:%f v1:%f rowIndex:%d\nsum:%f\n",
+					t0, v0, rowIndex, t1, v1, nextRowIndex, sum)
 				ok = true
 
 				if nextRowIndex < 0 {
