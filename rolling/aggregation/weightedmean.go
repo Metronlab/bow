@@ -15,7 +15,7 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 				return v, err
 			}
 
-			fmt.Printf("WeightedAverageStep col%d\nbow:%+v\nw:%+v\nRES:%f/%f", col, w.Bow, w, v.(float64), float64(w.End-w.Start))
+			fmt.Printf("WeightedAverageStep col%d\nw:%+v\nRES:%f/%f=%f\n", col, w, v.(float64), float64(w.End-w.Start), v.(float64)/float64(w.End-w.Start))
 			return v.(float64) / float64(w.End-w.Start), nil
 		})
 }
