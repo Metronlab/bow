@@ -259,7 +259,7 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 		buf.SetOrDrop(winIndex, val)
 	}
 
-	fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v", colIndex, typ.String(), buf)
+	fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v\n", colIndex, typ.String(), buf)
 
 	return &buf, typ, nil
 }

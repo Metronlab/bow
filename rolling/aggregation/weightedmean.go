@@ -1,6 +1,7 @@
 package aggregation
 
 import (
+	"fmt"
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 )
@@ -14,6 +15,7 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 				return v, err
 			}
 
+			fmt.Printf("WeightedAverageStep col%d\nbow:%+v\nw:%+v\nRES:%f/%f", col, w.Bow, w, v.(float64), float64(w.End-w.Start))
 			return v.(float64) / float64(w.End-w.Start), nil
 		})
 }
