@@ -22,7 +22,7 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 
 			windowsWide := float64(w.End - w.Start)
 			fmt.Printf("WeightedAverageStep col%d\nw:%+v\nStart:%s End:%s\nRES:%f/%f=%f\n",
-				col, w, timeFromMillisecond(w.Start), timeFromMillisecond(w.End),
+				col, w, timeFromMillisecond(w.Start).Format(time.RFC3339), timeFromMillisecond(w.End).Format(time.RFC3339),
 				v.(float64), windowsWide, v.(float64)/windowsWide)
 			return v.(float64) / windowsWide, nil
 		})
@@ -39,7 +39,7 @@ func WeightedAverageLinear(col string) rolling.ColumnAggregation {
 
 			windowsWide := float64(w.End - w.Start)
 			fmt.Printf("WeightedAverageLinear col%d\nw:%+v\nStart:%s End:%s\nRES:%f/%f=%f\n",
-				col, w, timeFromMillisecond(w.Start), timeFromMillisecond(w.End),
+				col, w, timeFromMillisecond(w.Start).Format(time.RFC3339), timeFromMillisecond(w.End).Format(time.RFC3339),
 				v.(float64), windowsWide, v.(float64)/windowsWide)
 			return v.(float64) / windowsWide, nil
 		})
