@@ -17,6 +17,7 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 		func(col int, w rolling.Window) (interface{}, error) {
 			v, err := integralFunc(col, w)
 			if v == nil || err != nil {
+				fmt.Printf("WeightedAverageStep error: %s\n", err)
 				return v, err
 			}
 
@@ -34,6 +35,7 @@ func WeightedAverageLinear(col string) rolling.ColumnAggregation {
 		func(col int, w rolling.Window) (interface{}, error) {
 			v, err := integralFunc(col, w)
 			if v == nil || err != nil {
+				fmt.Printf("WeightedAverageLinear error: %s\n", err)
 				return v, err
 			}
 
