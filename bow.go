@@ -467,7 +467,7 @@ func (b *bow) String() string {
 					cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
 				} else {
 					t := timeFromMillisecond(int64(i))
-					cells = append(cells, fmt.Sprintf("%v", t.Format(time.RFC3339)))
+					cells = append(cells, fmt.Sprintf("%v", t.Format(time.RFC3339Nano)))
 				}
 			} else {
 				cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
