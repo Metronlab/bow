@@ -112,8 +112,6 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return it
 	}
 
-	fmt.Printf("rolling.Aggregate BEFORE: %+v\n", it)
-
 	itTmp := *it
 
 	newIntervalCol, aggrs, err := itTmp.indexedAggrs(aggrs)
@@ -136,7 +134,8 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	fmt.Printf("rolling.Aggregate AFTER: %+v\n", itNew)
+	b, _ = itNew.Bow()
+	fmt.Printf("rolling.Aggregate\nBEFORE: %+v\nAFTER: %+v\n", it.bow, b)
 	return itNew
 }
 
