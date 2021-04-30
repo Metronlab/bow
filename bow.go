@@ -485,11 +485,15 @@ func (b *bow) String() string {
 	})
 
 	// Print each row on buffer
+	var rowIndex int
 	rowChan := b.RowMapIter()
 	for row := range rowChan {
-		formatRow(func(colIndex int) string {
-			return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
-		})
+		if rowIndex == 0 || rowIndex == b.NumRows()-1 {
+			formatRow(func(colIndex int) string {
+				return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
+			})
+			rowIndex++
+		}
 	}
 
 	// Flush buffer and format lines along the way
