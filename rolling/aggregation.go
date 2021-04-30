@@ -135,7 +135,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 	}
 
 	b, _ = itNew.Bow()
-	fmt.Printf("rolling.Aggregate\nBEFORE: %+v\nAFTER: %+v\n", it.bow, b)
+	fmt.Printf("rolling.Aggregate\nBEFORE:\n%+vAFTER:\n%+v\n", it.bow, b)
 	return itNew
 }
 
