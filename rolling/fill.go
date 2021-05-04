@@ -34,7 +34,7 @@ func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) R
 	}
 
 	itCopy := *it
-	fmt.Printf("FILL IN\nintervalRollingIterator\n%+v\n%+vinterpolations\n%+v\n", itCopy, itCopy.bow, interpolations)
+	//fmt.Printf("FILL IN\nintervalRollingIterator\n%+v\n%+vinterpolations\n%+v\n", itCopy, itCopy.bow, interpolations)
 	newIntervalCol, interpolations, err := itCopy.indexedInterpolations(interpolations)
 	if err != nil {
 		return itCopy.setError(errors.New(logPrefix + err.Error()))
@@ -47,7 +47,7 @@ func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) R
 	if b == nil {
 		b = it.bow.NewEmpty()
 	}
-	fmt.Printf("FILLED WINDOWS\n%+v\n", b)
+	//fmt.Printf("FILLED WINDOWS\n%+v\n", b)
 
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
@@ -55,7 +55,7 @@ func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) R
 	}
 
 	b, _ = newIt.Bow()
-	fmt.Printf("FILL OUT\nintervalRollingIterator\n%+v\n%+vinterpolations\n%+v\n", newIt, b, interpolations)
+	//fmt.Printf("FILL OUT\nintervalRollingIterator\n%+v\n%+vinterpolations\n%+v\n", newIt, b, interpolations)
 	return newIt
 }
 

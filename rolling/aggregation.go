@@ -111,26 +111,26 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return it
 	}
 
-	itTmp := *it
+	itCopy := *it
 
-	newIntervalCol, aggrs, err := itTmp.indexedAggrs(aggrs)
+	newIntervalCol, aggrs, err := itCopy.indexedAggrs(aggrs)
 	if err != nil {
-		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
+		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	seriesSlice, err := itTmp.aggrWindows(aggrs)
+	seriesSlice, err := itCopy.aggrWindows(aggrs)
 	if err != nil {
-		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
+		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
 	b, err := bow.NewBow(seriesSlice...)
 	if err != nil {
-		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
+		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	itNew, err := IntervalRollingForIndex(b, newIntervalCol, itTmp.interval, itTmp.options)
+	itNew, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
-		return itTmp.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
+		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
 	b, _ = itNew.Bow()
@@ -257,7 +257,7 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 		buf.SetOrDrop(winIndex, val)
 	}
 
-	//fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v\n", colIndex, typ.String(), buf)
+	fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v\n", colIndex, typ.String(), buf)
 
 	return &buf, typ, nil
 }
