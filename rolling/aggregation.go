@@ -112,7 +112,6 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 	}
 
 	itCopy := *it
-
 	newIntervalCol, aggrs, err := itCopy.indexedAggrs(aggrs)
 	if err != nil {
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
@@ -187,9 +186,9 @@ func (it *intervalRollingIterator) aggrWindows(aggrs []ColumnAggregation) ([]bow
 	seriesSlice := make([]bow.Series, len(aggrs))
 
 	for writeColIndex, aggr := range aggrs {
-		itTmp := *it
+		itCopy := *it
 
-		buf, outputType, err := itTmp.windowsAggrBuffer(writeColIndex, aggr)
+		buf, outputType, err := itCopy.windowsAggrBuffer(writeColIndex, aggr)
 		if err != nil {
 			return nil, err
 		}
@@ -197,7 +196,7 @@ func (it *intervalRollingIterator) aggrWindows(aggrs []ColumnAggregation) ([]bow
 		name := aggr.OutputName()
 		if name == "" {
 			var err error
-			name, err = itTmp.bow.GetName(aggr.InputIndex())
+			name, err = itCopy.bow.GetName(aggr.InputIndex())
 			if err != nil {
 				return nil, err
 			}
@@ -257,7 +256,7 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 		buf.SetOrDrop(winIndex, val)
 	}
 
-	fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v\n", colIndex, typ.String(), buf)
+	//fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v\n", colIndex, typ.String(), buf)
 
 	return &buf, typ, nil
 }
