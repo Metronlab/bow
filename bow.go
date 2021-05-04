@@ -485,7 +485,7 @@ func (b *bow) String() string {
 	})
 
 	// Print each row on buffer
-	rowChan := b.FirstLastRowMapIter()
+	rowChan := b.FilteredRowMapIter()
 	for row := range rowChan {
 		formatRow(func(colIndex int) string {
 			return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
@@ -523,13 +523,13 @@ func (b *bow) rowMapIter(rows chan map[string]interface{}) {
 	}
 }
 
-func (b *bow) FirstLastRowMapIter() chan map[string]interface{} {
+func (b *bow) FilteredRowMapIter() chan map[string]interface{} {
 	rows := make(chan map[string]interface{})
-	go b.firstLastRowMapIter(rows)
+	go b.filteredRowMapIter(rows)
 	return rows
 }
 
-func (b *bow) firstLastRowMapIter(rows chan map[string]interface{}) {
+func (b *bow) filteredRowMapIter(rows chan map[string]interface{}) {
 	defer close(rows)
 
 	if b.Record == nil || b.NumRows() <= 0 {
@@ -537,8 +537,15 @@ func (b *bow) firstLastRowMapIter(rows chan map[string]interface{}) {
 	}
 
 	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-		if rowIndex == 0 || rowIndex == b.NumRows()-1 {
-			rows <- b.GetRow(rowIndex)
+		if b.NumRows() >= 6 {
+			if rowIndex == 0 || rowIndex == 1 || rowIndex == 2 ||
+				rowIndex == b.NumRows()-3 || rowIndex == b.NumRows()-2 || rowIndex == b.NumRows()-1 {
+				rows <- b.GetRow(rowIndex)
+			}
+		} else {
+			if rowIndex == 0 || rowIndex == b.NumRows()-1 {
+				rows <- b.GetRow(rowIndex)
+			}
 		}
 	}
 }
