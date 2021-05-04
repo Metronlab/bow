@@ -47,6 +47,7 @@ func (it *intervalRollingIterator) Fill(interpolations ...ColumnInterpolation) R
 	if b == nil {
 		b = it.bow.NewEmpty()
 	}
+	fmt.Printf("FILLED WINDOWS\n%+v\n", b)
 
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
