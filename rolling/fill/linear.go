@@ -1,7 +1,6 @@
 package fill
 
 import (
-	"fmt"
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 )
@@ -12,13 +11,13 @@ func Linear(colName string) rolling.ColInterpolation {
 			var rowIndex = w.FirstIndex
 			var err error
 			if prevRow != nil {
-				fmt.Printf("LINEAR prevRow\n%+v\n", prevRow)
+				//fmt.Printf("LINEAR prevRow\n%+v\n", prevRow)
 				fullBow, err = bow.AppendBows(prevRow, fullBow)
 				if err != nil {
 					return nil, err
 				}
 				rowIndex++
-				fmt.Printf("LINEAR rowIndex:%d\n%+v\n", rowIndex, fullBow)
+				//fmt.Printf("LINEAR rowIndex:%d\n%+v\n", rowIndex, fullBow)
 			}
 
 			t0, v0, prevIndex := fullBow.GetPreviousFloat64s(w.IntervalColumnIndex, inputCol, rowIndex-1)
