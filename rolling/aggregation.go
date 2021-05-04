@@ -6,18 +6,18 @@ import (
 	"github.com/metronlab/bow/transform"
 )
 
-type ColumnAggregation interface {
+type ColAggregation interface {
 	InputName() string
 	InputIndex() int
 	MutateInputIndex(int)
 
 	OutputName() string
-	Rename(string) ColumnAggregation
+	Rename(string) ColAggregation
 	NeedInclusive() bool
 
 	Type() bow.Type
 	Func() ColumnAggregationFunc
-	Transform(...transform.Transform) ColumnAggregation
+	Transform(...transform.Transform) ColAggregation
 	Transforms() []transform.Transform
 	GetReturnType(inputType bow.Type, iterator bow.Type) bow.Type
 }
@@ -34,7 +34,7 @@ type columnAggregation struct {
 	typ        bow.Type
 }
 
-func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow.Type, fn ColumnAggregationFunc) ColumnAggregation {
+func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow.Type, fn ColumnAggregationFunc) ColAggregation {
 	return &columnAggregation{
 		inputName:       colName,
 		inputIndex:      -1,
@@ -44,7 +44,7 @@ func NewColumnAggregation(colName string, inclusiveWindow bool, returnedType bow
 	}
 }
 
-type ColumnAggregationConstruct func(col string) ColumnAggregation
+type ColumnAggregationConstruct func(col string) ColAggregation
 type ColumnAggregationFunc func(col int, w Window) (interface{}, error)
 
 func (a *columnAggregation) GetReturnType(input, iterator bow.Type) (typ bow.Type) {
@@ -81,7 +81,7 @@ func (a *columnAggregation) Func() ColumnAggregationFunc {
 	return a.fn
 }
 
-func (a *columnAggregation) Transform(transforms ...transform.Transform) ColumnAggregation {
+func (a *columnAggregation) Transform(transforms ...transform.Transform) ColAggregation {
 	a2 := *a
 	a2.transforms = transforms
 	return &a2
@@ -95,7 +95,7 @@ func (a *columnAggregation) OutputName() string {
 	return a.outputName
 }
 
-func (a *columnAggregation) Rename(name string) ColumnAggregation {
+func (a *columnAggregation) Rename(name string) ColAggregation {
 	a2 := *a
 	a2.outputName = name
 	return &a2
@@ -105,8 +105,8 @@ func (a *columnAggregation) NeedInclusive() bool {
 	return a.inclusiveWindow
 }
 
-// Aggregate each column using a ColumnAggregation
-func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling {
+// Aggregate each colIndex using a ColAggregation
+func (it *intervalRollingIter) Aggregate(aggrs ...ColAggregation) Rolling {
 	if it.err != nil {
 		return it
 	}
@@ -117,7 +117,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	seriesSlice, err := itCopy.aggrWindows(aggrs)
+	seriesSlice, err := itCopy.aggregateWindows(aggrs)
 	if err != nil {
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
@@ -127,7 +127,7 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	itNew, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
+	itNew, err := IntervalRollingForIndex(b, nil, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
@@ -137,14 +137,14 @@ func (it *intervalRollingIterator) Aggregate(aggrs ...ColumnAggregation) Rolling
 	return itNew
 }
 
-func (it *intervalRollingIterator) indexedAggrs(aggrs []ColumnAggregation) (int, []ColumnAggregation, error) {
-	if len(aggrs) == 0 {
-		return -1, nil, fmt.Errorf("at least one column aggregation is required")
+func (it *intervalRollingIter) indexedAggrs(aggregations []ColAggregation) (int, []ColAggregation, error) {
+	if len(aggregations) == 0 {
+		return -1, nil, fmt.Errorf("at least one colIndex aggregation is required")
 	}
 
 	newIntervalCol := -1
-	for i := range aggrs {
-		isInterval, err := it.validateAggr(aggrs[i], i)
+	for i := range aggregations {
+		isInterval, err := it.validateAggregation(aggregations[i], i)
 		if err != nil {
 			return -1, nil, err
 		}
@@ -154,38 +154,38 @@ func (it *intervalRollingIterator) indexedAggrs(aggrs []ColumnAggregation) (int,
 	}
 
 	if newIntervalCol == -1 {
-		name, err := it.bow.GetName(it.column)
+		name, err := it.bow.GetName(it.colIndex)
 		if err != nil {
 			return -1, nil, err
 		}
-		return -1, nil, fmt.Errorf("must keep interval column '%s'", name)
+		return -1, nil, fmt.Errorf("must keep interval colIndex '%s'", name)
 	}
 
-	return newIntervalCol, aggrs, nil
+	return newIntervalCol, aggregations, nil
 }
 
-func (it *intervalRollingIterator) validateAggr(aggr ColumnAggregation, newIndex int) (isInterval bool, err error) {
-	if aggr.InputName() == "" {
-		return false, fmt.Errorf("aggregation %d has no column name", newIndex)
+func (it *intervalRollingIter) validateAggregation(aggregation ColAggregation, newIndex int) (isInterval bool, err error) {
+	if aggregation.InputName() == "" {
+		return false, fmt.Errorf("aggregation %d has no colIndex name", newIndex)
 	}
-	readIndex, err := it.bow.GetColumnIndex(aggr.InputName())
+	readIndex, err := it.bow.GetColIndex(aggregation.InputName())
 	if err != nil {
 		return false, err
 	}
-	aggr.MutateInputIndex(readIndex)
+	aggregation.MutateInputIndex(readIndex)
 
-	if aggr.NeedInclusive() {
+	if aggregation.NeedInclusive() {
 		it.options.Inclusive = true
 	}
 
-	return readIndex == it.column, nil
+	return readIndex == it.colIndex, nil
 }
 
-// For each column aggregation, gives a series with each point resulting from a window aggregation.
-func (it *intervalRollingIterator) aggrWindows(aggrs []ColumnAggregation) ([]bow.Series, error) {
-	seriesSlice := make([]bow.Series, len(aggrs))
+// For each colIndex aggregation, gives a series with each point resulting from a window aggregation.
+func (it *intervalRollingIter) aggregateWindows(aggregations []ColAggregation) ([]bow.Series, error) {
+	seriesSlice := make([]bow.Series, len(aggregations))
 
-	for writeColIndex, aggr := range aggrs {
+	for writeColIndex, aggr := range aggregations {
 		itCopy := *it
 
 		buf, outputType, err := itCopy.windowsAggrBuffer(writeColIndex, aggr)
@@ -208,7 +208,7 @@ func (it *intervalRollingIterator) aggrWindows(aggrs []ColumnAggregation) ([]bow
 	return seriesSlice, nil
 }
 
-func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAggregation) (*bow.Buffer, bow.Type, error) {
+func (it *intervalRollingIter) windowsAggrBuffer(colIndex int, aggr ColAggregation) (*bow.Buffer, bow.Type, error) {
 	var buf bow.Buffer
 	var typ bow.Type
 
@@ -221,7 +221,7 @@ func (it *intervalRollingIterator) windowsAggrBuffer(colIndex int, aggr ColumnAg
 		buf = bow.NewBuffer(it.numWindows, cType, true)
 		typ = cType
 	case bow.IteratorDependent:
-		iType := it.bow.GetType(it.column)
+		iType := it.bow.GetType(it.colIndex)
 		buf = bow.NewBuffer(it.numWindows, iType, true)
 		typ = iType
 	default:

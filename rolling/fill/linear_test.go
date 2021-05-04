@@ -23,7 +23,7 @@ func TestLinear(t *testing.T) {
 	})
 
 	t.Run("ascendant no options", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
+		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, nil, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
@@ -39,7 +39,7 @@ func TestLinear(t *testing.T) {
 	})
 
 	t.Run("descendant no options", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
+		r, _ := rolling.IntervalRolling(descendantLinearTestBow, nil, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
@@ -55,7 +55,7 @@ func TestLinear(t *testing.T) {
 	})
 
 	t.Run("ascendant with offset", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
+		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, nil, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
 			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
@@ -71,7 +71,7 @@ func TestLinear(t *testing.T) {
 	})
 
 	t.Run("descendant with offset", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
+		r, _ := rolling.IntervalRolling(descendantLinearTestBow, nil, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
 			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
@@ -92,7 +92,7 @@ func TestLinear(t *testing.T) {
 			{"test", "test2"},
 		})
 		require.NoError(t, err)
-		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, nil, timeCol, rollInterval, rolling.Options{})
 		_, err = r.
 			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
@@ -105,7 +105,7 @@ func TestLinear(t *testing.T) {
 			{true, false},
 		})
 		require.NoError(t, err)
-		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, nil, timeCol, rollInterval, rolling.Options{})
 		res, err := r.
 			Fill(WindowStart(timeCol), Linear(valueCol)).
 			Bow()

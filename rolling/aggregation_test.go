@@ -12,7 +12,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		{10, 15, 16, 25, 29},
 		{1.0, 1.5, 1.6, 2.5, 2.9},
 	})
-	r, _ := IntervalRolling(b, timeCol, 10, Options{})
+	r, _ := IntervalRolling(b, nil, timeCol, 10, Options{})
 
 	timeAggr := NewColumnAggregation(timeCol, false, bow.Int64,
 		func(col int, w Window) (interface{}, error) {
@@ -101,12 +101,12 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		assert.True(t, aggregated.Equal(expected))
 	})
 
-	t.Run("missing interval column", func(t *testing.T) {
+	t.Run("missing interval colIndex", func(t *testing.T) {
 		_, err := r.Aggregate(valueAggr).Bow()
-		assert.EqualError(t, err, fmt.Sprintf("rolling.Aggregate error: must keep interval column '%s'", timeCol))
+		assert.EqualError(t, err, fmt.Sprintf("rolling.Aggregate error: must keep interval colIndex '%s'", timeCol))
 	})
 
-	t.Run("invalid column", func(t *testing.T) {
+	t.Run("invalid colIndex", func(t *testing.T) {
 		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", false, bow.Int64,
 			func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
 		assert.EqualError(t, err, "rolling.Aggregate error: no column '-'")

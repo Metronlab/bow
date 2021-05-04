@@ -5,7 +5,7 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func IntegralTrapezoid(col string) rolling.ColumnAggregation {
+func IntegralTrapezoid(col string) rolling.ColAggregation {
 	return rolling.NewColumnAggregation(col, true, bow.Float64,
 		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {
@@ -37,7 +37,7 @@ func IntegralTrapezoid(col string) rolling.ColumnAggregation {
 		})
 }
 
-func IntegralStep(col string) rolling.ColumnAggregation {
+func IntegralStep(col string) rolling.ColAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.Float64,
 		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {

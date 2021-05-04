@@ -13,12 +13,12 @@ import (
 // to the reference column refColName, which has to be sorted.
 // Fills only int64 and float64 types.
 func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
-	refIndex, err := b.GetColumnIndex(refColName)
+	refIndex, err := b.GetColIndex(refColName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: FillLinear: error with refColName: %w", err)
 	}
 
-	toFillIndex, err := b.GetColumnIndex(toFillColName)
+	toFillIndex, err := b.GetColIndex(toFillColName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: FillLinear: error with toFillColName: %w", err)
 	}
@@ -460,7 +460,7 @@ func selectCols(b *bow, colNames []string) ([]bool, error) {
 		}
 	} else {
 		for _, colName := range colNames {
-			foundColIndex, err := b.GetColumnIndex(colName)
+			foundColIndex, err := b.GetColIndex(colName)
 			if err != nil {
 				return nil, err
 			}

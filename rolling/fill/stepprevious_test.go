@@ -19,7 +19,7 @@ func TestStepPrevious(t *testing.T) {
 			{10, 13},
 			{1.0, 1.3},
 		})
-		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, nil, timeCol, 2, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
@@ -37,7 +37,7 @@ func TestStepPrevious(t *testing.T) {
 			{10, 13},
 			{true, false},
 		})
-		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, nil, timeCol, 2, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
@@ -55,7 +55,7 @@ func TestStepPrevious(t *testing.T) {
 			{10, 13},
 			{"test", "test2"},
 		})
-		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, nil, timeCol, 2, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
@@ -73,7 +73,7 @@ func TestStepPrevious(t *testing.T) {
 			{10, 13},
 			{1.0, 1.3},
 		})
-		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{Offset: 1})
+		r, _ := rolling.IntervalRolling(b, nil, timeCol, 2, rolling.Options{Offset: 1})
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
@@ -91,7 +91,7 @@ func TestStepPrevious(t *testing.T) {
 			{10, 11, 13, 15},
 			{1.0, nil, nil, 1.5},
 		})
-		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, nil, timeCol, 2, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()

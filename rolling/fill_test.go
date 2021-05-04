@@ -8,12 +8,12 @@ import (
 )
 
 func TestIntervalRolling_Fill(t *testing.T) {
-	timeInterp := NewColumnInterpolation(timeCol, []bow.Type{bow.Int64},
-		func(colIndex int, w Window, full bow.Bow) (interface{}, error) {
+	timeInterp := NewColInterpolation(timeCol, []bow.Type{bow.Int64},
+		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 			return w.Start, nil
 		})
-	valueInterp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
-		func(colIndex int, w Window, full bow.Bow) (interface{}, error) {
+	valueInterp := NewColInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
+		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 			return 9.9, nil
 		})
 
@@ -22,9 +22,9 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{10, 13},
 			{1.0, 1.3},
 		})
-		r, _ := IntervalRolling(b, timeCol, 2, Options{})
-		interp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Bool},
-			func(colIndex int, w Window, full bow.Bow) (interface{}, error) {
+		r, _ := IntervalRolling(b, nil, timeCol, 2, Options{})
+		interp := NewColInterpolation(valueCol, []bow.Type{bow.Int64, bow.Bool},
+			func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 				return true, nil
 			})
 		_, err := r.
@@ -33,16 +33,16 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		assert.EqualError(t, err, "fill: interpolation accepts types [int64 bool], got type float64")
 	})
 
-	t.Run("missing interval column", func(t *testing.T) {
+	t.Run("missing interval colIndex", func(t *testing.T) {
 		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 13},
 			{1.0, 1.3},
 		})
-		r, _ := IntervalRolling(b, timeCol, 2, Options{})
+		r, _ := IntervalRolling(b, nil, timeCol, 2, Options{})
 		_, err := r.
 			Fill(valueInterp).
 			Bow()
-		assert.EqualError(t, err, fmt.Sprintf("fill: must keep interval column '%s'", timeCol))
+		assert.EqualError(t, err, fmt.Sprintf("fill: must keep interval colIndex '%s'", timeCol))
 	})
 
 	t.Run("empty bow", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{},
 			{},
 		})
-		r, _ := IntervalRolling(b, timeCol, 2, Options{})
+		r, _ := IntervalRolling(b, nil, timeCol, 2, Options{})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).
@@ -65,7 +65,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{10, 13},
 			{1.0, 1.3},
 		})
-		r, _ := IntervalRolling(b, timeCol, 2, Options{})
+		r, _ := IntervalRolling(b, nil, timeCol, 2, Options{})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).
@@ -84,7 +84,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{10, 13},
 			{1.0, 1.3},
 		})
-		r, _ := IntervalRolling(b, timeCol, 2, Options{Offset: 1})
+		r, _ := IntervalRolling(b, nil, timeCol, 2, Options{Offset: 1})
 
 		filled, err := r.
 			Fill(timeInterp, valueInterp).

@@ -5,7 +5,7 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func Difference(col string) rolling.ColumnAggregation {
+func Difference(col string) rolling.ColAggregation {
 	first := First(col).Func()
 	last := Last(col).Func()
 

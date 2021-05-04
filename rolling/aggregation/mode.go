@@ -5,7 +5,7 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func Mode(col string) rolling.ColumnAggregation {
+func Mode(col string) rolling.ColAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.InputDependent,
 		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {

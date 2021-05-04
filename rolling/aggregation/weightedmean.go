@@ -11,7 +11,7 @@ func timeFromMillisecond(millisecond int64) time.Time {
 }
 */
 
-func WeightedAverageStep(col string) rolling.ColumnAggregation {
+func WeightedAverageStep(col string) rolling.ColAggregation {
 	integralFunc := IntegralStep(col).Func()
 	return rolling.NewColumnAggregation(col, false, bow.Float64,
 		func(col int, w rolling.Window) (interface{}, error) {
@@ -31,7 +31,7 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 		})
 }
 
-func WeightedAverageLinear(col string) rolling.ColumnAggregation {
+func WeightedAverageLinear(col string) rolling.ColAggregation {
 	integralFunc := IntegralTrapezoid(col).Func()
 	return rolling.NewColumnAggregation(col, true, bow.Float64,
 		func(col int, w rolling.Window) (interface{}, error) {

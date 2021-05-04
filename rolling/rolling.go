@@ -12,8 +12,8 @@ import (
 // Use `HasNext` and `Next` to iterate over windows.
 // Use `Bow` to get the processed bow.
 type Rolling interface {
-	Fill(interpolations ...ColumnInterpolation) Rolling
-	Aggregate(...ColumnAggregation) Rolling
+	Fill(interpolations ...ColInterpolation) Rolling
+	Aggregate(aggregations ...ColAggregation) Rolling
 
 	NumWindows() (int, error)
 	HasNext() bool
@@ -49,18 +49,35 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 // IntervalRolling provides an interval-based `Rolling`.
 // Intervals rely on numerical values regardless of a unit.
 // All windows except the last one may be empty.
-// `column`: column used to make intervals
+// `colIndex`: colIndex used to make intervals
 // `interval`: length of an interval
-func IntervalRolling(b bow.Bow, column string, interval int64, options Options) (Rolling, error) {
-	index, err := b.GetColumnIndex(column)
-	if err != nil {
-		return nil, errors.New("intervalrolling: " + err.Error())
+func IntervalRolling(b, prevRow bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
+	if prevRow != nil {
+		if !prevRow.Schema().Equal(b.Schema()) {
+			return nil, fmt.Errorf("intervalrolling: b and prevRow must have the same schema")
+		}
+		if prevRow.NumRows() != 1 {
+			return nil, fmt.Errorf("intervalrolling: prevRow must have one row, have %d", prevRow.NumRows())
+		}
 	}
-	return IntervalRollingForIndex(b, index, interval, options)
+
+	colIndex, err := b.GetColIndex(colName)
+	if err != nil {
+		return nil, fmt.Errorf("intervalrolling: %w", err)
+	}
+
+	return IntervalRollingForIndex(b, prevRow, colIndex, interval, options)
 }
 
-func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Options) (Rolling, error) {
-	logPrefix := "intervalrolling: "
+func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, options Options) (Rolling, error) {
+	if prevRow != nil {
+		if !prevRow.Schema().Equal(b.Schema()) {
+			return nil, fmt.Errorf("intervalrolling: b and prevRow must have the same schema")
+		}
+		if prevRow.NumRows() != 1 {
+			return nil, fmt.Errorf("intervalrolling: prevRow must have one row, have %d", prevRow.NumRows())
+		}
+	}
 
 	var err error
 	options.Offset, err = validateIntervalOffset(interval, options.Offset)
@@ -68,17 +85,17 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Opti
 		return nil, err
 	}
 
-	iType := b.GetType(column)
-	if iType != bow.Int64 {
-		return nil, fmt.Errorf(logPrefix+"impossible to roll over type %v", iType)
+	colType := b.GetType(colIndex)
+	if colType != bow.Int64 {
+		return nil, fmt.Errorf("intervalrolling: impossible to roll over type %v", colType)
 	}
 
 	var start int64
 	if b.NumRows() > 0 {
-		first, valid := b.GetInt64(column, 0)
+		first, valid := b.GetInt64(colIndex, 0)
 		if !valid {
-			v := b.GetValue(column, 0)
-			return nil, fmt.Errorf(logPrefix+"expected int64 start value, got %v", v)
+			v := b.GetValue(colIndex, 0)
+			return nil, fmt.Errorf("intervalrolling: expected int64 start value, got %v", v)
 		}
 		// align first window start on interval
 		start = (first/interval)*interval + options.Offset
@@ -87,14 +104,15 @@ func IntervalRollingForIndex(b bow.Bow, column int, interval int64, options Opti
 		}
 	}
 
-	numWins, err := numWindows(b, column, start, interval)
+	numWins, err := numWindows(b, colIndex, start, interval)
 	if err != nil {
 		return nil, err
 	}
 
-	return &intervalRollingIterator{
+	return &intervalRollingIter{
 		bow:        b,
-		column:     column,
+		prevRow:    prevRow,
+		colIndex:   colIndex,
 		interval:   interval,
 		options:    options,
 		numWindows: numWins,
@@ -115,11 +133,12 @@ func validateIntervalOffset(interval, offset int64) (int64, error) {
 	return offset, nil
 }
 
-type intervalRollingIterator struct {
+type intervalRollingIter struct {
 	// todo: sync.Mutex
 
 	bow        bow.Bow
-	column     int
+	prevRow    bow.Bow
+	colIndex   int
 	interval   int64
 	options    Options
 	numWindows int
@@ -130,18 +149,18 @@ type intervalRollingIterator struct {
 	err         error
 }
 
-func (it *intervalRollingIterator) Bow() (bow.Bow, error) {
+func (it *intervalRollingIter) Bow() (bow.Bow, error) {
 	return it.bow, it.err
 }
 
 // HasNext checks if `Next` will provide a window.
 //
 // todo: concurrent-safe
-func (it *intervalRollingIterator) HasNext() bool {
+func (it *intervalRollingIter) HasNext() bool {
 	if it.currIndex >= it.bow.NumRows() {
 		return false
 	}
-	n, valid := it.bow.GetInt64(it.column, it.bow.NumRows()-1)
+	n, valid := it.bow.GetInt64(it.colIndex, it.bow.NumRows()-1)
 	return valid && it.currStart <= n
 }
 
@@ -149,7 +168,7 @@ func (it *intervalRollingIterator) HasNext() bool {
 // This mutates the iterator.
 //
 // todo: concurrent-safe
-func (it *intervalRollingIterator) Next() (windowIndex int, w *Window, err error) {
+func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
 	if !it.HasNext() {
 		return it.windowIndex, nil, nil
 	}
@@ -161,7 +180,7 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *Window, err error
 	var i int
 	var isInclusive bool
 	for i = firstIndex; i < it.bow.NumRows(); i++ {
-		ref, ok := it.bow.GetInt64(it.column, i)
+		ref, ok := it.bow.GetInt64(it.colIndex, i)
 		if !ok {
 			continue
 		}
@@ -204,30 +223,30 @@ func (it *intervalRollingIterator) Next() (windowIndex int, w *Window, err error
 	return windowIndex, &Window{
 		FirstIndex:          firstIndex,
 		Bow:                 b,
-		IntervalColumnIndex: it.column,
+		IntervalColumnIndex: it.colIndex,
 		Start:               start,
 		End:                 end,
 		IsInclusive:         isInclusive,
 	}, nil
 }
 
-func (it *intervalRollingIterator) setError(err error) Rolling {
+func (it *intervalRollingIter) setError(err error) Rolling {
 	it.err = err
 	return it
 }
 
 // NumWindows gives the total of windows across the entire bow this iterator was built from.
-func (it *intervalRollingIterator) NumWindows() (int, error) {
+func (it *intervalRollingIter) NumWindows() (int, error) {
 	return it.numWindows, it.err
 }
 
-func numWindows(b bow.Bow, column int, start, interval int64) (int, error) {
+func numWindows(b bow.Bow, colIndex int, start, interval int64) (int, error) {
 	nrows := b.NumRows()
 	if nrows == 0 {
 		return nrows, nil
 	}
 
-	last, irow := b.GetPreviousInt64(column, nrows-1)
+	last, irow := b.GetPreviousInt64(colIndex, nrows-1)
 
 	if irow == -1 || start > last {
 		return 0, nil

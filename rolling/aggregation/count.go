@@ -5,7 +5,7 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func Count(col string) rolling.ColumnAggregation {
+func Count(col string) rolling.ColAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.Int64,
 		func(col int, w rolling.Window) (interface{}, error) {
 			var count int64
