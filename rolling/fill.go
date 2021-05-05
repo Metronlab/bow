@@ -133,43 +133,47 @@ func (it *intervalRollingIter) fillWindows(interpolations []ColInterpolation) (b
 }
 
 func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *Window) (bow.Bow, error) {
-	var first int64 = -1
+	var firstBowValue int64 = -1
 	if w.Bow.NumRows() > 0 {
-		value, i := w.Bow.GetNextFloat64(it.colIndex, 0)
+		firstVal, i := w.Bow.GetNextFloat64(it.colIndex, 0)
 		if i > -1 {
-			first = int64(value)
+			firstBowValue = int64(firstVal)
 		}
 	}
 
 	// has start: call interpolation anyway for those stateful
-	if first == w.Start {
-		for _, interp := range interpolations {
-			_, err := interp.fn(interp.colIndex, *w, it.bow, it.prevRow)
+	if firstBowValue == w.Start {
+		for _, interpolation := range interpolations {
+			interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
 			if err != nil {
 				return nil, err
 			}
+			fmt.Printf("fillWindow HAS WINDOW START Interpolated:%+v\nit.prevRow\n%+vit.bow\n%+v\n",
+				interpolatedValue, it.prevRow, it.bow)
 		}
+
+		fmt.Printf("fillWindow HAS WINDOW START w.Bow\n%+v\n", w.Bow)
 		return w.Bow, nil
 	}
 
 	// missing start
 	seriesSlice := make([]bow.Series, len(interpolations))
-	for writeColIndex, interp := range interpolations {
-		typ := w.Bow.GetType(interp.colIndex)
-		name, err := w.Bow.GetName(interp.colIndex)
+	for colIndex, interpolation := range interpolations {
+		typ := w.Bow.GetType(interpolation.colIndex)
+		name, err := w.Bow.GetName(interpolation.colIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		start, err := interp.fn(interp.colIndex, *w, it.bow, it.prevRow)
+		interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
 		if err != nil {
 			return nil, err
 		}
 
 		buf := bow.NewBuffer(1, typ, true)
-		buf.SetOrDrop(0, start)
+		buf.SetOrDrop(0, interpolatedValue)
 
-		seriesSlice[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
+		seriesSlice[colIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 	}
 
 	startBow, err := bow.NewBow(seriesSlice...)
