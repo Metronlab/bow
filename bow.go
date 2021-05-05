@@ -484,12 +484,18 @@ func (b *bow) String() string {
 		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
 	})
 
+	fmt.Printf("BOWPRINT rows:%d\n%+v\n", b.NumRows(), b.Schema())
 	// Print each row on buffer
 	rowChan := b.FilteredRowMapIter()
 	for row := range rowChan {
 		formatRow(func(colIndex int) string {
 			return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
 		})
+	}
+
+	_, err := fmt.Fprintf(w, "rows:%d\n", b.NumRows())
+	if err != nil {
+		panic(err)
 	}
 
 	// Flush buffer and format lines along the way
@@ -532,6 +538,7 @@ func (b *bow) filteredRowMapIter(rows chan map[string]interface{}) {
 	}
 
 	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
+		fmt.Printf("BOWPRINT rows:%d rowIndex:%d\n%+v\n", b.NumRows(), rowIndex, b.Schema())
 		if rowIndex == 0 || rowIndex == b.NumRows()-1 {
 			rows <- b.GetRow(rowIndex)
 		}
