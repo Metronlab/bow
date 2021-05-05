@@ -537,15 +537,8 @@ func (b *bow) filteredRowMapIter(rows chan map[string]interface{}) {
 	}
 
 	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-		if b.NumRows() >= 6 {
-			if rowIndex == 0 || rowIndex == 1 || rowIndex == 2 ||
-				rowIndex == b.NumRows()-3 || rowIndex == b.NumRows()-2 || rowIndex == b.NumRows()-1 {
-				rows <- b.GetRow(rowIndex)
-			}
-		} else if b.NumRows() > 0 {
-			if rowIndex == 0 || rowIndex == b.NumRows()-1 {
-				rows <- b.GetRow(rowIndex)
-			}
+		if rowIndex == 0 || rowIndex == b.NumRows()-1 {
+			rows <- b.GetRow(rowIndex)
 		}
 	}
 }
