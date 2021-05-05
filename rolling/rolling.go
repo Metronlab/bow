@@ -52,15 +52,10 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 // `colIndex`: colIndex used to make intervals
 // `interval`: length of an interval
 func IntervalRolling(b, prevRow bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
-	if prevRow != nil {
-		if !prevRow.Schema().Equal(b.Schema()) {
-			return nil, fmt.Errorf("rolling.IntervalRolling: b and prevRow must have the same schema")
-		}
-		if prevRow.NumRows() == 0 {
-			prevRow = nil
-		} else if prevRow.NumRows() != 1 {
-			return nil, fmt.Errorf("rolling.IntervalRolling: prevRow must have only one row, have %d", prevRow.NumRows())
-		}
+	var err error
+	prevRow, err = ValidatePrevRow(b, prevRow)
+	if err != nil {
+		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
 
 	colIndex, err := b.GetColIndex(colName)
@@ -72,18 +67,12 @@ func IntervalRolling(b, prevRow bow.Bow, colName string, interval int64, options
 }
 
 func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, options Options) (Rolling, error) {
-	if prevRow != nil {
-		if !prevRow.Schema().Equal(b.Schema()) {
-			return nil, fmt.Errorf("rolling.IntervalRolling: b and prevRow must have the same schema")
-		}
-		if prevRow.NumRows() == 0 {
-			prevRow = nil
-		} else if prevRow.NumRows() != 1 {
-			return nil, fmt.Errorf("rolling.IntervalRolling: prevRow must have only one row, have %d", prevRow.NumRows())
-		}
+	var err error
+	prevRow, err = ValidatePrevRow(b, prevRow)
+	if err != nil {
+		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
 
-	var err error
 	options.Offset, err = validateIntervalOffset(interval, options.Offset)
 	if err != nil {
 		return nil, err
@@ -122,6 +111,21 @@ func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, o
 		numWindows: numWins,
 		currStart:  start,
 	}, nil
+}
+
+func ValidatePrevRow(b, prevRow bow.Bow) (bow.Bow, error) {
+	if prevRow != nil {
+		if !prevRow.Schema().Equal(b.Schema()) {
+			return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the same schema")
+		}
+		if prevRow.NumRows() == 0 {
+			prevRow = nil
+		} else if prevRow.NumRows() != 1 {
+			return nil, fmt.Errorf("ValidatePrevRow: prevRow must have only one row, have %d", prevRow.NumRows())
+		}
+	}
+
+	return prevRow, nil
 }
 
 func validateIntervalOffset(interval, offset int64) (int64, error) {
