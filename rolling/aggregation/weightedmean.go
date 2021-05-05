@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
-	"time"
 )
 
+/*
 func timeFromMillisecond(millisecond int64) time.Time {
 	return time.Unix(millisecond/1e3, millisecond%1e3*1e6).UTC()
 }
+*/
 
 func WeightedAverageStep(col string) rolling.ColAggregation {
 	integralFunc := IntegralStep(col).Func()
@@ -22,9 +23,9 @@ func WeightedAverageStep(col string) rolling.ColAggregation {
 			}
 
 			windowsWide := float64(w.End - w.Start)
-			fmt.Printf("WeightedAverageStep Col:%d\nWindow Bow: Start:%s End:%s isInclusive:%v >> RES:%f/%f=%f\n%+v\n",
-				col, timeFromMillisecond(w.Start).Format(time.RFC3339), timeFromMillisecond(w.End).Format(time.RFC3339), w.IsInclusive,
-				v.(float64), windowsWide, v.(float64)/windowsWide, w.Bow)
+			//fmt.Printf("WeightedAverageStep Col:%d\nWindow Bow: Start:%s End:%s isInclusive:%v >> RES:%f/%f=%f\n%+v\n",
+			//	col, timeFromMillisecond(w.Start).Format(time.RFC3339), timeFromMillisecond(w.End).Format(time.RFC3339), w.IsInclusive,
+			//	v.(float64), windowsWide, v.(float64)/windowsWide, w.Bow)
 			return v.(float64) / windowsWide, nil
 		})
 }
@@ -40,9 +41,9 @@ func WeightedAverageLinear(col string) rolling.ColAggregation {
 			}
 
 			windowsWide := float64(w.End - w.Start)
-			fmt.Printf("WeightedAverageLinear Col:%d\nWindow Bow: Start:%s End:%s isInclusive:%v >> RES:%f/%f=%f\n%+v\n",
-				col, timeFromMillisecond(w.Start).Format(time.RFC3339), timeFromMillisecond(w.End).Format(time.RFC3339), w.IsInclusive,
-				v.(float64), windowsWide, v.(float64)/windowsWide, w.Bow)
+			//fmt.Printf("WeightedAverageLinear Col:%d\nWindow Bow: Start:%s End:%s isInclusive:%v >> RES:%f/%f=%f\n%+v\n",
+			//	col, timeFromMillisecond(w.Start).Format(time.RFC3339), timeFromMillisecond(w.End).Format(time.RFC3339), w.IsInclusive,
+			//	v.(float64), windowsWide, v.(float64)/windowsWide, w.Bow)
 			return v.(float64) / windowsWide, nil
 		})
 }
