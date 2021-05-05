@@ -484,7 +484,6 @@ func (b *bow) String() string {
 		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
 	})
 
-	fmt.Printf("BOWPRINT rows:%d\n%+v\n", b.NumRows(), b.Schema())
 	// Print each row on buffer
 	rowChan := b.FilteredRowMapIter()
 	for row := range rowChan {
@@ -538,7 +537,6 @@ func (b *bow) filteredRowMapIter(rows chan map[string]interface{}) {
 	}
 
 	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-		fmt.Printf("BOWPRINT rows:%d rowIndex:%d\n%+v\n", b.NumRows(), rowIndex, b.Schema())
 		if rowIndex == 0 || rowIndex == b.NumRows()-1 {
 			rows <- b.GetRow(rowIndex)
 		}
