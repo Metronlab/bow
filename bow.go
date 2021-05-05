@@ -484,6 +484,7 @@ func (b *bow) String() string {
 		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
 	})
 
+	fmt.Printf("BOWPRINT rows:%d schema:%+v\n", b.NumRows(), b.Schema())
 	// Print each row on buffer
 	rowChan := b.FilteredRowMapIter()
 	for row := range rowChan {
