@@ -144,7 +144,7 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *
 	// has start: call interpolation anyway for those stateful
 	if first == w.Start {
 		for _, interp := range interpolations {
-			_, err := interp.fn(interp.colIndex, *w, it.bow, nil)
+			_, err := interp.fn(interp.colIndex, *w, it.bow, it.prevRow)
 			if err != nil {
 				return nil, err
 			}
