@@ -103,7 +103,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 
 	t.Run("missing interval colIndex", func(t *testing.T) {
 		_, err := r.Aggregate(valueAggr).Bow()
-		assert.EqualError(t, err, fmt.Sprintf("rolling.Aggregate error: must keep interval colIndex '%s'", timeCol))
+		assert.EqualError(t, err, fmt.Sprintf("rolling.Aggregate error: must keep interval column '%s'", timeCol))
 	})
 
 	t.Run("invalid colIndex", func(t *testing.T) {
