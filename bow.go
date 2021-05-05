@@ -542,7 +542,7 @@ func (b *bow) filteredRowMapIter(rows chan map[string]interface{}) {
 				rowIndex == b.NumRows()-3 || rowIndex == b.NumRows()-2 || rowIndex == b.NumRows()-1 {
 				rows <- b.GetRow(rowIndex)
 			}
-		} else {
+		} else if b.NumRows() > 0 {
 			if rowIndex == 0 || rowIndex == b.NumRows()-1 {
 				rows <- b.GetRow(rowIndex)
 			}
