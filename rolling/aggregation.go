@@ -112,7 +112,7 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColAggregation) Rolling
 	}
 
 	itCopy := *it
-	newIntervalCol, aggregations, err := itCopy.indexedAggrs(aggregations)
+	newIntervalCol, aggregations, err := itCopy.indexedAggregations(aggregations)
 	if err != nil {
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
@@ -137,7 +137,7 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColAggregation) Rolling
 	return itNew
 }
 
-func (it *intervalRollingIter) indexedAggrs(aggregations []ColAggregation) (int, []ColAggregation, error) {
+func (it *intervalRollingIter) indexedAggregations(aggregations []ColAggregation) (int, []ColAggregation, error) {
 	if len(aggregations) == 0 {
 		return -1, nil, fmt.Errorf("at least one colIndex aggregation is required")
 	}

@@ -114,27 +114,27 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 	t.Run("interval < 0", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
 		rolling, err := IntervalRolling(b, nil, timeCol, 0, Options{})
-		assert.EqualError(t, err, "intervalrolling: strictly positive interval required")
+		assert.EqualError(t, err, "rolling.IntervalRolling: strictly positive interval required")
 		assert.Nil(t, rolling)
 	})
 
 	t.Run("interval == 0", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
 		rolling, err := IntervalRolling(b, nil, timeCol, 0, Options{})
-		assert.EqualError(t, err, "intervalrolling: strictly positive interval required")
+		assert.EqualError(t, err, "rolling.IntervalRolling: strictly positive interval required")
 		assert.Nil(t, rolling)
 	})
 
 	t.Run("non existing index", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
 		_, err := IntervalRolling(b, nil, badCol, 1, Options{})
-		assert.EqualError(t, err, fmt.Sprintf("intervalrolling: no column '%s'", badCol))
+		assert.EqualError(t, err, fmt.Sprintf("rolling.IntervalRolling: no column '%s'", badCol))
 	})
 
 	t.Run("invalid interval type", func(t *testing.T) {
 		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol}, []bow.Type{bow.Float64}, [][]interface{}{{0.}})
 		_, err := IntervalRolling(b, nil, timeCol, 1, Options{})
-		assert.EqualError(t, err, "intervalrolling: impossible to roll over type float64")
+		assert.EqualError(t, err, "rolling.IntervalRolling: impossible to roll over type float64")
 	})
 
 	t.Run("empty bow gives valid finished iterator", func(t *testing.T) {

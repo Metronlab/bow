@@ -9,20 +9,20 @@ import (
 // ColInterpolationFunc provides a value at the start of `window`.
 type ColInterpolationFunc func(inputCol int, window Window, fullBow, prevRow bow.Bow) (interface{}, error)
 
-func NewColInterpolation(inputName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColInterpolation {
+func NewColInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColInterpolation {
 	return ColInterpolation{
-		inputName:  inputName,
+		colName:    colName,
 		inputTypes: inputTypes,
 		fn:         fn,
 	}
 }
 
 type ColInterpolation struct {
-	inputName  string
+	colName    string
 	inputTypes []bow.Type
 	fn         ColInterpolationFunc
 
-	inputCol int
+	colIndex int
 }
 
 // Fill each window by interpolating its start if missing
@@ -87,14 +87,14 @@ func (it *intervalRollingIter) indexedInterpolations(interpolations []ColInterpo
 }
 
 func (it *intervalRollingIter) validateInterpolation(interpolation *ColInterpolation, newIndex int) (bool, error) {
-	if interpolation.inputName == "" {
+	if interpolation.colName == "" {
 		return false, fmt.Errorf("interpolation %d has no colIndex name", newIndex)
 	}
-	readIndex, err := it.bow.GetColIndex(interpolation.inputName)
+	readIndex, err := it.bow.GetColIndex(interpolation.colName)
 	if err != nil {
 		return false, err
 	}
-	interpolation.inputCol = readIndex
+	interpolation.colIndex = readIndex
 
 	var typeOk bool
 	typ := it.bow.GetType(readIndex)
@@ -144,7 +144,7 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *
 	// has start: call interpolation anyway for those stateful
 	if first == w.Start {
 		for _, interp := range interpolations {
-			_, err := interp.fn(interp.inputCol, *w, it.bow, nil)
+			_, err := interp.fn(interp.colIndex, *w, it.bow, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -155,13 +155,13 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *
 	// missing start
 	seriesSlice := make([]bow.Series, len(interpolations))
 	for writeColIndex, interp := range interpolations {
-		typ := w.Bow.GetType(interp.inputCol)
-		name, err := w.Bow.GetName(interp.inputCol)
+		typ := w.Bow.GetType(interp.colIndex)
+		name, err := w.Bow.GetName(interp.colIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		start, err := interp.fn(interp.inputCol, *w, it.bow, it.prevRow)
+		start, err := interp.fn(interp.colIndex, *w, it.bow, it.prevRow)
 		if err != nil {
 			return nil, err
 		}

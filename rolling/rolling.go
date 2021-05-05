@@ -54,16 +54,18 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 func IntervalRolling(b, prevRow bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
 	if prevRow != nil {
 		if !prevRow.Schema().Equal(b.Schema()) {
-			return nil, fmt.Errorf("intervalrolling: b and prevRow must have the same schema")
+			return nil, fmt.Errorf("rolling.IntervalRolling: b and prevRow must have the same schema")
 		}
-		if prevRow.NumRows() != 1 {
-			return nil, fmt.Errorf("intervalrolling: prevRow must have one row, have %d", prevRow.NumRows())
+		if prevRow.NumRows() == 0 {
+			prevRow = nil
+		} else if prevRow.NumRows() != 1 {
+			return nil, fmt.Errorf("rolling.IntervalRolling: prevRow must have only one row, have %d", prevRow.NumRows())
 		}
 	}
 
 	colIndex, err := b.GetColIndex(colName)
 	if err != nil {
-		return nil, fmt.Errorf("intervalrolling: %w", err)
+		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
 
 	return IntervalRollingForIndex(b, prevRow, colIndex, interval, options)
@@ -72,10 +74,12 @@ func IntervalRolling(b, prevRow bow.Bow, colName string, interval int64, options
 func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, options Options) (Rolling, error) {
 	if prevRow != nil {
 		if !prevRow.Schema().Equal(b.Schema()) {
-			return nil, fmt.Errorf("intervalrolling: b and prevRow must have the same schema")
+			return nil, fmt.Errorf("rolling.IntervalRolling: b and prevRow must have the same schema")
 		}
-		if prevRow.NumRows() != 1 {
-			return nil, fmt.Errorf("intervalrolling: prevRow must have one row, have %d", prevRow.NumRows())
+		if prevRow.NumRows() == 0 {
+			prevRow = nil
+		} else if prevRow.NumRows() != 1 {
+			return nil, fmt.Errorf("rolling.IntervalRolling: prevRow must have only one row, have %d", prevRow.NumRows())
 		}
 	}
 
@@ -87,7 +91,7 @@ func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, o
 
 	colType := b.GetType(colIndex)
 	if colType != bow.Int64 {
-		return nil, fmt.Errorf("intervalrolling: impossible to roll over type %v", colType)
+		return nil, fmt.Errorf("rolling.IntervalRolling: impossible to roll over type %v", colType)
 	}
 
 	var start int64
@@ -95,7 +99,7 @@ func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, o
 		first, valid := b.GetInt64(colIndex, 0)
 		if !valid {
 			v := b.GetValue(colIndex, 0)
-			return nil, fmt.Errorf("intervalrolling: expected int64 start value, got %v", v)
+			return nil, fmt.Errorf("rolling.IntervalRolling: expected int64 start value, got %v", v)
 		}
 		// align first window start on interval
 		start = (first/interval)*interval + options.Offset
@@ -122,7 +126,7 @@ func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, o
 
 func validateIntervalOffset(interval, offset int64) (int64, error) {
 	if interval <= 0 {
-		return -1, errors.New("intervalrolling: strictly positive interval required")
+		return -1, errors.New("rolling.IntervalRolling: strictly positive interval required")
 	}
 	if offset >= interval || offset <= -interval {
 		offset = offset % interval

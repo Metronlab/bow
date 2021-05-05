@@ -8,20 +8,20 @@ import (
 func StepPrevious(colName string) rolling.ColInterpolation {
 	return rolling.NewColInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool, bow.String},
 		func(inputCol int, w rolling.Window, fullBow, prevRow bow.Bow) (interface{}, error) {
-			var rowIndexToFill = w.FirstIndex
+			var rowIndexToInterpolate = w.FirstIndex
 
 			/*
 				var err error
-				if prevRow != nil && rowIndexToFill == 0 {
+				if prevRow != nil && rowIndexToInterpolate == 0 {
 					fullBow, err = bow.AppendBows(prevRow, fullBow)
 					if err != nil {
 						return nil, err
 					}
-					rowIndexToFill = 1
+					rowIndexToInterpolate = 1
 				}
 			*/
 
-			_, v, _ := fullBow.GetPreviousValues(w.IntervalColumnIndex, inputCol, rowIndexToFill-1)
+			_, v, _ := fullBow.GetPreviousValues(w.IntervalColumnIndex, inputCol, rowIndexToInterpolate-1)
 			return v, nil
 		},
 	)
