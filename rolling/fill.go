@@ -144,15 +144,16 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *
 	// has start: call interpolation anyway for those stateful
 	if firstBowValue == w.Start {
 		for _, interpolation := range interpolations {
-			interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
+			//interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
+			_, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
 			if err != nil {
 				return nil, err
 			}
-			fmt.Printf("fillWindow HAS WINDOW START Interpolated:%+v\nit.prevRow\n%+vit.bow\n%+v\n",
-				interpolatedValue, it.prevRow, it.bow)
+			//fmt.Printf("fillWindow HAS WINDOW START Interpolated:%+v\nit.prevRow\n%+vit.bow\n%+v\n",
+			//	interpolatedValue, it.prevRow, it.bow)
 		}
 
-		fmt.Printf("fillWindow HAS WINDOW START w.Bow\n%+v\n", w.Bow)
+		//fmt.Printf("fillWindow HAS WINDOW START w.Bow\n%+v\n", w.Bow)
 		return w.Bow, nil
 	}
 
