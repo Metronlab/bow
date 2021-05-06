@@ -14,7 +14,7 @@ func TestIntervalPosition(t *testing.T) {
 	})
 
 	t.Run("no options", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(b, nil, timeCol, interval, rolling.Options{})
+		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{})
 		filled, err := r.
 			Fill(WindowStart(timeCol)).
 			Bow()
@@ -26,7 +26,7 @@ func TestIntervalPosition(t *testing.T) {
 	})
 
 	t.Run("with offset", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(b, nil, timeCol, interval, rolling.Options{Offset: 1.})
+		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{Offset: 1.})
 		filled, err := r.
 			Fill(WindowStart(timeCol)).
 			Bow()

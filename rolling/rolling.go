@@ -9,15 +9,15 @@ import (
 
 // Rolling allows to process a bow via windows.
 // Use `Fill` and/or `Aggregate` to transform windows.
-// Use `HasNext` and `Next` to iterate over windows.
+// Use `HasNextWindow` and `NextWindow` to iterate over windows.
 // Use `Bow` to get the processed bow.
 type Rolling interface {
 	Fill(interpolations ...ColInterpolation) Rolling
 	Aggregate(aggregations ...ColAggregation) Rolling
 
 	NumWindows() (int, error)
-	HasNext() bool
-	Next() (windowIndex int, w *Window, err error)
+	HasNextWindow() bool
+	NextWindow() (windowIndex int, w *Window, err error)
 
 	Bow() (bow.Bow, error)
 }
@@ -26,6 +26,7 @@ type Options struct {
 	// offsets windows' start, starting earlier if necessary to preserve first points
 	Offset    int64
 	Inclusive bool
+	PrevRow   bow.Bow
 }
 
 func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
@@ -51,9 +52,9 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 // All windows except the last one may be empty.
 // `colIndex`: colIndex used to make intervals
 // `interval`: length of an interval
-func IntervalRolling(b, prevRow bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
+func IntervalRolling(b bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
 	var err error
-	prevRow, err = ValidatePrevRow(b, prevRow)
+	options.PrevRow, err = ValidatePrevRow(b, options.PrevRow)
 	if err != nil {
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
@@ -63,12 +64,12 @@ func IntervalRolling(b, prevRow bow.Bow, colName string, interval int64, options
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
 
-	return IntervalRollingForIndex(b, prevRow, colIndex, interval, options)
+	return IntervalRollingForIndex(b, colIndex, interval, options)
 }
 
-func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, options Options) (Rolling, error) {
+func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Options) (Rolling, error) {
 	var err error
-	prevRow, err = ValidatePrevRow(b, prevRow)
+	options.PrevRow, err = ValidatePrevRow(b, options.PrevRow)
 	if err != nil {
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
@@ -104,7 +105,6 @@ func IntervalRollingForIndex(b, prevRow bow.Bow, colIndex int, interval int64, o
 
 	return &intervalRollingIter{
 		bow:        b,
-		prevRow:    prevRow,
 		colIndex:   colIndex,
 		interval:   interval,
 		options:    options,
@@ -145,7 +145,6 @@ type intervalRollingIter struct {
 	// todo: sync.Mutex
 
 	bow        bow.Bow
-	prevRow    bow.Bow
 	colIndex   int
 	interval   int64
 	options    Options
@@ -161,10 +160,10 @@ func (it *intervalRollingIter) Bow() (bow.Bow, error) {
 	return it.bow, it.err
 }
 
-// HasNext checks if `Next` will provide a window.
+// HasNext checks if `NextWindow` will provide a window.
 //
 // todo: concurrent-safe
-func (it *intervalRollingIter) HasNext() bool {
+func (it *intervalRollingIter) HasNextWindow() bool {
 	if it.currIndex >= it.bow.NumRows() {
 		return false
 	}
@@ -176,8 +175,8 @@ func (it *intervalRollingIter) HasNext() bool {
 // This mutates the iterator.
 //
 // todo: concurrent-safe
-func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
-	if !it.HasNext() {
+func (it *intervalRollingIter) NextWindow() (windowIndex int, w *Window, err error) {
+	if !it.HasNextWindow() {
 		return it.windowIndex, nil, nil
 	}
 
@@ -228,6 +227,7 @@ func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
 	} else {
 		b = it.bow.Slice(firstIndex, lastIndex+1)
 	}
+
 	return windowIndex, &Window{
 		FirstIndex:          firstIndex,
 		Bow:                 b,

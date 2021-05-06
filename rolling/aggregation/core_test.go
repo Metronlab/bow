@@ -89,7 +89,7 @@ func runTestCases(t *testing.T,
 	testCases []bowTest) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			r, err := rolling.IntervalRolling(test.TestedBow, nil, tc, 10, rolling.Options{})
+			r, err := rolling.IntervalRolling(test.TestedBow, tc, 10, rolling.Options{})
 			assert.NoError(t, err)
 			aggregated, err := r.
 				Aggregate(

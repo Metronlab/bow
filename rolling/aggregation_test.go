@@ -12,7 +12,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 		{10, 15, 16, 25, 29},
 		{1.0, 1.5, 1.6, 2.5, 2.9},
 	})
-	r, _ := IntervalRolling(b, nil, timeCol, 10, Options{})
+	r, _ := IntervalRolling(b, timeCol, 10, Options{})
 
 	timeAggr := NewColumnAggregation(timeCol, false, bow.Int64,
 		func(col int, w Window) (interface{}, error) {

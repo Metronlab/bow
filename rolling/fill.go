@@ -49,7 +49,7 @@ func (it *intervalRollingIter) Fill(interpolations ...ColInterpolation) Rolling 
 	}
 	//fmt.Printf("FILLED WINDOWS\n%+v\n", b)
 
-	newIt, err := IntervalRollingForIndex(b, nil, newIntervalCol, itCopy.interval, itCopy.options)
+	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
 		return itCopy.setError(errors.New(logPrefix + err.Error()))
 	}
@@ -117,8 +117,8 @@ func (it *intervalRollingIter) fillWindows(interpolations []ColInterpolation) (b
 
 	bows := make([]bow.Bow, it2.numWindows)
 
-	for it2.HasNext() {
-		winIndex, w, err := it2.Next()
+	for it2.HasNextWindow() {
+		winIndex, w, err := it2.NextWindow()
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +145,7 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *
 	if firstBowValue == w.Start {
 		for _, interpolation := range interpolations {
 			//interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
-			_, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
+			_, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.options.PrevRow)
 			if err != nil {
 				return nil, err
 			}
@@ -166,7 +166,7 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *
 			return nil, err
 		}
 
-		interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
+		interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.options.PrevRow)
 		if err != nil {
 			return nil, err
 		}

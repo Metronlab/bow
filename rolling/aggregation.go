@@ -127,7 +127,7 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColAggregation) Rolling
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	itNew, err := IntervalRollingForIndex(b, nil, newIntervalCol, itCopy.interval, itCopy.options)
+	itNew, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
@@ -228,8 +228,8 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggregation 
 		return nil, bow.Unknown, fmt.Errorf("aggregation %d has invalid return type %s", colIndex, aggregation.Type())
 	}
 
-	for it.HasNext() {
-		winIndex, w, err := it.Next()
+	for it.HasNextWindow() {
+		winIndex, w, err := it.NextWindow()
 		if err != nil {
 			return nil, bow.Unknown, err
 		}

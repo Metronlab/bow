@@ -149,7 +149,7 @@ func benchmarkBow(b *testing.B) {
 		var r rolling.Rolling
 		b.Run("create rolling", func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				r, err = rolling.IntervalRolling(benchBow, nil, "time", 10, rolling.Options{})
+				r, err = rolling.IntervalRolling(benchBow, "time", 10, rolling.Options{})
 				if err != nil {
 					panic(err)
 				}
