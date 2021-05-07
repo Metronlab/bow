@@ -9,15 +9,15 @@ import (
 
 // Rolling allows to process a bow via windows.
 // Use `Fill` and/or `Aggregate` to transform windows.
-// Use `HasNextWindow` and `NextWindow` to iterate over windows.
+// Use `HasNext` and `Next` to iterate over windows.
 // Use `Bow` to get the processed bow.
 type Rolling interface {
 	Fill(interpolations ...ColInterpolation) Rolling
-	Aggregate(aggregations ...ColAggregation) Rolling
+	Aggregate(aggregations ...ColumnAggregation) Rolling
 
 	NumWindows() (int, error)
-	HasNextWindow() bool
-	NextWindow() (windowIndex int, w *Window, err error)
+	HasNext() bool
+	Next() (windowIndex int, w *Window, err error)
 
 	Bow() (bow.Bow, error)
 }
@@ -167,10 +167,10 @@ func (it *intervalRollingIter) Bow() (bow.Bow, error) {
 	return it.bow, it.err
 }
 
-// HasNext checks if `NextWindow` will provide a window.
+// HasNext checks if `Next` will provide a window.
 //
 // todo: concurrent-safe
-func (it *intervalRollingIter) HasNextWindow() bool {
+func (it *intervalRollingIter) HasNext() bool {
 	if it.currIndex >= it.bow.NumRows() {
 		return false
 	}
@@ -182,8 +182,8 @@ func (it *intervalRollingIter) HasNextWindow() bool {
 // This mutates the iterator.
 //
 // todo: concurrent-safe
-func (it *intervalRollingIter) NextWindow() (windowIndex int, w *Window, err error) {
-	if !it.HasNextWindow() {
+func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
+	if !it.HasNext() {
 		return it.windowIndex, nil, nil
 	}
 

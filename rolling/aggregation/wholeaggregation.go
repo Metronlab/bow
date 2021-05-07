@@ -8,8 +8,8 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-// Aggregate any column with a ColAggregation
-func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColAggregation) (bow.Bow, error) {
+// Aggregate any column with a ColumnAggregation
+func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregation) (bow.Bow, error) {
 	errPrefix := fmt.Sprintf("aggregate on '%s': ", indexColName)
 
 	if b == nil {
@@ -39,7 +39,7 @@ func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColAggregation) 
 	return b2, nil
 }
 
-func validateAggr(b bow.Bow, aggr rolling.ColAggregation) error {
+func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
 	if aggr.InputName() == "" {
 		return fmt.Errorf("no column name")
 	}
@@ -54,7 +54,7 @@ func validateAggr(b bow.Bow, aggr rolling.ColAggregation) error {
 	return err
 }
 
-func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColAggregation) (bow.Bow, error) {
+func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation) (bow.Bow, error) {
 	seriess := make([]bow.Series, len(aggrs))
 
 	for writeColIndex, aggr := range aggrs {

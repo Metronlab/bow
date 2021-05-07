@@ -223,7 +223,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 }
 
 // FillNext fills nil values of `colNames` columns (`colNames` defaults to all columns)
-// using NOCB (NextWindow Obs. Carried Backward) method.
+// using NOCB (Next Obs. Carried Backward) method.
 func (b *bow) FillNext(colNames ...string) (Bow, error) {
 	toFillCols, err := selectCols(b, colNames)
 	if err != nil {

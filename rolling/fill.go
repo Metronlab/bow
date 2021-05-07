@@ -117,8 +117,8 @@ func (it *intervalRollingIter) fillWindows(interpolations []ColInterpolation) (b
 
 	bows := make([]bow.Bow, it2.numWindows)
 
-	for it2.HasNextWindow() {
-		winIndex, w, err := it2.NextWindow()
+	for it2.HasNext() {
+		winIndex, w, err := it2.Next()
 		if err != nil {
 			return nil, err
 		}

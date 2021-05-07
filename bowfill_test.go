@@ -81,7 +81,7 @@ func TestFill(t *testing.T) {
 		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
-	t.Run("NextWindow int64 toFill b", func(t *testing.T) {
+	t.Run("Next int64 toFill b", func(t *testing.T) {
 		filled, err := holedInt.FillNext("b")
 		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
@@ -97,7 +97,7 @@ func TestFill(t *testing.T) {
 		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
-	t.Run("NextWindow int64 toFill all columns", func(t *testing.T) {
+	t.Run("Next int64 toFill all columns", func(t *testing.T) {
 		filled, err := holedInt.FillNext()
 		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Int64, Int64, Int64, Int64, Int64}, [][]interface{}{
@@ -228,7 +228,7 @@ func TestFill(t *testing.T) {
 		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
-	t.Run("NextWindow float64 toFill b", func(t *testing.T) {
+	t.Run("Next float64 toFill b", func(t *testing.T) {
 		filled, err := holedFloat.FillNext("b")
 		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
@@ -244,7 +244,7 @@ func TestFill(t *testing.T) {
 		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
-	t.Run("NextWindow float64 toFill all columns", func(t *testing.T) {
+	t.Run("Next float64 toFill all columns", func(t *testing.T) {
 		filled, err := holedFloat.FillNext()
 		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
@@ -319,7 +319,7 @@ func TestFill(t *testing.T) {
 		assert.EqualValues(t, expected.String(), filled.String())
 	})
 
-	t.Run("NextWindow non numeric", func(t *testing.T) {
+	t.Run("Next non numeric", func(t *testing.T) {
 		filled, err := nonNumeric.FillNext()
 		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Bool, String}, [][]interface{}{
