@@ -97,7 +97,7 @@ func TestBow_FindFirst(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			colIndex, err := b.GetColIndex(test.searchedCol)
+			colIndex, err := b.GetColumnIndex(test.searchedCol)
 			require.NoError(t, err)
 
 			res := b.FindFirst(colIndex, test.searchedValue)

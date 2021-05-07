@@ -90,7 +90,7 @@ func (it *intervalRollingIter) validateInterpolation(interpolation *ColInterpola
 	if interpolation.colName == "" {
 		return false, fmt.Errorf("interpolation %d has no colIndex name", newIndex)
 	}
-	readIndex, err := it.bow.GetColIndex(interpolation.colName)
+	readIndex, err := it.bow.GetColumnIndex(interpolation.colName)
 	if err != nil {
 		return false, err
 	}

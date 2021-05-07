@@ -59,7 +59,7 @@ func IntervalRolling(b bow.Bow, colName string, interval int64, options Options)
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
 
-	colIndex, err := b.GetColIndex(colName)
+	colIndex, err := b.GetColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}

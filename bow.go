@@ -29,7 +29,7 @@ type Bow interface {
 	// Getters
 	GetType(colIndex int) (colType Type)
 	GetName(colIndex int) (colName string, err error)
-	GetColIndex(colName string) (colIndex int, err error)
+	GetColumnIndex(colName string) (colIndex int, err error)
 
 	GetRow(rowIndex int) (row map[string]interface{})
 
@@ -247,7 +247,7 @@ func (b *bow) DropNil(colNames ...string) (Bow, error) {
 	nilColIndexes := make([]int, len(colNames))
 	for i := 0; i < len(colNames); i++ {
 		var err error
-		nilColIndexes[i], err = b.GetColIndex(colNames[i])
+		nilColIndexes[i], err = b.GetColumnIndex(colNames[i])
 		if err != nil {
 			return nil, err
 		}
@@ -286,7 +286,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		return nil, fmt.Errorf("bow: function SortByCol: empty bow")
 	}
 
-	colIndex, err := b.GetColIndex(colName)
+	colIndex, err := b.GetColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: function SortByCol: column to sort by not found")
 	}
