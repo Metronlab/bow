@@ -132,8 +132,8 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColAggregation) Rolling
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	b, _ = itNew.Bow()
-	fmt.Printf("rolling.Aggregate\nBEFORE:\n%+vAFTER:\n%+v\n", it.bow, b)
+	//b, _ = itNew.Bow()
+	//fmt.Printf("rolling.Aggregate\nBEFORE:\n%+vAFTER:\n%+v\n", it.bow, b)
 	return itNew
 }
 
