@@ -114,11 +114,17 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 }
 
 func ValidatePrevRow(b, prevRow bow.Bow) (bow.Bow, error) {
-	fmt.Printf("VALIDATEPREVROW:\nprevRow\n%+v\nb\n%+v\n", prevRow, b)
 	if prevRow != nil {
-		if !prevRow.Schema().Equal(b.Schema()) {
-			return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the same schema")
+		if b.NumCols() != prevRow.NumCols() {
+			return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the number of columns")
 		}
+
+		for fieldIndex, field := range b.Schema().Fields() {
+			if field.Name != prevRow.Schema().Field(fieldIndex).Name {
+				return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the same field names")
+			}
+		}
+
 		if prevRow.NumRows() == 0 {
 			prevRow = nil
 		} else if prevRow.NumRows() != 1 {
