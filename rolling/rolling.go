@@ -12,7 +12,7 @@ import (
 // Use `HasNext` and `Next` to iterate over windows.
 // Use `Bow` to get the processed bow.
 type Rolling interface {
-	Fill(interpolations ...ColInterpolation) Rolling
+	Fill(interpolations ...ColumnInterpolation) Rolling
 	Aggregate(aggregations ...ColumnAggregation) Rolling
 
 	NumWindows() (int, error)

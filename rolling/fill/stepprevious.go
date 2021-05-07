@@ -5,7 +5,7 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func StepPrevious(colName string) rolling.ColInterpolation {
+func StepPrevious(colName string) rolling.ColumnInterpolation {
 	return rolling.NewColInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool, bow.String},
 		func(inputCol int, w rolling.Window, fullBow, prevRow bow.Bow) (interface{}, error) {
 			var rowIndexToInterpolate = w.FirstIndex

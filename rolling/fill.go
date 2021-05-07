@@ -9,15 +9,15 @@ import (
 // ColInterpolationFunc provides a value at the start of `window`.
 type ColInterpolationFunc func(inputCol int, window Window, fullBow, prevRow bow.Bow) (interface{}, error)
 
-func NewColInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColInterpolation {
-	return ColInterpolation{
+func NewColInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColumnInterpolation {
+	return ColumnInterpolation{
 		colName:    colName,
 		inputTypes: inputTypes,
 		fn:         fn,
 	}
 }
 
-type ColInterpolation struct {
+type ColumnInterpolation struct {
 	colName    string
 	inputTypes []bow.Type
 	fn         ColInterpolationFunc
@@ -26,7 +26,7 @@ type ColInterpolation struct {
 }
 
 // Fill each window by interpolating its start if missing
-func (it *intervalRollingIter) Fill(interpolations ...ColInterpolation) Rolling {
+func (it *intervalRollingIter) Fill(interpolations ...ColumnInterpolation) Rolling {
 	const logPrefix = "fill: "
 
 	if it.err != nil {
@@ -59,7 +59,7 @@ func (it *intervalRollingIter) Fill(interpolations ...ColInterpolation) Rolling 
 	return newIt
 }
 
-func (it *intervalRollingIter) indexedInterpolations(interpolations []ColInterpolation) (int, []ColInterpolation, error) {
+func (it *intervalRollingIter) indexedInterpolations(interpolations []ColumnInterpolation) (int, []ColumnInterpolation, error) {
 	if len(interpolations) == 0 {
 		return -1, nil, fmt.Errorf("at least one colIndex interpolation is required")
 	}
@@ -86,7 +86,7 @@ func (it *intervalRollingIter) indexedInterpolations(interpolations []ColInterpo
 	return newIntervalCol, interpolations, nil
 }
 
-func (it *intervalRollingIter) validateInterpolation(interpolation *ColInterpolation, newIndex int) (bool, error) {
+func (it *intervalRollingIter) validateInterpolation(interpolation *ColumnInterpolation, newIndex int) (bool, error) {
 	if interpolation.colName == "" {
 		return false, fmt.Errorf("interpolation %d has no colIndex name", newIndex)
 	}
@@ -112,7 +112,7 @@ func (it *intervalRollingIter) validateInterpolation(interpolation *ColInterpola
 	return readIndex == it.colIndex, nil
 }
 
-func (it *intervalRollingIter) fillWindows(interpolations []ColInterpolation) (bow.Bow, error) {
+func (it *intervalRollingIter) fillWindows(interpolations []ColumnInterpolation) (bow.Bow, error) {
 	it2 := *it
 
 	bows := make([]bow.Bow, it2.numWindows)
@@ -132,7 +132,7 @@ func (it *intervalRollingIter) fillWindows(interpolations []ColInterpolation) (b
 	return bow.AppendBows(bows...)
 }
 
-func (it *intervalRollingIter) fillWindow(interpolations []ColInterpolation, w *Window) (bow.Bow, error) {
+func (it *intervalRollingIter) fillWindow(interpolations []ColumnInterpolation, w *Window) (bow.Bow, error) {
 	var firstBowValue int64 = -1
 	if w.Bow.NumRows() > 0 {
 		firstVal, i := w.Bow.GetNextFloat64(it.colIndex, 0)
