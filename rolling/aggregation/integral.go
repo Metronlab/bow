@@ -16,7 +16,7 @@ func IntegralTrapezoid(col string) rolling.ColumnAggregation {
 
 			var sum float64
 			var ok bool
-			fmt.Printf("IntegralTrapeziod:\n%v\n", w.Bow)
+			fmt.Printf("IntegralTrapezoid:\n%v\n", w.Bow)
 			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, 0)
 			if rowIndex < 0 {
 				return nil, nil
@@ -40,6 +40,7 @@ func IntegralTrapezoid(col string) rolling.ColumnAggregation {
 			if !ok {
 				return nil, nil
 			}
+			fmt.Printf("RES IntegralTrapezoid:%f\n%+v\n", sum, w.Bow)
 			return sum, nil
 		})
 }
@@ -76,6 +77,7 @@ func IntegralStep(col string) rolling.ColumnAggregation {
 			if !ok {
 				return nil, nil
 			}
+			fmt.Printf("RES IntegralStep:%f\n%+v\n", sum, w.Bow)
 			return sum, nil
 		})
 }
