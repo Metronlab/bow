@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
+	"time"
 )
 
-/*
 func timeFromMillisecond(millisecond int64) time.Time {
 	return time.Unix(millisecond/1e3, millisecond%1e3*1e6).UTC()
 }
-*/
 
 func WeightedAverageStep(col string) rolling.ColumnAggregation {
 	integralFunc := IntegralStep(col).Func()
