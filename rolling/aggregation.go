@@ -132,8 +132,6 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColumnAggregation) Roll
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	b, _ = itNew.Bow()
-	fmt.Printf("rolling.Aggregate\nBEFORE:\n%+vAFTER:\n%+v\n", it.bow, b)
 	return itNew
 }
 
@@ -256,6 +254,5 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggregation 
 		buf.SetOrDrop(winIndex, val)
 	}
 
-	//fmt.Printf("windowAggrBuffer colIndex %d typ:%s buf:%+v\n", colIndex, typ.String(), buf)
 	return &buf, typ, nil
 }

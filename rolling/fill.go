@@ -34,7 +34,6 @@ func (it *intervalRollingIter) Fill(interpolations ...ColumnInterpolation) Rolli
 	}
 
 	itCopy := *it
-	//fmt.Printf("FILL IN\nintervalRollingIterator\n%+v\n%+vinterpolations\n%+v\n", itCopy, itCopy.bow, interpolations)
 	newIntervalCol, interpolations, err := itCopy.indexedInterpolations(interpolations)
 	if err != nil {
 		return itCopy.setError(errors.New(logPrefix + err.Error()))
@@ -47,15 +46,12 @@ func (it *intervalRollingIter) Fill(interpolations ...ColumnInterpolation) Rolli
 	if b == nil {
 		b = it.bow.NewEmpty()
 	}
-	//fmt.Printf("FILLED WINDOWS\n%+v\n", b)
 
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
 		return itCopy.setError(errors.New(logPrefix + err.Error()))
 	}
 
-	//b, _ = newIt.Bow()
-	//fmt.Printf("FILL OUT\nintervalRollingIterator\n%+v\n%+vinterpolations\n%+v\n", newIt, b, interpolations)
 	return newIt
 }
 
@@ -144,16 +140,12 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColumnInterpolation, 
 	// has start: call interpolation anyway for those stateful
 	if firstBowValue == w.Start {
 		for _, interpolation := range interpolations {
-			//interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.prevRow)
 			_, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.options.PrevRow)
 			if err != nil {
 				return nil, err
 			}
-			//fmt.Printf("fillWindow HAS WINDOW START Interpolated:%+v\nit.prevRow\n%+vit.bow\n%+v\n",
-			//	interpolatedValue, it.prevRow, it.bow)
 		}
 
-		//fmt.Printf("fillWindow HAS WINDOW START w.Bow\n%+v\n", w.Bow)
 		return w.Bow, nil
 	}
 
