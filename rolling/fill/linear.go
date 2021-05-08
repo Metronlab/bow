@@ -6,7 +6,7 @@ import (
 )
 
 func Linear(colName string) rolling.ColumnInterpolation {
-	return rolling.NewColInterpolation(colName, []bow.Type{bow.Int64, bow.Float64},
+	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64},
 		func(inputCol int, w rolling.Window, fullBow, prevRow bow.Bow) (interface{}, error) {
 			var rowIndexToInterpolate = w.FirstIndex
 

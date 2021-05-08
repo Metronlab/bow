@@ -50,7 +50,7 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 // IntervalRolling provides an interval-based `Rolling`.
 // Intervals rely on numerical values regardless of a unit.
 // All windows except the last one may be empty.
-// `colIndex`: colIndex used to make intervals
+// `colName`: colName used to make intervals
 // `interval`: length of an interval
 func IntervalRolling(b bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
 	var err error

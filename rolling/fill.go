@@ -9,7 +9,7 @@ import (
 // ColInterpolationFunc provides a value at the start of `window`.
 type ColInterpolationFunc func(inputCol int, window Window, fullBow, prevRow bow.Bow) (interface{}, error)
 
-func NewColInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColumnInterpolation {
+func NewColumnInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
 		colName:    colName,
 		inputTypes: inputTypes,
@@ -76,7 +76,7 @@ func (it *intervalRollingIter) indexedInterpolations(interpolations []ColumnInte
 		if err != nil {
 			return -1, nil, err
 		}
-		return -1, nil, fmt.Errorf("must keep interval colIndex '%s'", name)
+		return -1, nil, fmt.Errorf("must keep interval column '%s'", name)
 	}
 
 	return newIntervalCol, interpolations, nil

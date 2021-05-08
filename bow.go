@@ -3,15 +3,12 @@ package bow
 import (
 	"errors"
 	"fmt"
+	"github.com/apache/arrow/go/arrow/memory"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"text/tabwriter"
-	"time"
-
-	"github.com/apache/arrow/go/arrow/memory"
 
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
@@ -444,10 +441,6 @@ func dedupStrings(s []string) []string {
 	return s[:writeIndex]
 }
 
-func timeFromMillisecond(millisecond int64) time.Time {
-	return time.Unix(millisecond/1e3, millisecond%1e3*1e6).UTC()
-}
-
 func (b *bow) String() string {
 	if b.NumCols() == 0 {
 		return ""
@@ -456,34 +449,21 @@ func (b *bow) String() string {
 	writer := new(strings.Builder)
 	// tabs will be replaced by two spaces by formatter
 	w.Init(writer, 0, 4, 2, ' ', 0)
-
 	// format any line (header or row)
 	formatRow := func(getCellStr func(colIndex int) string) {
 		var cells []string
 		for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
-			if b.Schema().Field(colIndex).Name == "time" && b.GetType(colIndex) == Int64 {
-				i, err := strconv.Atoi(getCellStr(colIndex))
-				if err != nil {
-					cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
-				} else {
-					t := timeFromMillisecond(int64(i))
-					cells = append(cells, fmt.Sprintf("%v", t.Format(time.RFC3339Nano)))
-				}
-			} else {
-				cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
-			}
+			cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
 		}
 		_, err := fmt.Fprintln(w, strings.Join(cells, "\t"))
 		if err != nil {
 			panic(err)
 		}
 	}
-
 	// Print col names on buffer
 	formatRow(func(colIndex int) string {
 		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
 	})
-
 	// Print each row on buffer
 	rowChan := b.RowMapIter()
 	for row := range rowChan {
@@ -492,16 +472,10 @@ func (b *bow) String() string {
 		})
 	}
 
-	_, err := fmt.Fprintf(w, "rows:%d\n", b.NumRows())
-	if err != nil {
-		panic(err)
-	}
-
 	// Flush buffer and format lines along the way
 	if err := w.Flush(); err != nil {
 		panic(err)
 	}
-
 	return writer.String()
 }
 
@@ -520,39 +494,6 @@ func (b *bow) rowMapIter(rows chan map[string]interface{}) {
 
 	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 		rows <- b.GetRow(rowIndex)
-	}
-}
-
-func (b *bow) FilteredRowMapIter() chan map[string]interface{} {
-	rows := make(chan map[string]interface{})
-	go b.filteredRowMapIter(rows)
-	return rows
-}
-
-func (b *bow) filteredRowMapIter(rows chan map[string]interface{}) {
-	defer close(rows)
-
-	if b.Record == nil || b.NumRows() <= 0 {
-		return
-	}
-
-	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-		if b.NumRows() >= 6 {
-			if rowIndex == 0 ||
-				rowIndex == 1 ||
-				rowIndex == 2 ||
-				rowIndex == b.NumRows()-3 ||
-				rowIndex == b.NumRows()-2 ||
-				rowIndex == b.NumRows()-1 {
-				rows <- b.GetRow(rowIndex)
-			} else if b.NumRows() > 6 && rowIndex == 4 {
-				rows <- map[string]interface{}{"...": "..."}
-			}
-		} else {
-			if rowIndex == 0 || rowIndex == b.NumRows()-1 {
-				rows <- b.GetRow(rowIndex)
-			}
-		}
 	}
 }
 

@@ -152,7 +152,7 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 func TestIntervalRolling_iterate(t *testing.T) {
 	var interval int64 = 5
 	b := newIntervalRollingTestBow([][]interface{}{
-		{12, 15, 16, 25, 25, 29}, // 25 is a duplicated index on ref colIndex
+		{12, 15, 16, 25, 25, 29}, // 25 is a duplicated index on ref column
 		{1.2, 1.5, 1.6, 2.5, 3.5, 2.9},
 	})
 
