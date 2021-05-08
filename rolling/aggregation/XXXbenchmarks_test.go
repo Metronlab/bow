@@ -2,10 +2,11 @@ package aggregation
 
 import (
 	"fmt"
-	"github.com/metronlab/bow"
-	"github.com/metronlab/bow/rolling"
 	"math/rand"
 	"testing"
+
+	"github.com/metronlab/bow"
+	"github.com/metronlab/bow/rolling"
 )
 
 // BenchSize of 1e8 triggers out of memory on a 16Go mem computer

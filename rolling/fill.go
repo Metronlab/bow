@@ -6,10 +6,10 @@ import (
 	"github.com/metronlab/bow"
 )
 
-// ColInterpolationFunc provides a value at the start of `window`.
-type ColInterpolationFunc func(inputCol int, window Window, fullBow, prevRow bow.Bow) (interface{}, error)
+// ColumnInterpolationFunc provides a value at the start of `window`.
+type ColumnInterpolationFunc func(inputCol int, window Window, fullBow, prevRow bow.Bow) (interface{}, error)
 
-func NewColumnInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColumnInterpolation {
+func NewColumnInterpolation(colName string, inputTypes []bow.Type, fn ColumnInterpolationFunc) ColumnInterpolation {
 	return ColumnInterpolation{
 		colName:    colName,
 		inputTypes: inputTypes,
@@ -20,7 +20,7 @@ func NewColumnInterpolation(colName string, inputTypes []bow.Type, fn ColInterpo
 type ColumnInterpolation struct {
 	colName    string
 	inputTypes []bow.Type
-	fn         ColInterpolationFunc
+	fn         ColumnInterpolationFunc
 
 	colIndex int
 }
@@ -57,7 +57,7 @@ func (it *intervalRollingIter) Fill(interpolations ...ColumnInterpolation) Rolli
 
 func (it *intervalRollingIter) indexedInterpolations(interpolations []ColumnInterpolation) (int, []ColumnInterpolation, error) {
 	if len(interpolations) == 0 {
-		return -1, nil, fmt.Errorf("at least one colIndex interpolation is required")
+		return -1, nil, fmt.Errorf("at least one column interpolation is required")
 	}
 
 	newIntervalCol := -1
@@ -84,7 +84,7 @@ func (it *intervalRollingIter) indexedInterpolations(interpolations []ColumnInte
 
 func (it *intervalRollingIter) validateInterpolation(interpolation *ColumnInterpolation, newIndex int) (bool, error) {
 	if interpolation.colName == "" {
-		return false, fmt.Errorf("interpolation %d has no colIndex name", newIndex)
+		return false, fmt.Errorf("interpolation %d has no column name", newIndex)
 	}
 	readIndex, err := it.bow.GetColumnIndex(interpolation.colName)
 	if err != nil {
@@ -129,16 +129,16 @@ func (it *intervalRollingIter) fillWindows(interpolations []ColumnInterpolation)
 }
 
 func (it *intervalRollingIter) fillWindow(interpolations []ColumnInterpolation, w *Window) (bow.Bow, error) {
-	var firstBowValue int64 = -1
+	var firstColValue int64 = -1
 	if w.Bow.NumRows() > 0 {
-		firstVal, i := w.Bow.GetNextFloat64(it.colIndex, 0)
+		firstColVal, i := w.Bow.GetNextFloat64(it.colIndex, 0)
 		if i > -1 {
-			firstBowValue = int64(firstVal)
+			firstColValue = int64(firstColVal)
 		}
 	}
 
 	// has start: call interpolation anyway for those stateful
-	if firstBowValue == w.Start {
+	if firstColValue == w.Start {
 		for _, interpolation := range interpolations {
 			_, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.options.PrevRow)
 			if err != nil {

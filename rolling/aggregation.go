@@ -105,7 +105,7 @@ func (a *columnAggregation) NeedInclusive() bool {
 	return a.inclusiveWindow
 }
 
-// Aggregate each colIndex using a ColumnAggregation
+// Aggregate each column using a ColumnAggregation
 func (it *intervalRollingIter) Aggregate(aggregations ...ColumnAggregation) Rolling {
 	if it.err != nil {
 		return it
@@ -137,7 +137,7 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColumnAggregation) Roll
 
 func (it *intervalRollingIter) indexedAggregations(aggregations []ColumnAggregation) (int, []ColumnAggregation, error) {
 	if len(aggregations) == 0 {
-		return -1, nil, fmt.Errorf("at least one colIndex aggregation is required")
+		return -1, nil, fmt.Errorf("at least one column aggregation is required")
 	}
 
 	newIntervalCol := -1
