@@ -53,12 +53,6 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 // `colName`: column name used to make intervals
 // `interval`: length of an interval
 func IntervalRolling(b bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
-	var err error
-	options.PrevRow, err = ValidatePrevRow(b, options.PrevRow)
-	if err != nil {
-		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
-	}
-
 	colIndex, err := b.GetColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
@@ -115,14 +109,8 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 
 func ValidatePrevRow(b, prevRow bow.Bow) (bow.Bow, error) {
 	if prevRow != nil {
-		if b.NumCols() != prevRow.NumCols() {
-			return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the number of columns")
-		}
-
-		for fieldIndex, field := range b.Schema().Fields() {
-			if field.Name != prevRow.Schema().Field(fieldIndex).Name {
-				return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the same field names")
-			}
+		if b.Schema().Equal(prevRow.Schema()) {
+			return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the same schema")
 		}
 
 		if prevRow.NumRows() == 0 {
