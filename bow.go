@@ -3,16 +3,14 @@ package bow
 import (
 	"errors"
 	"fmt"
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
 	"reflect"
 	"sort"
 	"strings"
 	"sync"
 	"text/tabwriter"
-
-	"github.com/apache/arrow/go/arrow/memory"
-
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
 )
 
 // Bow is a wrapper of Apache Arrow array.Record interface.
@@ -36,7 +34,7 @@ type Bow interface {
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetNextValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
 	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resultRowIndex int)
-	GetPreviousValues(colIndex1, colindex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
+	GetPreviousValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
 
 	GetInt64(colIndex, rowIndex int) (value int64, valid bool)
 	GetNextInt64(colIndex, rowIndex int) (value int64, resRowIndex int)

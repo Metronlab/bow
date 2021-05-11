@@ -7,20 +7,20 @@ import (
 
 func IntegralTrapezoid(col string) rolling.ColumnAggregation {
 	return rolling.NewColumnAggregation(col, true, bow.Float64,
-		func(col int, w rolling.Window) (interface{}, error) {
+		func(colIndex int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {
 				return nil, nil
 			}
 
 			var sum float64
 			var ok bool
-			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, 0)
+			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, 0)
 			if rowIndex < 0 {
 				return nil, nil
 			}
 
 			for rowIndex >= 0 {
-				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, rowIndex+1)
+				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, rowIndex+1)
 				if nextRowIndex < 0 {
 					break
 				}
@@ -39,15 +39,15 @@ func IntegralTrapezoid(col string) rolling.ColumnAggregation {
 
 func IntegralStep(col string) rolling.ColumnAggregation {
 	return rolling.NewColumnAggregation(col, false, bow.Float64,
-		func(col int, w rolling.Window) (interface{}, error) {
+		func(colIndex int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {
 				return nil, nil
 			}
 			var sum float64
 			var ok bool
-			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, 0)
+			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, 0)
 			for rowIndex >= 0 {
-				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, col, rowIndex+1)
+				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, rowIndex+1)
 				if nextRowIndex < 0 {
 					t1 = float64(w.End)
 				}

@@ -114,34 +114,34 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 	t.Run("interval < 0", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
 		rolling, err := IntervalRolling(b, timeCol, 0, Options{})
-		assert.EqualError(t, err, "intervalrolling: strictly positive interval required")
+		assert.EqualError(t, err, "rolling.IntervalRolling: strictly positive interval required")
 		assert.Nil(t, rolling)
 	})
 
 	t.Run("interval == 0", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
 		rolling, err := IntervalRolling(b, timeCol, 0, Options{})
-		assert.EqualError(t, err, "intervalrolling: strictly positive interval required")
+		assert.EqualError(t, err, "rolling.IntervalRolling: strictly positive interval required")
 		assert.Nil(t, rolling)
 	})
 
 	t.Run("non existing index", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
 		_, err := IntervalRolling(b, badCol, 1, Options{})
-		assert.EqualError(t, err, fmt.Sprintf("intervalrolling: no column '%s'", badCol))
+		assert.EqualError(t, err, fmt.Sprintf("rolling.IntervalRolling: no column '%s'", badCol))
 	})
 
 	t.Run("invalid interval type", func(t *testing.T) {
 		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol}, []bow.Type{bow.Float64}, [][]interface{}{{0.}})
 		_, err := IntervalRolling(b, timeCol, 1, Options{})
-		assert.EqualError(t, err, "intervalrolling: impossible to roll over type float64")
+		assert.EqualError(t, err, "rolling.IntervalRolling: impossible to roll over type float64")
 	})
 
 	t.Run("empty bow gives valid finished iterator", func(t *testing.T) {
 		b := newIntervalRollingTestBow(emptyCols)
 		rolling, err := IntervalRolling(b, timeCol, 1, Options{})
 		assert.Nil(t, err)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 		assert.Nil(t, err)
 		_, w, err := iter.Next()
 		assert.Nil(t, w)
@@ -160,7 +160,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 10, 15, 0, [][]interface{}{{12}, {1.2}}},
@@ -182,7 +182,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Inclusive: true})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 10, 15, 0, [][]interface{}{{12, 15}, {1.2, 1.5}}},
@@ -204,7 +204,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 1})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 11, 16, 0, [][]interface{}{{12, 15}, {1.2, 1.5}}},
@@ -226,7 +226,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 2})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 12, 17, 0, [][]interface{}{{12, 15, 16}, {1.2, 1.5, 1.6}}},
@@ -248,7 +248,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 3})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
@@ -271,7 +271,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 8})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
@@ -294,7 +294,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: 5})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 10, 15, 0, [][]interface{}{{12}, {1.2}}},
@@ -316,7 +316,7 @@ func TestIntervalRolling_iterate(t *testing.T) {
 		rolling, err := IntervalRolling(b, timeCol, interval, Options{Offset: -2})
 		assert.Nil(t, err)
 		assert.NotNil(t, rolling)
-		iter := rolling.(*intervalRollingIterator)
+		iter := rolling.(*intervalRollingIter)
 
 		expected := []testWindow{
 			{0, 8, 13, 0, [][]interface{}{{12}, {1.2}}},
@@ -344,7 +344,7 @@ type testWindow struct {
 	cols        [][]interface{}
 }
 
-func checkTestWindow(t *testing.T, iter *intervalRollingIterator, expected testWindow) {
+func checkTestWindow(t *testing.T, iter *intervalRollingIter, expected testWindow) {
 	wi, w, err := iter.Next()
 	assert.Equal(t, expected.windowIndex, wi)
 	assert.NotNil(t, w)

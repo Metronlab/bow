@@ -1,3 +1,10 @@
+v0.10.0 [2021-05-11]
+-------------------
+
+- Rolling:
+    - improved code readability
+    - aggregation/fill: it is now possible to pass a previous row option to the rolling to enable the correct interpolation of the first row of its first window, in the case of missing window start row
+
 v0.9.0 [2021-03-24]
 -------------------
 
