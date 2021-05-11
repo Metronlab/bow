@@ -7,7 +7,7 @@ import (
 
 func WindowStart(colName string) rolling.ColumnInterpolation {
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64},
-		func(inputCol int, w rolling.Window, full bow.Bow) (interface{}, error) {
+		func(colIndexToFill int, w rolling.Window, fullBow, prevRow bow.Bow) (interface{}, error) {
 			return w.Start, nil
 		},
 	)

@@ -9,11 +9,11 @@ import (
 
 func TestIntervalRolling_Fill(t *testing.T) {
 	timeInterp := NewColumnInterpolation(timeCol, []bow.Type{bow.Int64},
-		func(colIndex int, w Window, full bow.Bow) (interface{}, error) {
+		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 			return w.Start, nil
 		})
 	valueInterp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
-		func(colIndex int, w Window, full bow.Bow) (interface{}, error) {
+		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 			return 9.9, nil
 		})
 
@@ -24,7 +24,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		})
 		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 		interp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Bool},
-			func(colIndex int, w Window, full bow.Bow) (interface{}, error) {
+			func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 				return true, nil
 			})
 		_, err := r.
