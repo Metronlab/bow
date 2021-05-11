@@ -109,8 +109,8 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 
 func ValidatePrevRow(b, prevRow bow.Bow) (bow.Bow, error) {
 	if prevRow != nil {
-		if b.Schema().Equal(prevRow.Schema()) {
-			return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the same schema: b: %s prevRow: %s",
+		if !b.Schema().Equal(prevRow.Schema()) {
+			return nil, fmt.Errorf("ValidatePrevRow: b and prevRow must have the same schema:\nb %s\nprevRow %s",
 				b.Schema(), prevRow.Schema())
 		}
 
