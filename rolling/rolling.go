@@ -58,6 +58,7 @@ func IntervalRolling(b bow.Bow, colName string, interval int64, options Options)
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
 
+	fmt.Printf("ROLL\nB\n%+v\nPREVROW\n%+v\n", b, options.PrevRow)
 	return IntervalRollingForIndex(b, colIndex, interval, options)
 }
 

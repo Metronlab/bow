@@ -127,6 +127,7 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColumnAggregation) Roll
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
+	fmt.Printf("AGGR\nB\n%+v\nPREVROW\n%+v\n", b, itCopy.options.PrevRow)
 	itNew, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
