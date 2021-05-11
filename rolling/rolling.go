@@ -58,7 +58,6 @@ func IntervalRolling(b bow.Bow, colName string, interval int64, options Options)
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
 
-	fmt.Printf("ROLL\nB\n%+v\nPREVROW\n%+v\n", b, options.PrevRow)
 	return IntervalRollingForIndex(b, colIndex, interval, options)
 }
 
@@ -69,7 +68,7 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 		return nil, err
 	}
 
-	options.PrevRow, err = validatePrevRow(b, options.PrevRow)
+	options.PrevRow, err = validatePrevRow(options.PrevRow)
 	if err != nil {
 		return nil, err
 	}
@@ -108,19 +107,14 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 	}, nil
 }
 
-func validatePrevRow(b, prevRow bow.Bow) (bow.Bow, error) {
+func validatePrevRow(prevRow bow.Bow) (bow.Bow, error) {
 	if prevRow != nil {
 		if prevRow.NumRows() == 0 {
 			prevRow = nil
 		} else if prevRow.NumRows() != 1 {
 			return nil, fmt.Errorf(
-				"validatePrevRow: prevRow must have only one row, have %d", prevRow.NumRows())
-		} else {
-			if !b.Schema().Equal(prevRow.Schema()) {
-				return nil, fmt.Errorf(
-					"validatePrevRow: b and prevRow must have the same schema:\nb %s\nprevRow %s",
-					b.Schema(), prevRow.Schema())
-			}
+				"validatePrevRow: prevRow must have only one row, have %d",
+				prevRow.NumRows())
 		}
 	}
 

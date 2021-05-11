@@ -47,7 +47,6 @@ func (it *intervalRollingIter) Fill(interpolations ...ColumnInterpolation) Rolli
 		b = it.bow.NewEmpty()
 	}
 
-	fmt.Printf("FILL\nB\n%+v\nPREVROW\n%+v\n", b, itCopy.options.PrevRow)
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
 		return itCopy.setError(errors.New(logPrefix + err.Error()))
