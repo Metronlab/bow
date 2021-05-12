@@ -119,12 +119,12 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -206,12 +206,12 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					build.AppendValues(values, valids)
 					newArray = build.NewArray()
 				}
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -319,12 +319,12 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
@@ -432,12 +432,12 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 				default:
 					newArray = b.Record.Column(colIndex)
 				}
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: newArray,
 				}
 			} else {
-				filledSeries[b.getColumnIndexUnsafe(colName)] = Series{
+				filledSeries[colIndex] = Series{
 					Name:  colName,
 					Array: b.Record.Column(colIndex),
 				}
