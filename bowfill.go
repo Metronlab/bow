@@ -56,7 +56,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
-		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+		go func(colIndex int, colName string) {
 			defer wg.Done()
 			if colIndex == toFillIndex {
 				var newArray array.Interface
@@ -129,7 +129,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name, &wg)
+		}(colIndex, col.Name)
 	}
 	wg.Wait()
 	return NewBow(filledSeries...)
@@ -163,7 +163,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
-		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+		go func(colIndex int, colName string) {
 			defer wg.Done()
 			typ := b.GetType(colIndex)
 			if toFillCols[colIndex] {
@@ -216,7 +216,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name, &wg)
+		}(colIndex, col.Name)
 	}
 	wg.Wait()
 	return NewBow(filledSeries...)
@@ -236,7 +236,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
-		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+		go func(colIndex int, colName string) {
 			defer wg.Done()
 			typ := b.GetType(colIndex)
 			if toFillCols[colIndex] {
@@ -329,7 +329,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name, &wg)
+		}(colIndex, col.Name)
 	}
 	wg.Wait()
 	return NewBow(filledSeries...)
@@ -349,7 +349,7 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
-		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+		go func(colIndex int, colName string) {
 			defer wg.Done()
 			typ := b.GetType(colIndex)
 			if toFillCols[colIndex] {
@@ -442,7 +442,7 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name, &wg)
+		}(colIndex, col.Name)
 	}
 	wg.Wait()
 	return NewBow(filledSeries...)

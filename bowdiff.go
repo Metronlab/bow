@@ -31,7 +31,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	calcSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		wg.Add(1)
-		go func(colIndex int, colName string, wg *sync.WaitGroup) {
+		go func(colIndex int, colName string) {
 			defer wg.Done()
 
 			typ := b.GetType(colIndex)
@@ -64,7 +64,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 					Array: b.Record.Column(colIndex),
 				}
 			}
-		}(colIndex, col.Name, &wg)
+		}(colIndex, col.Name)
 	}
 	wg.Wait()
 
