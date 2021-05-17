@@ -2,11 +2,11 @@ package bow
 
 import (
 	"fmt"
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
 	"sync"
 )
 
+// Diff calculates the first discrete difference of each row compared with the previous row.
+// For boolean columns, XOR operation is used.
 func (b *bow) Diff(colNames ...string) (Bow, error) {
 	selectedCols, err := selectCols(b, colNames)
 	if err != nil {
@@ -33,49 +33,31 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string, wg *sync.WaitGroup) {
 			defer wg.Done()
+
 			typ := b.GetType(colIndex)
 			if selectedCols[colIndex] {
-				var newArray array.Interface
-				prevData := b.Record.Column(colIndex).Data()
-				pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-				valids := make([]bool, b.NumRows())
-				switch typ {
-				case Int64:
-					prevArray := array.NewInt64Data(prevData)
-					values := make([]int64, b.NumRows())
-					for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
-						values[rowIndex] = prevArray.Value(rowIndex) - prevArray.Value(rowIndex-1)
-						valids[rowIndex] = prevArray.IsValid(rowIndex) && prevArray.IsValid(rowIndex-1)
+				buf := NewBuffer(b.NumRows(), typ, true)
+				for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
+					valid := b.Column(colIndex).IsValid(rowIndex) && b.Column(colIndex).IsValid(rowIndex-1)
+					if valid {
+						switch typ {
+						case Int64:
+							currVal, _ := b.GetInt64(colIndex, rowIndex)
+							prevVal, _ := b.GetInt64(colIndex, rowIndex-1)
+							buf.SetOrDrop(rowIndex, currVal-prevVal)
+						case Float64:
+							currVal, _ := b.GetFloat64(colIndex, rowIndex)
+							prevVal, _ := b.GetFloat64(colIndex, rowIndex-1)
+							buf.SetOrDrop(rowIndex, currVal-prevVal)
+						case Bool:
+							currVal, _ := b.GetInt64(colIndex, rowIndex)
+							prevVal, _ := b.GetInt64(colIndex, rowIndex-1)
+							buf.SetOrDrop(rowIndex, currVal != prevVal)
+						}
 					}
-					build := array.NewInt64Builder(pool)
-					build.AppendValues(values, valids)
-					newArray = build.NewArray()
-				case Float64:
-					prevArray := array.NewFloat64Data(prevData)
-					values := make([]float64, b.NumRows())
-					for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
-						values[rowIndex] = prevArray.Value(rowIndex) - prevArray.Value(rowIndex-1)
-						valids[rowIndex] = prevArray.IsValid(rowIndex) && prevArray.IsValid(rowIndex-1)
-					}
-					build := array.NewFloat64Builder(pool)
-					build.AppendValues(values, valids)
-					newArray = build.NewArray()
-				case Bool:
-					prevArray := array.NewBooleanData(prevData)
-					values := make([]bool, b.NumRows())
-					for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
-						values[rowIndex] = prevArray.Value(rowIndex) != prevArray.Value(rowIndex-1)
-						valids[rowIndex] = prevArray.IsValid(rowIndex) && prevArray.IsValid(rowIndex-1)
-					}
-					build := array.NewBooleanBuilder(pool)
-					build.AppendValues(values, valids)
-					newArray = build.NewArray()
 				}
 
-				calcSeries[colIndex] = Series{
-					Name:  colName,
-					Array: newArray,
-				}
+				calcSeries[colIndex] = NewSeries(colName, typ, buf.Value, buf.Valid)
 			} else {
 				calcSeries[colIndex] = Series{
 					Name:  colName,
