@@ -1,3 +1,9 @@
+v0.11.0 [2021-05-17]
+-------------------
+
+- Add new bow.Diff function
+- Depreciate Difference aggregation
+
 v0.10.0 [2021-05-11]
 -------------------
 
