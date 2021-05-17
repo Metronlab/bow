@@ -58,6 +58,9 @@ type Bow interface {
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
 
+	// Calculations
+	Diff(colNames ...string) (Bow, error)
+
 	Equal(other Bow) (equal bool)
 
 	MarshalJSON() (buf []byte, err error)

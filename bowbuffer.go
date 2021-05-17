@@ -79,7 +79,7 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	case []string:
 		v[i], b.Valid[i] = String.Convert(value).(string)
 	default:
-		panic(fmt.Errorf("unsuported buffer type %T", v))
+		panic(fmt.Errorf("unsupported buffer type %T", v))
 	}
 }
 
