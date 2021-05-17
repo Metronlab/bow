@@ -6,6 +6,7 @@ import (
 )
 
 // Diff calculates the first discrete difference of each row compared with the previous row.
+// If any of the current or the previous row is nil, the result will be nil.
 // For boolean columns, XOR operation is used.
 func (b *bow) Diff(colNames ...string) (Bow, error) {
 	selectedCols, err := selectCols(b, colNames)
