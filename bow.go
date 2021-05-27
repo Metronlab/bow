@@ -79,6 +79,9 @@ type Bow interface {
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refColName, toFillColName string) (Bow, error)
 
+	// Parquet file format
+	ParquetFileWrite(path string) error
+
 	// Exposed from arrow.Record
 	Release()
 	Retain()
