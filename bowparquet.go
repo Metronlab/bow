@@ -159,6 +159,9 @@ func (b *bow) WriteParquet(fileName string) error {
 
 	for row := range b.RowMapIter() {
 		rowJSON, err := json.Marshal(row)
+		if err != nil {
+			return fmt.Errorf("bow.WriteParquet: %w", err)
+		}
 		if err = pw.Write(string(rowJSON)); err != nil {
 			return fmt.Errorf("bow.WriteParquet: %w", err)
 		}
