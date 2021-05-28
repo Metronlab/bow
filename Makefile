@@ -1,3 +1,7 @@
+#user overridable variables
+PKG=./...
+RUN=".*"
+
 all: count fix-fmt check test
 
 install: ## install dependencies
@@ -8,7 +12,9 @@ install: ## install dependencies
 		github.com/jstemmer/go-junit-report
 
 test: ## Run unit tests
-	@bash -c $(PWD)/scripts/test.sh
+	@RUN=$(RUN) \
+		PKG=$(PKG) \
+		bash -c $(PWD)/scripts/test.sh
 
 fix-fmt: ## use fmt -w
 	@bash -c $(PWD)/scripts/fix-fmt.sh

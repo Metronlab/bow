@@ -6,12 +6,13 @@ set -o pipefail
 : ${TEST_RESULTS:=/tmp/test-results}
 : ${COVER_RESULTS:=/tmp/cover-results}
 : ${PKG:=./...}
+: ${RUN:=".*"}
 
 mkdir -p ${COVER_RESULTS}
 mkdir -p ${TEST_RESULTS}
 
 trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-go test ${PKG} -v -race -cover -covermode=atomic -coverprofile=${COVER_RESULTS}/coverage.cover -timeout 30s \
+go test ${PKG} -v -race -cover -covermode=atomic -coverprofile=${COVER_RESULTS}/coverage.cover -timeout 30s -run ${RUN} \
     | tee ${TEST_RESULTS}/go-test.out \
     | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' \
     | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/'' \

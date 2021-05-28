@@ -80,7 +80,7 @@ type Bow interface {
 	FillLinear(refColName, toFillColName string) (Bow, error)
 
 	// Parquet file format
-	ParquetFileWrite(path string) error
+	WriteParquet(path string) error
 
 	// Exposed from arrow.Record
 	Release()
