@@ -2,19 +2,77 @@ package bow
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 )
 
+const (
+	testInputFileName  = "bowparquet_test_input.parquet"
+	testOutputFileName = "bowparquet_test_output"
+)
+
 func TestParquet(t *testing.T) {
-	bBefore, err := NewBowFromParquet("data-before.parquet")
-	assert.NoError(t, err)
-	//fmt.Printf("BOW: %d ROWS\n%+v\n", bBefore.NumRows(), bBefore.Schema().String())
+	t.Run("bow supported types with rows", func(t *testing.T) {
+		bBefore, err := NewBowFromRowBasedInterfaces(
+			[]string{"Int", "Float", "Bool", "String"},
+			[]Type{Int64, Float64, Bool, String},
+			[][]interface{}{
+				{1, 1., true, "hi"},
+				{2, 2., false, "ho"},
+				{3, 3., true, "hu"},
+			})
+		require.NoError(t, err)
 
-	err = bBefore.WriteParquet("data-after.parquet")
-	assert.NoError(t, err)
+		err = bBefore.WriteParquet(testOutputFileName + "_withrows")
+		assert.NoError(t, err)
 
-	bAfter, err := NewBowFromParquet("data-after.parquet")
-	assert.NoError(t, err)
+		bAfter, err := NewBowFromParquet(testOutputFileName + "_withrows")
+		assert.NoError(t, err)
 
-	assert.Equal(t, bBefore.String(), bAfter.String())
+		assert.Equal(t, bBefore.String(), bAfter.String())
+
+		require.NoError(t, os.Remove(testOutputFileName+"_withrows.parquet"))
+	})
+
+	t.Run("read/write input file", func(t *testing.T) {
+		bBefore, err := NewBowFromParquet(testInputFileName)
+		assert.NoError(t, err)
+		//fmt.Printf("BOW: %d ROWS\n%+v\n", bBefore.NumRows(), bBefore.Schema().String())
+
+		err = bBefore.WriteParquet(testOutputFileName)
+		assert.NoError(t, err)
+
+		bAfter, err := NewBowFromParquet(testOutputFileName)
+		assert.NoError(t, err)
+
+		assert.Equal(t, bBefore.String(), bAfter.String())
+
+		require.NoError(t, os.Remove(testOutputFileName+".parquet"))
+	})
+
+	t.Run("bow supported types without rows", func(t *testing.T) {
+		bBefore, err := NewBowFromRowBasedInterfaces(
+			[]string{"Int", "Float", "Bool", "String"},
+			[]Type{Int64, Float64, Bool, String},
+			[][]interface{}{})
+		require.NoError(t, err)
+
+		err = bBefore.WriteParquet(testOutputFileName + "_norows")
+		assert.NoError(t, err)
+
+		bAfter, err := NewBowFromParquet(testOutputFileName + "_norows")
+		assert.NoError(t, err)
+
+		assert.Equal(t, bBefore.String(), bAfter.String())
+
+		require.NoError(t, os.Remove(testOutputFileName+"_norows.parquet"))
+	})
+
+	t.Run("write empty bow", func(t *testing.T) {
+		bBefore := NewBowEmpty()
+
+		err := bBefore.WriteParquet(testOutputFileName + "_empty")
+		assert.Errorf(t, err, "bow.WriteParquet: no columns")
+	})
 }

@@ -8,18 +8,17 @@ import (
 	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/tool/parquet-tools/schematool"
 	"github.com/xitongsys/parquet-go/writer"
-	"os"
 	"strings"
 )
 
-var ParquetToBowType = map[parquet.Type]Type{
+var TypeParquetToBow = map[parquet.Type]Type{
 	parquet.Type_BOOLEAN:    Bool,
 	parquet.Type_INT64:      Int64,
 	parquet.Type_DOUBLE:     Float64,
 	parquet.Type_BYTE_ARRAY: String,
 }
 
-var BowToParquetType = map[Type]parquet.Type{
+var TypeBowToParquet = map[Type]parquet.Type{
 	Bool:    parquet.Type_BOOLEAN,
 	Int64:   parquet.Type_INT64,
 	Float64: parquet.Type_DOUBLE,
@@ -27,15 +26,12 @@ var BowToParquetType = map[Type]parquet.Type{
 }
 
 func NewBowFromParquet(fileName string) (Bow, error) {
-	r, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer r.Close()
-
 	fr, err := local.NewLocalFileReader(fileName)
 	if err != nil {
-		panic(err)
+		fr, err = local.NewLocalFileReader(fileName + ".parquet")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	pr, err := reader.NewParquetColumnReader(fr, 4)
@@ -45,20 +41,20 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 
 	series := make([]Series, pr.SchemaHandler.GetColumnNum())
 
-	var valueColIndex int64
 	schema := pr.Footer.GetSchema()
 
 	/*
-		tree := schematool.CreateSchemaTree(pr.SchemaHandler.SchemaElements)
-		fmt.Printf("Read SchemaTree\n%s\n", tree.OutputJsonSchema())
+		schemaTree := schematool.CreateSchemaTree(pr.SchemaHandler.SchemaElements)
+		fmt.Printf("Read SchemaTree\n%s\n", schemaTree.OutputJsonSchema())
 
-		footerBytes, err := json.MarshalIndent(pr.Footer, "", "\t")
+		footerIndented, err := json.MarshalIndent(pr.Footer, "", "\t")
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("footer\n%s\n", string(footerBytes))
+		fmt.Printf("Read Footer\n%s\n", string(footerIndented))
 	*/
 
+	var valueColIndex int64
 	for _, col := range schema {
 		if col.NumChildren == nil {
 			values, _, _, err := pr.ReadColumnByIndex(valueColIndex, pr.GetNumRows())
@@ -67,7 +63,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 			}
 
 			var ok bool
-			switch ParquetToBowType[col.GetType()] {
+			switch TypeParquetToBow[col.GetType()] {
 			case Int64:
 				var vs = make([]int64, len(values))
 				for i, v := range values {
@@ -119,6 +115,10 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 }
 
 func (b *bow) WriteParquet(fileName string) error {
+	if b.NumCols() == 0 {
+		return fmt.Errorf("bow.WriteParquet: no columns")
+	}
+
 	if !strings.HasSuffix(fileName, ".parquet") {
 		fileName += ".parquet"
 	}
@@ -140,7 +140,7 @@ func (b *bow) WriteParquet(fileName string) error {
 
 	optionalRepType := parquet.FieldRepetitionType_OPTIONAL
 	for i, f := range b.Schema().Fields() {
-		typ := BowToParquetType[b.GetType(i)]
+		typ := TypeBowToParquet[b.GetType(i)]
 		se = parquet.NewSchemaElement()
 		se.Type = &typ
 		se.RepetitionType = &optionalRepType
@@ -176,7 +176,7 @@ func (b *bow) WriteParquet(fileName string) error {
 		return err
 	}
 
-	fmt.Printf("bow.WriteParquet: %s successfully written\n%s",
+	fmt.Printf("bow.WriteParquet: %s successfully written with footer:\n%s\n",
 		fileName, string(footerBytes))
 
 	return nil
