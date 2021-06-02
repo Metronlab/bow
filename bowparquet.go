@@ -1,24 +1,28 @@
 package bow
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
+	"github.com/xitongsys/parquet-go/schema"
 	"github.com/xitongsys/parquet-go/tool/parquet-tools/schematool"
 	"github.com/xitongsys/parquet-go/writer"
+	"io"
 	"strings"
 )
 
-var TypeParquetToBow = map[parquet.Type]Type{
+var TypeParquetToBowMap = map[parquet.Type]Type{
 	parquet.Type_BOOLEAN:    Bool,
 	parquet.Type_INT64:      Int64,
 	parquet.Type_DOUBLE:     Float64,
 	parquet.Type_BYTE_ARRAY: String,
 }
 
-var TypeBowToParquet = map[Type]parquet.Type{
+var TypeBowToParquetMap = map[Type]parquet.Type{
 	Bool:    parquet.Type_BOOLEAN,
 	Int64:   parquet.Type_INT64,
 	Float64: parquet.Type_DOUBLE,
@@ -34,28 +38,54 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 		}
 	}
 
-	pr, err := reader.NewParquetColumnReader(fr, 4)
+	pr := new(reader.ParquetReader)
+	pr.NP = 4
+	pr.PFile = fr
+
+	size, err := pr.GetFooterSize()
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+	if _, err = pr.PFile.Seek(-(int64)(8+size), io.SeekEnd); err != nil {
+		return nil, err
+	}
+	pr.Footer = parquet.NewFileMetaData()
+	conf := &thrift.TConfiguration{}
+	pf := thrift.NewTCompactProtocolFactoryConf(conf)
+	protocol := pf.GetProtocol(thrift.NewStreamTransportR(pr.PFile))
+	err = pr.Footer.Read(context.TODO(), protocol)
+	if err != nil {
+		return nil, err
 	}
 
-	series := make([]Series, pr.SchemaHandler.GetColumnNum())
+	pr.ColumnBuffers = make(map[string]*reader.ColumnBufferType)
+	pr.SchemaHandler = schema.NewSchemaHandlerFromSchemaList(pr.Footer.GetSchema())
 
-	schema := pr.Footer.GetSchema()
+	var originalColNames = make([]string, len(pr.Footer.GetSchema()))
+	for i, se := range pr.Footer.GetSchema() {
+		originalColNames[i] = se.Name
+	}
 
-	/*
-		schemaTree := schematool.CreateSchemaTree(pr.SchemaHandler.SchemaElements)
-		fmt.Printf("Read SchemaTree\n%s\n", schemaTree.OutputJsonSchema())
-
-		footerIndented, err := json.MarshalIndent(pr.Footer, "", "\t")
-		if err != nil {
-			return nil, err
+	var originalRowGroups = make([]*parquet.RowGroup, len(pr.Footer.RowGroups))
+	for r, rg := range pr.Footer.RowGroups {
+		var originalCols = make([]*parquet.ColumnChunk, len(rg.Columns))
+		for c, col := range rg.Columns {
+			var originalMetaData = parquet.ColumnMetaData{
+				PathInSchema: col.MetaData.PathInSchema,
+			}
+			var originalCol = parquet.ColumnChunk{
+				MetaData: &originalMetaData,
+			}
+			originalCols[c] = &originalCol
 		}
-		fmt.Printf("Read Footer\n%s\n", string(footerIndented))
-	*/
+		originalRowGroups[r] = &parquet.RowGroup{Columns: originalCols}
+	}
+
+	pr.RenameSchema()
 
 	var valueColIndex int64
-	for _, col := range schema {
+	var series = make([]Series, pr.SchemaHandler.GetColumnNum())
+	for colIndex, col := range pr.Footer.GetSchema() {
 		if col.NumChildren == nil {
 			values, _, _, err := pr.ReadColumnByIndex(valueColIndex, pr.GetNumRows())
 			if err != nil {
@@ -63,7 +93,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 			}
 
 			var ok bool
-			switch TypeParquetToBow[col.GetType()] {
+			switch TypeParquetToBowMap[col.GetType()] {
 			case Int64:
 				var vs = make([]int64, len(values))
 				for i, v := range values {
@@ -72,7 +102,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 						panic(values)
 					}
 				}
-				series[valueColIndex] = NewSeries(col.Name, Int64, vs, nil)
+				series[valueColIndex] = NewSeries(originalColNames[colIndex], Int64, vs, nil)
 
 			case Float64:
 				var vs = make([]float64, len(values))
@@ -82,7 +112,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 						panic(values)
 					}
 				}
-				series[valueColIndex] = NewSeries(col.Name, Float64, vs, nil)
+				series[valueColIndex] = NewSeries(originalColNames[colIndex], Float64, vs, nil)
 
 			case Bool:
 				var vs = make([]bool, len(values))
@@ -92,7 +122,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 						panic(values)
 					}
 				}
-				series[valueColIndex] = NewSeries(col.Name, Bool, vs, nil)
+				series[valueColIndex] = NewSeries(originalColNames[colIndex], Bool, vs, nil)
 
 			case String:
 				var vs = make([]string, len(values))
@@ -102,16 +132,38 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 						panic(values)
 					}
 				}
-				series[valueColIndex] = NewSeries(col.Name, String, vs, nil)
+				series[valueColIndex] = NewSeries(originalColNames[colIndex], String, vs, nil)
 
 			default:
 				return nil, fmt.Errorf("unsupported type %s", col.GetType())
 			}
+			pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
 			valueColIndex++
 		}
 	}
 
-	return NewBow(series...)
+	for r, rg := range pr.Footer.RowGroups {
+		for c := range rg.Columns {
+			pr.Footer.RowGroups[r].Columns[c].MetaData.PathInSchema = originalRowGroups[r].Columns[c].MetaData.PathInSchema
+		}
+	}
+
+	b, err := NewBow(series...)
+	if err != nil {
+		return nil, err
+	}
+
+	b.SetMetadata(pr.Footer)
+
+	footerIndented, err := json.MarshalIndent(pr.Footer, "", "\t")
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("bow.NewBowFromParquet: %s successfully read: %d rows\n%+v\n%+v\n",
+		fileName, b.NumRows(), b.Schema().String(), string(footerIndented))
+
+	return b, nil
 }
 
 func (b *bow) WriteParquet(fileName string) error {
@@ -140,7 +192,7 @@ func (b *bow) WriteParquet(fileName string) error {
 
 	optionalRepType := parquet.FieldRepetitionType_OPTIONAL
 	for i, f := range b.Schema().Fields() {
-		typ := TypeBowToParquet[b.GetType(i)]
+		typ := TypeBowToParquetMap[b.GetType(i)]
 		se = parquet.NewSchemaElement()
 		se.Type = &typ
 		se.RepetitionType = &optionalRepType
@@ -149,13 +201,14 @@ func (b *bow) WriteParquet(fileName string) error {
 	}
 
 	schemaTree := schematool.CreateSchemaTree(schemas)
-	//fmt.Printf("Write SchemaTree\n%s\n", schemaTree.OutputJsonSchema())
-
 	pw, err := writer.NewJSONWriter(schemaTree.OutputJsonSchema(), fw, 4)
 	if err != nil {
 		return fmt.Errorf("bow.WriteParquet: %w", err)
 	}
-	pw.NumRows = int64(b.NumRows())
+
+	if b.GetMetadata() != nil {
+		pw.Footer.KeyValueMetadata = b.GetMetadata().KeyValueMetadata
+	}
 
 	for row := range b.RowMapIter() {
 		rowJSON, err := json.Marshal(row)
@@ -176,8 +229,8 @@ func (b *bow) WriteParquet(fileName string) error {
 		return err
 	}
 
-	fmt.Printf("bow.WriteParquet: %s successfully written with footer:\n%s\n",
-		fileName, string(footerBytes))
+	fmt.Printf("bow.WriteParquet: %s successfully written: %d rows\n%s\n",
+		fileName, pw.Footer.NumRows, string(footerBytes))
 
 	return nil
 }

@@ -15,7 +15,7 @@ const (
 func TestParquet(t *testing.T) {
 	t.Run("bow supported types with rows", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
-			[]string{"Int", "Float", "Bool", "String"},
+			[]string{"int", "float", "bool", "string"},
 			[]Type{Int64, Float64, Bool, String},
 			[][]interface{}{
 				{1, 1., true, "hi"},
@@ -38,7 +38,6 @@ func TestParquet(t *testing.T) {
 	t.Run("read/write input file", func(t *testing.T) {
 		bBefore, err := NewBowFromParquet(testInputFileName)
 		assert.NoError(t, err)
-		//fmt.Printf("BOW: %d ROWS\n%+v\n", bBefore.NumRows(), bBefore.Schema().String())
 
 		err = bBefore.WriteParquet(testOutputFileName)
 		assert.NoError(t, err)
@@ -53,7 +52,7 @@ func TestParquet(t *testing.T) {
 
 	t.Run("bow supported types without rows", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
-			[]string{"Int", "Float", "Bool", "String"},
+			[]string{"int", "float", "bool", "string"},
 			[]Type{Int64, Float64, Bool, String},
 			[][]interface{}{})
 		require.NoError(t, err)

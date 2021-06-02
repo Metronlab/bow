@@ -6,6 +6,7 @@ import (
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
+	"github.com/xitongsys/parquet-go/parquet"
 	"reflect"
 	"sort"
 	"strings"
@@ -81,6 +82,8 @@ type Bow interface {
 
 	// Parquet file format
 	WriteParquet(path string) error
+	SetMetadata(*parquet.FileMetaData)
+	GetMetadata() *parquet.FileMetaData
 
 	// Exposed from arrow.Record
 	Release()
@@ -97,6 +100,16 @@ type Bow interface {
 
 type bow struct {
 	array.Record
+
+	metadata *parquet.FileMetaData
+}
+
+func (b *bow) GetMetadata() *parquet.FileMetaData {
+	return b.metadata
+}
+
+func (b *bow) SetMetadata(metadata *parquet.FileMetaData) {
+	b.metadata = metadata
 }
 
 func NewBowEmpty() Bow {
