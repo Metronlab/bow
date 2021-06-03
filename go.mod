@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/apache/arrow/go/arrow v0.0.0-20210508225959-ec51aec4d150
-	github.com/apache/thrift v0.14.1
+	github.com/apache/thrift v0.14.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/stretchr/testify v1.5.1

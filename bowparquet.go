@@ -1,17 +1,14 @@
 package bow
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/schema"
 	"github.com/xitongsys/parquet-go/tool/parquet-tools/schematool"
 	"github.com/xitongsys/parquet-go/writer"
-	"io"
 	"strings"
 )
 
@@ -34,30 +31,16 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 	if err != nil {
 		fr, err = local.NewLocalFileReader(fileName + ".parquet")
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 		}
 	}
 
 	pr := new(reader.ParquetReader)
 	pr.NP = 4
 	pr.PFile = fr
-
-	size, err := pr.GetFooterSize()
-	if err != nil {
-		return nil, err
+	if err := pr.ReadFooter(); err != nil {
+		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
-	if _, err = pr.PFile.Seek(-(int64)(8+size), io.SeekEnd); err != nil {
-		return nil, err
-	}
-	pr.Footer = parquet.NewFileMetaData()
-	conf := &thrift.TConfiguration{}
-	pf := thrift.NewTCompactProtocolFactoryConf(conf)
-	protocol := pf.GetProtocol(thrift.NewStreamTransportR(pr.PFile))
-	err = pr.Footer.Read(context.TODO(), protocol)
-	if err != nil {
-		return nil, err
-	}
-
 	pr.ColumnBuffers = make(map[string]*reader.ColumnBufferType)
 	pr.SchemaHandler = schema.NewSchemaHandlerFromSchemaList(pr.Footer.GetSchema())
 
@@ -89,7 +72,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 		if col.NumChildren == nil {
 			values, _, _, err := pr.ReadColumnByIndex(valueColIndex, pr.GetNumRows())
 			if err != nil {
-				panic(err)
+				return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 			}
 
 			var ok bool
@@ -99,7 +82,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 				for i, v := range values {
 					vs[i], ok = ToInt64(v)
 					if !ok {
-						panic(values)
+						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
 					}
 				}
 				series[valueColIndex] = NewSeries(originalColNames[colIndex], Int64, vs, nil)
@@ -109,7 +92,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 				for i, v := range values {
 					vs[i], ok = ToFloat64(v)
 					if !ok {
-						panic(values)
+						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
 					}
 				}
 				series[valueColIndex] = NewSeries(originalColNames[colIndex], Float64, vs, nil)
@@ -119,7 +102,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 				for i, v := range values {
 					vs[i], ok = ToBool(v)
 					if !ok {
-						panic(values)
+						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
 					}
 				}
 				series[valueColIndex] = NewSeries(originalColNames[colIndex], Bool, vs, nil)
@@ -129,13 +112,13 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 				for i, v := range values {
 					vs[i], ok = ToString(v)
 					if !ok {
-						panic(values)
+						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
 					}
 				}
 				series[valueColIndex] = NewSeries(originalColNames[colIndex], String, vs, nil)
 
 			default:
-				return nil, fmt.Errorf("unsupported type %s", col.GetType())
+				return nil, fmt.Errorf("bow.NewBowFromParquet: unsupported type %s", col.GetType())
 			}
 			pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
 			valueColIndex++
@@ -150,14 +133,14 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 
 	b, err := NewBow(series...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
 
 	b.SetMetadata(pr.Footer)
 
 	footerIndented, err := json.MarshalIndent(pr.Footer, "", "\t")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
 
 	fmt.Printf("bow.NewBowFromParquet: %s successfully read: %d rows\n%+v\n%+v\n",
@@ -206,10 +189,6 @@ func (b *bow) WriteParquet(fileName string) error {
 		return fmt.Errorf("bow.WriteParquet: %w", err)
 	}
 
-	if b.GetMetadata() != nil {
-		pw.Footer.KeyValueMetadata = b.GetMetadata().KeyValueMetadata
-	}
-
 	for row := range b.RowMapIter() {
 		rowJSON, err := json.Marshal(row)
 		if err != nil {
@@ -220,13 +199,24 @@ func (b *bow) WriteParquet(fileName string) error {
 		}
 	}
 
-	if err = pw.WriteStop(); err != nil {
+	metadata := b.GetMetadata()
+	if metadata != nil {
+		for i, m := range metadata.KeyValueMetadata {
+			if m.GetKey() == "ARROW:schema" {
+				metadata.KeyValueMetadata = append(metadata.KeyValueMetadata[:i], metadata.KeyValueMetadata[i+1:]...)
+			}
+		}
+		pw.Footer.KeyValueMetadata = metadata.KeyValueMetadata
+	}
+
+	err = pw.WriteStop()
+	if err != nil {
 		return fmt.Errorf("bow.WriteParquet: %w", err)
 	}
 
 	footerBytes, err := json.MarshalIndent(pw.Footer, "", "\t")
 	if err != nil {
-		return err
+		return fmt.Errorf("bow.WriteParquet: %w", err)
 	}
 
 	fmt.Printf("bow.WriteParquet: %s successfully written: %d rows\n%s\n",
