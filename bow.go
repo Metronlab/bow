@@ -6,7 +6,6 @@ import (
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
-	"github.com/xitongsys/parquet-go/parquet"
 	"reflect"
 	"sort"
 	"strings"
@@ -82,8 +81,6 @@ type Bow interface {
 
 	// Parquet file format
 	WriteParquet(path string) error
-	SetMetadata(*parquet.FileMetaData)
-	GetMetadata() *parquet.FileMetaData
 
 	// Exposed from arrow.Record
 	Release()
@@ -100,16 +97,6 @@ type Bow interface {
 
 type bow struct {
 	array.Record
-
-	metadata *parquet.FileMetaData
-}
-
-func (b *bow) GetMetadata() *parquet.FileMetaData {
-	return b.metadata
-}
-
-func (b *bow) SetMetadata(metadata *parquet.FileMetaData) {
-	b.metadata = metadata
 }
 
 func NewBowEmpty() Bow {
@@ -119,7 +106,7 @@ func NewBowEmpty() Bow {
 	return &bow{Record: array.NewRecord(schema, arrays, 0)}
 }
 
-func NewBow(series ...Series) (Bow, error) {
+func NewBow(metadata *arrow.Metadata, series ...Series) (Bow, error) {
 	var fields []arrow.Field
 	var arrays []array.Interface
 	var nRows int64
@@ -150,7 +137,7 @@ func NewBow(series ...Series) (Bow, error) {
 		arrays = append(arrays, s.Array)
 	}
 
-	schema := arrow.NewSchema(fields, nil)
+	schema := arrow.NewSchema(fields, metadata)
 
 	return &bow{Record: array.NewRecord(schema, arrays, nRows)}, nil
 }
@@ -180,7 +167,7 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 			return nil, err
 		}
 	}
-	return NewBow(series...)
+	return NewBow(nil, series...)
 }
 
 // NewBowFromRowBasedInterfaces returns a new bow from rowData
@@ -240,7 +227,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 
 		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
 	}
-	return NewBow(seriess...)
+	return NewBow(nil, seriess...)
 }
 
 func (b *bow) NewEmpty() Bow {
@@ -423,7 +410,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		}(colIndex, col, &wg)
 	}
 	wg.Wait()
-	return NewBow(sortedSeries...)
+	return NewBow(nil, sortedSeries...)
 }
 
 // Int64ColIsSorted tests whether a column of int64s is sorted in increasing order.
@@ -491,6 +478,11 @@ func (b *bow) String() string {
 		formatRow(func(colIndex int) string {
 			return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
 		})
+	}
+
+	_, err := fmt.Fprintf(w, "metadata: %+v\n", b.Schema().Metadata())
+	if err != nil {
+		panic(err)
 	}
 
 	// Flush buffer and format lines along the way
@@ -571,7 +563,7 @@ func (b *bow) Slice(i, j int) Bow {
 
 func (b *bow) Select(colNames ...string) (Bow, error) {
 	if len(colNames) == 0 {
-		return NewBow()
+		return NewBow(nil)
 	}
 
 	colsToInclude, err := selectCols(b, colNames)
@@ -588,7 +580,7 @@ func (b *bow) Select(colNames ...string) (Bow, error) {
 			})
 		}
 	}
-	return NewBow(newSeries...)
+	return NewBow(nil, newSeries...)
 }
 
 func (b *bow) NumRows() int {

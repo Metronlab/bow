@@ -69,5 +69,5 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBow(calcSeries...)
+	return NewBow(nil, calcSeries...)
 }

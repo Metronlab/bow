@@ -132,7 +132,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
-	return NewBow(filledSeries...)
+	return NewBow(nil, filledSeries...)
 }
 
 // FillMean fills nil values of `colNames` columns (`colNames` defaults to all columns)
@@ -219,7 +219,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
-	return NewBow(filledSeries...)
+	return NewBow(nil, filledSeries...)
 }
 
 // FillNext fills nil values of `colNames` columns (`colNames` defaults to all columns)
@@ -332,7 +332,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
-	return NewBow(filledSeries...)
+	return NewBow(nil, filledSeries...)
 }
 
 // FillPrevious fills nil values of `colNames` columns (`colNames` defaults to all columns)
@@ -445,7 +445,7 @@ func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
-	return NewBow(filledSeries...)
+	return NewBow(nil, filledSeries...)
 }
 
 // selectCols returns a bool slice of size b.NumCols

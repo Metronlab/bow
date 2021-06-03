@@ -124,7 +124,7 @@ func NewGenBow(options ...Option) (Bow, error) {
 			series[i] = newRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.missingData)
 		}
 	}
-	return NewBow(series...)
+	return NewBow(nil, series...)
 }
 
 func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Series {

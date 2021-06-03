@@ -122,7 +122,7 @@ func (it *intervalRollingIter) Aggregate(aggregations ...ColumnAggregation) Roll
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}
 
-	b, err := bow.NewBow(seriesSlice...)
+	b, err := bow.NewBow(nil, seriesSlice...)
 	if err != nil {
 		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
 	}

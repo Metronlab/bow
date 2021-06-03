@@ -12,7 +12,7 @@ func TestCount(t *testing.T) {
 			Name:      "empty",
 			TestedBow: empty,
 			ExpectedBow: func() bow.Bow {
-				b, err := bow.NewBow(
+				b, err := bow.NewBow(nil,
 					bow.NewSeries("time", bow.Int64, []int64{}, nil),
 					bow.NewSeries("value", bow.Int64, []int64{}, nil),
 				)

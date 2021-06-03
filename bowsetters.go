@@ -27,5 +27,5 @@ func (b *bow) SetColName(colIndex int, newName string) (Bow, error) {
 			}
 		}
 	}
-	return NewBow(newSeries...)
+	return NewBow(nil, newSeries...)
 }

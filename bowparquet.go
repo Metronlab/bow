@@ -3,6 +3,7 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/apache/arrow/go/arrow"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
@@ -131,12 +132,19 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 		}
 	}
 
-	b, err := NewBow(series...)
+	var keys, values []string
+	for _, m := range pr.Footer.KeyValueMetadata {
+		if m.GetKey() != "ARROW:schema" {
+			keys = append(keys, m.GetKey())
+			values = append(values, m.GetValue())
+		}
+	}
+	metadata := arrow.NewMetadata(keys, values)
+
+	b, err := NewBow(&metadata, series...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
-
-	b.SetMetadata(pr.Footer)
 
 	footerIndented, err := json.MarshalIndent(pr.Footer, "", "\t")
 	if err != nil {
@@ -199,15 +207,18 @@ func (b *bow) WriteParquet(fileName string) error {
 		}
 	}
 
-	metadata := b.GetMetadata()
-	if metadata != nil {
-		for i, m := range metadata.KeyValueMetadata {
-			if m.GetKey() == "ARROW:schema" {
-				metadata.KeyValueMetadata = append(metadata.KeyValueMetadata[:i], metadata.KeyValueMetadata[i+1:]...)
-			}
+	var metadata []*parquet.KeyValue
+	keys := b.Schema().Metadata().Keys()
+	values := b.Schema().Metadata().Values()
+	for k, key := range keys {
+		if key != "ARROW:schema" {
+			metadata = append(metadata, &parquet.KeyValue{
+				Key:   key,
+				Value: &values[k],
+			})
 		}
-		pw.Footer.KeyValueMetadata = metadata.KeyValueMetadata
 	}
+	pw.Footer.KeyValueMetadata = metadata
 
 	err = pw.WriteStop()
 	if err != nil {

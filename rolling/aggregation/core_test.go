@@ -13,7 +13,7 @@ var (
 	tc = "time"
 	vc = "value"
 
-	empty, _ = bow.NewBow(
+	empty, _ = bow.NewBow(nil,
 		bow.NewSeries(tc, bow.Int64, []int64{}, nil),
 		bow.NewSeries(vc, bow.Float64, []float64{}, nil),
 	)

@@ -434,7 +434,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			rightCol++
 		}
 	}
-	newBow, err := NewBow(newSeries...)
+	newBow, err := NewBow(nil, newSeries...)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -623,7 +623,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			rightCol++
 		}
 	}
-	newBow, err := NewBow(newSeries...)
+	newBow, err := NewBow(nil, newSeries...)
 	if err != nil {
 		panic(err.Error())
 	}

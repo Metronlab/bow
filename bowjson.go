@@ -135,7 +135,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		}
 		series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 	}
-	tmpBow, err := NewBow(series...)
+	tmpBow, err := NewBow(nil, series...)
 	if err != nil {
 		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 	}
