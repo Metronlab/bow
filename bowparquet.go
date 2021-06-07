@@ -71,60 +71,62 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 	var valueColIndex int64
 	var series = make([]Series, pr.SchemaHandler.GetColumnNum())
 	for colIndex, col := range pr.Footer.GetSchema() {
-		if col.NumChildren == nil {
-			values, _, _, err := pr.ReadColumnByIndex(valueColIndex, pr.GetNumRows())
-			if err != nil {
-				return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
-			}
-
-			var ok bool
-			switch TypeParquetToBowMap[col.GetType()] {
-			case Int64:
-				var vs = make([]int64, len(values))
-				for i, v := range values {
-					vs[i], ok = ToInt64(v)
-					if !ok {
-						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
-					}
-				}
-				series[valueColIndex] = NewSeries(originalColNames[colIndex], Int64, vs, nil)
-
-			case Float64:
-				var vs = make([]float64, len(values))
-				for i, v := range values {
-					vs[i], ok = ToFloat64(v)
-					if !ok {
-						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
-					}
-				}
-				series[valueColIndex] = NewSeries(originalColNames[colIndex], Float64, vs, nil)
-
-			case Bool:
-				var vs = make([]bool, len(values))
-				for i, v := range values {
-					vs[i], ok = ToBool(v)
-					if !ok {
-						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
-					}
-				}
-				series[valueColIndex] = NewSeries(originalColNames[colIndex], Bool, vs, nil)
-
-			case String:
-				var vs = make([]string, len(values))
-				for i, v := range values {
-					vs[i], ok = ToString(v)
-					if !ok {
-						panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
-					}
-				}
-				series[valueColIndex] = NewSeries(originalColNames[colIndex], String, vs, nil)
-
-			default:
-				return nil, fmt.Errorf("bow.NewBowFromParquet: unsupported type %s", col.GetType())
-			}
-			pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
-			valueColIndex++
+		if col.NumChildren != nil {
+			continue
 		}
+
+		values, _, _, err := pr.ReadColumnByIndex(valueColIndex, pr.GetNumRows())
+		if err != nil {
+			return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
+		}
+
+		var ok bool
+		switch TypeParquetToBowMap[col.GetType()] {
+		case Int64:
+			var vs = make([]int64, len(values))
+			for i, v := range values {
+				vs[i], ok = ToInt64(v)
+				if !ok {
+					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				}
+			}
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], Int64, vs, nil)
+
+		case Float64:
+			var vs = make([]float64, len(values))
+			for i, v := range values {
+				vs[i], ok = ToFloat64(v)
+				if !ok {
+					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				}
+			}
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], Float64, vs, nil)
+
+		case Bool:
+			var vs = make([]bool, len(values))
+			for i, v := range values {
+				vs[i], ok = ToBool(v)
+				if !ok {
+					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				}
+			}
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], Bool, vs, nil)
+
+		case String:
+			var vs = make([]string, len(values))
+			for i, v := range values {
+				vs[i], ok = ToString(v)
+				if !ok {
+					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				}
+			}
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], String, vs, nil)
+
+		default:
+			return nil, fmt.Errorf("bow.NewBowFromParquet: unsupported type %s", col.GetType())
+		}
+		pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
+		valueColIndex++
 	}
 
 	for r, rg := range pr.Footer.RowGroups {

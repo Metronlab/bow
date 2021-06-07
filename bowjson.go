@@ -103,42 +103,57 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	}
 
 	series := make([]Series, len(jsonB.Schema.Fields))
+
+	if jsonB.Data == nil {
+		for i, field := range jsonB.Schema.Fields {
+			t := newTypeFromArrowName(field.Type)
+			buf := NewBuffer(0, t, true)
+			series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
+		}
+
+		tmpBow, err := NewBow(nil, series...)
+		if err != nil {
+			return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
+		}
+
+		b.Record = tmpBow.(*bow).Record
+		return nil
+	}
+
 	for i, field := range jsonB.Schema.Fields {
 		t := newTypeFromArrowName(field.Type)
 		var buf Buffer
-		if jsonB.Data == nil {
-			buf = NewBuffer(0, t, true)
-		} else {
-			var err error
-			buf, err = NewBufferFromInterfacesIter(t, len(jsonB.Data), func() chan interface{} {
-				cellsChan := make(chan interface{})
-				go func(cellsChan chan interface{}, colName string) {
-					for _, row := range jsonB.Data {
-						val, ok := row[colName]
-						if !ok {
-							cellsChan <- nil
-						} else {
-							_, ok = val.(float64)
-							if t == Int64 && ok {
-								val = int64(val.(float64))
-							}
-							cellsChan <- val
+		var err error
+		buf, err = NewBufferFromInterfacesIter(t, len(jsonB.Data), func() chan interface{} {
+			cellsChan := make(chan interface{})
+			go func(cellsChan chan interface{}, colName string) {
+				for _, row := range jsonB.Data {
+					val, ok := row[colName]
+					if !ok {
+						cellsChan <- nil
+					} else {
+						_, ok = val.(float64)
+						if t == Int64 && ok {
+							val = int64(val.(float64))
 						}
+						cellsChan <- val
 					}
-					close(cellsChan)
-				}(cellsChan, field.Name)
-				return cellsChan
-			}())
-			if err != nil {
-				return err
-			}
+				}
+				close(cellsChan)
+			}(cellsChan, field.Name)
+			return cellsChan
+		}())
+		if err != nil {
+			return err
 		}
 		series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 	}
+
 	tmpBow, err := NewBow(nil, series...)
 	if err != nil {
 		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 	}
+
 	b.Record = tmpBow.(*bow).Record
 	return nil
 }
