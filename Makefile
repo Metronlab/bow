@@ -2,7 +2,7 @@
 PKG=./...
 RUN=".*"
 
-all: count test
+all: lint count test
 
 install: ## install dependencies
 	@go get golang.org/x/lint/golint \
