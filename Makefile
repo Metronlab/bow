@@ -2,7 +2,7 @@
 PKG=./...
 RUN=".*"
 
-all: count fix-fmt check test
+all: count test
 
 install: ## install dependencies
 	@go get golang.org/x/lint/golint \
@@ -16,11 +16,9 @@ test: ## Run unit tests
 		PKG=$(PKG) \
 		bash -c $(PWD)/scripts/test.sh
 
-fix-fmt: ## use fmt -w
-	@bash -c $(PWD)/scripts/fix-fmt.sh
-
-check: ## check code syntax
-	@bash -c $(PWD)/scripts/code-checks.sh
+lint:
+	go fmt ${PKG}
+	golangci-lint run -v ${PKG}
 
 bench: ## run benchmarks
 	@bash -c $(PWD)/scripts/benchmark.sh

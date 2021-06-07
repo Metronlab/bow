@@ -2,6 +2,7 @@ package rolling
 
 import (
 	"fmt"
+
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/transform"
 )

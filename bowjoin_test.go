@@ -1,9 +1,9 @@
 package bow
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -472,9 +472,9 @@ func TestOuterJoin_NonComplyingType(t *testing.T) {
 	require.NoError(t, err)
 	defer func() {
 		if r := recover(); r == nil ||
-			r.(error).Error() != "bow: left and right bow on join columns are of incompatible types: index1" {
+			r.(error).Error() != "bow Join: left and right bow on join columns are of incompatible types: index1" {
 			t.Errorf("indexes of bow1 and bow2 are incompatible and should panic. Have %v, expect %v",
-				r, "bow: left and right bow on join columns are of incompatible types: index1")
+				r, "bow Join: left and right bow on join columns are of incompatible types: index1")
 		}
 	}()
 	bow1.OuterJoin(bow2)
@@ -621,9 +621,9 @@ func TestInnerJoin_NonComplyingTypes(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r == nil ||
-			r.(error).Error() != "bow: left and right bow on join columns are of incompatible types: index1" {
+			r.(error).Error() != "bow Join: left and right bow on join columns are of incompatible types: index1" {
 			t.Errorf("indexes of bow1 and bow2 are incompatible and should panic. Have %v, expect %v",
-				r, "bow: left and right bow on join columns are of incompatible types: index1")
+				r, "bow Join: left and right bow on join columns are of incompatible types: index1")
 		}
 	}()
 	bow1.InnerJoin(bow2)

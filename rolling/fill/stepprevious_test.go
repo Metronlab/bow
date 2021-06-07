@@ -2,10 +2,11 @@ package fill
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 const (

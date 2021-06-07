@@ -3,14 +3,15 @@ package bow
 import (
 	"errors"
 	"fmt"
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
 	"reflect"
 	"sort"
 	"strings"
 	"sync"
 	"text/tabwriter"
+
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
 )
 
 // Bow is a wrapper of Apache Arrow array.Record interface.

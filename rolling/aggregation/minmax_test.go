@@ -1,9 +1,10 @@
 package aggregation
 
 import (
+	"testing"
+
 	"github.com/metronlab/bow"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestMin(t *testing.T) {

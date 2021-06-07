@@ -3,11 +3,12 @@ package bow
 import (
 	crand "crypto/rand"
 	"fmt"
+	"math/big"
+	"strconv"
+
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
 	"github.com/google/uuid"
-	"math/big"
-	"strconv"
 )
 
 type genBowOptions struct {
