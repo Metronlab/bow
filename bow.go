@@ -107,7 +107,25 @@ func NewBowEmpty() Bow {
 	return &bow{Record: array.NewRecord(schema, arrays, 0)}
 }
 
-func NewBow(metadata *arrow.Metadata, series ...Series) (Bow, error) {
+func NewBow(series ...Series) (Bow, error) {
+	rec, err := newRecord(nil, series...)
+	if err != nil {
+		return nil, fmt.Errorf("bow.NewBow: %w", err)
+	}
+
+	return &bow{Record: rec}, nil
+}
+
+func NewBowWithMetadata(metadata *arrow.Metadata, series ...Series) (Bow, error) {
+	rec, err := newRecord(metadata, series...)
+	if err != nil {
+		return nil, fmt.Errorf("bow.NewBowWithMetadata: %w", err)
+	}
+
+	return &bow{Record: rec}, nil
+}
+
+func newRecord(metadata *arrow.Metadata, series ...Series) (array.Record, error) {
 	var fields []arrow.Field
 	var arrays []array.Interface
 	var nRows int64
@@ -118,20 +136,18 @@ func NewBow(metadata *arrow.Metadata, series ...Series) (Bow, error) {
 
 	for _, s := range series {
 		if s.Array == nil {
-			return nil, errors.New("bow: NewBow: empty Series")
+			return nil, errors.New("empty Series")
 		}
 		if s.Name == "" {
-			return nil, errors.New("bow: empty Series name")
+			return nil, errors.New("empty Series name")
 		}
 		if getTypeFromArrowType(s.Array.DataType()) == Unknown {
-			return nil, fmt.Errorf(
-				"bow: unsupported type: %s",
-				s.Array.DataType().Name())
+			return nil, fmt.Errorf("unsupported type: %s", s.Array.DataType().Name())
 		}
 		if int64(s.Array.Len()) != nRows {
 			return nil,
 				fmt.Errorf(
-					"bow: Series '%s' has a length of %d, which is different from the previous ones",
+					"bow.Series '%s' has a length of %d, which is different from the previous ones",
 					s.Name, s.Array.Len())
 		}
 		fields = append(fields, arrow.Field{Name: s.Name, Type: s.Array.DataType()})
@@ -140,7 +156,7 @@ func NewBow(metadata *arrow.Metadata, series ...Series) (Bow, error) {
 
 	schema := arrow.NewSchema(fields, metadata)
 
-	return &bow{Record: array.NewRecord(schema, arrays, nRows)}, nil
+	return array.NewRecord(schema, arrays, nRows), nil
 }
 
 // NewBowFromColBasedInterfaces returns a new Bow with:
@@ -168,7 +184,7 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 			return nil, err
 		}
 	}
-	return NewBow(nil, series...)
+	return NewBow(series...)
 }
 
 // NewBowFromRowBasedInterfaces returns a new bow from rowData
@@ -228,7 +244,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 
 		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
 	}
-	return NewBow(nil, seriess...)
+	return NewBow(seriess...)
 }
 
 func (b *bow) NewEmpty() Bow {
@@ -411,7 +427,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		}(colIndex, col, &wg)
 	}
 	wg.Wait()
-	return NewBow(nil, sortedSeries...)
+	return NewBow(sortedSeries...)
 }
 
 // Int64ColIsSorted tests whether a column of int64s is sorted in increasing order.
@@ -564,7 +580,7 @@ func (b *bow) Slice(i, j int) Bow {
 
 func (b *bow) Select(colNames ...string) (Bow, error) {
 	if len(colNames) == 0 {
-		return NewBow(nil)
+		return NewBow()
 	}
 
 	colsToInclude, err := selectCols(b, colNames)
@@ -581,7 +597,7 @@ func (b *bow) Select(colNames ...string) (Bow, error) {
 			})
 		}
 	}
-	return NewBow(nil, newSeries...)
+	return NewBow(newSeries...)
 }
 
 func (b *bow) NumRows() int {

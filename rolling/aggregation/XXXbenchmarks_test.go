@@ -111,7 +111,7 @@ func benchmarkBow(b *testing.B) {
 
 		b.Run("Series -> bow", func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				benchBow, _ = bow.NewBow(nil, Series...)
+				benchBow, _ = bow.NewBow(Series...)
 			}
 		})
 	}
@@ -141,7 +141,7 @@ func benchmarkBow(b *testing.B) {
 
 		b.Run("Series -> bow", func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				benchBow, _ = bow.NewBow(nil, Series...)
+				benchBow, _ = bow.NewBow(Series...)
 			}
 		})
 	}

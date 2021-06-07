@@ -13,7 +13,7 @@ func TestFirst(t *testing.T) {
 			Name:      "empty",
 			TestedBow: empty,
 			ExpectedBow: func() bow.Bow {
-				b, err := bow.NewBow(nil,
+				b, err := bow.NewBow(
 					bow.NewSeries("time", bow.Int64, []int64{}, nil),
 					bow.NewSeries("value", bow.Float64, []float64{}, nil),
 				)
@@ -87,7 +87,7 @@ func TestLast(t *testing.T) {
 			Name:      "empty",
 			TestedBow: empty,
 			ExpectedBow: func() bow.Bow {
-				b, err := bow.NewBow(nil,
+				b, err := bow.NewBow(
 					bow.NewSeries("time", bow.Int64, []int64{}, nil),
 					bow.NewSeries("value", bow.Float64, []float64{}, nil),
 				)

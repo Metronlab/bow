@@ -114,7 +114,7 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 		seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 	}
 
-	b, err := bow.NewBow(nil, seriess...)
+	b, err := bow.NewBow(seriess...)
 	if err != nil {
 		return nil, err
 	}

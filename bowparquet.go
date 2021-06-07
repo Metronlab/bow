@@ -144,7 +144,7 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 	}
 	metadata := arrow.NewMetadata(keys, values)
 
-	b, err := NewBow(&metadata, series...)
+	b, err := NewBowWithMetadata(&metadata, series...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}

@@ -58,7 +58,7 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 	})
 
 	t.Run("left bow of len 0", func(t *testing.T) {
-		bow1, err := NewBow(nil,
+		bow1, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
@@ -92,7 +92,7 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 	})
 
 	t.Run("right bow of len 0", func(t *testing.T) {
-		bow1, err := NewBow(nil,
+		bow1, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
@@ -126,19 +126,19 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 	})
 
 	t.Run("left and right bow of len 0", func(t *testing.T) {
-		bow1, err := NewBow(nil,
+		bow1, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
 		)
 		require.NoError(t, err)
-		bow2, err := NewBow(nil,
+		bow2, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col2", Int64, []int64{}, nil),
 		)
 		require.NoError(t, err)
-		expected, err := NewBow(nil,
+		expected, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
@@ -151,7 +151,7 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 	})
 
 	t.Run("left bow of len 0", func(t *testing.T) {
-		bow1, err := NewBow(nil,
+		bow1, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
@@ -188,7 +188,7 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 	})
 
 	t.Run("right bow of len 0", func(t *testing.T) {
-		bow1, err := NewBow(nil,
+		bow1, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
@@ -225,19 +225,19 @@ func TestOuterJoin_empty_bows(t *testing.T) {
 	})
 
 	t.Run("left and right bow of len 0", func(t *testing.T) {
-		bow1, err := NewBow(nil,
+		bow1, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
 		)
 		require.NoError(t, err)
-		bow2, err := NewBow(nil,
+		bow2, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col2", Int64, []int64{}, nil),
 		)
 		require.NoError(t, err)
-		expected, err := NewBow(nil,
+		expected, err := NewBow(
 			NewSeries("index1", Int64, []int64{}, nil),
 			NewSeries("index2", Float64, []float64{}, nil),
 			NewSeries("col1", Int64, []int64{}, nil),
@@ -581,20 +581,20 @@ func TestInnerJoin_timeSeries_like(t *testing.T) {
 }
 
 func TestInnerJoin_NoResultingRows(t *testing.T) {
-	bow1, err := NewBow(nil,
+	bow1, err := NewBow(
 		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
 		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
 		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 	)
 	require.NoError(t, err)
 
-	bow2, err := NewBow(nil,
+	bow2, err := NewBow(
 		NewSeries("index1", Int64, []int64{10}, nil),
 		NewSeries("col2", Int64, []int64{10}, nil),
 	)
 	require.NoError(t, err)
 
-	expected, err := NewBow(nil,
+	expected, err := NewBow(
 		NewSeries("index1", Int64, []int64{}, nil),
 		NewSeries("index2", Float64, []float64{}, nil),
 		NewSeries("col1", Int64, []int64{}, []bool{}),
@@ -607,14 +607,14 @@ func TestInnerJoin_NoResultingRows(t *testing.T) {
 }
 
 func TestInnerJoin_NonComplyingTypes(t *testing.T) {
-	bow1, err := NewBow(nil,
+	bow1, err := NewBow(
 		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
 		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
 		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 	)
 	require.NoError(t, err)
 
-	bow2, err := NewBow(nil,
+	bow2, err := NewBow(
 		NewSeries("index1", Float64, []float64{1}, nil),
 	)
 	require.NoError(t, err)
@@ -630,19 +630,19 @@ func TestInnerJoin_NonComplyingTypes(t *testing.T) {
 }
 
 func TestInnerJoin_NoCommonColumns(t *testing.T) {
-	bow1, err := NewBow(nil,
+	bow1, err := NewBow(
 		NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
 		NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
 		NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 	)
 	require.NoError(t, err)
 
-	bow2, err := NewBow(nil,
+	bow2, err := NewBow(
 		NewSeries("index3", Float64, []float64{1.1}, nil),
 	)
 	require.NoError(t, err)
 
-	expected, err := NewBow(nil,
+	expected, err := NewBow(
 		NewSeries("index1", Int64, []int64{}, nil),
 		NewSeries("index2", Float64, []float64{}, nil),
 		NewSeries("col1", Int64, []int64{}, nil),

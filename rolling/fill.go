@@ -170,7 +170,7 @@ func (it *intervalRollingIter) fillWindow(interpolations []ColumnInterpolation, 
 		seriesSlice[colIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 	}
 
-	startBow, err := bow.NewBow(nil, seriesSlice...)
+	startBow, err := bow.NewBow(seriesSlice...)
 	if err != nil {
 		return nil, err
 	}
