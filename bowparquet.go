@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apache/arrow/go/arrow"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
@@ -28,7 +27,7 @@ var TypeBowToParquetMap = map[Type]parquet.Type{
 	String:  parquet.Type_BYTE_ARRAY,
 }
 
-func NewBowFromParquet(fileName string) (Bow, error) {
+func NewBowFromParquet(fileName string, verbose bool) (Bow, error) {
 	fr, err := local.NewLocalFileReader(fileName)
 	if err != nil {
 		fr, err = local.NewLocalFileReader(fileName + ".parquet")
@@ -142,9 +141,8 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 			values = append(values, m.GetValue())
 		}
 	}
-	metadata := arrow.NewMetadata(keys, values)
 
-	b, err := NewBowWithMetadata(&metadata, series...)
+	b, err := NewBowWithMetadata(NewMetadata(keys, values), series...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
@@ -154,13 +152,15 @@ func NewBowFromParquet(fileName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
 
-	fmt.Printf("bow.NewBowFromParquet: %s successfully read: %d rows\n%+v\n%+v\n",
-		fileName, b.NumRows(), b.Schema().String(), string(footerIndented))
+	if verbose {
+		fmt.Printf("bow.NewBowFromParquet: %s successfully read: %d rows\n%+v\n%+v\n",
+			fileName, b.NumRows(), b.Schema().String(), string(footerIndented))
+	}
 
 	return b, nil
 }
 
-func (b *bow) WriteParquet(fileName string) error {
+func (b *bow) WriteParquet(fileName string, verbose bool) error {
 	if b.NumCols() == 0 {
 		return fmt.Errorf("bow.WriteParquet: no columns")
 	}
@@ -233,8 +233,10 @@ func (b *bow) WriteParquet(fileName string) error {
 		return fmt.Errorf("bow.WriteParquet: %w", err)
 	}
 
-	fmt.Printf("bow.WriteParquet: %s successfully written: %d rows\n%s\n",
-		fileName, pw.Footer.NumRows, string(footerBytes))
+	if verbose {
+		fmt.Printf("bow.WriteParquet: %s successfully written: %d rows\n%s\n",
+			fileName, pw.Footer.NumRows, string(footerBytes))
+	}
 
 	return nil
 }

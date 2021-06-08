@@ -8,25 +8,24 @@ import (
 )
 
 func TestBow_SetColName(t *testing.T) {
-	b, err := NewBowFromRowBasedInterfaces([]string{"time", "val"}, []Type{Int64, Float64}, [][]interface{}{
-		{10, 0.1},
-		{11, 0.2},
-	})
+	b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+		NewSeries("oldName", Float64, []float64{0.1, 0.2}, nil),
+	)
 	require.NoError(t, err)
-	expected, err := NewBowFromRowBasedInterfaces([]string{"time", "value"}, []Type{Int64, Float64}, [][]interface{}{
-		{10, 0.1},
-		{11, 0.2},
-	})
+
+	expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+		NewSeries("newName", Float64, []float64{0.1, 0.2}, nil),
+	)
 	require.NoError(t, err)
 
 	t.Run("valid", func(t *testing.T) {
-		res, err := b.SetColName(1, "value")
+		res, err := b.SetColName(0, "newName")
 		require.NoError(t, err)
 		assert.EqualValues(t, expected.String(), res.String())
 	})
 
 	t.Run("invalid colIndex", func(t *testing.T) {
-		_, err = b.SetColName(2, "value")
+		_, err = b.SetColName(1, "newName")
 		require.Error(t, err)
 	})
 

@@ -125,6 +125,7 @@ func NewGenBow(options ...Option) (Bow, error) {
 			series[i] = newRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.missingData)
 		}
 	}
+
 	return NewBow(series...)
 }
 

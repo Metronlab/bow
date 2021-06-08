@@ -419,4 +419,52 @@ func TestFill(t *testing.T) {
 			assert.Nil(t, filled)
 		})
 	})
+
+	t.Run("with metadata", func(t *testing.T) {
+		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
+
+		// Previous
+		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 1, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 1., 3.}, []bool{true, true, true}),
+		)
+		require.NoError(t, err)
+		res, err := b.FillPrevious()
+		require.NoError(t, err)
+		assert.Equal(t, expected.String(), res.String())
+
+		// Next
+		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 3, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 3., 3.}, []bool{true, true, true}),
+		)
+		require.NoError(t, err)
+		res, err = b.FillNext()
+		require.NoError(t, err)
+		assert.Equal(t, expected.String(), res.String())
+
+		// Mean
+		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, true, true}),
+		)
+		require.NoError(t, err)
+		res, err = b.FillMean()
+		require.NoError(t, err)
+		assert.Equal(t, expected.String(), res.String())
+
+		// Linear
+		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
+		res, err = b.FillLinear("int", "float")
+		require.NoError(t, err)
+		assert.Equal(t, expected.String(), res.String())
+	})
 }

@@ -81,7 +81,7 @@ type Bow interface {
 	FillLinear(refColName, toFillColName string) (Bow, error)
 
 	// Parquet file format
-	WriteParquet(path string) error
+	WriteParquet(fileName string, verbose bool) error
 
 	// Exposed from arrow.Record
 	Release()
@@ -100,6 +100,10 @@ type bow struct {
 	array.Record
 }
 
+type Metadata struct {
+	arrow.Metadata
+}
+
 func NewBowEmpty() Bow {
 	var fields []arrow.Field
 	var arrays []array.Interface
@@ -108,7 +112,7 @@ func NewBowEmpty() Bow {
 }
 
 func NewBow(series ...Series) (Bow, error) {
-	rec, err := newRecord(nil, series...)
+	rec, err := newRecord(Metadata{}, series...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBow: %w", err)
 	}
@@ -116,7 +120,7 @@ func NewBow(series ...Series) (Bow, error) {
 	return &bow{Record: rec}, nil
 }
 
-func NewBowWithMetadata(metadata *arrow.Metadata, series ...Series) (Bow, error) {
+func NewBowWithMetadata(metadata Metadata, series ...Series) (Bow, error) {
 	rec, err := newRecord(metadata, series...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBowWithMetadata: %w", err)
@@ -125,7 +129,11 @@ func NewBowWithMetadata(metadata *arrow.Metadata, series ...Series) (Bow, error)
 	return &bow{Record: rec}, nil
 }
 
-func newRecord(metadata *arrow.Metadata, series ...Series) (array.Record, error) {
+func NewMetadata(keys, values []string) Metadata {
+	return Metadata{arrow.NewMetadata(keys, values)}
+}
+
+func newRecord(metadata Metadata, series ...Series) (array.Record, error) {
 	var fields []arrow.Field
 	var arrays []array.Interface
 	var nRows int64
@@ -154,9 +162,9 @@ func newRecord(metadata *arrow.Metadata, series ...Series) (array.Record, error)
 		arrays = append(arrays, s.Array)
 	}
 
-	schema := arrow.NewSchema(fields, metadata)
-
-	return array.NewRecord(schema, arrays, nRows), nil
+	return array.NewRecord(
+		arrow.NewSchema(fields, &metadata.Metadata),
+		arrays, nRows), nil
 }
 
 // NewBowFromColBasedInterfaces returns a new Bow with:
@@ -184,6 +192,7 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 			return nil, err
 		}
 	}
+
 	return NewBow(series...)
 }
 
@@ -194,6 +203,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowData []
 	for column := range colNames {
 		columnBasedRows[column] = make([]interface{}, len(rowData))
 	}
+
 	for rowI, row := range rowData {
 		if len(colNames) < len(row) {
 			return nil, errors.New("bow: mismatch between columnsNames names and row len")
@@ -202,6 +212,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowData []
 			columnBasedRows[colI][rowI] = row[colI]
 		}
 	}
+
 	return NewBowFromColBasedInterfaces(colNames, colTypes, columnBasedRows)
 }
 
@@ -219,13 +230,22 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	for _, b := range bows {
 		schema := b.Schema()
 		if !schema.Equal(refSchema) {
-			return nil, fmt.Errorf("schema mismatch: got both\n%v\nand\n%v", refSchema, schema)
+			return nil,
+				fmt.Errorf("bow.AppendBow: schema mismatch: got both\n%v\nand\n%v",
+					refSchema, schema)
 		}
+
+		if schema.Metadata().String() != refSchema.Metadata().String() {
+			return nil,
+				fmt.Errorf("bow.AppendBow: schema Metadata mismatch: got both\n%v\nand\n%v",
+					refSchema.Metadata(), schema.Metadata())
+		}
+
 		numRows += b.NumRows()
 	}
 
-	seriess := make([]Series, refBow.NumCols())
-	bufs := make([]Buffer, refBow.NumCols())
+	seriesSlice := make([]Series, refBow.NumCols())
+	bufSlice := make([]Buffer, refBow.NumCols())
 	var name string
 	for ci := 0; ci < refBow.NumCols(); ci++ {
 		var rowOffset int
@@ -234,17 +254,20 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		if err != nil {
 			return nil, err
 		}
-		bufs[ci] = NewBuffer(numRows, typ, true)
+		bufSlice[ci] = NewBuffer(numRows, typ, true)
 		for _, b := range bows {
 			for ri := 0; ri < b.NumRows(); ri++ {
-				bufs[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
+				bufSlice[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
 			}
 			rowOffset += b.NumRows()
 		}
 
-		seriess[ci] = NewSeries(name, typ, bufs[ci].Value, bufs[ci].Valid)
+		seriesSlice[ci] = NewSeries(name, typ, bufSlice[ci].Value, bufSlice[ci].Valid)
 	}
-	return NewBow(seriess...)
+
+	return NewBowWithMetadata(
+		Metadata{refSchema.Metadata()},
+		seriesSlice...)
 }
 
 func (b *bow) NewEmpty() Bow {
@@ -302,12 +325,12 @@ func (b *bow) DropNil(colNames ...string) (Bow, error) {
 // Returns the same Bow if the column is already sorted
 func (b *bow) SortByCol(colName string) (Bow, error) {
 	if b.NumCols() == 0 {
-		return nil, fmt.Errorf("bow: function SortByCol: empty bow")
+		return nil, fmt.Errorf("bow.SortByCol: empty bow")
 	}
 
 	colIndex, err := b.GetColumnIndex(colName)
 	if err != nil {
-		return nil, fmt.Errorf("bow: function SortByCol: column to sort by not found")
+		return nil, fmt.Errorf("bow.SortByCol: column to sort by not found")
 	}
 
 	if b.IsEmpty() {
@@ -344,7 +367,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		builder.AppendValues(colToSortBy.Values, colToSortBy.Valids)
 		newArray = builder.NewArray()
 	default:
-		return nil, fmt.Errorf("bow: function SortByCol: unsupported type for the column to sort by (Int64 only)")
+		return nil, fmt.Errorf("bow.SortByCol: unsupported type for the column to sort by (Int64 only)")
 	}
 
 	// Fill the sort by column with sorted values
@@ -360,6 +383,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		if col.Name == colName {
 			continue
 		}
+
 		wg.Add(1)
 		go func(colIndex int, col arrow.Field, wg *sync.WaitGroup) {
 			defer wg.Done()
@@ -427,7 +451,10 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		}(colIndex, col, &wg)
 	}
 	wg.Wait()
-	return NewBow(sortedSeries...)
+
+	return NewBowWithMetadata(
+		Metadata{b.Schema().Metadata()},
+		sortedSeries...)
 }
 
 // Int64ColIsSorted tests whether a column of int64s is sorted in increasing order.
@@ -513,6 +540,7 @@ func (b *bow) String() string {
 func (b *bow) RowMapIter() chan map[string]interface{} {
 	rows := make(chan map[string]interface{})
 	go b.rowMapIter(rows)
+
 	return rows
 }
 
@@ -528,8 +556,8 @@ func (b *bow) rowMapIter(rows chan map[string]interface{}) {
 	}
 }
 
-func (b *bow) Equal(B2 Bow) bool {
-	b2, ok := B2.(*bow)
+func (b *bow) Equal(other Bow) bool {
+	b2, ok := other.(*bow)
 	if !ok {
 		panic("bow: cannot Equal on non bow object")
 	}
@@ -548,8 +576,13 @@ func (b *bow) Equal(B2 Bow) bool {
 		return false
 	}
 
+	if b.Schema().Metadata().String() != b2.Schema().Metadata().String() {
+		return false
+	}
+
 	b1Chan := b.RowMapIter()
 	b2Chan := b2.RowMapIter()
+
 	for {
 		i1, ok1 := <-b1Chan
 		i2, ok2 := <-b2Chan
@@ -569,6 +602,7 @@ func (b *bow) Equal(B2 Bow) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -580,7 +614,8 @@ func (b *bow) Slice(i, j int) Bow {
 
 func (b *bow) Select(colNames ...string) (Bow, error) {
 	if len(colNames) == 0 {
-		return NewBow()
+		return NewBowWithMetadata(
+			Metadata{b.Schema().Metadata()})
 	}
 
 	colsToInclude, err := selectCols(b, colNames)
@@ -597,13 +632,17 @@ func (b *bow) Select(colNames ...string) (Bow, error) {
 			})
 		}
 	}
-	return NewBow(newSeries...)
+
+	return NewBowWithMetadata(
+		Metadata{b.Schema().Metadata()},
+		newSeries...)
 }
 
 func (b *bow) NumRows() int {
 	if b.Record == nil {
 		return 0
 	}
+
 	return int(b.Record.NumRows())
 }
 
@@ -611,5 +650,6 @@ func (b *bow) NumCols() int {
 	if b.Record == nil {
 		return 0
 	}
+
 	return int(b.Record.NumCols())
 }

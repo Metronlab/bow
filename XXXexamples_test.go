@@ -16,38 +16,38 @@ func ExampleNewBow() {
 		panic(err)
 	}
 
-	fmt.Print(b)
-	// output:
-
-	//col1:int64  col2:float64  col3:bool
-	//1           1.1           true
-	//2           <nil>         <nil>
-	//3           3.3           true
-	//4           4             false
+	fmt.Println(b)
+	// Output:
+	// col1:int64  col2:float64  col3:bool
+	// 1           1.1           true
+	// 2           <nil>         <nil>
+	// 3           3.3           true
+	// 4           4             false
+	// metadata: []
 }
 
 func ExampleNewBowFromColBasedInterfaces() {
-	columns := []string{"time", "value", "valueFromJson"}
-	ts := make([]Type, len(columns))
-	ts[0] = Int64
-	rows := [][]interface{}{
+	colNames := []string{"time", "value", "valueFromJson"}
+	colTypes := make([]Type, len(colNames))
+	colTypes[0] = Int64
+	colData := [][]interface{}{
 		{1, 1.2, json.Number("3")},
 		{1, json.Number("1.2"), 3},
 		{json.Number("1.1"), 2, 1.3},
 	}
 
-	b, err := NewBowFromColBasedInterfaces(columns, ts, rows)
+	b, err := NewBowFromColBasedInterfaces(colNames, colTypes, colData)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Print(b)
-	// output:
-
-	//time:int64  value:int64  valueFromJson:float64
-	//1           1            1.1
-	//<nil>       <nil>        <nil>
-	//3           3            1.3
+	fmt.Println(b)
+	// Output:
+	// time:int64  value:int64  valueFromJson:float64
+	// 1           1            1.1
+	// 1           <nil>        2
+	// 3           3            1.3
+	// metadata: []
 }
 
 func ExampleBow_MarshalJSON() {
@@ -77,7 +77,7 @@ func ExampleBow_MarshalJSON() {
 	}
 
 	fmt.Println(out.String())
-	//output:
+	// Output:
 	// {
 	// 	"schema": {
 	// 		"fields": [

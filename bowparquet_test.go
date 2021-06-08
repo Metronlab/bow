@@ -15,12 +15,12 @@ const (
 
 func TestParquet(t *testing.T) {
 	t.Run("read/write input file", func(t *testing.T) {
-		bBefore, err := NewBowFromParquet(testInputFileName)
+		bBefore, err := NewBowFromParquet(testInputFileName, false)
 		assert.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName, false))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName)
+		bAfter, err := NewBowFromParquet(testOutputFileName, false)
 		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
@@ -39,9 +39,9 @@ func TestParquet(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows"))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName + "_withrows")
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows", false)
 		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
@@ -56,9 +56,9 @@ func TestParquet(t *testing.T) {
 			[][]interface{}{})
 		require.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows"))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", false))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName + "_norows")
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows", false)
 		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
@@ -69,7 +69,7 @@ func TestParquet(t *testing.T) {
 	t.Run("write empty bow", func(t *testing.T) {
 		bBefore := NewBowEmpty()
 
-		err := bBefore.WriteParquet(testOutputFileName + "_empty")
+		err := bBefore.WriteParquet(testOutputFileName+"_empty", false)
 		assert.Errorf(t, err, "bow.WriteParquet: no columns")
 	})
 }
