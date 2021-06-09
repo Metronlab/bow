@@ -20,7 +20,7 @@ func TestParquet(t *testing.T) {
 
 		assert.NoError(t, bBefore.WriteParquet(testOutputFileName, false))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName, false)
+		bAfter, err := NewBowFromParquet(testOutputFileName+".parquet", false)
 		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
@@ -41,10 +41,11 @@ func TestParquet(t *testing.T) {
 
 		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows", false)
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", false)
 		assert.NoError(t, err)
 
-		assert.Equal(t, bBefore.String(), bAfter.String())
+		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
+		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
 
 		require.NoError(t, os.Remove(testOutputFileName+"_withrows.parquet"))
 	})
@@ -58,10 +59,11 @@ func TestParquet(t *testing.T) {
 
 		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", false))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows", false)
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows.parquet", false)
 		assert.NoError(t, err)
 
-		assert.Equal(t, bBefore.String(), bAfter.String())
+		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
+		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
 
 		require.NoError(t, os.Remove(testOutputFileName+"_norows.parquet"))
 	})
