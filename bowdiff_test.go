@@ -1,37 +1,38 @@
 package bow
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestDiff(t *testing.T) {
-	t.Run("all columns all supported types with nils", func(t *testing.T) {
-		b, err := NewBowFromRowBasedInterfaces(
-			[]string{"a", "b", "c"},
-			[]Type{Int64, Float64, Bool},
-			[][]interface{}{
-				{1, 1., false},
-				{2, 2., false},
-				{3, 3., true},
-				{4, 4., true},
-				{nil, nil, nil},
-				{5, 5., false},
-			})
+	t.Run("all columns all supported types with nils and metadata", func(t *testing.T) {
+		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("a", Int64,
+				[]int64{1, 2, 3, 4, 0, 5},
+				[]bool{true, true, true, true, false, true}),
+			NewSeries("b", Float64,
+				[]float64{1., 2., 3., 4., 0., 5.},
+				[]bool{true, true, true, true, false, true}),
+			NewSeries("c", Bool,
+				[]bool{false, false, true, true, false, false},
+				[]bool{true, true, true, true, false, true}),
+		)
 		require.NoError(t, err)
 
-		expected, err := NewBowFromRowBasedInterfaces(
-			[]string{"a", "b", "c"},
-			[]Type{Int64, Float64, Bool},
-			[][]interface{}{
-				{nil, nil, nil},
-				{1, 1., false},
-				{1, 1., true},
-				{1, 1., false},
-				{nil, nil, nil},
-				{nil, nil, nil},
-			})
+		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("a", Int64,
+				[]int64{0, 1, 1, 1, 0, 0},
+				[]bool{false, true, true, true, false, false}),
+			NewSeries("b", Float64,
+				[]float64{0., 1., 1., 1., 0., 0.},
+				[]bool{false, true, true, true, false, false}),
+			NewSeries("c", Bool,
+				[]bool{false, false, true, false, false, false},
+				[]bool{false, true, true, true, false, false}),
+		)
 		require.NoError(t, err)
 
 		calc, err := b.Diff()
@@ -40,20 +41,25 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("one column all supported types", func(t *testing.T) {
-		b, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Float64, Bool}, [][]interface{}{
-			{1, 1., false},
-			{2, 2., false},
-			{3, 3., true},
-		})
+		b, err := NewBowFromRowBasedInterfaces(
+			[]string{"a", "b", "c"},
+			[]Type{Int64, Float64, Bool},
+			[][]interface{}{
+				{1, 1., false},
+				{2, 2., false},
+				{3, 3., true},
+			})
 		require.NoError(t, err)
 
-		expected, err := NewBowFromRowBasedInterfaces([]string{"a", "b", "c"}, []Type{Int64, Float64, Bool}, [][]interface{}{
-			{1, nil, false},
-			{2, 1., false},
-			{3, 1., true},
-		})
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"a", "b", "c"},
+			[]Type{Int64, Float64, Bool},
+			[][]interface{}{
+				{1, nil, false},
+				{2, 1., false},
+				{3, 1., true},
+			})
 		require.NoError(t, err)
-
 		calc, err := b.Diff("b")
 		assert.NoError(t, err)
 		assert.EqualValues(t, expected.String(), calc.String())

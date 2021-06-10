@@ -1,10 +1,11 @@
 package aggregation
 
 import (
+	"testing"
+
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/transform"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestIntegralStep(t *testing.T) {

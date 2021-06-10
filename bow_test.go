@@ -2,14 +2,20 @@ package bow
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
-func TestBow_NewBowFromColumnBasedInterface(t *testing.T) {
+func TestNewBowEmpty(t *testing.T) {
+	assert.Equal(t, 0, NewBowEmpty().NumRows())
+	assert.Equal(t, 0, NewBowEmpty().NumCols())
+}
+
+func TestNewBowFromColumnBasedInterface(t *testing.T) {
 	t.Run("nil colTypes", func(t *testing.T) {
-		bobow, err := NewBowFromColBasedInterfaces(
+		b, err := NewBowFromColBasedInterfaces(
 			[]string{"int", "float", "string", "bool"},
 			nil,
 			[][]interface{}{
@@ -19,6 +25,7 @@ func TestBow_NewBowFromColumnBasedInterface(t *testing.T) {
 				{false, true},
 			})
 		require.NoError(t, err)
+
 		expected, err := NewBowFromColBasedInterfaces(
 			[]string{"int", "float", "string", "bool"},
 			[]Type{Int64, Float64, String, Bool},
@@ -30,13 +37,13 @@ func TestBow_NewBowFromColumnBasedInterface(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		assert.Equal(t, bobow.String(), expected.String())
+		assert.Equal(t, b.String(), expected.String())
 	})
 }
 
 func TestBow_SortByCol(t *testing.T) {
 	t.Run("sorted", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b"},
 			[]Type{Int64, Float64, Float64},
 			[][]interface{}{
@@ -46,12 +53,14 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3.9, 13.4},
 			})
 		require.NoError(t, err)
-		sorted, err := bobow.SortByCol("time")
+
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
-		assert.EqualValues(t, bobow.String(), sorted.String())
+		assert.EqualValues(t, b.String(), sorted.String())
 	})
+
 	t.Run("simple unsorted - all types", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "i", "f", "b", "s"},
 			[]Type{Int64, Int64, Float64, Bool, String},
 			[][]interface{}{
@@ -71,12 +80,13 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3, 13.4, true, "tal"},
 			})
 		require.NoError(t, err)
-		sorted, err := bobow.SortByCol("time")
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+
 	t.Run("simple unsorted different cols", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"a", "b", "time"},
 			[]Type{Float64, Float64, Int64},
 			[][]interface{}{
@@ -96,12 +106,13 @@ func TestBow_SortByCol(t *testing.T) {
 				{3.9, 13.4, 13},
 			})
 		require.NoError(t, err)
-		sorted, err := bobow.SortByCol("time")
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+
 	t.Run("simple unsorted with nil values", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b"},
 			[]Type{Int64, Float64, Float64},
 			[][]interface{}{
@@ -121,12 +132,13 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, nil, 13.4},
 			})
 		require.NoError(t, err)
-		sorted, err := bobow.SortByCol("time")
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+
 	t.Run("sorted in desc order", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b"},
 			[]Type{Int64, Float64, Float64},
 			[][]interface{}{
@@ -146,12 +158,13 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3.9, 13.4},
 			})
 		require.NoError(t, err)
-		sorted, err := bobow.SortByCol("time")
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+
 	t.Run("duplicate values - sort by column", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b"},
 			[]Type{Int64, Float64, Float64},
 			[][]interface{}{
@@ -171,12 +184,13 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3.9, 13.4},
 			})
 		require.NoError(t, err)
-		sorted, err := bobow.SortByCol("time")
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+
 	t.Run("nil values - sort by column", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b"},
 			[]Type{Int64, Float64, Float64},
 			[][]interface{}{
@@ -196,28 +210,50 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3.9, 13.4},
 			})
 		require.NoError(t, err)
-		sorted, err := bobow.SortByCol("time")
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+
 	t.Run("no rows", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a"},
 			[]Type{Int64, Float64},
 			[][]interface{}{})
 		require.NoError(t, err)
-		expected := bobow
-		sorted, err := bobow.SortByCol("time")
+		expected := b
+		sorted, err := b.SortByCol("time")
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
+
+	t.Run("with metadata", func(t *testing.T) {
+		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 3, 2}, nil),
+			NewSeries("value", Float64, []float64{.1, .3, .2}, nil),
+		)
+		require.NoError(t, err)
+
+		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 2, 3}, nil),
+			NewSeries("value", Float64, []float64{.1, .2, .3}, nil),
+		)
+		require.NoError(t, err)
+
+		sorted, err := b.SortByCol("time")
+		assert.NoError(t, err)
+
+		assert.Equal(t, expected.String(), sorted.String())
+	})
+
 	t.Run("ERR: empty bow", func(t *testing.T) {
-		bobow := NewBowEmpty()
-		_, err := bobow.SortByCol("time")
+		b := NewBowEmpty()
+		_, err := b.SortByCol("time")
 		assert.Error(t, err)
 	})
+
 	t.Run("ERR: missing column", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"other", "a", "b"},
 			[]Type{Int64, Float64, Float64},
 			[][]interface{}{
@@ -227,11 +263,12 @@ func TestBow_SortByCol(t *testing.T) {
 				{10, 2.4, 3.1},
 			})
 		require.NoError(t, err)
-		_, err = bobow.SortByCol("time")
+		_, err = b.SortByCol("time")
 		assert.Error(t, err)
 	})
+
 	t.Run("ERR: unsupported type - sort by column", func(t *testing.T) {
-		bobow, err := NewBowFromRowBasedInterfaces(
+		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b"},
 			[]Type{Float64, Float64, Float64},
 			[][]interface{}{
@@ -241,22 +278,13 @@ func TestBow_SortByCol(t *testing.T) {
 				{10., 2.4, 3.1},
 			})
 		require.NoError(t, err)
-		_, err = bobow.SortByCol("time")
+		_, err = b.SortByCol("time")
 		assert.Error(t, err)
 	})
 }
 
-func TestBow_Empty(t *testing.T) {
-	emptyBow := NewBowEmpty()
-
-	if emptyBow.NumRows() != 0 || emptyBow.NumCols() != 0 {
-		emptyBow.Release()
-		t.Errorf("Empty Bow should not have any rows or cols")
-	}
-}
-
-func TestBow_AppendBows(t *testing.T) {
-	t.Run("no bow", func(t *testing.T) {
+func TestAppendBows(t *testing.T) {
+	t.Run("no bows", func(t *testing.T) {
 		appended, err := AppendBows()
 		assert.NoError(t, err)
 		assert.Nil(t, appended)
@@ -315,7 +343,7 @@ func TestBow_AppendBows(t *testing.T) {
 				{.2},
 			})
 		appended, err := AppendBows(b1, b2)
-		assert.EqualError(t, err, "schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - a: type=float64")
+		assert.EqualError(t, err, "bow.AppendBow: schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - a: type=float64")
 		assert.Nil(t, appended)
 	})
 
@@ -333,7 +361,7 @@ func TestBow_AppendBows(t *testing.T) {
 				{2},
 			})
 		appended, err := AppendBows(b1, b2)
-		assert.EqualError(t, err, "schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - b: type=int64")
+		assert.EqualError(t, err, "bow.AppendBow: schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - b: type=int64")
 		assert.Nil(t, appended)
 	})
 
@@ -359,6 +387,7 @@ func TestBow_AppendBows(t *testing.T) {
 				{6},
 				{.6},
 			})
+
 		appended, err := AppendBows(b1, b2, b3)
 		expected, _ := NewBowFromColBasedInterfaces(
 			[]string{"a", "b"},
@@ -371,62 +400,99 @@ func TestBow_AppendBows(t *testing.T) {
 		assert.True(t, appended.Equal(expected), fmt.Sprintf(
 			"want:\n%v\nhave:\n%v", expected, appended))
 	})
+
+	t.Run("2 bows with the same metadata", func(t *testing.T) {
+		b1, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 2}, nil),
+			NewSeries("value", Float64, []float64{.1, .2}, nil),
+		)
+		require.NoError(t, err)
+
+		b2, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{3, 4}, nil),
+			NewSeries("value", Float64, []float64{.3, .4}, nil),
+		)
+		require.NoError(t, err)
+
+		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 2, 3, 4}, nil),
+			NewSeries("value", Float64, []float64{.1, .2, .3, .4}, nil),
+		)
+		require.NoError(t, err)
+
+		appended, err := AppendBows(b1, b2)
+		assert.NoError(t, err)
+
+		assert.Equal(t, expected.String(), appended.String())
+	})
+
+	t.Run("2 bows with different metadata", func(t *testing.T) {
+		b1, err := NewBowWithMetadata(NewMetadata([]string{"k1"}, []string{"v1"}),
+			NewSeries("time", Int64, []int64{1, 2}, nil),
+			NewSeries("value", Float64, []float64{.1, .2}, nil),
+		)
+		require.NoError(t, err)
+
+		b2, err := NewBowWithMetadata(NewMetadata([]string{"k2"}, []string{"v2"}),
+			NewSeries("time", Int64, []int64{3, 4}, nil),
+			NewSeries("value", Float64, []float64{.3, .4}, nil),
+		)
+		require.NoError(t, err)
+
+		appended, err := AppendBows(b1, b2)
+		assert.Error(t, err)
+		assert.Nil(t, appended)
+	})
 }
 
-func TestBow_NewSlice(t *testing.T) {
-	origin, err := NewBowFromColBasedInterfaces(
-		[]string{"time", "value"},
-		[]Type{Int64, Float64},
-		[][]interface{}{
-			{1, 2, 3},
-			{.1, .2, .3},
-		})
-	assert.NoError(t, err)
+func TestBow_Slice(t *testing.T) {
+	origin, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+		NewSeries("time", Int64, []int64{1, 2, 3}, nil),
+		NewSeries("value", Float64, []float64{.1, .2, .3}, nil),
+	)
+	require.NoError(t, err)
 
 	// begin
-	expected, err := NewBowFromColBasedInterfaces(
-		[]string{"time", "value"},
-		[]Type{Int64, Float64},
-		[][]interface{}{
-			{1},
-			{.1},
-		})
-	assert.NoError(t, err)
-	slice := origin.Slice(0, 1)
-	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
+	expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+		NewSeries("time", Int64, []int64{1}, nil),
+		NewSeries("value", Float64, []float64{.1}, nil),
+	)
+	require.NoError(t, err)
+
+	res := origin.Slice(0, 1)
+	assert.True(t, expected.Equal(res),
+		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 
 	// end
-	expected, err = NewBowFromColBasedInterfaces(
-		[]string{"time", "value"},
-		[]Type{Int64, Float64},
-		[][]interface{}{
-			{2, 3},
-			{.2, .3},
-		})
-	assert.NoError(t, err)
-	slice = origin.Slice(1, 3)
-	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
+	expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+		NewSeries("time", Int64, []int64{2, 3}, nil),
+		NewSeries("value", Float64, []float64{.2, .3}, nil),
+	)
+	require.NoError(t, err)
+
+	res = origin.Slice(1, 3)
+	assert.True(t, expected.Equal(res),
+		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 
 	// empty on already sliced bow (recursive test)
-	expected, err = NewBowFromColBasedInterfaces(
-		[]string{"time", "value"},
-		[]Type{Int64, Float64},
-		[][]interface{}{
-			{},
-			{},
-		})
-	assert.NoError(t, err)
-	slice = slice.Slice(1, 1)
-	assert.True(t, expected.Equal(slice), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", expected, slice))
+	expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+		NewSeries("time", Int64, []int64{}, nil),
+		NewSeries("value", Float64, []float64{}, nil),
+	)
+	require.NoError(t, err)
+
+	res = res.Slice(1, 1)
+	assert.True(t, expected.Equal(res),
+		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 }
 
-func TestBow_NewBowFromColNames(t *testing.T) {
+func TestBow_Select(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		b := NewBowEmpty()
-
 		newBow, err := b.Select()
 		assert.NoError(t, err)
-		assert.True(t, b.Equal(newBow), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, b))
+		assert.True(t, b.Equal(newBow),
+			fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, b))
 	})
 
 	b, err := NewBowFromRowBasedInterfaces(
@@ -445,7 +511,8 @@ func TestBow_NewBowFromColNames(t *testing.T) {
 
 		newBow, err := b.Select()
 		assert.NoError(t, err)
-		assert.True(t, expected.Equal(newBow), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, expected))
+		assert.True(t, expected.Equal(newBow),
+			fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, expected))
 	})
 
 	t.Run("valid", func(t *testing.T) {
@@ -462,13 +529,32 @@ func TestBow_NewBowFromColNames(t *testing.T) {
 
 		newBow, err := b.Select("time", "a")
 		assert.NoError(t, err)
-		assert.True(t, expected.Equal(newBow), fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, expected))
+		assert.True(t, expected.Equal(newBow),
+			fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, expected))
 	})
 
 	t.Run("wrong colNames", func(t *testing.T) {
 		newBow, err := b.Select("time", "unknown")
 		assert.Nil(t, newBow)
 		assert.Error(t, err)
+	})
+
+	t.Run("with metadata", func(t *testing.T) {
+		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
+			NewSeries("value", Float64, []float64{1, 2, 3}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
+
+		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
+
+		res, err := b.Select("time")
+		require.NoError(t, err)
+
+		assert.Equal(t, expected.String(), res.String())
 	})
 }
 
@@ -572,5 +658,24 @@ func TestBow_DropNil(t *testing.T) {
 		assert.Nil(t, err)
 		assert.True(t, compacted.Equal(expected),
 			fmt.Sprintf("want %v\ngot %v", expected, compacted))
+	})
+
+	t.Run("with metadata", func(t *testing.T) {
+		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
+			NewSeries("value", Float64, []float64{1, 2, 3}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
+
+		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("time", Int64, []int64{1, 3}, nil),
+			NewSeries("value", Float64, []float64{1, 3}, nil),
+		)
+		require.NoError(t, err)
+
+		res, err := b.DropNil()
+		require.NoError(t, err)
+
+		assert.Equal(t, expected.String(), res.String())
 	})
 }

@@ -11,12 +11,12 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 
 **Data types handling**
 * [x] implement string, int64, float64, bool data types
-* [ ] use go gen as a paliative for the lack of generics in Go
+* [ ] use go gen as a palliative for the lack of generics in Go
 * [ ] handle all Arrow data types
 
 **Serialization**
 * [x] expose native Arrow stringer
-* [ ] implement Parquet serialization
+* [x] implement Parquet serialization
 * [ ] expose native Arrow CSV
 * [ ] expose native Arrow JSON
 * [ ] expose native Arrow IPC
@@ -27,10 +27,10 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 * [x] implement Fill methods to handle missing data
 * [x] implement InnerJoin method
 * [x] implement OuterJoin method
-* [ ] implement Select columns method
+* [x] implement Select columns method
+* [x] handle Arrow Schema metadata
 * [ ] implement Apply method
 * [ ] implement facade for all accessible features to simplify usage
-* [ ] handle Arrow Schema metadata
 * [ ] improve Bow append method in collaboration with Arrow maintainers
 
 **Go to v1**

@@ -48,8 +48,7 @@ func benchInnerJoin(rows int, typ Type, b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		joined := leftBow.InnerJoin(rightBow)
-		joined.Release()
+		leftBow.InnerJoin(rightBow)
 	}
 }
 
@@ -77,11 +76,8 @@ func benchOuterJoin(rows int, typ Type, b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		joined := leftBow.OuterJoin(rightBow)
-		joined.Release()
+		leftBow.OuterJoin(rightBow)
 	}
-	leftBow.Release()
-	rightBow.Release()
 }
 
 func BenchmarkBow_Fill(b *testing.B) {
@@ -116,13 +112,11 @@ func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
 	}
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		filled, err := data.FillPrevious()
+		_, err := data.FillPrevious()
 		if err != nil {
 			panic(err)
 		}
-		filled.Release()
 	}
-	data.Release()
 }
 
 func benchFillNext(rows, cols int, typ Type, b *testing.B) {
@@ -136,13 +130,11 @@ func benchFillNext(rows, cols int, typ Type, b *testing.B) {
 	}
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		filled, err := data.FillNext()
+		_, err := data.FillNext()
 		if err != nil {
 			panic(err)
 		}
-		filled.Release()
 	}
-	data.Release()
 }
 
 func benchFillMean(rows, cols int, typ Type, b *testing.B) {
@@ -156,13 +148,11 @@ func benchFillMean(rows, cols int, typ Type, b *testing.B) {
 	}
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		filled, err := data.FillMean()
+		_, err := data.FillMean()
 		if err != nil {
 			panic(err)
 		}
-		filled.Release()
 	}
-	data.Release()
 }
 
 func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
@@ -177,13 +167,11 @@ func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
 	}
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		filled, err := data.FillLinear("0", "1")
+		_, err := data.FillLinear("0", "1")
 		if err != nil {
 			panic(err)
 		}
-		filled.Release()
 	}
-	data.Release()
 }
 
 func BenchmarkBow_IsColSorted(b *testing.B) {
@@ -202,7 +190,6 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				for n := 0; n < b.N; n++ {
 					_ = data.IsColSorted(0)
 				}
-				data.Release()
 			})
 			b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted", rows, typ), func(b *testing.B) {
 				data, err := NewGenBow(
@@ -216,7 +203,6 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				for n := 0; n < b.N; n++ {
 					_ = data.IsColSorted(0)
 				}
-				data.Release()
 			})
 			b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted_With_Missing_Data", rows, typ), func(b *testing.B) {
 				data, err := NewGenBow(
@@ -231,7 +217,6 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				for n := 0; n < b.N; n++ {
 					_ = data.IsColSorted(0)
 				}
-				data.Release()
 			})
 		}
 	}
@@ -258,7 +243,6 @@ func BenchmarkMarshalJSON(b *testing.B) {
 					panic(err)
 				}
 			}
-			data.Release()
 		})
 	}
 }
@@ -290,7 +274,6 @@ func BenchmarkUnmarshalJSON(b *testing.B) {
 					panic(err)
 				}
 			}
-			data.Release()
 		})
 	}
 }

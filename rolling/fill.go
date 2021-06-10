@@ -3,6 +3,7 @@ package rolling
 import (
 	"errors"
 	"fmt"
+
 	"github.com/metronlab/bow"
 )
 

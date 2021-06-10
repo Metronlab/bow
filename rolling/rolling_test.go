@@ -2,9 +2,10 @@ package rolling
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/metronlab/bow"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var (

@@ -29,23 +29,23 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		curr := values[rowIndex]
 		var next int64
 		rowIndex++
-		for rowIndex < len(values) {
-			if arr.IsValid(rowIndex) {
-				next = values[rowIndex]
-				if order == orderUndefined {
-					if curr < next {
-						order = orderASC
-					} else if curr > next {
-						order = orderDESC
-					}
-				}
-				if order == orderASC && next < curr ||
-					order == orderDESC && next > curr {
-					return false
-				}
-				curr = next
+		for ; rowIndex < len(values); rowIndex++ {
+			if !arr.IsValid(rowIndex) {
+				continue
 			}
-			rowIndex++
+			next = values[rowIndex]
+			if order == orderUndefined {
+				if curr < next {
+					order = orderASC
+				} else if curr > next {
+					order = orderDESC
+				}
+			}
+			if order == orderASC && next < curr ||
+				order == orderDESC && next > curr {
+				return false
+			}
+			curr = next
 		}
 	case Float64:
 		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
@@ -56,23 +56,23 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		curr := values[rowIndex]
 		var next float64
 		rowIndex++
-		for rowIndex < len(values) {
-			if arr.IsValid(rowIndex) {
-				next = values[rowIndex]
-				if order == orderUndefined {
-					if curr < next {
-						order = orderASC
-					} else if curr > next {
-						order = orderDESC
-					}
-				}
-				if order == orderASC && next < curr ||
-					order == orderDESC && next > curr {
-					return false
-				}
-				curr = next
+		for ; rowIndex < len(values); rowIndex++ {
+			if !arr.IsValid(rowIndex) {
+				continue
 			}
-			rowIndex++
+			next = values[rowIndex]
+			if order == orderUndefined {
+				if curr < next {
+					order = orderASC
+				} else if curr > next {
+					order = orderDESC
+				}
+			}
+			if order == orderASC && next < curr ||
+				order == orderDESC && next > curr {
+				return false
+			}
+			curr = next
 		}
 	default:
 		return false

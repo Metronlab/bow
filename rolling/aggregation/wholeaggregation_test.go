@@ -2,9 +2,10 @@ package aggregation
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/metronlab/bow"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 const (
