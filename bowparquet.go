@@ -94,46 +94,47 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 		}
 
 		var ok bool
+		var vd = make([]bool, len(values))
 		switch TypeParquetToBowMap[col.GetType()] {
 		case Int64:
 			var vs = make([]int64, len(values))
 			for i, v := range values {
 				vs[i], ok = ToInt64(v)
-				if !ok {
-					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				if ok {
+					vd[i] = true
 				}
 			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], Int64, vs, nil)
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], Int64, vs, vd)
 
 		case Float64:
 			var vs = make([]float64, len(values))
 			for i, v := range values {
 				vs[i], ok = ToFloat64(v)
-				if !ok {
-					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				if ok {
+					vd[i] = true
 				}
 			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], Float64, vs, nil)
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], Float64, vs, vd)
 
 		case Bool:
 			var vs = make([]bool, len(values))
 			for i, v := range values {
 				vs[i], ok = ToBool(v)
-				if !ok {
-					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				if ok {
+					vd[i] = true
 				}
 			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], Bool, vs, nil)
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], Bool, vs, vd)
 
 		case String:
 			var vs = make([]string, len(values))
 			for i, v := range values {
 				vs[i], ok = ToString(v)
-				if !ok {
-					panic(fmt.Errorf("bow.NewBowFromParquet: error while converting values: %+v", values))
+				if ok {
+					vd[i] = true
 				}
 			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], String, vs, nil)
+			series[valueColIndex] = NewSeries(originalColNames[colIndex], String, vs, vd)
 
 		default:
 			return nil, fmt.Errorf("bow.NewBowFromParquet: unsupported type %s", col.GetType())
@@ -193,12 +194,6 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		path += ".parquet"
 	}
 
-	fw, err := local.NewLocalFileWriter(path)
-	if err != nil {
-		return fmt.Errorf("bow.WriteParquet: %w", err)
-	}
-	defer fw.Close()
-
 	var metadata []*parquet.KeyValue
 	m := b.GetMetadata()
 	values := m.Values()
@@ -213,7 +208,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		}
 
 		if key == KeyColTypeMetadata {
-			err = json.Unmarshal([]byte(values[k]), &typeMeta)
+			err := json.Unmarshal([]byte(values[k]), &typeMeta)
 			if err != nil {
 				return fmt.Errorf("bow.WriteParquet: %w", err)
 			}
@@ -246,6 +241,12 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		}
 		schemas = append(schemas, se)
 	}
+
+	fw, err := local.NewLocalFileWriter(path)
+	if err != nil {
+		return fmt.Errorf("bow.WriteParquet: %w", err)
+	}
+	defer fw.Close()
 
 	schemaTree := schematool.CreateSchemaTree(schemas)
 	pw, err := writer.NewJSONWriter(schemaTree.OutputJsonSchema(), fw, 4)
