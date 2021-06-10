@@ -60,7 +60,6 @@ func TestDiff(t *testing.T) {
 				{3, 1., true},
 			})
 		require.NoError(t, err)
-
 		calc, err := b.Diff("b")
 		assert.NoError(t, err)
 		assert.EqualValues(t, expected.String(), calc.String())
