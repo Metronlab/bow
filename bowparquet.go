@@ -36,6 +36,7 @@ type colTypeMetadata struct {
 }
 
 // NewBowFromParquet loads a parquet object from the file path, returning a new Bow
+// Only value columns are used to create the new Bow.
 // Argument verbose is used to print information about the file loaded.
 func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	fr, err := local.NewLocalFileReader(path)
