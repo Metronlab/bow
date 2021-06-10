@@ -1,10 +1,11 @@
 package bow
 
 import (
-	"errors"
+	"fmt"
+	"sort"
+
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
-	"sort"
 )
 
 func (b *bow) OuterJoin(other Bow) Bow {
@@ -14,10 +15,10 @@ func (b *bow) OuterJoin(other Bow) Bow {
 		panic("bow: non bow object passed as argument")
 	}
 
+	// Prepare new Series Slice
 	commonCols := getCommonCols(left.Schema(), right.Schema())
-
-	// Compute new columns number
-	newColNum := left.NumCols() + right.NumCols() - len(commonCols)
+	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
+	newSeries := make([]Series, newNumCols)
 
 	// Get common rows indices
 	var commonRows struct{ l, r []int }
@@ -57,411 +58,493 @@ func (b *bow) OuterJoin(other Bow) Bow {
 			}
 		}
 	}
-	newRowNum := left.NumRows() + right.NumRows()
-	newRowNum += len(commonRows.l) - uniquesLeft - uniquesRight
+	newNumRows := left.NumRows() + right.NumRows() +
+		len(commonRows.l) - uniquesLeft - uniquesRight
 
-	// Fill newSeries
-	var rightCol int
-	newSeries := make([]Series, newColNum)
-	newValid := make([]bool, newRowNum)
-	var leftRow int
-	var commonRow int
-	for col := 0; col < newColNum; col++ {
-		leftRow = 0
-		commonRow = 0
-		for i := 0; i < newRowNum; i++ {
-			newValid[i] = false
-		}
-		// Fill left bow columns
-		if col < left.NumCols() {
-			switch left.GetType(col) {
-			case Int64:
-				leftData := array.NewInt64Data(left.Column(col).Data())
-				newArray := make([]int64, newRowNum)
+	fillLeftBowColumns(&newSeries, left, right, newNumRows,
+		uniquesLeft, commonCols, commonRows)
+	fillRightBowColumns(&newSeries, left, right, newNumCols,
+		newNumRows, uniquesLeft, commonCols, commonRows)
 
-				// Fill rows from left bow
-				if left.NumRows() > 0 {
-					for newRow := 0; newRow < newRowNum; newRow++ {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-							if left.Column(col).IsValid(leftRow) {
-								newArray[newRow] = leftData.Value(leftRow)
-								newValid[newRow] = true
-							}
-							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-								newRow++
-							}
-							commonRow++
-						}
-						if leftRow++; leftRow >= left.NumRows() {
-							break
-						}
-					}
-				}
+	var keys, values []string
+	keys = append(keys, left.Schema().Metadata().Keys()...)
+	keys = append(keys, right.Schema().Metadata().Keys()...)
+	values = append(values, left.Schema().Metadata().Values()...)
+	values = append(values, right.Schema().Metadata().Values()...)
 
-				// Fill remaining rows from right bow if column is common
-				if _, isColCommon := commonCols[left.ColumnName(col)]; isColCommon {
-					rightData := array.NewInt64Data(right.Column(commonCols[left.ColumnName(col)][1]).Data())
-					newRow := left.NumRows() + len(commonRows.l) - uniquesLeft
-					for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-						var isRowCommon bool
-						for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-							if rightRow == commonRows.r[commonRow] {
-								isRowCommon = true
-								break
-							}
-						}
-						if !isRowCommon {
-							if right.Column(commonCols[left.ColumnName(col)][1]).IsValid(rightRow) {
-								newArray[newRow] = rightData.Value(rightRow)
-								newValid[newRow] = true
-							}
-							newRow++
-						}
-					}
-				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
-			case Float64:
-				leftData := array.NewFloat64Data(left.Column(col).Data())
-				newArray := make([]float64, newRowNum)
-
-				// Fill rows from left bow
-				if left.NumRows() > 0 {
-					for newRow := 0; newRow < newRowNum; newRow++ {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-							if left.Column(col).IsValid(leftRow) {
-								newArray[newRow] = leftData.Value(leftRow)
-								newValid[newRow] = true
-							}
-							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-								newRow++
-							}
-							commonRow++
-						}
-						if leftRow++; leftRow >= left.NumRows() {
-							break
-						}
-					}
-				}
-
-				// Fill remaining rows from right bow if column is common
-				if _, isColCommon := commonCols[left.ColumnName(col)]; isColCommon {
-					rightData := array.NewFloat64Data(right.Column(commonCols[left.ColumnName(col)][1]).Data())
-					newRow := left.NumRows() + len(commonRows.l) - uniquesLeft
-					for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-						var isRowCommon bool
-						for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-							if rightRow == commonRows.r[commonRow] {
-								isRowCommon = true
-								break
-							}
-						}
-						if !isRowCommon {
-							if right.Column(commonCols[left.ColumnName(col)][1]).IsValid(rightRow) {
-								newArray[newRow] = rightData.Value(rightRow)
-								newValid[newRow] = true
-							}
-							newRow++
-						}
-					}
-				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
-			case Bool:
-				leftData := array.NewBooleanData(left.Column(col).Data())
-				newArray := make([]bool, newRowNum)
-
-				// Fill rows from left bow
-				if left.NumRows() > 0 {
-					for newRow := 0; newRow < newRowNum; newRow++ {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-							if left.Column(col).IsValid(leftRow) {
-								newArray[newRow] = leftData.Value(leftRow)
-								newValid[newRow] = true
-							}
-							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-								newRow++
-							}
-							commonRow++
-						}
-						if leftRow++; leftRow >= left.NumRows() {
-							break
-						}
-					}
-				}
-
-				// Fill remaining rows from right bow if column is common
-				if _, isColCommon := commonCols[left.ColumnName(col)]; isColCommon {
-					rightData := array.NewBooleanData(right.Column(commonCols[left.ColumnName(col)][1]).Data())
-					newRow := left.NumRows() + len(commonRows.l) - uniquesLeft
-					for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-						var isRowCommon bool
-						for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-							if rightRow == commonRows.r[commonRow] {
-								isRowCommon = true
-								break
-							}
-						}
-						if !isRowCommon {
-							if right.Column(commonCols[left.ColumnName(col)][1]).IsValid(rightRow) {
-								newArray[newRow] = rightData.Value(rightRow)
-								newValid[newRow] = true
-							}
-							newRow++
-						}
-					}
-				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
-			case String:
-				leftData := array.NewStringData(left.Column(col).Data())
-				newArray := make([]string, newRowNum)
-
-				// Fill rows from left bow
-				if left.NumRows() > 0 {
-					for newRow := 0; newRow < newRowNum; newRow++ {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-							if left.Column(col).IsValid(leftRow) {
-								newArray[newRow] = leftData.Value(leftRow)
-								newValid[newRow] = true
-							}
-							if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-								newRow++
-							}
-							commonRow++
-						}
-						if leftRow++; leftRow >= left.NumRows() {
-							break
-						}
-					}
-				}
-
-				// Fill remaining rows from right bow if column is common
-				if _, isColCommon := commonCols[left.ColumnName(col)]; isColCommon {
-					rightData := array.NewStringData(right.Column(commonCols[left.ColumnName(col)][1]).Data())
-					newRow := left.NumRows() + len(commonRows.l) - uniquesLeft
-					for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-						var isRowCommon bool
-						for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-							if rightRow == commonRows.r[commonRow] {
-								isRowCommon = true
-								break
-							}
-						}
-						if !isRowCommon {
-							if right.Column(commonCols[left.ColumnName(col)][1]).IsValid(rightRow) {
-								newArray[newRow] = rightData.Value(rightRow)
-								newValid[newRow] = true
-							}
-							newRow++
-						}
-					}
-				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
-			}
-			// Fill right bow columns
-		} else {
-			for commonCols[right.ColumnName(rightCol)] != nil {
-				rightCol++
-			}
-			switch right.GetType(rightCol) {
-			case Int64:
-				rightData := array.NewInt64Data(right.Column(rightCol).Data())
-				newArray := make([]int64, newRowNum)
-
-				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
-						}
-						commonRow++
-					}
-					leftRow++
-				}
-
-				// Fill remaining rows from right bow
-				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
-				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-					var isRowCommon bool
-					for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-						if rightRow == commonRows.r[commonRow] {
-							isRowCommon = true
-							break
-						}
-					}
-					if !isRowCommon {
-						if right.Column(rightCol).IsValid(rightRow) {
-							newArray[newRow] = rightData.Value(rightRow)
-							newValid[newRow] = true
-						}
-						newRow++
-					}
-				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
-			case Float64:
-				rightData := array.NewFloat64Data(right.Column(rightCol).Data())
-				newArray := make([]float64, newRowNum)
-
-				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
-						}
-						commonRow++
-					}
-					leftRow++
-				}
-
-				// Fill remaining rows from right bow
-				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
-				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-					var isRowCommon bool
-					for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-						if rightRow == commonRows.r[commonRow] {
-							isRowCommon = true
-							break
-						}
-					}
-					if !isRowCommon {
-						if right.Column(rightCol).IsValid(rightRow) {
-							newArray[newRow] = rightData.Value(rightRow)
-							newValid[newRow] = true
-						}
-						newRow++
-					}
-				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
-			case Bool:
-				rightData := array.NewBooleanData(right.Column(rightCol).Data())
-				newArray := make([]bool, newRowNum)
-
-				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
-						}
-						commonRow++
-					}
-					leftRow++
-				}
-
-				// Fill remaining rows from right bow
-				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
-				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-					var isRowCommon bool
-					for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-						if rightRow == commonRows.r[commonRow] {
-							isRowCommon = true
-							break
-						}
-					}
-					if !isRowCommon {
-						if right.Column(rightCol).IsValid(rightRow) {
-							newArray[newRow] = rightData.Value(rightRow)
-							newValid[newRow] = true
-						}
-						newRow++
-					}
-				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
-			case String:
-				rightData := array.NewStringData(right.Column(rightCol).Data())
-				newArray := make([]string, newRowNum)
-
-				// Fill common rows from right bow
-				for newRow := 0; newRow < newRowNum; newRow++ {
-					for commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow && newRow < newRowNum {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						if commonRow+1 < len(commonRows.l) && commonRows.l[commonRow+1] == leftRow {
-							newRow++
-						}
-						commonRow++
-					}
-					leftRow++
-				}
-
-				// Fill remaining rows from right bow
-				newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
-				for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
-					var isRowCommon bool
-					for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-						if rightRow == commonRows.r[commonRow] {
-							isRowCommon = true
-							break
-						}
-					}
-					if !isRowCommon {
-						if right.Column(rightCol).IsValid(rightRow) {
-							newArray[newRow] = rightData.Value(rightRow)
-							newValid[newRow] = true
-						}
-						newRow++
-					}
-				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
-			}
-			rightCol++
-		}
-	}
-	newBow, err := NewBow(newSeries...)
+	newBow, err := NewBowWithMetadata(
+		NewMetadata(keys, values),
+		newSeries...)
 	if err != nil {
 		panic(err.Error())
 	}
+
 	return newBow
+}
+
+func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniquesLeft int,
+	commonCols map[string][]int, commonRows struct{ l, r []int }) {
+	var leftRow, commonRow int
+	var newValid = make([]bool, newNumRows)
+
+	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
+		leftRow = 0
+		commonRow = 0
+		for i := 0; i < newNumRows; i++ {
+			newValid[i] = false
+		}
+		switch left.GetType(colIndex) {
+		case Int64:
+			leftData := array.NewInt64Data(left.Column(colIndex).Data())
+			newArray := make([]int64, newNumRows)
+
+			// Fill rows from left bow
+			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
+				if left.Column(colIndex).IsValid(leftRow) {
+					newArray[newRow] = leftData.Value(leftRow)
+					newValid[newRow] = true
+				}
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow &&
+					newRow < newNumRows {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				if leftRow++; leftRow >= left.NumRows() {
+					break
+				}
+			}
+
+			// Fill remaining rows from right bow if column is common
+			_, isColCommon := commonCols[left.ColumnName(colIndex)]
+			var rightData *array.Int64
+			var newRow int
+			if isColCommon {
+				rightData = array.NewInt64Data(right.Column(commonCols[left.ColumnName(colIndex)][1]).Data())
+				newRow = left.NumRows() + len(commonRows.l) - uniquesLeft
+			}
+			for rightRow := 0; isColCommon && rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(commonCols[left.ColumnName(colIndex)][1]).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+
+			(*newSeries)[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
+		case Float64:
+			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
+			newArray := make([]float64, newNumRows)
+
+			// Fill rows from left bow
+			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
+				if left.Column(colIndex).IsValid(leftRow) {
+					newArray[newRow] = leftData.Value(leftRow)
+					newValid[newRow] = true
+				}
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow &&
+					newRow < newNumRows {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				if leftRow++; leftRow >= left.NumRows() {
+					break
+				}
+			}
+
+			// Fill remaining rows from right bow if column is common
+			_, isColCommon := commonCols[left.ColumnName(colIndex)]
+			var rightData *array.Float64
+			var newRow int
+			if isColCommon {
+				rightData = array.NewFloat64Data(right.Column(commonCols[left.ColumnName(colIndex)][1]).Data())
+				newRow = left.NumRows() + len(commonRows.l) - uniquesLeft
+			}
+			for rightRow := 0; isColCommon && rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(commonCols[left.ColumnName(colIndex)][1]).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+
+			(*newSeries)[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
+		case Bool:
+			leftData := array.NewBooleanData(left.Column(colIndex).Data())
+			newArray := make([]bool, newNumRows)
+
+			// Fill rows from left bow
+			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
+				if left.Column(colIndex).IsValid(leftRow) {
+					newArray[newRow] = leftData.Value(leftRow)
+					newValid[newRow] = true
+				}
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow &&
+					newRow < newNumRows {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				if leftRow++; leftRow >= left.NumRows() {
+					break
+				}
+			}
+
+			// Fill remaining rows from right bow if column is common
+			_, isColCommon := commonCols[left.ColumnName(colIndex)]
+			var rightData *array.Boolean
+			var newRow int
+			if isColCommon {
+				rightData = array.NewBooleanData(right.Column(commonCols[left.ColumnName(colIndex)][1]).Data())
+				newRow = left.NumRows() + len(commonRows.l) - uniquesLeft
+			}
+			for rightRow := 0; isColCommon && rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(commonCols[left.ColumnName(colIndex)][1]).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+
+			(*newSeries)[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
+		case String:
+			leftData := array.NewStringData(left.Column(colIndex).Data())
+			newArray := make([]string, newNumRows)
+
+			// Fill rows from left bow
+			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
+				if left.Column(colIndex).IsValid(leftRow) {
+					newArray[newRow] = leftData.Value(leftRow)
+					newValid[newRow] = true
+				}
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow &&
+					newRow < newNumRows {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				if leftRow++; leftRow >= left.NumRows() {
+					break
+				}
+			}
+
+			// Fill remaining rows from right bow if column is common
+			_, isColCommon := commonCols[left.ColumnName(colIndex)]
+			var rightData *array.String
+			var newRow int
+			if isColCommon {
+				rightData = array.NewStringData(right.Column(commonCols[left.ColumnName(colIndex)][1]).Data())
+				newRow = left.NumRows() + len(commonRows.l) - uniquesLeft
+			}
+			for rightRow := 0; isColCommon && rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(commonCols[left.ColumnName(colIndex)][1]).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+
+			(*newSeries)[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
+		}
+	}
+}
+
+func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
+	newNumRows, uniquesLeft int, commonCols map[string][]int,
+	commonRows struct{ l, r []int }) {
+	var leftRow, commonRow, rightCol int
+	var newValid = make([]bool, newNumRows)
+
+	for colIndex := left.NumCols(); colIndex < newNumCols; colIndex++ {
+		leftRow = 0
+		commonRow = 0
+		for i := 0; i < newNumRows; i++ {
+			newValid[i] = false
+		}
+		for commonCols[right.ColumnName(rightCol)] != nil {
+			rightCol++
+		}
+		switch right.GetType(rightCol) {
+		case Int64:
+			rightData := array.NewInt64Data(right.Column(rightCol).Data())
+			newArray := make([]int64, newNumRows)
+
+			// Fill common rows from right bow
+			for newRow := 0; newRow < newNumRows; newRow++ {
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				leftRow++
+			}
+
+			// Fill remaining rows from right bow
+			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
+			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(rightCol).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+			(*newSeries)[colIndex] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		case Float64:
+			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
+			newArray := make([]float64, newNumRows)
+
+			// Fill common rows from right bow
+			for newRow := 0; newRow < newNumRows; newRow++ {
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow &&
+					newRow < newNumRows {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				leftRow++
+			}
+
+			// Fill remaining rows from right bow
+			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
+			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(rightCol).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+			(*newSeries)[colIndex] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		case Bool:
+			rightData := array.NewBooleanData(right.Column(rightCol).Data())
+			newArray := make([]bool, newNumRows)
+
+			// Fill common rows from right bow
+			for newRow := 0; newRow < newNumRows; newRow++ {
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow &&
+					newRow < newNumRows {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				leftRow++
+			}
+
+			// Fill remaining rows from right bow
+			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
+			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(rightCol).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+			(*newSeries)[colIndex] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		case String:
+			rightData := array.NewStringData(right.Column(rightCol).Data())
+			newArray := make([]string, newNumRows)
+
+			// Fill common rows from right bow
+			for newRow := 0; newRow < newNumRows; newRow++ {
+				for commonRow < len(commonRows.l) &&
+					commonRows.l[commonRow] == leftRow &&
+					newRow < newNumRows {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				leftRow++
+			}
+
+			// Fill remaining rows from right bow
+			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
+			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
+					if rightRow == commonRows.r[commonRow] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if right.Column(rightCol).IsValid(rightRow) {
+						newArray[newRow] = rightData.Value(rightRow)
+						newValid[newRow] = true
+					}
+					newRow++
+				}
+			}
+			(*newSeries)[colIndex] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		}
+		rightCol++
+	}
 }
 
 func (b *bow) InnerJoin(other Bow) Bow {
 	left := b
 	right, ok := other.(*bow)
 	if !ok {
-		panic("bow: non bow object passed as argument")
+		panic("bow.InnerJoin: non bow object passed as argument")
 	}
 
-	if left.NumRows() <= 0 && right.NumRows() <= 0 {
-		return &bow{}
-	}
-	if left.NumRows() > 0 && right.NumRows() <= 0 {
-		return left
-	}
-	if left.NumRows() <= 0 && right.NumRows() > 0 {
-		return right
+	if left.NumCols() == 0 && right.NumCols() == 0 {
+		return left.Slice(0, 0)
 	}
 
+	if left.NumCols() > 0 && right.NumCols() == 0 {
+		return left.Slice(0, 0)
+	}
+
+	if left.NumCols() == 0 && right.NumCols() > 0 {
+		return right.Slice(0, 0)
+	}
+
+	// Prepare new Series Slice
 	commonCols := getCommonCols(left.Schema(), right.Schema())
-
-	// Compute new columns number
-	newColNum := left.NumCols() + right.NumCols() - len(commonCols)
+	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
+	newSeries := make([]Series, newNumCols)
 
 	// Get common rows indexes
 	var commonRows struct{ l, r []int }
@@ -469,7 +552,6 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 			isCommon := true
 			for _, commonCol := range commonCols {
-				// TODO: improve performance by replacing GetValue by accessing array.Data values directly
 				if left.GetValue(commonCol[0], leftRow) != right.GetValue(commonCol[1], rightRow) {
 					isCommon = false
 					continue
@@ -481,173 +563,220 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 		}
 	}
-	newRowNum := len(commonRows.l)
+	newNumRows := len(commonRows.l)
 
-	// Fill newSeries
+	var newValid = make([]bool, newNumRows)
 	var rightCol, leftRow, commonRow, newRow int
-	newValid := make([]bool, newRowNum)
-	newSeries := make([]Series, newColNum)
-	for col := 0; col < newColNum; col++ {
-		commonRow = 0
+
+	// Fill left bow columns
+	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		newRow = 0
-		for i := 0; i < newRowNum; i++ {
+		commonRow = 0
+		for i := 0; i < newNumRows; i++ {
 			newValid[i] = false
 		}
-		// Fill left bow columns
-		if col < left.NumCols() {
-			switch left.GetType(col) {
-			case Int64:
-				leftData := array.NewInt64Data(left.Column(col).Data())
-				newArray := make([]int64, newRowNum)
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
+		switch left.GetType(colIndex) {
+		case Int64:
+			leftData := array.NewInt64Data(left.Column(colIndex).Data())
+			newArray := make([]int64, newNumRows)
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
 					}
+					newRow++
+					commonRow++
 				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
-			case Float64:
-				leftData := array.NewFloat64Data(left.Column(col).Data())
-				newArray := make([]float64, newRowNum)
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
-					}
-				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
-			case Bool:
-				leftData := array.NewBooleanData(left.Column(col).Data())
-				newArray := make([]bool, newRowNum)
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
-					}
-				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
-			case String:
-				leftData := array.NewStringData(left.Column(col).Data())
-				newArray := make([]string, newRowNum)
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if left.Column(col).IsValid(leftRow) {
-							newArray[newRow] = leftData.Value(leftRow)
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
-					}
-				}
-				newSeries[col] = NewSeries(left.ColumnName(col), left.GetType(col), newArray, newValid)
 			}
-			// Fill right bow columns
-		} else {
-			for commonCols[right.ColumnName(rightCol)] != nil {
-				rightCol++
+			newSeries[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
+		case Float64:
+			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
+			newArray := make([]float64, newNumRows)
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
+					}
+					newRow++
+					commonRow++
+				}
 			}
-			switch right.GetType(rightCol) {
-			case Int64:
-				rightData := array.NewInt64Data(right.Column(rightCol).Data())
-				newArray := make([]int64, newRowNum)
-				// Fill common rows from right bow
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
+			newSeries[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
+		case Bool:
+			leftData := array.NewBooleanData(left.Column(colIndex).Data())
+			newArray := make([]bool, newNumRows)
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
 					}
+					newRow++
+					commonRow++
 				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
-			case Float64:
-				rightData := array.NewFloat64Data(right.Column(rightCol).Data())
-				newArray := make([]float64, newRowNum)
-				// Fill common rows from right bow
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
-					}
-				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
-			case Bool:
-				rightData := array.NewBooleanData(right.Column(rightCol).Data())
-				newArray := make([]bool, newRowNum)
-				// Fill common rows from right bow
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
-					}
-				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
-			case String:
-				rightData := array.NewStringData(right.Column(rightCol).Data())
-				newArray := make([]string, newRowNum)
-				// Fill common rows from right bow
-				for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
-					if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
-						if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-							newArray[newRow] = rightData.Value(commonRows.r[commonRow])
-							newValid[newRow] = true
-						}
-						newRow++
-						commonRow++
-					}
-				}
-				newSeries[col] = NewSeries(right.ColumnName(rightCol), right.GetType(rightCol), newArray, newValid)
 			}
-			rightCol++
+			newSeries[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
+		case String:
+			leftData := array.NewStringData(left.Column(colIndex).Data())
+			newArray := make([]string, newNumRows)
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if left.Column(colIndex).IsValid(leftRow) {
+						newArray[newRow] = leftData.Value(leftRow)
+						newValid[newRow] = true
+					}
+					newRow++
+					commonRow++
+				}
+			}
+			newSeries[colIndex] = NewSeries(
+				left.ColumnName(colIndex),
+				left.GetType(colIndex),
+				newArray, newValid)
 		}
 	}
-	newBow, err := NewBow(newSeries...)
+
+	// Fill right bow columns
+	for col := left.NumCols(); col < newNumCols; col++ {
+		newRow = 0
+		commonRow = 0
+		for i := 0; i < newNumRows; i++ {
+			newValid[i] = false
+		}
+		for commonCols[right.ColumnName(rightCol)] != nil {
+			rightCol++
+		}
+		switch right.GetType(rightCol) {
+		case Int64:
+			rightData := array.NewInt64Data(right.Column(rightCol).Data())
+			newArray := make([]int64, newNumRows)
+			// Fill common rows from right bow
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					newRow++
+					commonRow++
+				}
+			}
+			newSeries[col] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		case Float64:
+			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
+			newArray := make([]float64, newNumRows)
+			// Fill common rows from right bow
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					newRow++
+					commonRow++
+				}
+			}
+			newSeries[col] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		case Bool:
+			rightData := array.NewBooleanData(right.Column(rightCol).Data())
+			newArray := make([]bool, newNumRows)
+			// Fill common rows from right bow
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					newRow++
+					commonRow++
+				}
+			}
+			newSeries[col] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		case String:
+			rightData := array.NewStringData(right.Column(rightCol).Data())
+			newArray := make([]string, newNumRows)
+			// Fill common rows from right bow
+			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
+				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
+					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
+						newArray[newRow] = rightData.Value(commonRows.r[commonRow])
+						newValid[newRow] = true
+					}
+					newRow++
+					commonRow++
+				}
+			}
+			newSeries[col] = NewSeries(
+				right.ColumnName(rightCol),
+				right.GetType(rightCol),
+				newArray, newValid)
+		}
+		rightCol++
+	}
+
+	// Join Metadata
+	var keys, values []string
+	keys = append(keys, left.Schema().Metadata().Keys()...)
+	keys = append(keys, right.Schema().Metadata().Keys()...)
+	values = append(values, left.Schema().Metadata().Values()...)
+	values = append(values, right.Schema().Metadata().Values()...)
+
+	newBow, err := NewBowWithMetadata(
+		NewMetadata(keys, values),
+		newSeries...)
 	if err != nil {
 		panic(err.Error())
 	}
+
 	return newBow
 }
 
-// getCommonCols return in key column names and corresponding indexes on l / r
+// getCommonCols returns in key column names and corresponding indexes on left / right schemas
 // TODO: improve behavior of multiple column with same name
-func getCommonCols(l, r *arrow.Schema) map[string][]int {
+func getCommonCols(left, right *arrow.Schema) map[string][]int {
 	commonCols := make(map[string][]int)
-	for _, lField := range l.Fields() {
-		rFields, commonCol := r.FieldsByName(lField.Name)
-		if commonCol {
-			if len(rFields) > 1 {
-				panic("too many columns carry the same name")
-			}
-			rField := rFields[0]
-			if rField.Type.ID() != lField.Type.ID() {
-				panic(errors.New("bow: left and right bow on join columns are of incompatible types: " + lField.Name))
-			}
-
-			commonCols[lField.Name] = append(commonCols[lField.Name], l.FieldIndices(lField.Name)[0])
-			commonCols[lField.Name] = append(commonCols[lField.Name], r.FieldIndices(lField.Name)[0])
+	for _, lField := range left.Fields() {
+		rFields, commonCol := right.FieldsByName(lField.Name)
+		if !commonCol {
+			continue
 		}
+
+		if len(rFields) > 1 {
+			panic(fmt.Errorf(
+				"bow Join: too many columns have the same name: right:%+v left:%+v",
+				right.String(), left.String()))
+		}
+
+		rField := rFields[0]
+		if rField.Type.ID() != lField.Type.ID() {
+			panic(fmt.Errorf(
+				"bow Join: left and right bow on join columns are of incompatible types: %s",
+				lField.Name))
+		}
+
+		commonCols[lField.Name] = append(commonCols[lField.Name], left.FieldIndices(lField.Name)[0])
+		commonCols[lField.Name] = append(commonCols[lField.Name], right.FieldIndices(lField.Name)[0])
 	}
+
 	return commonCols
 }

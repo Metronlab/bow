@@ -3,11 +3,12 @@ package bow
 import (
 	crand "crypto/rand"
 	"fmt"
+	"math/big"
+	"strconv"
+
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
 	"github.com/google/uuid"
-	"math/big"
-	"strconv"
 )
 
 type genBowOptions struct {
@@ -86,23 +87,23 @@ func NewGenBow(options ...Option) (Bow, error) {
 		option(f)
 	}
 
-	if len(f.dataTypes) > 0 {
-		if f.dataType != Unknown {
-			return nil, fmt.Errorf("NewGenBow: either GenDataType or GenDataTypes must be set")
-		} else if len(f.dataTypes) != f.cols {
-			return nil, fmt.Errorf("NewGenBow: GenDataTypes array length must be equal to GenCols")
-		}
-	} else {
-		if f.dataType == Unknown {
-			f.dataType = Int64
-		}
+	if len(f.dataTypes) > 0 && f.dataType != Unknown {
+		return nil, fmt.Errorf("bow.NewGenBow: either GenDataType or GenDataTypes must be set")
+	}
+	if len(f.dataTypes) > 0 && len(f.dataTypes) != f.cols {
+		return nil, fmt.Errorf("bow.NewGenBow: GenDataTypes array length must be equal to GenCols")
+	}
+	if len(f.dataTypes) == 0 && f.dataType == Unknown {
+		f.dataType = Int64
+	}
+	if len(f.dataTypes) == 0 {
 		for i := 0; i < f.cols; i++ {
 			f.dataTypes = append(f.dataTypes, f.dataType)
 		}
 	}
 
 	if len(f.colNames) > 0 && len(f.colNames) != f.cols {
-		return nil, fmt.Errorf("NewGenBow: GenColNames array length must be equal to GenCols")
+		return nil, fmt.Errorf("bow.NewGenBow: GenColNames array length must be equal to GenCols")
 	} else if len(f.colNames) == 0 {
 		for i := 0; i < f.cols; i++ {
 			f.colNames = append(f.colNames, strconv.Itoa(i))
@@ -110,10 +111,10 @@ func NewGenBow(options ...Option) (Bow, error) {
 	}
 
 	if f.refCol > f.cols-1 {
-		return nil, fmt.Errorf("NewGenBow: GenRefCol is out of range")
+		return nil, fmt.Errorf("bow.NewGenBow: GenRefCol is out of range")
 	}
 	if f.refCol > -1 && f.dataTypes[f.refCol] == Bool {
-		return nil, fmt.Errorf("NewGenBow: GenRefCol cannot be of type Bool")
+		return nil, fmt.Errorf("bow.NewGenBow: GenRefCol cannot be of type Bool")
 	}
 
 	series := make([]Series, f.cols)
@@ -124,6 +125,7 @@ func NewGenBow(options ...Option) (Bow, error) {
 			series[i] = newRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.missingData)
 		}
 	}
+
 	return NewBow(series...)
 }
 

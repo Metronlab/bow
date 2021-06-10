@@ -1,4 +1,8 @@
-all: count fix-fmt check test
+#user overridable variables
+PKG=./...
+RUN=".*"
+
+all: lint count test
 
 install: ## install dependencies
 	@go get golang.org/x/lint/golint \
@@ -8,13 +12,13 @@ install: ## install dependencies
 		github.com/jstemmer/go-junit-report
 
 test: ## Run unit tests
-	@bash -c $(PWD)/scripts/test.sh
+	@RUN=$(RUN) \
+		PKG=$(PKG) \
+		bash -c $(PWD)/scripts/test.sh
 
-fix-fmt: ## use fmt -w
-	@bash -c $(PWD)/scripts/fix-fmt.sh
-
-check: ## check code syntax
-	@bash -c $(PWD)/scripts/code-checks.sh
+lint:
+	go fmt ${PKG}
+	golangci-lint run -v ${PKG}
 
 bench: ## run benchmarks
 	@bash -c $(PWD)/scripts/benchmark.sh

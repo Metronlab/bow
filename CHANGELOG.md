@@ -1,3 +1,10 @@
+v0.12.0 [2021-06-10]
+-------------------
+
+- Apache Parquet file read/write support
+- Add Schema Metadata support
+- Add golangci-lint usage
+
 v0.11.0 [2021-05-17]
 -------------------
 

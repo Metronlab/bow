@@ -2,11 +2,12 @@ package fill
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestLinear(t *testing.T) {

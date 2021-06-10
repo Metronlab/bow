@@ -69,5 +69,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBow(calcSeries...)
+	return NewBowWithMetadata(
+		Metadata{b.Schema().Metadata()},
+		calcSeries...)
 }

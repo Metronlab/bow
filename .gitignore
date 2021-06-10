@@ -31,4 +31,6 @@ mocks
 # GENERAL PURPOSE
 vendor
 
-/benchmarkResults.*.txt
+benchmarkResults.*.txt
+
+bowparquet_test_output*

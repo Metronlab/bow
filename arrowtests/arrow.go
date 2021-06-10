@@ -59,7 +59,7 @@ func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	qualityIndex := table.Schema().FieldIndices("quality")[0]
 
 	// TableReader is able to iter on a table grouping by indexes,
-	// marvellous to do calculation in parallel
+	// marvelous to do calculation in parallel
 	// Underutilized in this case, for a naive implementation iteration is done 1 by 1
 	tr := array.NewTableReader(table, 1)
 	defer tr.Release()
