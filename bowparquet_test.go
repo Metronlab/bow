@@ -1,6 +1,7 @@
 package bow
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -74,5 +75,64 @@ func TestParquet(t *testing.T) {
 
 		err := bBefore.WriteParquet(testOutputFileName+"_empty", false)
 		assert.Errorf(t, err, "bow.WriteParquet: no columns")
+	})
+
+	t.Run("bow with context and col_types metadata", func(t *testing.T) {
+		var series = make([]Series, 2)
+
+		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
+		series[1] = NewSeries("value", Float64, []float64{0.}, []bool{true})
+
+		var keys, values []string
+		type Unit struct {
+			Symbol string `json:"symbol"`
+		}
+		type Meta struct {
+			Unit Unit `json:"unit"`
+		}
+		type Context map[string]Meta
+
+		var context = Context{
+			"time":  Meta{Unit{Symbol: "microseconds"}},
+			"value": Meta{Unit{Symbol: "kWh"}},
+		}
+
+		contextJSON, err := json.Marshal(context)
+		assert.NoError(t, err)
+
+		keys = append(keys, "context")
+		values = append(values, string(contextJSON))
+
+		bBefore, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
+			series...)
+		assert.NoError(t, err)
+
+		err = bBefore.WriteParquet(testOutputFileName+"_meta", false)
+		assert.NoError(t, err)
+
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", false)
+		assert.NoError(t, err)
+
+		assert.Equal(t, bBefore.String(), bAfter.String())
+
+		require.NoError(t, os.Remove(testOutputFileName+"_meta.parquet"))
+	})
+
+	t.Run("bow with wrong col_types metadata", func(t *testing.T) {
+		var series = make([]Series, 2)
+
+		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
+		series[1] = NewSeries("value", Float64, []float64{0.}, []bool{true})
+
+		var keys, values []string
+
+		bBefore, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampMicrosCols(keys, values, "unknown"),
+			series...)
+		assert.NoError(t, err)
+
+		err = bBefore.WriteParquet(testOutputFileName+"_wrong", false)
+		assert.Error(t, err)
 	})
 }
