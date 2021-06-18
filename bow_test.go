@@ -679,3 +679,72 @@ func TestBow_DropNil(t *testing.T) {
 		assert.Equal(t, expected.String(), res.String())
 	})
 }
+
+func TestAddCols(t *testing.T) {
+	bow1, err := NewBowFromRowBasedInterfaces(
+		[]string{"time", "a", "b"},
+		[]Type{Int64, Float64, Float64},
+		[][]interface{}{
+			{1, 1.1, 2.1},
+			{2, 1.2, 2.2},
+			{3, 1.3, 2.3},
+			{4, 1.4, 2.4},
+		})
+	require.NoError(t, err)
+	serieC := NewSeries("c", Int64, []int64{1, 2, 3, 4}, nil)
+	serieD := NewSeries("d", String, []string{"one", "two", "three", "four"}, nil)
+	serieE := NewSeries("e", Bool, []bool{true, false, true, false}, nil)
+
+	t.Run("empty", func(t *testing.T) {
+		b := NewBowEmpty()
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"c", "d"},
+			[]Type{Int64, String},
+			[][]interface{}{
+				{1, "one"},
+				{2, "two"},
+				{3, "three"},
+				{4, "four"},
+			})
+		require.NoError(t, err)
+
+		newBow, err := b.AddCols(serieC, serieD)
+		require.NoError(t, err)
+		assert.True(t, newBow.Equal(expected), "expected: %q have: %q", expected, newBow)
+	})
+
+	t.Run("valid series", func(t *testing.T) {
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"time", "a", "b", "c", "d", "e"},
+			[]Type{Int64, Float64, Float64, Int64, String, Bool},
+			[][]interface{}{
+				{1, 1.1, 2.1, 1, "one", true},
+				{2, 1.2, 2.2, 2, "two", false},
+				{3, 1.3, 2.3, 3, "three", true},
+				{4, 1.4, 2.4, 4, "four", false},
+			})
+		require.NoError(t, err)
+
+		newBow, err := bow1.AddCols(serieC, serieD, serieE)
+		require.NoError(t, err)
+		assert.True(t, newBow.Equal(expected), "expected: %q have: %q", expected, newBow)
+	})
+
+	t.Run("column name already exists", func(t *testing.T) {
+		_, err := bow1.AddCols(NewSeries("a", Int64, []int64{1, 2, 3, 4}, nil))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "already exists")
+	})
+
+	t.Run("duplicate column name", func(t *testing.T) {
+		_, err := bow1.AddCols(serieC, serieC)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "already exists")
+	})
+
+	t.Run("no series", func(t *testing.T) {
+		newBow, err := bow1.AddCols()
+		require.NoError(t, err)
+		assert.True(t, newBow.Equal(bow1), "expected: %q have: %q", bow1, newBow)
+	})
+}

@@ -88,6 +88,8 @@ type Bow interface {
 	IsColEmpty(colIndex int) bool
 	IsColSorted(colIndex int) bool
 	IsEmpty() bool
+
+	AddCols(series ...Series) (Bow, error)
 }
 
 type bow struct {
@@ -392,4 +394,33 @@ func (b *bow) NumCols() int {
 	}
 
 	return int(b.Record.NumCols())
+}
+
+func (b *bow) AddCols(series ...Series) (Bow, error) {
+	seriesNbr := len(series)
+	if seriesNbr == 0 {
+		return b, nil
+	}
+
+	bowNumCols := b.NumCols()
+	addedColNames := make(map[string]*interface{}, bowNumCols+seriesNbr)
+	newSeries := make([]Series, bowNumCols+seriesNbr)
+
+	for colIndex, col := range b.Schema().Fields() {
+		newSeries[colIndex] = Series{
+			Name:  col.Name,
+			Array: b.Record.Column(colIndex),
+		}
+		addedColNames[col.Name] = nil
+	}
+
+	for i, s := range series {
+		_, ok := addedColNames[s.Name]
+		if ok {
+			return nil, fmt.Errorf("column %q already exists", s.Name)
+		}
+		newSeries[bowNumCols+i] = s
+		addedColNames[s.Name] = nil
+	}
+	return NewBow(newSeries...)
 }
