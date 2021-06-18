@@ -422,5 +422,5 @@ func (b *bow) AddCols(series ...Series) (Bow, error) {
 		newSeries[bowNumCols+i] = s
 		addedColNames[s.Name] = nil
 	}
-	return NewBow(newSeries...)
+	return NewBowWithMetadata(b.GetMetadata(), newSeries...)
 }

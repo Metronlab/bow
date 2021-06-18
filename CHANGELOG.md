@@ -1,4 +1,4 @@
-v0.12.2 [2021-06-17]
+v0.13.0 [2021-06-17]
 -------------------
 
 - Adding `AddCols` method to `Bow`'s interface
