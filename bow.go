@@ -399,7 +399,7 @@ func (b *bow) NumCols() int {
 func (b *bow) AddCols(series ...Series) (Bow, error) {
 	bowNumCols := b.NumCols()
 	seriesNbr := len(series)
-	addedColNames := make(map[string]*interface{}, seriesNbr)
+	addedColNames := make(map[string]*interface{}, bowNumCols+seriesNbr)
 	newSeries := make([]Series, bowNumCols+seriesNbr)
 
 	for colIndex, col := range b.Schema().Fields() {
