@@ -397,8 +397,12 @@ func (b *bow) NumCols() int {
 }
 
 func (b *bow) AddCols(series ...Series) (Bow, error) {
-	bowNumCols := b.NumCols()
 	seriesNbr := len(series)
+	if seriesNbr == 0 {
+		return b, nil
+	}
+
+	bowNumCols := b.NumCols()
 	addedColNames := make(map[string]*interface{}, bowNumCols+seriesNbr)
 	newSeries := make([]Series, bowNumCols+seriesNbr)
 

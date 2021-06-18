@@ -741,4 +741,10 @@ func TestAddCols(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "already exists")
 	})
+
+	t.Run("no series", func(t *testing.T) {
+		newBow, err := bow1.AddCols()
+		require.NoError(t, err)
+		assert.True(t, newBow.Equal(bow1), "expected: %q have: %q", bow1, newBow)
+	})
 }
