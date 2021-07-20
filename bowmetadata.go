@@ -30,17 +30,33 @@ func (b *bow) GetMetadata() Metadata {
 		b.Schema().Metadata().Values())
 }
 
-func (b *bow) SetMetadata(key, value []string) Bow {
+func (b *bow) SetMetadata(key, value string) Bow {
 	metadata := b.GetMetadata()
 	metadata = metadata.Set(key, value)
 	return &bow{Record: array.NewRecord(
-		arrow.NewSchema(b.Schema().Fields(),
-			&metadata.Metadata),
+		arrow.NewSchema(b.Schema().Fields(), &metadata.Metadata),
 		b.Record.Columns(),
 		b.Record.NumCols())}
 }
 
-func (md *Metadata) Set(keys, values []string) Metadata {
+func (md *Metadata) Set(key, value string) Metadata {
+	if key == "" {
+		return *md
+	}
+
+	srcKeys := md.Keys()
+	srcValues := md.Values()
+	srcKeyIdx := md.FindKey(key)
+	if srcKeyIdx == -1 {
+		srcKeys = append(srcKeys, key)
+		srcValues = append(srcValues, value)
+	} else {
+		srcValues[srcKeyIdx] = value
+	}
+	return Metadata{arrow.NewMetadata(srcKeys, srcValues)}
+}
+
+func (md *Metadata) SetMany(keys, values []string) Metadata {
 	if len(keys) != len(values) {
 		panic("metadata len mismatch")
 	}

@@ -45,7 +45,7 @@ type Bow interface {
 	FindFirst(colIndex int, value interface{}) (rowIndex int)
 
 	GetMetadata() Metadata
-	SetMetadata(key, value []string) Bow
+	SetMetadata(key, value string) Bow
 
 	// Setters
 	SetColName(colIndex int, newName string) (Bow, error)
