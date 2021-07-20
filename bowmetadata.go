@@ -28,3 +28,25 @@ func (b *bow) GetMetadata() Metadata {
 		b.Schema().Metadata().Keys(),
 		b.Schema().Metadata().Values())
 }
+
+func (md *Metadata) Set(keys, values []string) Metadata {
+	if len(keys) != len(values) {
+		panic("metadata len mismatch")
+	}
+	if len(keys) == 0 {
+		return *md
+	}
+
+	srcKeys := md.Keys()
+	srcValues := md.Values()
+	for i, key := range keys {
+		srcKeyIdx := md.FindKey(key)
+		if srcKeyIdx == -1 {
+			srcKeys = append(srcKeys, key)
+			srcValues = append(srcValues, values[i])
+		} else {
+			srcValues[srcKeyIdx] = values[i]
+		}
+	}
+	return Metadata{arrow.NewMetadata(srcKeys, srcValues)}
+}
