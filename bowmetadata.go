@@ -40,10 +40,6 @@ func (b *bow) SetMetadata(key, value string) Bow {
 }
 
 func (md *Metadata) Set(key, value string) Metadata {
-	if key == "" {
-		return *md
-	}
-
 	srcKeys := md.Keys()
 	srcValues := md.Values()
 	srcKeyIdx := md.FindKey(key)
