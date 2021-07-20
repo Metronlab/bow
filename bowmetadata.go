@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
 )
 
 type Metadata struct {
@@ -27,6 +28,16 @@ func (b *bow) GetMetadata() Metadata {
 	return NewMetadata(
 		b.Schema().Metadata().Keys(),
 		b.Schema().Metadata().Values())
+}
+
+func (b *bow) SetMetadata(key, value []string) Bow {
+	metadata := b.GetMetadata()
+	metadata = metadata.Set(key, value)
+	return &bow{Record: array.NewRecord(
+		arrow.NewSchema(b.Schema().Fields(),
+			&metadata.Metadata),
+		b.Record.Columns(),
+		b.Record.NumCols())}
 }
 
 func (md *Metadata) Set(keys, values []string) Metadata {

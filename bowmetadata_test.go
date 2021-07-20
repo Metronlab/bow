@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSetMetadata(t *testing.T) {
+func TestMetadataSet(t *testing.T) {
 	t.Run("single set on existing key", func(t *testing.T) {
 		metadata := NewMetadata([]string{"testKey"}, []string{"testValue"})
 		expected := NewMetadata([]string{"testKey"}, []string{"updatedValue"})
