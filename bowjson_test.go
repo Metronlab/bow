@@ -120,3 +120,59 @@ func TestJSON(t *testing.T) {
 		})
 	})
 }
+
+func BenchmarkBow_MarshalJSON(b *testing.B) {
+	for rows := 10; rows <= 1000000; rows *= 50 {
+		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
+			data, err := NewGenBow(
+				GenRows(rows),
+				GenCols(4),
+				GenDataTypes([]Type{Int64, Float64, String, Bool}),
+				GenMissingData(true),
+				GenRefCol(0, false),
+				GenColNames([]string{"int64", "float64", "bool", "string"}))
+			if err != nil {
+				panic(err)
+			}
+
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_, err := data.MarshalJSON()
+				if err != nil {
+					panic(err)
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkBow_UnmarshalJSON(b *testing.B) {
+	for rows := 10; rows <= 1000000; rows *= 50 {
+		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
+			data, err := NewGenBow(
+				GenRows(rows),
+				GenCols(4),
+				GenDataTypes([]Type{Int64, Float64, String, Bool}),
+				GenMissingData(true),
+				GenRefCol(0, false),
+				GenColNames([]string{"int64", "float64", "bool", "string"}))
+			if err != nil {
+				panic(err)
+			}
+
+			var j []byte
+
+			j, err = data.MarshalJSON()
+			if err != nil {
+				panic(err)
+			}
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				err := NewBowEmpty().UnmarshalJSON(j)
+				if err != nil {
+					panic(err)
+				}
+			}
+		})
+	}
+}

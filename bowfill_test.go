@@ -1,6 +1,7 @@
 package bow
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -467,4 +468,96 @@ func TestFill(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expected.String(), res.String())
 	})
+}
+
+func BenchmarkBow_Fill(b *testing.B) {
+	for cols := 2; cols <= 32; cols *= 8 {
+		for rows := 10; rows <= 1000000; rows *= 100 {
+			b.Run(fmt.Sprintf("%dx%d_%v_Previous", rows, cols, Float64), func(b *testing.B) {
+				benchFillPrevious(rows, cols, Float64, b)
+			})
+			b.Run(fmt.Sprintf("%dx%d_%v_Next", rows, cols, Float64), func(b *testing.B) {
+				benchFillNext(rows, cols, Float64, b)
+			})
+			b.Run(fmt.Sprintf("%dx%d_%v_Mean", rows, cols, Float64), func(b *testing.B) {
+				benchFillMean(rows, cols, Float64, b)
+			})
+			b.Run(fmt.Sprintf("%dx%d_%v_Linear", rows, cols, Float64), func(b *testing.B) {
+				benchFillLinear(rows, cols, Float64, b)
+			})
+		}
+	}
+}
+
+func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, err := data.FillPrevious()
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func benchFillNext(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, err := data.FillNext()
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func benchFillMean(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, err := data.FillMean()
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
+	data, err := NewGenBow(
+		GenRows(rows),
+		GenCols(cols),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false))
+	if err != nil {
+		panic(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, err := data.FillLinear("0", "1")
+		if err != nil {
+			panic(err)
+		}
+	}
 }

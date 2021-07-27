@@ -1,6 +1,7 @@
 package bow
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -574,4 +575,73 @@ func TestInnerJoin(t *testing.T) {
 		result := b1.InnerJoin(b2)
 		assert.EqualValues(t, expected.String(), result.String())
 	})
+}
+
+func BenchmarkBow_Join(b *testing.B) {
+	for rows := 10; rows <= 4000; rows *= 20 {
+		b.Run(fmt.Sprintf("%dx%d_%v_Inner", rows, 2, Float64), func(b *testing.B) {
+			benchInnerJoin(rows, Float64, b)
+		})
+		b.Run(fmt.Sprintf("%dx%d_%v_Outer", rows, 2, Float64), func(b *testing.B) {
+			benchOuterJoin(rows, Float64, b)
+		})
+	}
+}
+
+func benchInnerJoin(rows int, typ Type, b *testing.B) {
+	leftBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "B"}))
+	if err != nil {
+		panic(err)
+	}
+
+	rightBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "C"}))
+	if err != nil {
+		panic(err)
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		leftBow.InnerJoin(rightBow)
+	}
+}
+
+func benchOuterJoin(rows int, typ Type, b *testing.B) {
+	leftBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "B"}))
+	if err != nil {
+		panic(err)
+	}
+
+	rightBow, err := NewGenBow(
+		GenRows(rows),
+		GenCols(2),
+		GenDataType(typ),
+		GenMissingData(true),
+		GenRefCol(0, false),
+		GenColNames([]string{"A", "C"}))
+	if err != nil {
+		panic(err)
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		leftBow.OuterJoin(rightBow)
+	}
 }
