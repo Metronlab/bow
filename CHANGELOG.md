@@ -1,3 +1,11 @@
+v0.15.0 [2021-07-28]
+-------------------
+- Benchmarks and Profiling:
+  - Moved benchmarks closer to functions
+  - Simplified and faster benchmarks
+  - Added AppendBows and NewBufferFromInterfaces benchmarks
+  - Added Makefile rules for tests and benchmarks profiling
+
 v0.14.0 [2021-07-20]
 -------------------
 
