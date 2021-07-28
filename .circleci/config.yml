@@ -13,7 +13,9 @@ jobs:
 
       - run:
           name: TESTS
-          command: bash -c ./scripts/test.sh
+          command: |
+            go get github.com/jstemmer/go-junit-report
+            bash -c ./scripts/test.sh
 
       - run:
           name: BENCHMARKS
