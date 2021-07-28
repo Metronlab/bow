@@ -9,7 +9,6 @@
 # Test binary, build with `go test -c`
 *.test
 mocks
-*.prof
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
@@ -22,7 +21,7 @@ mocks
 .idea/*
 .vscode
 
-# mac files generate
+# Apple Desktop Services Store
 .DS_Store
 
 # Ansible
@@ -30,7 +29,3 @@ mocks
 
 # GENERAL PURPOSE
 vendor
-
-benchmarkResults.*.txt
-
-bowparquet_test_output*

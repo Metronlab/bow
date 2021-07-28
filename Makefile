@@ -5,11 +5,7 @@ RUN=".*"
 all: lint count test
 
 install:
-	@go get golang.org/x/lint/golint \
-		honnef.co/go/tools/cmd/staticcheck \
-		github.com/client9/misspell/cmd/misspell \
-		golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow \
-		golang.org/x/perf/cmd/benchstat \
+	@go get golang.org/x/perf/cmd/benchstat \
 		github.com/jstemmer/go-junit-report
 
 lint:
@@ -20,9 +16,7 @@ count:
 	@bash -c $(PWD)/scripts/count-code-lines.sh
 
 test:
-	@RUN=$(RUN) \
-		PKG=$(PKG) \
-		bash -c $(PWD)/scripts/test.sh
+	@RUN=$(RUN) PKG=$(PKG) bash -c $(PWD)/scripts/test.sh
 
 bench:
 	@bash -c $(PWD)/scripts/benchmark.sh

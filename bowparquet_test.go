@@ -11,7 +11,7 @@ import (
 
 const (
 	testInputFileName  = "bowparquet_test_input.parquet"
-	testOutputFileName = "bowparquet_test_output"
+	testOutputFileName = "/tmp/bowparquet_test_output"
 )
 
 func TestParquet(t *testing.T) {
