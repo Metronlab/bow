@@ -19,7 +19,9 @@ jobs:
 
       - run:
           name: BENCHMARKS
-          command: bash -c ./scripts/benchmark.sh
+          command: |
+            go get golang.org/x/perf/cmd/benchstat
+            bash -c ./scripts/benchmark.sh
 
       - store_artifacts:
           path: /tmp/benchmarks
