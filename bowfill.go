@@ -10,25 +10,15 @@ import (
 // to the reference column refColName, which has to be sorted.
 // Fills only int64 and float64 types.
 func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
-	refIndices := b.GetColIndices(refColName)
-	if len(refIndices) == 0 {
-		return nil, fmt.Errorf(
-			"bow.FillLinear: refColName: %q does not exist", refColName)
-	} else if len(refIndices) > 1 {
-		return nil, fmt.Errorf(
-			"bow.FillLinear: refColName: several columns have the name %q", refColName)
+	refIndex, err := b.GetColIndex(refColName)
+	if err != nil {
+		return nil, fmt.Errorf("bow.FillLinear: %w", err)
 	}
-	refIndex := refIndices[0]
 
-	toFillIndices := b.GetColIndices(toFillColName)
-	if len(toFillIndices) == 0 {
-		return nil, fmt.Errorf(
-			"bow.FillLinear: toFillColName: %q does not exist", refColName)
-	} else if len(toFillIndices) > 1 {
-		return nil, fmt.Errorf(
-			"bow.FillLinear: toFillColName: several columns have the name %q", toFillColName)
+	toFillIndex, err := b.GetColIndex(toFillColName)
+	if err != nil {
+		return nil, fmt.Errorf("bow.FillLinear: %w", err)
 	}
-	toFillIndex := toFillIndices[0]
 
 	if refIndex == toFillIndex {
 		return nil, fmt.Errorf(
@@ -285,15 +275,11 @@ func selectCols(b *bow, colNames []string) ([]bool, error) {
 		}
 	} else {
 		for _, colName := range colNames {
-			colIndices := b.GetColIndices(colName)
-			if len(colIndices) == 0 {
-				return nil, fmt.Errorf(
-					"bow.selectCols: column %q does not exist", colName)
-			} else if len(colIndices) > 1 {
-				return nil, fmt.Errorf(
-					"bow.selectCols: several columns have the name %q", colName)
+			colIndex, err := b.GetColIndex(colName)
+			if err != nil {
+				return nil, fmt.Errorf("bow.selectCols: %w", err)
 			}
-			toFillCols[colIndices[0]] = true
+			toFillCols[colIndex] = true
 		}
 	}
 

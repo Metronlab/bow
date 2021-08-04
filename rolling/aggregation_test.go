@@ -108,10 +108,9 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 	})
 
 	t.Run("invalid colIndex", func(t *testing.T) {
-		assert.Panics(t, func() {
-			_, _ = r.Aggregate(timeAggr, NewColumnAggregation("-", false, bow.Int64,
-				func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
-		})
+		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", false, bow.Int64,
+			func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
+		assert.EqualError(t, err, "rolling.Aggregate error: no column '-'")
 	})
 }
 

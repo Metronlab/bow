@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/metronlab/bow"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -140,7 +139,11 @@ func TestBow_Aggregate(t *testing.T) {
 				{10, 20, 30},
 				{1., 2., 3.},
 			})
-		assert.Panics(t, func() { _, _ = Aggregate(b, timeCol, WindowStart("-")) })
+		actual, err := Aggregate(b, timeCol,
+			WindowStart("-"),
+		)
+		require.Nil(t, actual)
+		require.EqualError(t, err, "aggregate on 'time': no column '-'")
 	})
 }
 

@@ -215,8 +215,15 @@ func (b *bow) GetColName(colIndex int) string {
 	return b.Schema().Field(colIndex).Name
 }
 
-func (b *bow) GetColIndices(colName string) []int {
-	return b.Schema().FieldIndices(colName)
+func (b *bow) GetColIndex(colName string) (int, error) {
+	colIndices := b.Schema().FieldIndices(colName)
+	if len(colIndices) == 0 {
+		return -1, fmt.Errorf("no column '%s'", colName)
+	}
+	if len(colIndices) > 1 {
+		return -1, fmt.Errorf("several columns '%s", colName)
+	}
+	return colIndices[0], nil
 }
 
 // FindFirst returns the row index of provided value's first occurrence in the dataset.

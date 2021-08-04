@@ -102,16 +102,16 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		}
 	}
 
-	series := make([]Series, len(jsonB.Schema.Fields))
+	seriesSlice := make([]Series, len(jsonB.Schema.Fields))
 
 	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
 			t := newTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, t, true)
-			series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
+			seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 		}
 
-		tmpBow, err := NewBow(series...)
+		tmpBow, err := NewBow(seriesSlice...)
 		if err != nil {
 			return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 		}
@@ -134,10 +134,10 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 			}
 		}
 
-		series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
+		seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 	}
 
-	tmpBow, err := NewBow(series...)
+	tmpBow, err := NewBow(seriesSlice...)
 	if err != nil {
 		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 	}

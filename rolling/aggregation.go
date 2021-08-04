@@ -163,7 +163,10 @@ func (it *intervalRollingIter) validateAggregation(aggregation ColumnAggregation
 	if aggregation.InputName() == "" {
 		return false, fmt.Errorf("aggregation %d has no column name", newIndex)
 	}
-	readIndex := it.bow.GetColIndices(aggregation.InputName())[0]
+	readIndex, err := it.bow.GetColIndex(aggregation.InputName())
+	if err != nil {
+		return false, err
+	}
 	aggregation.MutateInputIndex(readIndex)
 
 	if aggregation.NeedInclusive() {

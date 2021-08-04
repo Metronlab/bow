@@ -1,6 +1,7 @@
 package rolling
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/metronlab/bow"
@@ -127,7 +128,8 @@ func TestIntervalRolling_iterator_init(t *testing.T) {
 
 	t.Run("non existing index", func(t *testing.T) {
 		b := newIntervalRollingTestBow([][]interface{}{{0}, {1.}})
-		assert.Panics(t, func() { _, _ = IntervalRolling(b, badCol, 1, Options{}) })
+		_, err := IntervalRolling(b, badCol, 1, Options{})
+		assert.EqualError(t, err, fmt.Sprintf("rolling.IntervalRolling: no column '%s'", badCol))
 	})
 
 	t.Run("invalid interval type", func(t *testing.T) {

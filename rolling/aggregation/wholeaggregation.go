@@ -10,22 +10,27 @@ import (
 // Aggregate any column with a ColumnAggregation
 func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregation) (bow.Bow, error) {
 	if b == nil {
-		return nil, fmt.Errorf("aggregate on %q: nil bow", indexColName)
+		return nil, fmt.Errorf("aggregate on '%s': nil bow", indexColName)
 	}
 	if len(aggrs) == 0 {
-		return nil, fmt.Errorf("aggregate on %q: at least one column aggregation is required", indexColName)
+		return nil, fmt.Errorf("aggregate on '%s': at least one column aggregation is required", indexColName)
 	}
 
 	for i := range aggrs {
 		err := validateAggr(b, aggrs[i])
 		if err != nil {
-			return nil, fmt.Errorf("aggregate on %q: %w", indexColName, err)
+			return nil, fmt.Errorf("aggregate on '%s': %w", indexColName, err)
 		}
 	}
 
-	b2, err := aggregateCols(b, b.GetColIndices(indexColName)[0], aggrs)
+	colIndex, err := b.GetColIndex(indexColName)
 	if err != nil {
-		return nil, fmt.Errorf("aggregate on %q: %w", indexColName, err)
+		return nil, err
+	}
+
+	b2, err := aggregateCols(b, colIndex, aggrs)
+	if err != nil {
+		return nil, fmt.Errorf("aggregate on '%s': %w", indexColName, err)
 	}
 
 	return b2, nil
@@ -35,7 +40,13 @@ func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
 	if aggr.InputName() == "" {
 		return fmt.Errorf("no column name")
 	}
-	aggr.MutateInputIndex(b.GetColIndices(aggr.InputName())[0])
+
+	colIndex, err := b.GetColIndex(aggr.InputName())
+	if err != nil {
+		return err
+	}
+
+	aggr.MutateInputIndex(colIndex)
 
 	return nil
 }

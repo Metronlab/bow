@@ -97,10 +97,10 @@ func TestBow_FindFirst(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			colIndices := b.GetColIndices(test.searchedCol)
-			require.Equal(t, 1, len(colIndices))
+			colIndex, err := b.GetColIndex(test.searchedCol)
+			require.NoError(t, err)
 
-			res := b.FindFirst(colIndices[0], test.searchedValue)
+			res := b.FindFirst(colIndex, test.searchedValue)
 			assert.Equal(t, res, test.expectedIndex, "expected: %q have: %q", test.expectedIndex, res)
 		})
 	}

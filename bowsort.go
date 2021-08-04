@@ -18,14 +18,10 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.SortByCol: empty bow")
 	}
 
-	colIndices := b.GetColIndices(colName)
-	if len(colIndices) == 0 {
-		return nil, fmt.Errorf("bow.SortByCol: column to sort by %q does not exist", colName)
-	} else if len(colIndices) > 1 {
-		return nil, fmt.Errorf("bow.SortByCol: several columns %q found", colName)
-
+	colIndex, err := b.GetColIndex(colName)
+	if err != nil {
+		return nil, fmt.Errorf("bow.SortByCol: %w", err)
 	}
-	colIndex := colIndices[0]
 
 	if b.IsEmpty() {
 		return b, nil

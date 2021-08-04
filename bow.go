@@ -21,7 +21,7 @@ type Bow interface {
 	// Getters
 	GetColType(colIndex int) Type
 	GetColName(colIndex int) string
-	GetColIndices(colName string) []int
+	GetColIndex(colName string) (int, error)
 
 	GetRow(rowIndex int) (row map[string]interface{})
 
@@ -193,13 +193,11 @@ func (b *bow) DropNil(colNames ...string) (Bow, error) {
 
 	nilColIndices := make([]int, len(colNames))
 	for colIndex := range colNames {
-		colIndices := b.GetColIndices(colNames[colIndex])
-		if len(colIndices) == 0 {
-			return nil, fmt.Errorf("bow.DropNil: column %q does not exist", colNames[colIndex])
-		} else if len(colIndices) > 1 {
-			return nil, fmt.Errorf("bow.DropNil: several columns %q found", colNames[colIndex])
+		var err error
+		nilColIndices[colIndex], err = b.GetColIndex(colNames[colIndex])
+		if err != nil {
+			return nil, fmt.Errorf("bow.DropNil: %w", err)
 		}
-		nilColIndices[colIndex] = colIndices[0]
 	}
 
 	var droppedRowIndices []int
