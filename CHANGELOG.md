@@ -1,4 +1,4 @@
-v0.15.0 [2021-07-28]
+v0.15.0 [2021-08-04]
 -------------------
 - Benchmarks and Profiling:
   - Moved benchmarks closer to functions
