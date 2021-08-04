@@ -63,16 +63,15 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 		wg.Add(1)
 		go func(toFillIndex int, colName string) {
 			defer wg.Done()
-			colBuf := b.NewBufferFromCol(toFillIndex)
 			toFillBuf := b.NewBufferFromCol(toFillIndex)
 			switch toFillColType {
 			case Int64:
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if colBuf.Valid[rowIndex] {
+					if b.Column(toFillIndex).IsValid(rowIndex) {
 						continue
 					}
-					prevToFill, rowPrev := colBuf.GetPreviousValue(rowIndex - 1)
-					nextToFill, rowNext := colBuf.GetNextValue(rowIndex + 1)
+					prevToFill, rowPrev := b.GetPreviousFloat64(toFillIndex, rowIndex-1)
+					nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
 					rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
 					prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
 					nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
@@ -80,8 +79,8 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 						if nextRef-prevRef != 0 {
 							tmp := rowRef - prevRef
 							tmp /= nextRef - prevRef
-							tmp *= float64(nextToFill.(int64) - prevToFill.(int64))
-							tmp += float64(prevToFill.(int64))
+							tmp *= nextToFill - prevToFill
+							tmp += prevToFill
 							toFillBuf.SetOrDrop(rowIndex, int64(math.Round(tmp)))
 						} else {
 							toFillBuf.SetOrDrop(rowIndex, prevToFill)
@@ -90,11 +89,11 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 				}
 			case Float64:
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if colBuf.Valid[rowIndex] {
+					if b.Column(toFillIndex).IsValid(rowIndex) {
 						continue
 					}
-					prevToFill, rowPrev := colBuf.GetPreviousValue(rowIndex - 1)
-					nextToFill, rowNext := colBuf.GetNextValue(rowIndex + 1)
+					prevToFill, rowPrev := b.GetPreviousFloat64(toFillIndex, rowIndex-1)
+					nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
 					rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
 					prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
 					nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
@@ -102,8 +101,8 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 						if nextRef-prevRef != 0.0 {
 							tmp := rowRef - prevRef
 							tmp /= nextRef - prevRef
-							tmp *= nextToFill.(float64) - prevToFill.(float64)
-							tmp += prevToFill.(float64)
+							tmp *= nextToFill - prevToFill
+							tmp += prevToFill
 							toFillBuf.SetOrDrop(rowIndex, tmp)
 						} else {
 							toFillBuf.SetOrDrop(rowIndex, prevToFill)
