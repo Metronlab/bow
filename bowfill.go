@@ -81,7 +81,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 							tmp /= nextRef - prevRef
 							tmp *= nextToFill - prevToFill
 							tmp += prevToFill
-							toFillBuf.SetOrDrop(rowIndex, int64(math.Round(tmp)))
+							toFillBuf.SetOrDrop(rowIndex, math.Round(tmp))
 						} else {
 							toFillBuf.SetOrDrop(rowIndex, prevToFill)
 						}
@@ -165,7 +165,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 					if prevRow > -1 && nextRow > -1 {
-						toFillBuf.SetOrDrop(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
+						toFillBuf.SetOrDrop(rowIndex, math.Round((prevVal+nextVal)/2))
 					}
 				}
 			case Float64:
