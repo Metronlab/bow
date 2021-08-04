@@ -6,18 +6,21 @@ set -o pipefail
 : ${PKG:=./...}
 : ${TIMEOUT:="1h"}
 
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+CURR_BRANCH=$(git branch --show-current)
+
 : ${BENCH_RESULTS_DIR:=/tmp/benchmarks}
-: ${BENCH_RESULTS_NEW:=/tmp/benchmarks/results.new.txt}
-: ${BENCH_RESULTS_OLD:=/tmp/benchmarks/results.master.old.txt}
+: ${BENCH_RESULTS_CURR:=/tmp/benchmarks/${CURR_BRANCH}.${TIMESTAMP}.txt}
+: ${BENCH_RESULTS_MAIN:=/tmp/benchmarks/main.${TIMESTAMP}.txt}
 
 mkdir -p ${BENCH_RESULTS_DIR}
 
-echo "Running benchmarks"
-go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee ${BENCH_RESULTS_NEW}
+printf "Running benchmarks to %s\n" "${BENCH_RESULTS_CURR}"
+go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee "${BENCH_RESULTS_CURR}"
 
 echo
-printf "Running benchstat on %s" ${BENCH_RESULTS_NEW}
-benchstat ${BENCH_RESULTS_NEW}
+printf "Running benchstat on %s\n" "${BENCH_RESULTS_CURR}"
+benchstat "${BENCH_RESULTS_CURR}"
 
 if [ -n "$CI" ]; then
   echo
@@ -27,8 +30,8 @@ if [ -n "$CI" ]; then
   git checkout -q -f main
   echo
   echo "Running benchmarks on main branch"
-  go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee ${BENCH_RESULTS_OLD} || echo "Benchmark on main failed"
+  go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee "${BENCH_RESULTS_MAIN}" || echo "Benchmark on main failed"
 
   git checkout -q -f "$CIRCLE_SHA1"
-  bash ./scripts/benchstat.sh ${BENCH_RESULTS_OLD} ${BENCH_RESULTS_NEW}
+  bash ./scripts/benchstat.sh "${BENCH_RESULTS_MAIN}" "${BENCH_RESULTS_CURR}"
 fi
