@@ -52,8 +52,6 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			toFillColName, toFillColType)
 	}
 
-	refBuf := b.NewBufferFromCol(refIndex)
-
 	var wg sync.WaitGroup
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
@@ -75,9 +73,9 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 					}
 					prevToFill, rowPrev := colBuf.GetPreviousValue(rowIndex - 1)
 					nextToFill, rowNext := colBuf.GetNextValue(rowIndex + 1)
-					rowRef, valid1 := refBuf.GetFloat64(rowIndex)
-					prevRef, valid2 := refBuf.GetFloat64(rowPrev)
-					nextRef, valid3 := refBuf.GetFloat64(rowNext)
+					rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
+					prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
+					nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
 					if valid1 && valid2 && valid3 {
 						if nextRef-prevRef != 0 {
 							tmp := rowRef - prevRef
@@ -97,9 +95,9 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 					}
 					prevToFill, rowPrev := colBuf.GetPreviousValue(rowIndex - 1)
 					nextToFill, rowNext := colBuf.GetNextValue(rowIndex + 1)
-					rowRef, valid1 := refBuf.GetFloat64(rowIndex)
-					prevRef, valid2 := refBuf.GetFloat64(rowPrev)
-					nextRef, valid3 := refBuf.GetFloat64(rowNext)
+					rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
+					prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
+					nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
 					if valid1 && valid2 && valid3 {
 						if nextRef-prevRef != 0.0 {
 							tmp := rowRef - prevRef
@@ -157,7 +155,6 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
-			prevDataBuf := b.NewBufferFromCol(colIndex)
 			toFillBuf := b.NewBufferFromCol(colIndex)
 			colType := b.GetColType(colIndex)
 			switch colType {
@@ -166,11 +163,10 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					if toFillBuf.Valid[rowIndex] {
 						continue
 					}
-					prevVal, prevRow := prevDataBuf.GetPreviousValue(rowIndex - 1)
-					nextVal, nextRow := prevDataBuf.GetNextValue(rowIndex + 1)
+					prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
+					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 					if prevRow > -1 && nextRow > -1 {
-						toFillBuf.SetOrDrop(rowIndex,
-							int64(math.Round(float64(prevVal.(int64)+nextVal.(int64))/2)))
+						toFillBuf.SetOrDrop(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
 					}
 				}
 			case Float64:
@@ -178,11 +174,10 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					if toFillBuf.Valid[rowIndex] {
 						continue
 					}
-					prevVal, prevRow := prevDataBuf.GetPreviousValue(rowIndex - 1)
-					nextVal, nextRow := prevDataBuf.GetNextValue(rowIndex + 1)
+					prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
+					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 					if prevRow > -1 && nextRow > -1 {
-						toFillBuf.SetOrDrop(rowIndex,
-							(prevVal.(float64)+nextVal.(float64))/2)
+						toFillBuf.SetOrDrop(rowIndex, (prevVal+nextVal)/2)
 					}
 				}
 			}
