@@ -38,3 +38,4 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 * [ ] examples for each methods
 * [ ] implement package to compare Bow and Pandas performances
 * [ ] API frozen, new releases won't break your code
+* [ ] support dataframes with several columns having the same name
