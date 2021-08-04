@@ -7,7 +7,7 @@ set -o pipefail
 : ${TIMEOUT:="1h"}
 
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
-CURR_BRANCH=$(git branch --show-current)
+CURR_BRANCH=$(git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3)
 
 : ${BENCH_RESULTS_DIR:=/tmp/benchmarks}
 : ${BENCH_RESULTS_CURR:=/tmp/benchmarks/${CURR_BRANCH}.${TIMESTAMP}.txt}
