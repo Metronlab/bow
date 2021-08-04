@@ -1,76 +1,32 @@
-version: 2 # use CircleCI 2.0
-jobs: # basic units of work in a run
-  build: # runs not using Workflows must have a `build` job as entry point
-    docker: # run the steps with Docker
-      - image: circleci/golang:1.15 #
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.16
 
-    environment: # environment variables for the build itself
-      TEST_RESULTS: /tmp/test-results # path to where test results will be saved
-      COVER_RESULTS: /tmp/cover-results
-      PKG: ./...
+    steps:
+      - checkout
 
-    steps: # steps that comprise the `build` job
-      - checkout # check out source code to working directory
-      - run: mkdir -p $TEST_RESULTS # create the test results directory
-      - run: mkdir -p $COVER_RESULTS
-
-      - restore_cache: # restores saved cache if no changes are detected since last run
+      - restore_cache:
           keys:
-            - v1-pkg-cache
+            - go-mod-v4-{{ checksum "go.sum" }}
 
       - run:
-          name: GET DEPENDENCIES
-          command: |
-            go get golang.org/x/lint/golint \
-            honnef.co/go/tools/cmd/staticcheck \
-            github.com/client9/misspell/cmd/misspell \
-            golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow \
-            github.com/jstemmer/go-junit-report
-      - run:
-          name: FIX EVENTUAL BAD FORMATED FILE
-          command: find * -type f -name "*.go" | grep '.go$' | grep -v '^vendor' | grep -v -e '^.tmp' | xargs gofmt -s -l -w
-
-      - run:
-          name: RUN GOLINT
-          command: test -z "$(golint ${PKG} | grep -v -e "should have comment" -e "vendor/" -e "mocks/" -e ".tmp/" | tee /dev/stderr )"
-
-      - run:
-          name: RUN STATICCHECK
-          command: staticcheck ${PKG}
-
-      - run:
-          name: RUN GOVET
-          command: go vet ${PKG}
-
-      - run:
-          name: RUN MISSPELL & GOFMT
-          command: |
-            GOFILES=$(find . -name '*.go' | grep -v -e '^./vendor' | grep -v -e '^./.tmp')
-            echo ${GOFILES} | xargs misspell -error
-            UNFORMATTED=$(gofmt -s -l ${GOFILES})
-            [ -z "${UNFORMATTED}" ] && exit 0
-            echo >&2 "Some files are not formatted, please run docker-compose run --rm fmt or edit the files"
-            echo >&2 "Unformatted files:"
-            echo >&2 ${UNFORMATED}
-            exit 1
-
-      - run:
-          name: RUN TESTS
+          name: TESTS
           command: |
             go get github.com/jstemmer/go-junit-report
-            bash -e ./scripts/test.sh
+            bash -c ./scripts/test.sh
 
       - run:
-          name: RUN BENCHMARKS
-          no_output_timeout: 1h
+          name: BENCHMARKS
           command: |
             go get golang.org/x/perf/cmd/benchstat
-            bash -e ./scripts/benchmark.sh
+            bash -c ./scripts/benchmark.sh
 
       - store_artifacts:
           path: /tmp/benchmarks
 
-      - save_cache: # Store cache in the /go/pkg directory
-          key: v1-pkg-cache
+      - save_cache:
+          key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
-            - "/go/pkg"
+            - "/go/pkg/mod"

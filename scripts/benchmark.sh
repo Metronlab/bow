@@ -23,11 +23,11 @@ if [ -n "$CI" ]; then
   echo
   echo "CI detected - running in comparison mode"
 
-  # compare with master branch
-  git checkout -q -f master
+  # compare with main branch
+  git checkout -q -f main
   echo
-  echo "Running benchmarks on master branch"
-  go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee ${BENCH_RESULTS_OLD} || echo "Benchmark on master failed"
+  echo "Running benchmarks on main branch"
+  go test ${PKG} -run=XXX -bench=. -benchmem -timeout ${TIMEOUT} | tee ${BENCH_RESULTS_OLD} || echo "Benchmark on main failed"
 
   git checkout -q -f "$CIRCLE_SHA1"
   bash ./scripts/benchstat.sh ${BENCH_RESULTS_OLD} ${BENCH_RESULTS_NEW}
