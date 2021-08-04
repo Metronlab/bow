@@ -29,11 +29,22 @@ func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
 }
 
 func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
-	buf := b.NewBufferFromCol(colIndex)
-	if !buf.Valid[rowIndex] {
+	if b.Column(colIndex).IsNull(rowIndex) {
 		return nil
 	}
-	return buf.GetValue(rowIndex)
+
+	switch b.GetColType(colIndex) {
+	case Float64:
+		return array.NewFloat64Data(b.Column(colIndex).Data()).Value(rowIndex)
+	case Int64:
+		return array.NewInt64Data(b.Column(colIndex).Data()).Value(rowIndex)
+	case Bool:
+		return array.NewBooleanData(b.Column(colIndex).Data()).Value(rowIndex)
+	case String:
+		return array.NewStringData(b.Column(colIndex).Data()).Value(rowIndex)
+	default:
+		panic(fmt.Errorf("bow.GetValue: unsupported type %s", b.GetColType(colIndex)))
+	}
 }
 
 func (b *bow) GetNextValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
