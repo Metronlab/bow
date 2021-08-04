@@ -1,6 +1,7 @@
 package bow
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -96,4 +97,50 @@ func TestBow_IsEmpty(t *testing.T) {
 		b := original.NewEmpty()
 		assert.True(t, b.IsEmpty())
 	})
+}
+
+func BenchmarkBow_IsColSorted(b *testing.B) {
+	for rows := 10; rows <= 1000000; rows *= 100 {
+		b.Run(fmt.Sprintf("%dx1_%v_Sorted", rows, Float64), func(b *testing.B) {
+			data, err := NewGenBow(
+				GenRows(rows),
+				GenCols(1),
+				GenDataType(Float64),
+				GenRefCol(0, false))
+			if err != nil {
+				panic(err)
+			}
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = data.IsColSorted(0)
+			}
+		})
+		b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted", rows, Float64), func(b *testing.B) {
+			data, err := NewGenBow(
+				GenRows(rows),
+				GenCols(1),
+				GenDataType(Float64))
+			if err != nil {
+				panic(err)
+			}
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = data.IsColSorted(0)
+			}
+		})
+		b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted_With_Missing_Data", rows, Float64), func(b *testing.B) {
+			data, err := NewGenBow(
+				GenRows(rows),
+				GenCols(1),
+				GenDataType(Float64),
+				GenMissingData(true))
+			if err != nil {
+				panic(err)
+			}
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = data.IsColSorted(0)
+			}
+		})
+	}
 }
