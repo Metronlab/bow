@@ -13,7 +13,7 @@ type Type int
 // - complete GetValue bow method
 
 const (
-	//Unknown is placed first to be by default
+	// Unknown is placed first to be by default
 	// when allocating Type or []Type
 	Unknown = Type(iota)
 
@@ -23,10 +23,10 @@ const (
 	Bool
 	String
 
-	//InputDependent is used in transformation like aggregation
+	// InputDependent is used in transformation like aggregation
 	// when output type is infer with input type
 	InputDependent
-	//IteratorDependent is used in transformation like aggregation
+	// IteratorDependent is used in transformation like aggregation
 	// when output type is infer with iteratorType
 	IteratorDependent
 )

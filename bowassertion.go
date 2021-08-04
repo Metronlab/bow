@@ -1,9 +1,5 @@
 package bow
 
-import (
-	"github.com/apache/arrow/go/arrow/array"
-)
-
 const (
 	orderUndefined = iota
 	orderASC
@@ -16,24 +12,25 @@ func (b *bow) IsColSorted(colIndex int) bool {
 	if b.IsColEmpty(colIndex) {
 		return false
 	}
+
 	var rowIndex int
 	var order = orderUndefined
 
-	switch b.GetType(colIndex) {
+	buf := b.NewBufferFromCol(colIndex)
+
+	switch b.GetColType(colIndex) {
 	case Int64:
-		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
-		values := arr.Int64Values()
-		for arr.IsNull(rowIndex) {
+		for !buf.Valid[rowIndex] {
 			rowIndex++
 		}
-		curr := values[rowIndex]
+		curr := buf.GetValue(rowIndex).(int64)
 		var next int64
 		rowIndex++
-		for ; rowIndex < len(values); rowIndex++ {
-			if !arr.IsValid(rowIndex) {
+		for ; rowIndex < b.NumRows(); rowIndex++ {
+			if !buf.Valid[rowIndex] {
 				continue
 			}
-			next = values[rowIndex]
+			next = buf.GetValue(rowIndex).(int64)
 			if order == orderUndefined {
 				if curr < next {
 					order = orderASC
@@ -48,19 +45,17 @@ func (b *bow) IsColSorted(colIndex int) bool {
 			curr = next
 		}
 	case Float64:
-		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
-		values := arr.Float64Values()
-		for arr.IsNull(rowIndex) {
+		for !buf.Valid[rowIndex] {
 			rowIndex++
 		}
-		curr := values[rowIndex]
+		curr := buf.GetValue(rowIndex).(float64)
 		var next float64
 		rowIndex++
-		for ; rowIndex < len(values); rowIndex++ {
-			if !arr.IsValid(rowIndex) {
+		for ; rowIndex < b.NumRows(); rowIndex++ {
+			if !buf.Valid[rowIndex] {
 				continue
 			}
-			next = values[rowIndex]
+			next = buf.GetValue(rowIndex).(float64)
 			if order == orderUndefined {
 				if curr < next {
 					order = orderASC

@@ -19,12 +19,14 @@ type Bow interface {
 	String() string
 
 	// Getters
-	GetType(colIndex int) (colType Type)
-	GetName(colIndex int) (colName string, err error)
-	GetColumnIndex(colName string) (colIndex int, err error)
+	GetColType(colIndex int) Type
+	GetColName(colIndex int) string
+	GetColIndices(colName string) []int
 
 	GetRow(rowIndex int) (row map[string]interface{})
 
+	NewBufferFromCol(colIndex int) Buffer
+	NewSeriesFromCol(colIndex int) Series
 	GetValueByName(colName string, rowIndex int) (value interface{})
 	GetValue(colIndex, rowIndex int) (value interface{})
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
@@ -83,6 +85,7 @@ type Bow interface {
 
 	// Exposed from arrow.Record
 	Schema() *arrow.Schema
+	Column(colIndex int) array.Interface
 	NumRows() int
 	NumCols() int
 
@@ -114,52 +117,62 @@ func NewBow(series ...Series) (Bow, error) {
 }
 
 // NewBowFromColBasedInterfaces returns a new Bow with:
-// - colNames contains the bow.Record fields names
-// - colTypes contains the bow.Record fields data types, and is not mandatory.
+// - colNames containing the bow.Record fields names
+// - colTypes containing the bow.Record fields data types, and is not mandatory.
 //	 If nil, the types will be automatically seeked.
-// - colData contains the data to be store in bow.Record
+// - colData containing the data to be store in bow.Record
 // - colNames and colData need to be of the same size
 func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colData) {
-		return nil, errors.New("bow: colNames and colData array lengths don't match")
+		return nil, errors.New("bow.NewBowFromColBasedInterfaces: colNames and colData array lengths don't match")
 	}
 
-	if colTypes != nil && len(colNames) != len(colTypes) {
-		return nil, errors.New("bow: colNames and colTypes array lengths don't match")
-	} else if colTypes == nil {
+	if colTypes == nil {
 		colTypes = make([]Type, len(colNames))
+	} else if len(colNames) != len(colTypes) {
+		return nil, errors.New("bow.NewBowFromColBasedInterfaces: colNames and colTypes array lengths don't match")
 	}
 
 	var err error
-	series := make([]Series, len(colNames))
-	for i, name := range colNames {
-		series[i], err = NewSeriesFromInterfaces(name, colTypes[i], colData[i])
+	seriesSlice := make([]Series, len(colNames))
+	for i, colName := range colNames {
+		seriesSlice[i], err = NewSeriesFromInterfaces(colName, colTypes[i], colData[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return NewBow(series...)
+	return NewBow(seriesSlice...)
 }
 
-// NewBowFromRowBasedInterfaces returns a new bow from rowData
-// TODO: improve performance of this function
-func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowData [][]interface{}) (Bow, error) {
-	columnBasedRows := make([][]interface{}, len(colNames))
-	for column := range colNames {
-		columnBasedRows[column] = make([]interface{}, len(rowData))
+// NewBowFromRowBasedInterfaces returns a new bow from row based data
+func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedData [][]interface{}) (Bow, error) {
+	if len(colNames) != len(colTypes) {
+		return nil, errors.New(
+			"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and colTypes len")
 	}
 
-	for rowI, row := range rowData {
-		if len(colNames) < len(row) {
-			return nil, errors.New("bow: mismatch between columnsNames names and row len")
+	bufSlice := make([]Buffer, len(colNames))
+	for i := range bufSlice {
+		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i], true)
+	}
+
+	for rowIndex, row := range rowBasedData {
+		if len(row) != len(colNames) {
+			return nil, errors.New(
+				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row len")
 		}
-		for colI := range colNames {
-			columnBasedRows[colI][rowI] = row[colI]
+		for colIndex := range colNames {
+			bufSlice[colIndex].SetOrDrop(rowIndex, row[colIndex])
 		}
 	}
 
-	return NewBowFromColBasedInterfaces(colNames, colTypes, columnBasedRows)
+	seriesSlice := make([]Series, len(colNames))
+	for i := range colNames {
+		seriesSlice[i] = NewSeries(colNames[i], colTypes[i], bufSlice[i].Value, bufSlice[i].Valid)
+	}
+
+	return NewBow(seriesSlice...)
 }
 
 func (b *bow) NewEmpty() Bow {
@@ -178,38 +191,40 @@ func (b *bow) DropNil(colNames ...string) (Bow, error) {
 		colNames = dedupStrings(colNames)
 	}
 
-	nilColIndexes := make([]int, len(colNames))
-	for i := 0; i < len(colNames); i++ {
-		var err error
-		nilColIndexes[i], err = b.GetColumnIndex(colNames[i])
-		if err != nil {
-			return nil, err
+	nilColIndices := make([]int, len(colNames))
+	for colIndex := range colNames {
+		colIndices := b.GetColIndices(colNames[colIndex])
+		if len(colIndices) == 0 {
+			return nil, fmt.Errorf("bow.DropNil: column %q does not exist", colNames[colIndex])
+		} else if len(colIndices) > 1 {
+			return nil, fmt.Errorf("bow.DropNil: several columns %q found", colNames[colIndex])
 		}
+		nilColIndices[colIndex] = colIndices[0]
 	}
 
-	var dropped []int
-	for ri := 0; ri < b.NumRows(); ri++ {
-		for _, ci := range nilColIndexes {
-			if b.GetValue(ci, ri) == nil {
-				dropped = append(dropped, ri)
+	var droppedRowIndices []int
+	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
+		for _, nilColIndex := range nilColIndices {
+			if b.GetValue(nilColIndex, rowIndex) == nil {
+				droppedRowIndices = append(droppedRowIndices, rowIndex)
 				break
 			}
 		}
 	}
 
-	if len(dropped) == 0 {
+	if len(droppedRowIndices) == 0 {
 		return b, nil
 	}
 
-	slices := make([]Bow, len(dropped)+1)
+	bowSlice := make([]Bow, len(droppedRowIndices)+1)
 	var curr int
-	for i, di := range dropped {
-		slices[i] = b.Slice(curr, di)
-		curr = di + 1
+	for i, droppedRowIndex := range droppedRowIndices {
+		bowSlice[i] = b.Slice(curr, droppedRowIndex)
+		curr = droppedRowIndex + 1
 	}
-	slices[len(dropped)] = b.Slice(curr, b.NumRows())
+	bowSlice[len(droppedRowIndices)] = b.Slice(curr, b.NumRows())
 
-	return AppendBows(slices...)
+	return AppendBows(bowSlice...)
 }
 
 func dedupStrings(s []string) []string {
@@ -307,24 +322,21 @@ func (b *bow) Select(colNames ...string) (Bow, error) {
 			Metadata{b.Schema().Metadata()})
 	}
 
-	colsToInclude, err := selectCols(b, colNames)
+	selectedCols, err := selectCols(b, colNames)
 	if err != nil {
 		return nil, err
 	}
 
-	var newSeries []Series
-	for colIndex, col := range b.Schema().Fields() {
-		if colsToInclude[colIndex] {
-			newSeries = append(newSeries, Series{
-				Name:  col.Name,
-				Array: b.Record.Column(colIndex),
-			})
+	var seriesSlice []Series
+	for colIndex := range b.Schema().Fields() {
+		if selectedCols[colIndex] {
+			seriesSlice = append(seriesSlice, b.NewSeriesFromCol(colIndex))
 		}
 	}
 
 	return NewBowWithMetadata(
 		Metadata{b.Schema().Metadata()},
-		newSeries...)
+		seriesSlice...)
 }
 
 func (b *bow) NumRows() int {
@@ -344,30 +356,34 @@ func (b *bow) NumCols() int {
 }
 
 func (b *bow) AddCols(series ...Series) (Bow, error) {
-	seriesNbr := len(series)
-	if seriesNbr == 0 {
+	if len(series) == 0 {
 		return b, nil
 	}
 
-	bowNumCols := b.NumCols()
-	addedColNames := make(map[string]*interface{}, bowNumCols+seriesNbr)
-	newSeries := make([]Series, bowNumCols+seriesNbr)
+	addedColNames := make(map[string]*interface{}, b.NumCols()+len(series))
+	seriesSlice := make([]Series, b.NumCols()+len(series))
 
 	for colIndex, col := range b.Schema().Fields() {
-		newSeries[colIndex] = Series{
-			Name:  col.Name,
-			Array: b.Record.Column(colIndex),
-		}
+		seriesSlice[colIndex] = b.NewSeriesFromCol(colIndex)
 		addedColNames[col.Name] = nil
 	}
 
 	for i, s := range series {
 		_, ok := addedColNames[s.Name]
 		if ok {
-			return nil, fmt.Errorf("column %q already exists", s.Name)
+			return nil, fmt.Errorf("bow.AddCols: column %q already exists", s.Name)
 		}
-		newSeries[bowNumCols+i] = s
+		seriesSlice[b.NumCols()+i] = s
 		addedColNames[s.Name] = nil
 	}
-	return NewBowWithMetadata(b.GetMetadata(), newSeries...)
+	return NewBowWithMetadata(b.GetMetadata(), seriesSlice...)
+}
+
+func getValid(arr array.Interface, length int) []bool {
+	valid := make([]bool, length)
+
+	for i := 0; i < length; i++ {
+		valid[i] = arr.IsValid(i)
+	}
+	return valid
 }

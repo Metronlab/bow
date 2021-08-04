@@ -15,8 +15,8 @@ type JSONSchema struct {
 }
 
 type JSONBow struct {
-	Schema JSONSchema               `json:"schema"`
-	Data   []map[string]interface{} `json:"data"`
+	Schema       JSONSchema               `json:"schema"`
+	RowBasedData []map[string]interface{} `json:"data"`
 }
 
 func (b bow) MarshalJSON() ([]byte, error) {
@@ -29,7 +29,7 @@ func NewJSONBow(b Bow) (res JSONBow) {
 	}
 
 	res = JSONBow{
-		Data: make([]map[string]interface{}, 0, b.NumRows()),
+		RowBasedData: make([]map[string]interface{}, 0, b.NumRows()),
 	}
 	for _, col := range b.Schema().Fields() {
 		res.Schema.Fields = append(
@@ -44,7 +44,7 @@ func NewJSONBow(b Bow) (res JSONBow) {
 		if len(row) == 0 {
 			continue
 		}
-		res.Data = append(res.Data, row)
+		res.RowBasedData = append(res.RowBasedData, row)
 	}
 	return
 }
@@ -104,7 +104,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	series := make([]Series, len(jsonB.Schema.Fields))
 
-	if jsonB.Data == nil {
+	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
 			t := newTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, t, true)
@@ -122,30 +122,18 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	for i, field := range jsonB.Schema.Fields {
 		t := newTypeFromArrowName(field.Type)
-		var buf Buffer
-		var err error
-		buf, err = NewBufferFromInterfacesIter(t, len(jsonB.Data), func() chan interface{} {
-			cellsChan := make(chan interface{})
-			go func(cellsChan chan interface{}, colName string) {
-				for _, row := range jsonB.Data {
-					val, ok := row[colName]
-					if !ok {
-						cellsChan <- nil
-					} else {
-						_, ok = val.(float64)
-						if t == Int64 && ok {
-							val = int64(val.(float64))
-						}
-						cellsChan <- val
-					}
+		buf := NewBuffer(len(jsonB.RowBasedData), t, true)
+		for rowIndex, row := range jsonB.RowBasedData {
+			val, ok := row[field.Name]
+			if ok {
+				_, ok = val.(float64)
+				if t == Int64 && ok {
+					val = int64(val.(float64))
 				}
-				close(cellsChan)
-			}(cellsChan, field.Name)
-			return cellsChan
-		}())
-		if err != nil {
-			return err
+				buf.SetOrDrop(rowIndex, val)
+			}
 		}
+
 		series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 	}
 

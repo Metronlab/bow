@@ -29,7 +29,7 @@ func (b *bow) String() string {
 
 	// Print col names on buffer
 	formatRow(func(colIndex int) string {
-		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
+		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetColType(colIndex))
 	})
 
 	// Print each row on buffer

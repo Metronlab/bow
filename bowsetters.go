@@ -19,12 +19,8 @@ func (b *bow) SetColName(colIndex int, newName string) (Bow, error) {
 				Array: col,
 			}
 		} else {
-			oldName, err := b.GetName(i)
-			if err != nil {
-				return nil, fmt.Errorf("bow: SetColName: %s", err)
-			}
 			newSeries[i] = Series{
-				Name:  oldName,
+				Name:  b.GetColName(i),
 				Array: col,
 			}
 		}

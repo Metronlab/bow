@@ -1,7 +1,6 @@
 package aggregation
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/metronlab/bow"
@@ -10,30 +9,23 @@ import (
 
 // Aggregate any column with a ColumnAggregation
 func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregation) (bow.Bow, error) {
-	errPrefix := fmt.Sprintf("aggregate on '%s': ", indexColName)
-
 	if b == nil {
-		return nil, errors.New(errPrefix + "nil bow")
+		return nil, fmt.Errorf("aggregate on %q: nil bow", indexColName)
 	}
 	if len(aggrs) == 0 {
-		return nil, errors.New(errPrefix + "at least one column aggregation is required")
-	}
-
-	intervalCol, err := b.GetColumnIndex(indexColName)
-	if err != nil {
-		return nil, errors.New(errPrefix + err.Error())
+		return nil, fmt.Errorf("aggregate on %q: at least one column aggregation is required", indexColName)
 	}
 
 	for i := range aggrs {
 		err := validateAggr(b, aggrs[i])
 		if err != nil {
-			return nil, errors.New(errPrefix + err.Error())
+			return nil, fmt.Errorf("aggregate on %q: %w", indexColName, err)
 		}
 	}
 
-	b2, err := aggregateCols(b, intervalCol, aggrs)
+	b2, err := aggregateCols(b, b.GetColIndices(indexColName)[0], aggrs)
 	if err != nil {
-		return nil, errors.New(errPrefix + err.Error())
+		return nil, fmt.Errorf("aggregate on %q: %w", indexColName, err)
 	}
 
 	return b2, nil
@@ -43,15 +35,9 @@ func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
 	if aggr.InputName() == "" {
 		return fmt.Errorf("no column name")
 	}
+	aggr.MutateInputIndex(b.GetColIndices(aggr.InputName())[0])
 
-	readIndex, err := b.GetColumnIndex(aggr.InputName())
-	if err != nil {
-		return err
-	}
-
-	aggr.MutateInputIndex(readIndex)
-
-	return err
+	return nil
 }
 
 func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation) (bow.Bow, error) {
@@ -60,14 +46,10 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 	for writeColIndex, aggr := range aggrs {
 		name := aggr.OutputName()
 		if name == "" {
-			var err error
-			name, err = b.GetName(aggr.InputIndex())
-			if err != nil {
-				return nil, err
-			}
+			name = b.GetColName(aggr.InputIndex())
 		}
 
-		typ := aggr.GetReturnType(b.GetType(aggr.InputIndex()), b.GetType(aggr.InputIndex()))
+		typ := aggr.GetReturnType(b.GetColType(aggr.InputIndex()), b.GetColType(aggr.InputIndex()))
 
 		if b.IsEmpty() {
 			buf := bow.NewBuffer(0, typ, true)

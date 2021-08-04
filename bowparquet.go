@@ -233,7 +233,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 
 	optionalRepType := parquet.FieldRepetitionType_OPTIONAL
 	for i, f := range b.Schema().Fields() {
-		typ := typeBowToParquetMap[b.GetType(i)]
+		typ := typeBowToParquetMap[b.GetColType(i)]
 		se = parquet.NewSchemaElement()
 		se.Type = &typ
 		se.RepetitionType = &optionalRepType

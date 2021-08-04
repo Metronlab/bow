@@ -18,10 +18,14 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.SortByCol: empty bow")
 	}
 
-	colIndex, err := b.GetColumnIndex(colName)
-	if err != nil {
-		return nil, fmt.Errorf("bow.SortByCol: column to sort by not found")
+	colIndices := b.GetColIndices(colName)
+	if len(colIndices) == 0 {
+		return nil, fmt.Errorf("bow.SortByCol: column to sort by %q does not exist", colName)
+	} else if len(colIndices) > 1 {
+		return nil, fmt.Errorf("bow.SortByCol: several columns %q found", colName)
+
 	}
+	colIndex := colIndices[0]
 
 	if b.IsEmpty() {
 		return b, nil
@@ -31,7 +35,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	var newArray array.Interface
 	prevData := b.Record.Column(colIndex).Data()
 	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	switch b.GetType(colIndex) {
+	switch b.GetColType(colIndex) {
 	case Int64:
 		// Build the Int64Col interface to store the row indices before sorting
 		colToSortBy.Indices = func() []int {
@@ -43,7 +47,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		}()
 		prevValues := array.NewInt64Data(prevData)
 		colToSortBy.Values = prevValues.Int64Values()
-		colToSortBy.Valids = getValids(prevValues, b.NumRows())
+		colToSortBy.Valids = getValid(prevValues, b.NumRows())
 
 		// Stop if sort by column is already sorted
 		if Int64ColIsSorted(colToSortBy) {
@@ -81,7 +85,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 			newValids := make([]bool, b.NumRows())
 			prevData := b.Record.Column(colIndex).Data()
-			switch b.GetType(colIndex) {
+			switch b.GetColType(colIndex) {
 			case Int64:
 				prevValues := array.NewInt64Data(prevData)
 				newValues := make([]int64, b.NumRows())

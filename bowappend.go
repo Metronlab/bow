@@ -1,57 +1,94 @@
 package bow
 
-import "fmt"
+import (
+	"fmt"
 
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
+)
+
+// AppendBows attempts to append bows with equal schemas.
+// Different schemas will lead to undefined behavior.
+// Resulting metadata is copied from the first bow.
 func AppendBows(bows ...Bow) (Bow, error) {
 	if len(bows) == 0 {
 		return nil, nil
 	}
+
 	if len(bows) == 1 {
 		return bows[0], nil
 	}
-	refBow := bows[0]
-	refSchema := refBow.Schema()
-	var err error
-	var numRows int
+
+	numRows := 0
 	for _, b := range bows {
-		schema := b.Schema()
-		if !schema.Equal(refSchema) {
-			return nil,
-				fmt.Errorf("bow.AppendBow: schema mismatch: got both\n%v\nand\n%v",
-					refSchema, schema)
-		}
-
-		if schema.Metadata().String() != refSchema.Metadata().String() {
-			return nil,
-				fmt.Errorf("bow.AppendBow: schema Metadata mismatch: got both\n%v\nand\n%v",
-					refSchema.Metadata(), schema.Metadata())
-		}
-
 		numRows += b.NumRows()
 	}
 
+	refBow := bows[0]
 	seriesSlice := make([]Series, refBow.NumCols())
-	bufSlice := make([]Buffer, refBow.NumCols())
-	var name string
-	for ci := 0; ci < refBow.NumCols(); ci++ {
-		var rowOffset int
-		typ := refBow.GetType(ci)
-		name, err = refBow.GetName(ci)
-		if err != nil {
-			return nil, err
-		}
-		bufSlice[ci] = NewBuffer(numRows, typ, true)
-		for _, b := range bows {
-			for ri := 0; ri < b.NumRows(); ri++ {
-				bufSlice[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
+
+	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
+		var newArray array.Interface
+		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+		typ := refBow.GetColType(colIndex)
+		switch typ {
+		case Int64:
+			builder := array.NewInt64Builder(mem)
+			for _, b := range bows {
+				data := b.Column(colIndex).Data()
+				arr := array.NewInt64Data(data)
+				v := arr.Int64Values()
+				valid := getValid(arr, b.NumRows())
+				builder.AppendValues(v, valid)
 			}
-			rowOffset += b.NumRows()
+			newArray = builder.NewArray()
+		case Float64:
+			builder := array.NewFloat64Builder(mem)
+			for _, b := range bows {
+				data := b.Column(colIndex).Data()
+				arr := array.NewFloat64Data(data)
+				v := arr.Float64Values()
+				valid := getValid(arr, b.NumRows())
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+		case Bool:
+			builder := array.NewBooleanBuilder(mem)
+			for _, b := range bows {
+				data := b.Column(colIndex).Data()
+				arr := array.NewBooleanData(data)
+				v := make([]bool, b.NumRows())
+				for i := range v {
+					v[i] = arr.Value(i)
+				}
+				valid := getValid(arr, b.NumRows())
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+		case String:
+			builder := array.NewStringBuilder(mem)
+			for _, b := range bows {
+				data := b.Column(colIndex).Data()
+				arr := array.NewStringData(data)
+				v := make([]string, b.NumRows())
+				for i := range v {
+					v[i] = arr.Value(i)
+				}
+				valid := getValid(arr, b.NumRows())
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+		default:
+			panic(fmt.Errorf("unsupported type %+v", typ))
 		}
 
-		seriesSlice[ci] = NewSeries(name, typ, bufSlice[ci].Value, bufSlice[ci].Valid)
+		seriesSlice[colIndex] = Series{
+			Name:  refBow.GetColName(colIndex),
+			Array: newArray,
+		}
 	}
 
 	return NewBowWithMetadata(
-		Metadata{refSchema.Metadata()},
+		Metadata{refBow.Schema().Metadata()},
 		seriesSlice...)
 }

@@ -6,8 +6,6 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
 	"github.com/google/uuid"
 )
 
@@ -117,87 +115,71 @@ func NewGenBow(options ...Option) (Bow, error) {
 		return nil, fmt.Errorf("bow.NewGenBow: GenRefCol cannot be of type Bool")
 	}
 
-	series := make([]Series, f.cols)
-	for i := range series {
+	seriesSlice := make([]Series, f.cols)
+	for i := range seriesSlice {
 		if i == f.refCol {
-			series[i] = newSortedRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.descSort)
+			seriesSlice[i] = newSortedRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.descSort)
 		} else {
-			series[i] = newRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.missingData)
+			seriesSlice[i] = newRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.missingData)
 		}
 	}
 
-	return NewBow(series...)
+	return NewBow(seriesSlice...)
 }
 
 func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Series {
-	var newArray array.Interface
-	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	newBuf := NewBuffer(size, typ, true)
+	buf := NewBuffer(size, typ, true)
 	switch typ {
 	case Int64:
-		b := array.NewInt64Builder(pool)
-		defer b.Release()
 		var base int64
 		for row := 0; row < size; row++ {
 			if descSort {
 				newValue, _ := ToInt64(newRandomIncreasingNumber(typ, base))
-				newBuf.SetOrDrop(row, newValue)
+				buf.SetOrDrop(row, newValue)
 				base -= 100
 			} else {
 				newValue, _ := ToInt64(newRandomDecreasingNumber(typ, base))
-				newBuf.SetOrDrop(row, newValue)
+				buf.SetOrDrop(row, newValue)
 				base += 100
 			}
 		}
-		b.AppendValues(newBuf.Value.([]int64), newBuf.Valid)
-		newArray = b.NewArray()
 	case Float64:
-		b := array.NewFloat64Builder(pool)
-		defer b.Release()
 		var base float64
 		for row := 0; row < size; row++ {
 			if descSort {
 				newValue, _ := ToFloat64(newRandomIncreasingNumber(typ, base))
-				newBuf.SetOrDrop(row, newValue)
+				buf.SetOrDrop(row, newValue)
 				base -= 100
 			} else {
 				newValue, _ := ToFloat64(newRandomDecreasingNumber(typ, base))
-				newBuf.SetOrDrop(row, newValue)
+				buf.SetOrDrop(row, newValue)
 				base += 100
 			}
 		}
-		b.AppendValues(newBuf.Value.([]float64), newBuf.Valid)
-		newArray = b.NewArray()
 	case String:
-		b := array.NewStringBuilder(pool)
-		defer b.Release()
 		var base int64
 		for row := 0; row < size; row++ {
 			if descSort {
 				newValue, _ := ToString(newRandomIncreasingNumber(Int64, base))
-				newBuf.SetOrDrop(row, newValue)
+				buf.SetOrDrop(row, newValue)
 				base -= 100
 			} else {
 				newValue, _ := ToString(newRandomDecreasingNumber(Int64, base))
-				newBuf.SetOrDrop(row, newValue)
+				buf.SetOrDrop(row, newValue)
 				base += 100
 			}
 		}
-		b.AppendValues(newBuf.Value.([]string), newBuf.Valid)
-		newArray = b.NewArray()
 	default:
 		panic("unsupported data type")
 	}
-	return Series{
-		Name:  name,
-		Array: newArray,
-	}
+
+	return NewSeries(name, typ, buf.Value, buf.Valid)
 }
 
 func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
-	newBuf := NewBuffer(size, typ, true)
+	buf := NewBuffer(size, typ, true)
 	for row := 0; row < size; row++ {
-		newBuf.SetOrDrop(row, newRandomNumber(typ))
+		buf.SetOrDrop(row, newRandomNumber(typ))
 	}
 
 	if missingData {
@@ -210,40 +192,11 @@ func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
 			if err != nil {
 				panic(err)
 			}
-			newBuf.SetOrDrop(int(nils2.Int64()), nil)
+			buf.SetOrDrop(int(nils2.Int64()), nil)
 		}
 	}
 
-	var newArray array.Interface
-	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	switch typ {
-	case Float64:
-		b := array.NewFloat64Builder(pool)
-		defer b.Release()
-		b.AppendValues(newBuf.Value.([]float64), newBuf.Valid)
-		newArray = b.NewArray()
-	case Int64:
-		b := array.NewInt64Builder(pool)
-		defer b.Release()
-		b.AppendValues(newBuf.Value.([]int64), newBuf.Valid)
-		newArray = b.NewArray()
-	case Bool:
-		b := array.NewBooleanBuilder(pool)
-		defer b.Release()
-		b.AppendValues(newBuf.Value.([]bool), newBuf.Valid)
-		newArray = b.NewArray()
-	case String:
-		b := array.NewStringBuilder(pool)
-		defer b.Release()
-		b.AppendValues(newBuf.Value.([]string), newBuf.Valid)
-		newArray = b.NewArray()
-	default:
-		panic("unsupported data type")
-	}
-	return Series{
-		Name:  name,
-		Array: newArray,
-	}
+	return NewSeries(name, typ, buf.Value, buf.Valid)
 }
 
 func newRandomIncreasingNumber(typ Type, base interface{}) interface{} {
