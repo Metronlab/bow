@@ -5,8 +5,8 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func Min(col string) rolling.ColumnAggregation {
-	return rolling.NewColumnAggregation(col, false, bow.Float64,
+func Min(col string) rolling.ColAggregation {
+	return rolling.NewColAggregation(col, false, bow.Float64,
 		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {
 				return nil, nil
@@ -30,8 +30,8 @@ func Min(col string) rolling.ColumnAggregation {
 		})
 }
 
-func Max(col string) rolling.ColumnAggregation {
-	return rolling.NewColumnAggregation(col, false, bow.Float64,
+func Max(col string) rolling.ColAggregation {
+	return rolling.NewColAggregation(col, false, bow.Float64,
 		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {
 				return nil, nil

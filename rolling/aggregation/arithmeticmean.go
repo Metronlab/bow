@@ -5,8 +5,8 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func ArithmeticMean(col string) rolling.ColumnAggregation {
-	return rolling.NewColumnAggregation(col, false, bow.Float64,
+func ArithmeticMean(col string) rolling.ColAggregation {
+	return rolling.NewColAggregation(col, false, bow.Float64,
 		func(col int, w rolling.Window) (interface{}, error) {
 			if w.Bow.IsEmpty() {
 				return nil, nil

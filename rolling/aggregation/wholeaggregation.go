@@ -7,36 +7,36 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-// Aggregate any column with a ColumnAggregation
-func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregation) (bow.Bow, error) {
+// Aggregate any column with a ColAggregation
+func Aggregate(b bow.Bow, refColName string, aggrs ...rolling.ColAggregation) (bow.Bow, error) {
 	if b == nil {
-		return nil, fmt.Errorf("aggregate on '%s': nil bow", indexColName)
+		return nil, fmt.Errorf("aggregate on '%s': nil bow", refColName)
 	}
 	if len(aggrs) == 0 {
-		return nil, fmt.Errorf("aggregate on '%s': at least one column aggregation is required", indexColName)
+		return nil, fmt.Errorf("aggregate on '%s': at least one column aggregation is required", refColName)
 	}
 
 	for i := range aggrs {
 		err := validateAggr(b, aggrs[i])
 		if err != nil {
-			return nil, fmt.Errorf("aggregate on '%s': %w", indexColName, err)
+			return nil, fmt.Errorf("aggregate on '%s': %w", refColName, err)
 		}
 	}
 
-	colIndex, err := b.GetColIndex(indexColName)
+	refColIndex, err := b.GetColIndex(refColName)
 	if err != nil {
 		return nil, err
 	}
 
-	b2, err := aggregateCols(b, colIndex, aggrs)
+	aggregatedBow, err := aggregateCols(b, refColIndex, aggrs)
 	if err != nil {
-		return nil, fmt.Errorf("aggregate on '%s': %w", indexColName, err)
+		return nil, fmt.Errorf("aggregate on '%s': %w", refColName, err)
 	}
 
-	return b2, nil
+	return aggregatedBow, nil
 }
 
-func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
+func validateAggr(b bow.Bow, aggr rolling.ColAggregation) error {
 	if aggr.InputName() == "" {
 		return fmt.Errorf("no column name")
 	}
@@ -51,8 +51,9 @@ func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
 	return nil
 }
 
-func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation) (bow.Bow, error) {
-	seriess := make([]bow.Series, len(aggrs))
+// TODO: optimize this function with concurrency and less memory usage for accessing intervalCol data
+func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (bow.Bow, error) {
+	seriesSlice := make([]bow.Series, len(aggrs))
 
 	for writeColIndex, aggr := range aggrs {
 		name := aggr.OutputName()
@@ -60,11 +61,13 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 			name = b.GetColName(aggr.InputIndex())
 		}
 
-		typ := aggr.GetReturnType(b.GetColType(aggr.InputIndex()), b.GetColType(aggr.InputIndex()))
+		typ := aggr.GetReturnType(
+			b.GetColType(aggr.InputIndex()),
+			b.GetColType(aggr.InputIndex()))
 
 		if b.IsEmpty() {
 			buf := bow.NewBuffer(0, typ, true)
-			seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
+			seriesSlice[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 			continue
 		}
 
@@ -74,21 +77,21 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 		if b.NumRows() > 0 {
 			firstIndex = 0
 		}
-		start, startIndex := b.GetNextFloat64(intervalCol, 0)
+		start, startIndex := b.GetNextFloat64(refColIndex, 0)
 		if startIndex == -1 {
 			start = -1
 		}
-		end, endIndex := b.GetPreviousFloat64(intervalCol, b.NumRows()-1)
+		end, endIndex := b.GetPreviousFloat64(refColIndex, b.NumRows()-1)
 		if endIndex == -1 {
 			end = -1
 		}
 		w := rolling.Window{
-			Bow:                 b,
-			IntervalColumnIndex: intervalCol,
-			IsInclusive:         true,
-			FirstIndex:          firstIndex,
-			Start:               int64(start),
-			End:                 int64(end),
+			Bow:              b,
+			IntervalColIndex: refColIndex,
+			IsInclusive:      true,
+			FirstIndex:       firstIndex,
+			Start:            int64(start),
+			End:              int64(end),
 		}
 
 		val, err := aggr.Func()(aggr.InputIndex(), w)
@@ -104,13 +107,8 @@ func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation
 		}
 
 		buf.SetOrDrop(0, val)
-		seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
+		seriesSlice[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 	}
 
-	b, err := bow.NewBow(seriess...)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
+	return bow.NewBow(seriesSlice...)
 }

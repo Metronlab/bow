@@ -8,11 +8,11 @@ import (
 )
 
 func TestCount(t *testing.T) {
-	runTestCases(t, Count, nil, []bowTest{
+	runTestCases(t, Count, nil, []testCase{
 		{
-			Name:      "empty",
-			TestedBow: empty,
-			ExpectedBow: func() bow.Bow {
+			name:      "empty",
+			testedBow: emptyBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
 					bow.NewSeries("time", bow.Int64, []int64{}, nil),
 					bow.NewSeries("value", bow.Int64, []int64{}, nil),
@@ -22,9 +22,9 @@ func TestCount(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse",
-			TestedBow: sparseFloatBow,
-			ExpectedBow: func() bow.Bow {
+			name:      "sparse",
+			testedBow: sparseFloatBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
 					[]bow.Type{bow.Int64, bow.Int64},

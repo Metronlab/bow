@@ -1,4 +1,4 @@
-package fill
+package interpolation
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ func TestIntervalPosition(t *testing.T) {
 	t.Run("no options", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol)).
+			Interpolate(WindowStart(timeCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
 			{10, 12, 13},
@@ -29,7 +29,7 @@ func TestIntervalPosition(t *testing.T) {
 	t.Run("with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{Offset: 1.})
 		filled, err := r.
-			Fill(WindowStart(timeCol)).
+			Interpolate(WindowStart(timeCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol}, []bow.Type{bow.Int64}, [][]interface{}{
 			{9, 10, 11, 13},

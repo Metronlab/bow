@@ -89,7 +89,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	*/
 
 	for i, f := range jsonB.Schema.Fields {
-		if _, ok := mapArrowDataTypeNameType[f.Type]; ok {
+		if _, ok := mapArrowNameToBowType[f.Type]; ok {
 			continue
 		}
 		switch f.Type {
@@ -106,7 +106,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
-			t := newTypeFromArrowName(field.Type)
+			t := getBowTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, t, true)
 			seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 		}
@@ -121,17 +121,10 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	}
 
 	for i, field := range jsonB.Schema.Fields {
-		t := newTypeFromArrowName(field.Type)
+		t := getBowTypeFromArrowName(field.Type)
 		buf := NewBuffer(len(jsonB.RowBasedData), t, true)
 		for rowIndex, row := range jsonB.RowBasedData {
-			val, ok := row[field.Name]
-			if ok {
-				_, ok = val.(float64)
-				if t == Int64 && ok {
-					val = int64(val.(float64))
-				}
-				buf.SetOrDrop(rowIndex, val)
-			}
+			buf.SetOrDrop(rowIndex, row[field.Name])
 		}
 
 		seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)

@@ -9,7 +9,7 @@ import (
 
 func TestMode(t *testing.T) {
 	var modeFloatBow, _ = bow.NewBowFromRowBasedInterfaces(
-		[]string{tc, vc},
+		[]string{timeCol, valueCol},
 		[]bow.Type{bow.Int64, bow.Float64},
 		[][]interface{}{
 			{10, 10.}, // same value window
@@ -29,25 +29,25 @@ func TestMode(t *testing.T) {
 			{51, nil},
 		})
 
-	runTestCases(t, Mode, nil, []bowTest{
+	runTestCases(t, Mode, nil, []testCase{
 		{
-			Name:      "empty",
-			TestedBow: empty,
-			ExpectedBow: func() bow.Bow {
+			name:      "empty",
+			testedBow: emptyBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries(tc, bow.Int64, []int64{}, nil),
-					bow.NewSeries(vc, bow.Float64, []float64{}, nil),
+					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
 			}(),
 		},
 		{
-			Name:      "mode float",
-			TestedBow: modeFloatBow,
-			ExpectedBow: func() bow.Bow {
+			name:      "mode float",
+			testedBow: modeFloatBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{tc, vc},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 10.},
@@ -61,11 +61,11 @@ func TestMode(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse bool",
-			TestedBow: sparseBoolBow,
-			ExpectedBow: func() bow.Bow {
+			name:      "sparse bool",
+			testedBow: sparseBoolBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{tc, vc},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Bool},
 					[][]interface{}{
 						{10, true},
@@ -80,11 +80,11 @@ func TestMode(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse string",
-			TestedBow: sparseStringBow,
-			ExpectedBow: func() bow.Bow {
+			name:      "sparse string",
+			testedBow: sparseStringBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{tc, vc},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.String},
 					[][]interface{}{
 						{10, "10."},

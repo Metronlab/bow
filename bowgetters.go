@@ -247,7 +247,7 @@ func (b *bow) GetPreviousFloat64(colIndex, rowIndex int) (float64, int) {
 }
 
 func (b *bow) GetColType(colIndex int) Type {
-	return getTypeFromArrowType(b.Schema().Field(colIndex).Type)
+	return getBowTypeFromArrowType(b.Schema().Field(colIndex).Type)
 }
 
 func (b *bow) GetColName(colIndex int) string {

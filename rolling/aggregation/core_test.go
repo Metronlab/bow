@@ -10,16 +10,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	tc = "time"
-	vc = "value"
+const (
+	timeCol  = "time"
+	valueCol = "value"
+)
 
-	empty, _ = bow.NewBow(
-		bow.NewSeries(tc, bow.Int64, []int64{}, nil),
-		bow.NewSeries(vc, bow.Float64, []float64{}, nil),
+type testCase struct {
+	name        string
+	testedBow   bow.Bow
+	expectedBow bow.Bow
+}
+
+var (
+	emptyBow, _ = bow.NewBow(
+		bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+		bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 	)
 	nilBow, _ = bow.NewBowFromRowBasedInterfaces(
-		[]string{tc, vc},
+		[]string{timeCol, valueCol},
 		[]bow.Type{bow.Int64, bow.Float64},
 		[][]interface{}{
 			{10, nil},
@@ -27,7 +35,7 @@ var (
 			{20, nil},
 		})
 	sparseFloatBow, _ = bow.NewBowFromRowBasedInterfaces(
-		[]string{tc, vc},
+		[]string{timeCol, valueCol},
 		[]bow.Type{bow.Int64, bow.Float64},
 		[][]interface{}{
 			{10, 10.}, // partially valid window
@@ -44,7 +52,7 @@ var (
 			{69, 20.},
 		})
 	sparseBoolBow, _ = bow.NewBowFromRowBasedInterfaces(
-		[]string{tc, vc},
+		[]string{timeCol, valueCol},
 		[]bow.Type{bow.Int64, bow.Bool},
 		[][]interface{}{
 			{10, true}, // partially valid window
@@ -61,7 +69,7 @@ var (
 			{69, false},
 		})
 	sparseStringBow, _ = bow.NewBowFromRowBasedInterfaces(
-		[]string{tc, vc},
+		[]string{timeCol, valueCol},
 		[]bow.Type{bow.Int64, bow.String},
 		[][]interface{}{
 			{10, "10."}, // partially valid window
@@ -79,29 +87,22 @@ var (
 		})
 )
 
-type bowTest struct {
-	Name        string
-	TestedBow   bow.Bow
-	ExpectedBow bow.Bow
-}
-
-func runTestCases(t *testing.T,
-	aggrConstruct rolling.ColumnAggregationConstruct, aggrTransforms []transform.Transform,
-	testCases []bowTest) {
+func runTestCases(t *testing.T, aggrConstruct rolling.ColAggregationConstruct,
+	aggrTransforms []transform.Transform, testCases []testCase) {
 	for _, test := range testCases {
-		t.Run(test.Name, func(t *testing.T) {
-			r, err := rolling.IntervalRolling(test.TestedBow, tc, 10, rolling.Options{})
+		t.Run(test.name, func(t *testing.T) {
+			r, err := rolling.IntervalRolling(test.testedBow, timeCol, 10, rolling.Options{})
 			assert.NoError(t, err)
 			aggregated, err := r.
 				Aggregate(
-					WindowStart(tc),
-					aggrConstruct(vc).Transform(aggrTransforms...)).
+					WindowStart(timeCol),
+					aggrConstruct(valueCol).Transform(aggrTransforms...)).
 				Bow()
 			assert.NoError(t, err)
 			assert.NotNil(t, aggregated)
 
-			assert.Equal(t, true, aggregated.Equal(test.ExpectedBow),
-				fmt.Sprintf("expect:\n%v\nhave:\n%v", test.ExpectedBow, aggregated))
+			assert.Equal(t, true, aggregated.Equal(test.expectedBow),
+				fmt.Sprintf("expect:\n%v\nhave:\n%v", test.expectedBow, aggregated))
 		})
 	}
 }

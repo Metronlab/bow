@@ -34,7 +34,7 @@ func NewSeries(name string, typ Type, dataArray interface{}, validArray []bool) 
 					[]*memory.Buffer{
 						memory.NewBufferBytes(valid),
 						memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(typedDataArray)),
-					}, nil, bitutil.CountSetBits(valid, 0, length), 0),
+					}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
 			),
 		}
 	case Int64:
@@ -52,7 +52,7 @@ func NewSeries(name string, typ Type, dataArray interface{}, validArray []bool) 
 					[]*memory.Buffer{
 						memory.NewBufferBytes(valid),
 						memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(typedDataArray)),
-					}, nil, bitutil.CountSetBits(valid, 0, length), 0),
+					}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
 			),
 		}
 	case Bool:

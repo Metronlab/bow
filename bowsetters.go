@@ -19,10 +19,7 @@ func (b *bow) SetColName(colIndex int, newName string) (Bow, error) {
 				Array: col,
 			}
 		} else {
-			newSeries[i] = Series{
-				Name:  b.GetColName(i),
-				Array: col,
-			}
+			newSeries[i] = b.NewSeriesFromCol(i)
 		}
 	}
 

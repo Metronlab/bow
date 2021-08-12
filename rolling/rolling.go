@@ -8,12 +8,12 @@ import (
 )
 
 // Rolling allows to process a bow via windows.
-// Use `Fill` and/or `Aggregate` to transform windows.
+// Use `Interpolate` and/or `Aggregate` to transform windows.
 // Use `HasNext` and `Next` to iterate over windows.
 // Use `Bow` to get the processed bow.
 type Rolling interface {
-	Fill(interpolations ...ColumnInterpolation) Rolling
-	Aggregate(aggregations ...ColumnAggregation) Rolling
+	Interpolate(interpolations ...ColInterpolation) Rolling
+	Aggregate(aggregations ...ColAggregation) Rolling
 
 	NumWindows() (int, error)
 	HasNext() bool
@@ -222,12 +222,12 @@ func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
 	}
 
 	return windowIndex, &Window{
-		FirstIndex:          firstIndex,
-		Bow:                 b,
-		IntervalColumnIndex: it.colIndex,
-		Start:               start,
-		End:                 end,
-		IsInclusive:         isInclusive,
+		FirstIndex:       firstIndex,
+		Bow:              b,
+		IntervalColIndex: it.colIndex,
+		Start:            start,
+		End:              end,
+		IsInclusive:      isInclusive,
 	}, nil
 }
 
@@ -242,12 +242,12 @@ func (it *intervalRollingIter) NumWindows() (int, error) {
 }
 
 func numWindows(b bow.Bow, colIndex int, start, interval int64) (int, error) {
-	nrows := b.NumRows()
-	if nrows == 0 {
-		return nrows, nil
+	numRows := b.NumRows()
+	if numRows == 0 {
+		return numRows, nil
 	}
 
-	last, irow := b.GetPreviousInt64(colIndex, nrows-1)
+	last, irow := b.GetPreviousInt64(colIndex, numRows-1)
 
 	if irow == -1 || start > last {
 		return 0, nil

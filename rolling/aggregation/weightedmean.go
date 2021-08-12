@@ -5,9 +5,9 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func WeightedAverageStep(col string) rolling.ColumnAggregation {
+func WeightedAverageStep(col string) rolling.ColAggregation {
 	integralFunc := IntegralStep(col).Func()
-	return rolling.NewColumnAggregation(col, false, bow.Float64,
+	return rolling.NewColAggregation(col, false, bow.Float64,
 		func(colIndex int, w rolling.Window) (interface{}, error) {
 			v, err := integralFunc(colIndex, w)
 			if v == nil || err != nil {
@@ -19,9 +19,9 @@ func WeightedAverageStep(col string) rolling.ColumnAggregation {
 		})
 }
 
-func WeightedAverageLinear(col string) rolling.ColumnAggregation {
+func WeightedAverageLinear(col string) rolling.ColAggregation {
 	integralFunc := IntegralTrapezoid(col).Func()
-	return rolling.NewColumnAggregation(col, true, bow.Float64,
+	return rolling.NewColAggregation(col, true, bow.Float64,
 		func(colIndex int, w rolling.Window) (interface{}, error) {
 			v, err := integralFunc(colIndex, w)
 			if v == nil || err != nil {
