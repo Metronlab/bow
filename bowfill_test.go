@@ -10,22 +10,24 @@ import (
 
 func TestFill(t *testing.T) {
 	t.Run("int64", func(t *testing.T) {
-		b, _ := NewBowFromRowBasedInterfaces(
-			[]string{"a", "b", "c", "d", "e"},
-			[]Type{Int64, Int64, Int64, Int64, Int64},
-			[][]interface{}{
-				{20, 6, 30, 400, -10},
-				{13, nil, nil, nil, nil},
-				{10, 4, 10, 10, -5},
-				{1, nil, nil, 120, nil},
-				{0, nil, 3, 4, 0},
-				{nil, nil, nil, nil, nil},
-				{-2, 1, nil, nil, -8},
-			})
-
 		t.Run("Mean one column", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
+
 			filled, err := b.FillMean("b")
 			require.NoError(t, err)
+
 			expected, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c", "d", "e"},
 				[]Type{Int64, Int64, Int64, Int64, Int64},
@@ -39,10 +41,24 @@ func TestFill(t *testing.T) {
 					{-2, 1, nil, nil, -8},
 				})
 			require.NoError(t, err)
+
 			assert.EqualValues(t, expected.String(), filled.String())
 		})
 
 		t.Run("Mean all columns", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillMean()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -62,6 +78,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Next one column", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillNext("b")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -81,6 +110,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Next all columns", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillNext()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -100,6 +142,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Previous one column", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillPrevious("b")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -119,6 +174,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Previous all columns", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillPrevious()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -138,6 +206,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Linear refCol a toFillCol b (desc)", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillLinear("a", "b")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -157,6 +238,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Linear refCol a toFillCol e (asc)", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillLinear("a", "e")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -176,6 +270,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Int64, Int64, Int64, Int64, Int64},
+				[][]interface{}{
+					{20, 6, 30, 400, -10},
+					{13, nil, nil, nil, nil},
+					{10, 4, 10, 10, -5},
+					{1, nil, nil, 120, nil},
+					{0, nil, 3, 4, 0},
+					{nil, nil, nil, nil, nil},
+					{-2, 1, nil, nil, -8},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillLinear("d", "b")
 			assert.Nil(t, filled)
 			assert.Error(t, err)
@@ -183,20 +290,20 @@ func TestFill(t *testing.T) {
 	})
 
 	t.Run("float64", func(t *testing.T) {
-		b, _ := NewBowFromRowBasedInterfaces(
-			[]string{"a", "b", "c", "d", "e"},
-			[]Type{Float64, Float64, Float64, Float64, Float64},
-			[][]interface{}{
-				{20.0, 6.0, 30.0, 400.0, -10.0},
-				{13.0, nil, nil, nil, nil},
-				{10.0, 4.0, 10.0, 10.0, -5.0},
-				{1.0, nil, nil, 120.0, nil},
-				{0.0, nil, 3.0, 4.0, 0.0},
-				{nil, nil, nil, nil, nil},
-				{-2.0, 1.0, nil, nil, -8.0},
-			})
-
 		t.Run("Mean one column", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillMean("b")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -216,6 +323,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Mean all columns", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillMean()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -235,6 +355,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Next one column", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillNext("b")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -254,6 +387,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Next all columns", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillNext()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -273,6 +419,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Previous one column", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillPrevious("b")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -292,6 +451,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Previous all columns", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillPrevious()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -311,6 +483,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Linear refCol a toFillCol b (desc)", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillLinear("a", "b")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -330,6 +515,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Linear refCol a toFillCol e (asc)", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillLinear("a", "e")
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -349,6 +547,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
+			b, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c", "d", "e"},
+				[]Type{Float64, Float64, Float64, Float64, Float64},
+				[][]interface{}{
+					{20.0, 6.0, 30.0, 400.0, -10.0},
+					{13.0, nil, nil, nil, nil},
+					{10.0, 4.0, 10.0, 10.0, -5.0},
+					{1.0, nil, nil, 120.0, nil},
+					{0.0, nil, 3.0, 4.0, 0.0},
+					{nil, nil, nil, nil, nil},
+					{-2.0, 1.0, nil, nil, -8.0},
+				})
+			require.NoError(t, err)
 			filled, err := b.FillLinear("d", "b")
 			assert.Nil(t, filled)
 			assert.Error(t, err)
@@ -356,20 +567,20 @@ func TestFill(t *testing.T) {
 	})
 
 	t.Run("non numeric", func(t *testing.T) {
-		nonNumeric, _ := NewBowFromRowBasedInterfaces(
-			[]string{"a", "b", "c"},
-			[]Type{Int64, Bool, String},
-			[][]interface{}{
-				{20, nil, "dgr"},
-				{13, false, "sfr"},
-				{10, false, nil},
-				{1, true, "hey"},
-				{0, nil, "yop"},
-				{-1, true, nil},
-				{-2, false, "ioi"},
-			})
-
 		t.Run("Previous", func(t *testing.T) {
+			nonNumeric, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c"},
+				[]Type{Int64, Bool, String},
+				[][]interface{}{
+					{20, nil, "dgr"},
+					{13, false, "sfr"},
+					{10, false, nil},
+					{1, true, "hey"},
+					{0, nil, "yop"},
+					{-1, true, nil},
+					{-2, false, "ioi"},
+				})
+			require.NoError(t, err)
 			filled, err := nonNumeric.FillPrevious()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -390,6 +601,19 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Next", func(t *testing.T) {
+			nonNumeric, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c"},
+				[]Type{Int64, Bool, String},
+				[][]interface{}{
+					{20, nil, "dgr"},
+					{13, false, "sfr"},
+					{10, false, nil},
+					{1, true, "hey"},
+					{0, nil, "yop"},
+					{-1, true, nil},
+					{-2, false, "ioi"},
+				})
+			require.NoError(t, err)
 			filled, err := nonNumeric.FillNext()
 			require.NoError(t, err)
 			expected, err := NewBowFromRowBasedInterfaces(
@@ -409,12 +633,38 @@ func TestFill(t *testing.T) {
 		})
 
 		t.Run("Mean", func(t *testing.T) {
+			nonNumeric, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c"},
+				[]Type{Int64, Bool, String},
+				[][]interface{}{
+					{20, nil, "dgr"},
+					{13, false, "sfr"},
+					{10, false, nil},
+					{1, true, "hey"},
+					{0, nil, "yop"},
+					{-1, true, nil},
+					{-2, false, "ioi"},
+				})
+			require.NoError(t, err)
 			filled, err := nonNumeric.FillMean()
 			assert.Error(t, err)
 			assert.Nil(t, filled)
 		})
 
 		t.Run("Linear", func(t *testing.T) {
+			nonNumeric, err := NewBowFromRowBasedInterfaces(
+				[]string{"a", "b", "c"},
+				[]Type{Int64, Bool, String},
+				[][]interface{}{
+					{20, nil, "dgr"},
+					{13, false, "sfr"},
+					{10, false, nil},
+					{1, true, "hey"},
+					{0, nil, "yop"},
+					{-1, true, nil},
+					{-2, false, "ioi"},
+				})
+			require.NoError(t, err)
 			filled, err := nonNumeric.FillLinear("a", "b")
 			assert.Error(t, err)
 			assert.Nil(t, filled)
@@ -422,49 +672,63 @@ func TestFill(t *testing.T) {
 	})
 
 	t.Run("with metadata", func(t *testing.T) {
-		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+		// Previous
+		b1, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
 			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
 			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
-
-		// Previous
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
 			NewSeries("int", Int64, []int64{1, 1, 3}, []bool{true, true, true}),
 			NewSeries("float", Float64, []float64{1., 1., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
-		res, err := b.FillPrevious()
+		res, err := b1.FillPrevious()
 		require.NoError(t, err)
 		assert.Equal(t, expected.String(), res.String())
 
 		// Next
+		b2, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
 			NewSeries("int", Int64, []int64{1, 3, 3}, []bool{true, true, true}),
 			NewSeries("float", Float64, []float64{1., 3., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
-		res, err = b.FillNext()
+		res, err = b2.FillNext()
 		require.NoError(t, err)
 		assert.Equal(t, expected.String(), res.String())
 
 		// Mean
+		b3, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
 			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, true, true}),
 			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
-		res, err = b.FillMean()
+		res, err = b3.FillMean()
 		require.NoError(t, err)
 		assert.Equal(t, expected.String(), res.String())
 
 		// Linear
+		b4, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+		)
+		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
 			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
 			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
-		res, err = b.FillLinear("int", "float")
+		res, err = b4.FillLinear("int", "float")
 		require.NoError(t, err)
 		assert.Equal(t, expected.String(), res.String())
 	})

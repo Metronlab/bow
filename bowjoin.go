@@ -62,7 +62,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 		NewMetadata(keys, values),
 		newSeries...)
 	if err != nil {
-		panic(err.Error())
+		panic(fmt.Errorf("bow.OuterJoin: %w", err))
 	}
 
 	return newBow
@@ -647,7 +647,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		NewMetadata(keys, values),
 		newSeries...)
 	if err != nil {
-		panic(err.Error())
+		panic(fmt.Errorf("bow.InnerJoin: %w", err))
 	}
 
 	return newBow

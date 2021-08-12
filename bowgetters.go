@@ -47,6 +47,18 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 	}
 }
 
+func (b *bow) GetNextValue(colIndex, rowIndex int) (interface{}, int) {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
+		value := b.GetValue(colIndex, rowIndex)
+		if value != nil {
+			return value, rowIndex
+		}
+		rowIndex++
+	}
+
+	return nil, -1
+}
+
 func (b *bow) GetNextValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
@@ -57,17 +69,31 @@ func (b *bow) GetNextValues(colIndex1, colIndex2, rowIndex int) (interface{}, in
 		}
 		rowIndex++
 	}
+
 	return nil, nil, -1
 }
 
-func (b *bow) GetNextValue(colIndex, rowIndex int) (interface{}, int) {
+func (b *bow) GetNextIndex(colIndex, rowIndex int) int {
+	col := b.Column(colIndex)
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
+		if col.IsValid(rowIndex) {
+			return rowIndex
+		}
+		rowIndex++
+	}
+
+	return -1
+}
+
+func (b *bow) GetPreviousValue(colIndex, rowIndex int) (interface{}, int) {
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value := b.GetValue(colIndex, rowIndex)
 		if value != nil {
 			return value, rowIndex
 		}
-		rowIndex++
+		rowIndex--
 	}
+
 	return nil, -1
 }
 
@@ -81,18 +107,20 @@ func (b *bow) GetPreviousValues(colIndex1, colIndex2, rowIndex int) (interface{}
 		}
 		rowIndex--
 	}
+
 	return nil, nil, -1
 }
 
-func (b *bow) GetPreviousValue(colIndex, rowIndex int) (interface{}, int) {
+func (b *bow) GetPreviousIndex(colIndex, rowIndex int) int {
+	col := b.Column(colIndex)
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
-		value := b.GetValue(colIndex, rowIndex)
-		if value != nil {
-			return value, rowIndex
+		if col.IsValid(rowIndex) {
+			return rowIndex
 		}
 		rowIndex--
 	}
-	return nil, -1
+
+	return -1
 }
 
 func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {

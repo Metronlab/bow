@@ -31,8 +31,10 @@ type Bow interface {
 	GetValue(colIndex, rowIndex int) (value interface{})
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetNextValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
-	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resultRowIndex int)
+	GetNextIndex(colIndex, rowIndex int) (resRowIndex int)
+	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetPreviousValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
+	GetPreviousIndex(colIndex, rowIndex int) (resRowIndex int)
 
 	GetInt64(colIndex, rowIndex int) (value int64, valid bool)
 	GetNextInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
