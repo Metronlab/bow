@@ -26,7 +26,7 @@ jobs:
           go get golang.org/x/perf/cmd/benchstat
           bash -c ./scripts/benchmark.sh
 
-      - name: Upload artifact of current benchmark results
+      - name: Upload artifact of current branch benchmark results
         uses: actions/upload-artifact@v2
         with:
           name: current-benchmark-results
@@ -59,11 +59,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: current-benchmark-results
+          path: ${{ env.BENCH_RESULTS_CURR_FILE_PATH }}
       - shell: bash
         run: |
           ./scripts/benchstat.sh $BENCH_RESULTS_FILE_PATH $BENCH_RESULTS_CURR_FILE_PATH
 
-      - name: Archive base benchmark results
+      - name: Upload artifact of base branch benchmark results
         uses: actions/upload-artifact@v2
         with:
           name: base-benchmark-results
