@@ -37,6 +37,7 @@ jobs:
     needs: base
     runs-on: ubuntu-latest
     env:
+      BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
       BENCH_RESULTS_DIR_PATH: benchmarks
       BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
     steps:
@@ -59,6 +60,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: current-benchmark-results
+          path: ${{ env.BENCH_RESULTS_CURR_FILE_PATH }}
       - shell: bash
         run: |
           ./scripts/benchstat.sh $BENCH_RESULTS_FILE_PATH ${{ steps.download.outputs.download-path }}
