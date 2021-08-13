@@ -33,7 +33,7 @@ jobs:
           path: ${{ env.BENCH_RESULTS_FILE_PATH }}
 
   compare-benchmarks:
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     env:
       BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
