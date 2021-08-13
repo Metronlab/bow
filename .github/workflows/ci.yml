@@ -51,6 +51,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: current-branch-benchmark-results
+          path: ${{ env.BENCH_RESULTS_CURR_FILE_PATH }}
 
       - name: Display structure of downloaded files
         run: ls -R
