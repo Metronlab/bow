@@ -1,6 +1,6 @@
 name: ci
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   base:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: current-benchmark-results
-          path: $BENCH_RESULTS_FILE_PATH
+          path: ${{ env.BENCH_RESULTS_FILE_PATH }}
 
   compare-benchmarks:
     if: github.event_name == 'pull_request'
@@ -67,4 +67,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: base-benchmark-results
-          path: $BENCH_RESULTS_FILE_PATH
+          path: ${{ env.BENCH_RESULTS_FILE_PATH }}
