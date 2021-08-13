@@ -4,12 +4,11 @@
 set -o pipefail
 
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
-CURR_BRANCH=$(git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3)
 
 : ${PKG:=./...}
 : ${TIMEOUT:="1h"}
 : ${BENCH_RESULTS_DIR_PATH:=/tmp/benchmarks}
-: ${BENCH_RESULTS_FILE_PATH:=/tmp/benchmarks/${CURR_BRANCH}.${TIMESTAMP}.txt}
+: ${BENCH_RESULTS_FILE_PATH:=/tmp/benchmarks/${TIMESTAMP}.txt}
 
 mkdir -p ${BENCH_RESULTS_DIR_PATH}
 
