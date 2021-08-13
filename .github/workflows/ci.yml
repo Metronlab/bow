@@ -6,8 +6,8 @@ jobs:
   base:
     runs-on: ubuntu-latest
     env:
-      BENCH_RESULTS_DIR_PATH: ${{ format('{0}/benchmarks', runner.temp) }}
-      BENCH_RESULTS_FILE_PATH: ${{ format('{0}/benchmarks/{1}.txt', runner.temp, github.sha) }}
+      BENCH_RESULTS_DIR_PATH: benchmarks
+      BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
     steps:
       - uses: actions/checkout@v2
 
@@ -36,9 +36,9 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
-      BENCH_RESULTS_CURR_FILE_PATH: ${{ format('{0}/benchmarks/{1}.txt', runner.temp, github.sha) }}
-      BENCH_RESULTS_DIR_PATH: ${{ format('{0}/benchmarks', runner.temp) }}
-      BENCH_RESULTS_FILE_PATH: ${{ format('{0}/benchmarks/{1}.{2}.txt', runner.temp, github.base_ref, github.sha) }}
+      BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
+      BENCH_RESULTS_DIR_PATH: benchmarks
+      BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.{1}.txt', github.base_ref, github.sha) }}
     steps:
       - uses: actions/checkout@v2
         with:
