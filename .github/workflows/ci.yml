@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 on: [push, pull_request]
 
@@ -34,6 +34,7 @@ jobs:
 
   compare-benchmarks:
     if: ${{ github.event_name == 'pull_request' }}
+    needs: base
     runs-on: ubuntu-latest
     env:
       BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
