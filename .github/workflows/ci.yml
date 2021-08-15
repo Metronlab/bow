@@ -62,7 +62,7 @@ jobs:
 
       - name: Compare benchmarks
         run: |
-          bash -c ./scripts/benchstat.sh ${{ format('benchmarks/{0}.txt', github.base_ref) }} ${{ format('benchmarks/{0}.txt', github.sha) }}
+          bash ./scripts/benchstat.sh ${{ format('benchmarks/{0}.txt', github.base_ref) }} ${{ format('benchmarks/{0}.txt', github.sha) }}
 
       - name: Upload artifact of base branch benchmark results
         uses: actions/upload-artifact@v2
