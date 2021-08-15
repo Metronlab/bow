@@ -35,10 +35,6 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     needs: base
     runs-on: ubuntu-latest
-    env:
-      BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
-      BENCH_RESULTS_DIR_PATH: benchmarks
-      BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -51,7 +47,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: current-branch-benchmark-results
-          path: ${{ env.BENCH_RESULTS_DIR_PATH }}
+          path: benchmarks
 
       - name: Display structure of downloaded files
         run: ls -R
@@ -60,13 +56,19 @@ jobs:
         run: |
           go get golang.org/x/perf/cmd/benchstat
           bash -c ./scripts/benchmark.sh
+        env:
+          BENCH_RESULTS_DIR_PATH: benchmarks
+          BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
 
       - name: Compare benchmarks
         run: |
           bash -c ./scripts/benchstat.sh $BENCH_RESULTS_FILE_PATH $BENCH_RESULTS_CURR_FILE_PATH
+        env:
+          BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
+          BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
 
       - name: Upload artifact of base branch benchmark results
         uses: actions/upload-artifact@v2
         with:
           name: base-branch-benchmark-results
-          path: ${{ env.BENCH_RESULTS_FILE_PATH }}
+          path: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
