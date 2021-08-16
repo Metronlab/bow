@@ -73,9 +73,10 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 		return nil, err
 	}
 
-	colType := b.GetColType(colIndex)
-	if colType != bow.Int64 {
-		return nil, fmt.Errorf("rolling.IntervalRolling: impossible to roll over type %v", colType)
+	if b.GetColType(colIndex) != bow.Int64 {
+		return nil, fmt.Errorf(
+			"rolling.IntervalRolling: impossible to roll over type %v",
+			b.GetColType(colIndex))
 	}
 
 	var start int64
@@ -83,7 +84,8 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 		first, valid := b.GetInt64(colIndex, 0)
 		if !valid {
 			v := b.GetValue(colIndex, 0)
-			return nil, fmt.Errorf("rolling.IntervalRolling: expected int64 start value, got %v", v)
+			return nil, fmt.Errorf(
+				"rolling.IntervalRolling: expected int64 start value, got %v", v)
 		}
 		// align first window start on interval
 		start = (first/interval)*interval + options.Offset
@@ -132,6 +134,20 @@ func validateIntervalOffset(interval, offset int64) (int64, error) {
 		offset += interval
 	}
 	return offset, nil
+}
+
+func numWindows(b bow.Bow, colIndex int, start, interval int64) (int, error) {
+	if b.NumRows() == 0 {
+		return 0, nil
+	}
+
+	last, rowIndex := b.GetPreviousInt64(colIndex, b.NumRows()-1)
+
+	if rowIndex == -1 || start > last {
+		return 0, nil
+	}
+
+	return int((last-start)/interval + 1), nil
 }
 
 type intervalRollingIter struct {
@@ -239,19 +255,4 @@ func (it *intervalRollingIter) setError(err error) Rolling {
 // NumWindows gives the total of windows across the entire bow this iterator was built from.
 func (it *intervalRollingIter) NumWindows() (int, error) {
 	return it.numWindows, it.err
-}
-
-func numWindows(b bow.Bow, colIndex int, start, interval int64) (int, error) {
-	numRows := b.NumRows()
-	if numRows == 0 {
-		return numRows, nil
-	}
-
-	last, irow := b.GetPreviousInt64(colIndex, numRows-1)
-
-	if irow == -1 || start > last {
-		return 0, nil
-	}
-
-	return int((last-start)/interval + 1), nil
 }
