@@ -1,5 +1,8 @@
 # Bow
 
+![lint](https://github.com/Metronlab/bow/actions/workflows/golangci-lint.yml/badge.svg)
+![ci](https://github.com/Metronlab/bow/actions/workflows/ci.yml/badge.svg)
+
 This project is experimental and not ready for production.
 The interface and methods are still under heavy changes.
 
