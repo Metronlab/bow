@@ -35,6 +35,10 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		case Int64:
 			builder := array.NewInt64Builder(mem)
 			for _, b := range bows {
+				if t := b.GetColType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewInt64Data(data)
 				v := arr.Int64Values()
@@ -45,6 +49,10 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		case Float64:
 			builder := array.NewFloat64Builder(mem)
 			for _, b := range bows {
+				if t := b.GetColType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewFloat64Data(data)
 				v := arr.Float64Values()
@@ -55,6 +63,10 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		case Bool:
 			builder := array.NewBooleanBuilder(mem)
 			for _, b := range bows {
+				if t := b.GetColType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewBooleanData(data)
 				v := make([]bool, b.NumRows())
@@ -68,6 +80,10 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		case String:
 			builder := array.NewStringBuilder(mem)
 			for _, b := range bows {
+				if t := b.GetColType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewStringData(data)
 				v := make([]string, b.NumRows())
@@ -79,7 +95,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			}
 			newArray = builder.NewArray()
 		default:
-			panic(fmt.Errorf("unsupported type %+v", typ))
+			return nil, fmt.Errorf("bow.AppendBows: unsupported type %v", typ)
 		}
 
 		seriesSlice[colIndex] = Series{

@@ -132,6 +132,28 @@ func TestAppendBows(t *testing.T) {
 
 		assert.Equal(t, expected.String(), appended.String())
 	})
+
+	t.Run("same column names but different types", func(t *testing.T) {
+		b1, err := NewBowFromColBasedInterfaces(
+			[]string{"a", "b"},
+			[]Type{Int64, Float64},
+			[][]interface{}{
+				{1, 2},
+				{.1, .2},
+			})
+		require.NoError(t, err)
+		b2, err := NewBowFromColBasedInterfaces(
+			[]string{"a", "b"},
+			[]Type{Int64, Int64},
+			[][]interface{}{
+				{3},
+				{3},
+			})
+		require.NoError(t, err)
+
+		_, err = AppendBows(b1, b2)
+		assert.Error(t, err)
+	})
 }
 
 func BenchmarkAppendBows(b *testing.B) {
