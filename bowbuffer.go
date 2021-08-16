@@ -43,7 +43,7 @@ func NewBuffer(size int, typ Type, nullable bool) Buffer {
 }
 
 func (b *bow) NewBufferFromCol(colIndex int) Buffer {
-	colType := b.GetColType(colIndex)
+	colType := b.ColumnType(colIndex)
 	colData := b.Column(colIndex).Data()
 	switch colType {
 	case Int64:

@@ -92,13 +92,6 @@ func setValid(validArray []bool, length int) []byte {
 	return valid
 }
 
-func (b *bow) NewSeriesFromCol(colIndex int) Series {
-	return Series{
-		Name:  b.GetColName(colIndex),
-		Array: b.Column(colIndex),
-	}
-}
-
 func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (series Series, err error) {
 	if typ == Unknown {
 		if typ, err = seekType(cells); err != nil {

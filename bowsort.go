@@ -19,7 +19,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.SortByCol: empty bow")
 	}
 
-	colToSortByIndex, err := b.GetColIndex(colName)
+	colToSortByIndex, err := b.ColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("bow.SortByCol: %w", err)
 	}
@@ -30,11 +30,11 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			colName, b.Column(colToSortByIndex).NullN())
 	}
 
-	if b.IsEmpty() {
+	if b.NumRows() == 0 {
 		return b, nil
 	}
 
-	if b.GetColType(colToSortByIndex) != Int64 {
+	if b.ColumnType(colToSortByIndex) != Int64 {
 		return nil, fmt.Errorf("bow.SortByCol: unsupported type for the column to sort by (Int64 only)")
 	}
 
@@ -77,8 +77,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, wg *sync.WaitGroup) {
 			defer wg.Done()
-			prevData := b.Record.Column(colIndex).Data()
-			switch b.GetColType(colIndex) {
+			prevData := b.Column(colIndex).Data()
+			switch b.ColumnType(colIndex) {
 			case Int64:
 				prevValues := array.NewInt64Data(prevData)
 				newValues := make([]int64, b.NumRows())
@@ -91,7 +91,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				}
 
 				sortedSeries[colIndex] = Series{
-					Name: b.GetColName(colIndex),
+					Name: b.ColumnName(colIndex),
 					Array: array.NewInt64Data(
 						array.NewData(arrow.PrimitiveTypes.Int64, b.NumRows(),
 							[]*memory.Buffer{
@@ -112,7 +112,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				}
 
 				sortedSeries[colIndex] = Series{
-					Name: b.GetColName(colIndex),
+					Name: b.ColumnName(colIndex),
 					Array: array.NewFloat64Data(
 						array.NewData(arrow.PrimitiveTypes.Float64, b.NumRows(),
 							[]*memory.Buffer{
@@ -135,7 +135,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				builder := array.NewBooleanBuilder(mem)
 				builder.AppendValues(newValues, newValid)
 				sortedSeries[colIndex] = Series{
-					Name:  b.GetColName(colIndex),
+					Name:  b.ColumnName(colIndex),
 					Array: builder.NewArray(),
 				}
 			case String:
@@ -152,7 +152,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				builder := array.NewStringBuilder(mem)
 				builder.AppendValues(newValues, newValid)
 				sortedSeries[colIndex] = Series{
-					Name:  b.GetColName(colIndex),
+					Name:  b.ColumnName(colIndex),
 					Array: builder.NewArray(),
 				}
 			default:

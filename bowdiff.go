@@ -15,14 +15,14 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	}
 
 	for colIndex, col := range b.Schema().Fields() {
-		switch b.GetColType(colIndex) {
+		switch b.ColumnType(colIndex) {
 		case Int64:
 		case Float64:
 		case Bool:
 		default:
 			return nil, fmt.Errorf(
-				"bow.Diff: column '%s' is of unsupported type '%s'",
-				col.Name, b.GetColType(colIndex))
+				"bow.Diff: column '%s' is of unsupported type '%v'",
+				col.Name, b.ColumnType(colIndex))
 		}
 	}
 
@@ -37,7 +37,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
-			colType := b.GetColType(colIndex)
+			colType := b.ColumnType(colIndex)
 			colBuf := b.NewBufferFromCol(colIndex)
 			calcBuf := NewBuffer(b.NumRows(), colType, true)
 			for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {

@@ -42,7 +42,7 @@ func (it *intervalRollingIter) Interpolate(interps ...ColInterpolation) Rolling 
 		return itCopy.setError(fmt.Errorf("interpolate: %w", err))
 	}
 	if b == nil {
-		b = it.bow.NewEmpty()
+		b = it.bow.ClearRows()
 	}
 
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
@@ -70,7 +70,7 @@ func (it *intervalRollingIter) indexedInterpolations(interps []ColInterpolation)
 	}
 
 	if newIntervalCol == -1 {
-		return -1, nil, fmt.Errorf("must keep interval column '%s'", it.bow.GetColName(it.colIndex))
+		return -1, nil, fmt.Errorf("must keep interval column '%s'", it.bow.ColumnName(it.colIndex))
 	}
 
 	return newIntervalCol, interps, nil
@@ -80,14 +80,14 @@ func (it *intervalRollingIter) validateInterpolation(interp *ColInterpolation, n
 	if interp.colName == "" {
 		return false, fmt.Errorf("interpolation %d has no column name", newIndex)
 	}
-	readIndex, err := it.bow.GetColIndex(interp.colName)
+	readIndex, err := it.bow.ColumnIndex(interp.colName)
 	if err != nil {
 		return false, err
 	}
 	interp.colIndex = readIndex
 
 	var typeOk bool
-	typ := it.bow.GetColType(interp.colIndex)
+	typ := it.bow.ColumnType(interp.colIndex)
 	for _, inputTyp := range interp.inputTypes {
 		if typ == inputTyp {
 			typeOk = true
@@ -146,7 +146,7 @@ func (it *intervalRollingIter) interpolateWindow(interps []ColInterpolation, w *
 	// missing start
 	seriesSlice := make([]bow.Series, len(interps))
 	for colIndex, interpolation := range interps {
-		colType := w.Bow.GetColType(interpolation.colIndex)
+		colType := w.Bow.ColumnType(interpolation.colIndex)
 
 		interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.options.PrevRow)
 		if err != nil {
@@ -157,7 +157,7 @@ func (it *intervalRollingIter) interpolateWindow(interps []ColInterpolation, w *
 		buf.SetOrDrop(0, interpolatedValue)
 
 		seriesSlice[colIndex] = bow.NewSeries(
-			w.Bow.GetColName(interpolation.colIndex),
+			w.Bow.ColumnName(interpolation.colIndex),
 			colType, buf.Value, buf.Valid)
 	}
 

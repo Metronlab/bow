@@ -179,7 +179,7 @@ func TestBow_DropNil(t *testing.T) {
 			[][]interface{}{
 				{},
 			})
-		compacted, err := b.DropNil()
+		compacted, err := b.DropNils()
 		expected, _ := NewBowFromColBasedInterfaces(
 			[]string{"a"},
 			[]Type{Int64},
@@ -192,23 +192,23 @@ func TestBow_DropNil(t *testing.T) {
 	})
 
 	t.Run("unchanged without nil", func(t *testing.T) {
-		compacted, err := filledBow.DropNil()
+		compacted, err := filledBow.DropNils()
 		assert.Nil(t, err)
 		assert.True(t, compacted.Equal(filledBow),
 			fmt.Sprintf("want %v\ngot %v", filledBow, compacted))
 	})
 
 	t.Run("drop default", func(t *testing.T) {
-		compactedDefault, err := holedBow.DropNil()
+		compactedDefault, err := holedBow.DropNils()
 		assert.Nil(t, err)
-		compactedAll, err := holedBow.DropNil("b", "c", "a")
+		compactedAll, err := holedBow.DropNils("b", "c", "a")
 		assert.Nil(t, err)
 		assert.True(t, compactedDefault.Equal(compactedAll),
 			fmt.Sprintf("default %v\nall %v", compactedDefault, compactedAll))
 	})
 
 	t.Run("drop on all columns", func(t *testing.T) {
-		compacted, err := holedBow.DropNil()
+		compacted, err := holedBow.DropNils()
 		expected, _ := NewBowFromColBasedInterfaces(
 			[]string{"a", "b", "c"},
 			[]Type{Int64, Int64, Int64},
@@ -223,7 +223,7 @@ func TestBow_DropNil(t *testing.T) {
 	})
 
 	t.Run("drop on one column", func(t *testing.T) {
-		compacted, err := holedBow.DropNil("b")
+		compacted, err := holedBow.DropNils("b")
 		expected, _ := NewBowFromColBasedInterfaces(
 			[]string{"a", "b", "c"},
 			[]Type{Int64, Int64, Int64},
@@ -244,7 +244,7 @@ func TestBow_DropNil(t *testing.T) {
 			[][]interface{}{
 				{nil, nil, 1, nil, nil, 2, nil, nil},
 			})
-		compacted, err := b.DropNil()
+		compacted, err := b.DropNils()
 		expected, _ := NewBowFromColBasedInterfaces(
 			[]string{"a"},
 			[]Type{Int64},
@@ -269,7 +269,7 @@ func TestBow_DropNil(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		res, err := b.DropNil()
+		res, err := b.DropNils()
 		require.NoError(t, err)
 
 		assert.Equal(t, expected.String(), res.String())

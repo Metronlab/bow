@@ -33,7 +33,7 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 		return nil
 	}
 
-	switch b.GetColType(colIndex) {
+	switch b.ColumnType(colIndex) {
 	case Float64:
 		return array.NewFloat64Data(b.Column(colIndex).Data()).Value(rowIndex)
 	case Int64:
@@ -43,7 +43,7 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 	case String:
 		return array.NewStringData(b.Column(colIndex).Data()).Value(rowIndex)
 	default:
-		panic(fmt.Errorf("bow.GetValue: unsupported type %s", b.GetColType(colIndex)))
+		panic(fmt.Errorf("bow.GetValue: unsupported type %s", b.ColumnType(colIndex)))
 	}
 }
 
@@ -73,7 +73,7 @@ func (b *bow) GetNextValues(colIndex1, colIndex2, rowIndex int) (interface{}, in
 	return nil, nil, -1
 }
 
-func (b *bow) GetNextIndex(colIndex, rowIndex int) int {
+func (b *bow) GetNextRowIndex(colIndex, rowIndex int) int {
 	col := b.Column(colIndex)
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		if col.IsValid(rowIndex) {
@@ -111,7 +111,7 @@ func (b *bow) GetPreviousValues(colIndex1, colIndex2, rowIndex int) (interface{}
 	return nil, nil, -1
 }
 
-func (b *bow) GetPreviousIndex(colIndex, rowIndex int) int {
+func (b *bow) GetPreviousRowIndex(colIndex, rowIndex int) int {
 	col := b.Column(colIndex)
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		if col.IsValid(rowIndex) {
@@ -246,15 +246,11 @@ func (b *bow) GetPreviousFloat64(colIndex, rowIndex int) (float64, int) {
 	return 0., -1
 }
 
-func (b *bow) GetColType(colIndex int) Type {
+func (b *bow) ColumnType(colIndex int) Type {
 	return getBowTypeFromArrowType(b.Schema().Field(colIndex).Type)
 }
 
-func (b *bow) GetColName(colIndex int) string {
-	return b.Schema().Field(colIndex).Name
-}
-
-func (b *bow) GetColIndex(colName string) (int, error) {
+func (b *bow) ColumnIndex(colName string) (int, error) {
 	colIndices := b.Schema().FieldIndices(colName)
 	if len(colIndices) == 0 {
 		return -1, fmt.Errorf("no column '%s'", colName)
@@ -263,20 +259,4 @@ func (b *bow) GetColIndex(colName string) (int, error) {
 		return -1, fmt.Errorf("several columns '%s", colName)
 	}
 	return colIndices[0], nil
-}
-
-// FindFirst returns the row index of provided value's first occurrence in the dataset.
-// Return -1 when value is not found.
-func (b *bow) FindFirst(colIndex int, value interface{}) (rowIndex int) {
-	var rowValue interface{}
-
-	valueToFind := b.GetColType(colIndex).Convert(value)
-	for row := 0; row < b.NumRows(); {
-		rowValue, rowIndex = b.GetNextValue(colIndex, row)
-		if rowIndex == -1 || rowValue == valueToFind {
-			return
-		}
-		row = rowIndex + 1
-	}
-	return -1
 }

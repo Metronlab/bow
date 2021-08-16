@@ -75,8 +75,8 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		leftRow = 0
 		commonRow = 0
-		newBuf := NewBuffer(newNumRows, left.GetColType(colIndex), true)
-		switch left.GetColType(colIndex) {
+		newBuf := NewBuffer(newNumRows, left.ColumnType(colIndex), true)
+		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
 
@@ -124,7 +124,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
@@ -173,7 +173,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		case Bool:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
@@ -222,7 +222,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
@@ -271,7 +271,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		}
 	}
@@ -288,8 +288,8 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		newBuf := NewBuffer(newNumRows, right.GetColType(rightCol), true)
-		switch right.GetColType(rightCol) {
+		newBuf := NewBuffer(newNumRows, right.ColumnType(rightCol), true)
+		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())
 
@@ -328,7 +328,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
@@ -369,7 +369,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		case Bool:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
@@ -410,7 +410,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
@@ -451,7 +451,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		}
 		rightCol++
@@ -494,8 +494,8 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		newRow = 0
 		commonRow = 0
-		newBuf := NewBuffer(newNumRows, left.GetColType(colIndex), true)
-		switch left.GetColType(colIndex) {
+		newBuf := NewBuffer(newNumRows, left.ColumnType(colIndex), true)
+		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
@@ -509,7 +509,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
@@ -524,7 +524,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		case Bool:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
@@ -539,7 +539,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
@@ -554,7 +554,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetColType(colIndex),
+				left.ColumnType(colIndex),
 				newBuf.Value, newBuf.Valid)
 		}
 	}
@@ -563,11 +563,11 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for col := left.NumCols(); col < newNumCols; col++ {
 		newRow = 0
 		commonRow = 0
-		newBuf := NewBuffer(newNumRows, right.GetColType(rightCol), true)
+		newBuf := NewBuffer(newNumRows, right.ColumnType(rightCol), true)
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		switch right.GetColType(rightCol) {
+		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())
 			// Fill common rows from right bow
@@ -582,7 +582,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
@@ -598,7 +598,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		case Bool:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
@@ -614,7 +614,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
@@ -630,7 +630,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetColType(rightCol),
+				right.ColumnType(rightCol),
 				newBuf.Value, newBuf.Valid)
 		}
 		rightCol++

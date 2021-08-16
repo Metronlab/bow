@@ -15,12 +15,12 @@ import (
 // to the reference column refColName, which has to be sorted.
 // Fills only int64 and float64 types.
 func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
-	refIndex, err := b.GetColIndex(refColName)
+	refIndex, err := b.ColumnIndex(refColName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: FillLinear: error with refColName: %w", err)
 	}
 
-	toFillIndex, err := b.GetColIndex(toFillColName)
+	toFillIndex, err := b.ColumnIndex(toFillColName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: FillLinear: error with toFillColName: %w", err)
 	}
@@ -29,12 +29,12 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 		return nil, fmt.Errorf("bow: FillLinear: refColName and toFillColName are equal")
 	}
 
-	switch b.GetColType(refIndex) {
+	switch b.ColumnType(refIndex) {
 	case Int64:
 	case Float64:
 	default:
 		return nil, fmt.Errorf("bow: FillLinear: refColName '%s' is of type '%s'",
-			refColName, b.GetColType(refIndex))
+			refColName, b.ColumnType(refIndex))
 	}
 
 	if b.IsColEmpty(refIndex) {
@@ -45,13 +45,13 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refColName)
 	}
 
-	switch b.GetColType(toFillIndex) {
+	switch b.ColumnType(toFillIndex) {
 	case Int64:
 	case Float64:
 	default:
 		return nil, fmt.Errorf(
 			"bow: FillLinear: toFillColName '%s' is of type '%s'",
-			toFillColName, b.GetColType(toFillIndex))
+			toFillColName, b.ColumnType(toFillIndex))
 	}
 
 	var wg sync.WaitGroup
@@ -67,7 +67,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			defer wg.Done()
 			bitsToSet := make([]byte, b.NumRows())
 			colData := b.Column(toFillIndex).Data()
-			switch b.GetColType(toFillIndex) {
+			switch b.ColumnType(toFillIndex) {
 			case Int64:
 				arr := array.NewInt64Data(colData)
 				values := arr.Int64Values()
@@ -158,13 +158,13 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 
 	for colIndex, col := range b.Schema().Fields() {
 		if toFillCols[colIndex] {
-			switch b.GetColType(colIndex) {
+			switch b.ColumnType(colIndex) {
 			case Int64:
 			case Float64:
 			default:
 				return nil, fmt.Errorf(
 					"bow: FillMean type error: column '%s' is of type '%s'",
-					col.Name, b.GetColType(colIndex))
+					col.Name, b.ColumnType(colIndex))
 			}
 		}
 	}
@@ -182,7 +182,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			defer wg.Done()
 			bitsToSet := make([]byte, b.NumRows())
 			colData := b.Column(colIndex).Data()
-			switch b.GetColType(colIndex) {
+			switch b.ColumnType(colIndex) {
 			case Int64:
 				arr := array.NewInt64Data(colData)
 				values := arr.Int64Values()
@@ -272,7 +272,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 			defer wg.Done()
 			bitsToSet := make([]byte, b.NumRows())
 			prevData := b.Column(colIndex).Data()
-			switch b.GetColType(colIndex) {
+			switch b.ColumnType(colIndex) {
 			case Int64:
 				arr := array.NewInt64Data(prevData)
 				values := arr.Int64Values()
@@ -373,9 +373,9 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 func getFillRowIndex(b Bow, method string, colIndex, rowIndex int) int {
 	switch method {
 	case "Previous":
-		return b.GetPreviousIndex(colIndex, rowIndex-1)
+		return b.GetPreviousRowIndex(colIndex, rowIndex-1)
 	case "Next":
-		return b.GetNextIndex(colIndex, rowIndex+1)
+		return b.GetNextRowIndex(colIndex, rowIndex+1)
 	default:
 		panic(fmt.Errorf("bow.fill: method '%s' not supported", method))
 	}
@@ -393,7 +393,7 @@ func selectCols(b *bow, colNames []string) ([]bool, error) {
 		}
 	} else {
 		for _, colName := range colNames {
-			foundColIndex, err := b.GetColIndex(colName)
+			foundColIndex, err := b.ColumnIndex(colName)
 			if err != nil {
 				return nil, err
 			}

@@ -23,7 +23,7 @@ func Aggregate(b bow.Bow, refColName string, aggrs ...rolling.ColAggregation) (b
 		}
 	}
 
-	refColIndex, err := b.GetColIndex(refColName)
+	refColIndex, err := b.ColumnIndex(refColName)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func validateAggr(b bow.Bow, aggr rolling.ColAggregation) error {
 		return fmt.Errorf("no column name")
 	}
 
-	colIndex, err := b.GetColIndex(aggr.InputName())
+	colIndex, err := b.ColumnIndex(aggr.InputName())
 	if err != nil {
 		return err
 	}
@@ -58,14 +58,14 @@ func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (
 	for writeColIndex, aggr := range aggrs {
 		name := aggr.OutputName()
 		if name == "" {
-			name = b.GetColName(aggr.InputIndex())
+			name = b.ColumnName(aggr.InputIndex())
 		}
 
 		typ := aggr.GetReturnType(
-			b.GetColType(aggr.InputIndex()),
-			b.GetColType(aggr.InputIndex()))
+			b.ColumnType(aggr.InputIndex()),
+			b.ColumnType(aggr.InputIndex()))
 
-		if b.IsEmpty() {
+		if b.NumRows() == 0 {
 			buf := bow.NewBuffer(0, typ, true)
 			seriesSlice[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 			continue

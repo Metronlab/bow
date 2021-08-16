@@ -53,7 +53,7 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 // `colName`: column name used to make intervals
 // `interval`: length of an interval
 func IntervalRolling(b bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
-	colIndex, err := b.GetColIndex(colName)
+	colIndex, err := b.ColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
@@ -73,10 +73,10 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 		return nil, err
 	}
 
-	if b.GetColType(colIndex) != bow.Int64 {
+	if b.ColumnType(colIndex) != bow.Int64 {
 		return nil, fmt.Errorf(
 			"rolling.IntervalRolling: impossible to roll over type %v",
-			b.GetColType(colIndex))
+			b.ColumnType(colIndex))
 	}
 
 	var start int64
@@ -232,7 +232,7 @@ func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
 
 	var b bow.Bow
 	if lastIndex == -1 {
-		b = it.bow.NewEmpty()
+		b = it.bow.ClearRows()
 	} else {
 		b = it.bow.Slice(firstIndex, lastIndex+1)
 	}

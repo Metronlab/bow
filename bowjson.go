@@ -40,7 +40,7 @@ func NewJSONBow(b Bow) (res JSONBow) {
 			})
 	}
 
-	for row := range b.RowMapIter() {
+	for row := range b.GetRowsChan() {
 		if len(row) == 0 {
 			continue
 		}

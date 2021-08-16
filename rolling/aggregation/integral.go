@@ -8,7 +8,7 @@ import (
 func IntegralTrapezoid(col string) rolling.ColAggregation {
 	return rolling.NewColAggregation(col, true, bow.Float64,
 		func(colIndex int, w rolling.Window) (interface{}, error) {
-			if w.Bow.IsEmpty() {
+			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}
 
@@ -40,7 +40,7 @@ func IntegralTrapezoid(col string) rolling.ColAggregation {
 func IntegralStep(col string) rolling.ColAggregation {
 	return rolling.NewColAggregation(col, false, bow.Float64,
 		func(colIndex int, w rolling.Window) (interface{}, error) {
-			if w.Bow.IsEmpty() {
+			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}
 			var sum float64

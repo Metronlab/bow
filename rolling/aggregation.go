@@ -153,7 +153,7 @@ func (it *intervalRollingIter) indexedAggregations(aggrs []ColAggregation) (int,
 	}
 
 	if newIntervalCol == -1 {
-		return -1, nil, fmt.Errorf("must keep interval column '%s'", it.bow.GetColName(it.colIndex))
+		return -1, nil, fmt.Errorf("must keep interval column '%s'", it.bow.ColumnName(it.colIndex))
 	}
 
 	return newIntervalCol, aggrs, nil
@@ -163,7 +163,7 @@ func (it *intervalRollingIter) validateAggregation(aggr ColAggregation, newIndex
 	if aggr.InputName() == "" {
 		return false, fmt.Errorf("aggregation %d has no column name", newIndex)
 	}
-	readIndex, err := it.bow.GetColIndex(aggr.InputName())
+	readIndex, err := it.bow.ColumnIndex(aggr.InputName())
 	if err != nil {
 		return false, err
 	}
@@ -190,7 +190,7 @@ func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.S
 
 		colName := aggregation.OutputName()
 		if colName == "" {
-			colName = itCopy.bow.GetColName(aggregation.InputIndex())
+			colName = itCopy.bow.ColumnName(aggregation.InputIndex())
 		}
 
 		seriesSlice[colIndex] = bow.NewSeries(colName, outputType, buf.Value, buf.Valid)
@@ -208,11 +208,11 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggr
 		buf = bow.NewBuffer(it.numWindows, aggr.Type(), true)
 		typ = aggr.Type()
 	case bow.InputDependent:
-		cType := it.bow.GetColType(aggr.InputIndex())
+		cType := it.bow.ColumnType(aggr.InputIndex())
 		buf = bow.NewBuffer(it.numWindows, cType, true)
 		typ = cType
 	case bow.IteratorDependent:
-		iType := it.bow.GetColType(it.colIndex)
+		iType := it.bow.ColumnType(it.colIndex)
 		buf = bow.NewBuffer(it.numWindows, iType, true)
 		typ = iType
 	default:
