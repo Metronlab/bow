@@ -29,7 +29,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 				return true, nil
 			})
 		_, err := r.
-			Fill(timeInterp, interp).
+			Interpolate(timeInterp, interp).
 			Bow()
 		assert.EqualError(t, err, "fill: interpolation accepts types [int64 bool], got type float64")
 	})
@@ -41,7 +41,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		})
 		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 		_, err := r.
-			Fill(valueInterp).
+			Interpolate(valueInterp).
 			Bow()
 		assert.EqualError(t, err, fmt.Sprintf("fill: must keep interval column '%s'", timeCol))
 	})
@@ -54,7 +54,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 
 		filled, err := r.
-			Fill(timeInterp, valueInterp).
+			Interpolate(timeInterp, valueInterp).
 			Bow()
 		assert.Nil(t, err)
 
@@ -69,7 +69,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		r, _ := IntervalRolling(b, timeCol, 2, Options{})
 
 		filled, err := r.
-			Fill(timeInterp, valueInterp).
+			Interpolate(timeInterp, valueInterp).
 			Bow()
 		assert.Nil(t, err)
 
@@ -88,7 +88,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		r, _ := IntervalRolling(b, timeCol, 2, Options{Offset: 1})
 
 		filled, err := r.
-			Fill(timeInterp, valueInterp).
+			Interpolate(timeInterp, valueInterp).
 			Bow()
 		assert.Nil(t, err)
 

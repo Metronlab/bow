@@ -30,7 +30,7 @@ func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
 }
 
 func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
-	switch b.GetType(colIndex) {
+	switch b.ColumnType(colIndex) {
 	case Float64:
 		vd := array.NewFloat64Data(b.Column(colIndex).Data())
 		if vd.IsValid(rowIndex) {
@@ -52,7 +52,7 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 			return vd.Value(rowIndex)
 		}
 	default:
-		panic(fmt.Errorf("bow: unhandled type %s", b.GetType(colIndex)))
+		panic(fmt.Errorf("bow: unhandled type %s", b.ColumnType(colIndex)))
 	}
 	return nil
 }
@@ -273,18 +273,11 @@ func (b *bow) GetPreviousFloat64(colIndex, rowIndex int) (float64, int) {
 	return 0., -1
 }
 
-func (b *bow) GetType(colIndex int) Type {
+func (b *bow) ColumnType(colIndex int) Type {
 	return getTypeFromArrowType(b.Schema().Field(colIndex).Type)
 }
 
-func (b *bow) GetName(colIndex int) (string, error) {
-	if colIndex > len(b.Schema().Fields()) {
-		return "", fmt.Errorf("no index %d", colIndex)
-	}
-	return b.Schema().Field(colIndex).Name, nil
-}
-
-func (b *bow) GetColumnIndex(colName string) (int, error) {
+func (b *bow) ColumnIndex(colName string) (int, error) {
 	indices := b.Schema().FieldIndices(colName)
 	if len(indices) == 0 {
 		return -1, fmt.Errorf("no column '%s'", colName)
@@ -293,20 +286,4 @@ func (b *bow) GetColumnIndex(colName string) (int, error) {
 		return -1, fmt.Errorf("too many columns with name '%s'", colName)
 	}
 	return indices[0], nil
-}
-
-// FindFirst returns the row index of provided value's first occurrence in the dataset.
-// Return -1 when value is not found.
-func (b *bow) FindFirst(colIndex int, value interface{}) (rowIndex int) {
-	var rowValue interface{}
-
-	valueToFind := b.GetType(colIndex).Convert(value)
-	for row := 0; row < b.NumRows(); {
-		rowValue, rowIndex = b.GetNextValue(colIndex, row)
-		if rowIndex == -1 || rowValue == valueToFind {
-			return
-		}
-		row = rowIndex + 1
-	}
-	return -1
 }

@@ -8,12 +8,12 @@ import (
 )
 
 // Rolling allows to process a bow via windows.
-// Use `Fill` and/or `Aggregate` to transform windows.
+// Use `Interpolate` and/or `Aggregate` to transform windows.
 // Use `HasNext` and `Next` to iterate over windows.
 // Use `Bow` to get the processed bow.
 type Rolling interface {
-	Fill(interpolations ...ColumnInterpolation) Rolling
-	Aggregate(aggregations ...ColumnAggregation) Rolling
+	Interpolate(interpolations ...ColInterpolation) Rolling
+	Aggregate(aggregations ...ColAggregation) Rolling
 
 	NumWindows() (int, error)
 	HasNext() bool
@@ -53,7 +53,7 @@ func NumWindowsInRange(first, last, interval, offset int64) (int, error) {
 // `colName`: column name used to make intervals
 // `interval`: length of an interval
 func IntervalRolling(b bow.Bow, colName string, interval int64, options Options) (Rolling, error) {
-	colIndex, err := b.GetColumnIndex(colName)
+	colIndex, err := b.ColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("rolling.IntervalRolling: %w", err)
 	}
@@ -73,7 +73,7 @@ func IntervalRollingForIndex(b bow.Bow, colIndex int, interval int64, options Op
 		return nil, err
 	}
 
-	colType := b.GetType(colIndex)
+	colType := b.ColumnType(colIndex)
 	if colType != bow.Int64 {
 		return nil, fmt.Errorf("rolling.IntervalRolling: impossible to roll over type %v", colType)
 	}
@@ -216,7 +216,7 @@ func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
 
 	var b bow.Bow
 	if lastIndex == -1 {
-		b = it.bow.NewEmpty()
+		b = it.bow.ClearRows()
 	} else {
 		b = it.bow.Slice(firstIndex, lastIndex+1)
 	}

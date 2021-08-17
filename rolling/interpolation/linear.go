@@ -1,11 +1,11 @@
-package fill
+package interpolation
 
 import (
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 )
 
-func Linear(colName string) rolling.ColumnInterpolation {
+func Linear(colName string) rolling.ColInterpolation {
 	var prevT0, prevV0 float64
 	var prevValid bool
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64},

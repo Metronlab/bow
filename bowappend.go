@@ -11,7 +11,6 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	}
 	refBow := bows[0]
 	refSchema := refBow.Schema()
-	var err error
 	var numRows int
 	for _, b := range bows {
 		schema := b.Schema()
@@ -35,11 +34,8 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	var name string
 	for ci := 0; ci < refBow.NumCols(); ci++ {
 		var rowOffset int
-		typ := refBow.GetType(ci)
-		name, err = refBow.GetName(ci)
-		if err != nil {
-			return nil, err
-		}
+		typ := refBow.ColumnType(ci)
+		name = refBow.ColumnName(ci)
 		bufSlice[ci] = NewBuffer(numRows, typ, true)
 		for _, b := range bows {
 			for ri := 0; ri < b.NumRows(); ri++ {

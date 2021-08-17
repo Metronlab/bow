@@ -2,7 +2,7 @@ package bow
 
 import "fmt"
 
-func (b *bow) SetColName(colIndex int, newName string) (Bow, error) {
+func (b *bow) NewColName(colIndex int, newName string) (Bow, error) {
 	if colIndex >= b.NumCols() {
 		return nil, fmt.Errorf("bow: SetColName: column index out of bound")
 	}
@@ -19,10 +19,7 @@ func (b *bow) SetColName(colIndex int, newName string) (Bow, error) {
 				Array: col,
 			}
 		} else {
-			oldName, err := b.GetName(i)
-			if err != nil {
-				return nil, fmt.Errorf("bow: SetColName: %s", err)
-			}
+			oldName := b.ColumnName(i)
 			newSeries[i] = Series{
 				Name:  oldName,
 				Array: col,

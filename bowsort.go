@@ -18,7 +18,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.SortByCol: empty bow")
 	}
 
-	colIndex, err := b.GetColumnIndex(colName)
+	colIndex, err := b.ColumnIndex(colName)
 	if err != nil {
 		return nil, fmt.Errorf("bow.SortByCol: column to sort by not found")
 	}
@@ -31,7 +31,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	var newArray array.Interface
 	prevData := b.Record.Column(colIndex).Data()
 	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	switch b.GetType(colIndex) {
+	switch b.ColumnType(colIndex) {
 	case Int64:
 		// Build the Int64Col interface to store the row indices before sorting
 		colToSortBy.Indices = func() []int {
@@ -60,7 +60,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.SortByCol: unsupported type for the column to sort by (Int64 only)")
 	}
 
-	// Fill the sort by column with sorted values
+	// Interpolate the sort by column with sorted values
 	sortedSeries := make([]Series, b.NumCols())
 	sortedSeries[colIndex] = Series{
 		Name:  colName,
@@ -81,7 +81,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 			newValids := make([]bool, b.NumRows())
 			prevData := b.Record.Column(colIndex).Data()
-			switch b.GetType(colIndex) {
+			switch b.ColumnType(colIndex) {
 			case Int64:
 				prevValues := array.NewInt64Data(prevData)
 				newValues := make([]int64, b.NumRows())

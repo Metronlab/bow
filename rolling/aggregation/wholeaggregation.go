@@ -8,8 +8,8 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-// Aggregate any column with a ColumnAggregation
-func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregation) (bow.Bow, error) {
+// Aggregate any column with a ColAggregation
+func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColAggregation) (bow.Bow, error) {
 	errPrefix := fmt.Sprintf("aggregate on '%s': ", indexColName)
 
 	if b == nil {
@@ -19,7 +19,7 @@ func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregatio
 		return nil, errors.New(errPrefix + "at least one column aggregation is required")
 	}
 
-	intervalCol, err := b.GetColumnIndex(indexColName)
+	intervalCol, err := b.ColumnIndex(indexColName)
 	if err != nil {
 		return nil, errors.New(errPrefix + err.Error())
 	}
@@ -39,12 +39,12 @@ func Aggregate(b bow.Bow, indexColName string, aggrs ...rolling.ColumnAggregatio
 	return b2, nil
 }
 
-func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
+func validateAggr(b bow.Bow, aggr rolling.ColAggregation) error {
 	if aggr.InputName() == "" {
 		return fmt.Errorf("no column name")
 	}
 
-	readIndex, err := b.GetColumnIndex(aggr.InputName())
+	readIndex, err := b.ColumnIndex(aggr.InputName())
 	if err != nil {
 		return err
 	}
@@ -54,22 +54,18 @@ func validateAggr(b bow.Bow, aggr rolling.ColumnAggregation) error {
 	return err
 }
 
-func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColumnAggregation) (bow.Bow, error) {
+func aggregateCols(b bow.Bow, intervalCol int, aggrs []rolling.ColAggregation) (bow.Bow, error) {
 	seriess := make([]bow.Series, len(aggrs))
 
 	for writeColIndex, aggr := range aggrs {
 		name := aggr.OutputName()
 		if name == "" {
-			var err error
-			name, err = b.GetName(aggr.InputIndex())
-			if err != nil {
-				return nil, err
-			}
+			name = b.ColumnName(aggr.InputIndex())
 		}
 
-		typ := aggr.GetReturnType(b.GetType(aggr.InputIndex()), b.GetType(aggr.InputIndex()))
+		typ := aggr.GetReturnType(b.ColumnType(aggr.InputIndex()), b.ColumnType(aggr.InputIndex()))
 
-		if b.IsEmpty() {
+		if b.NumRows() == 0 {
 			buf := bow.NewBuffer(0, typ, true)
 			seriess[writeColIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
 			continue

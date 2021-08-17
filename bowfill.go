@@ -13,12 +13,12 @@ import (
 // to the reference column refColName, which has to be sorted.
 // Fills only int64 and float64 types.
 func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
-	refIndex, err := b.GetColumnIndex(refColName)
+	refIndex, err := b.ColumnIndex(refColName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: FillLinear: error with refColName: %w", err)
 	}
 
-	toFillIndex, err := b.GetColumnIndex(toFillColName)
+	toFillIndex, err := b.ColumnIndex(toFillColName)
 	if err != nil {
 		return nil, fmt.Errorf("bow: FillLinear: error with toFillColName: %w", err)
 	}
@@ -27,12 +27,12 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 		return nil, fmt.Errorf("bow: FillLinear: refColName and toFillColName are equal")
 	}
 
-	switch b.GetType(refIndex) {
+	switch b.ColumnType(refIndex) {
 	case Int64:
 	case Float64:
 	default:
 		return nil, fmt.Errorf("bow: FillLinear: refColName '%s' is of type '%s'",
-			refColName, b.GetType(refIndex))
+			refColName, b.ColumnType(refIndex))
 	}
 
 	if b.IsColEmpty(refIndex) {
@@ -43,13 +43,13 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refColName)
 	}
 
-	switch b.GetType(toFillIndex) {
+	switch b.ColumnType(toFillIndex) {
 	case Int64:
 	case Float64:
 	default:
 		return nil, fmt.Errorf(
 			"bow: FillLinear: toFillColName '%s' is of type '%s'",
-			toFillColName, b.GetType(toFillIndex))
+			toFillColName, b.ColumnType(toFillIndex))
 	}
 
 	var wg sync.WaitGroup
@@ -69,7 +69,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			var newArray array.Interface
 			prevData := b.Record.Column(colIndex).Data()
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-			switch b.GetType(colIndex) {
+			switch b.ColumnType(colIndex) {
 			case Int64:
 				prevArray := array.NewInt64Data(prevData)
 				values := prevArray.Int64Values()
@@ -154,13 +154,13 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 
 	for colIndex, col := range b.Schema().Fields() {
 		if toFillCols[colIndex] {
-			switch b.GetType(colIndex) {
+			switch b.ColumnType(colIndex) {
 			case Int64:
 			case Float64:
 			default:
 				return nil, fmt.Errorf(
 					"bow: FillMean type error: column '%s' is of type '%s'",
-					col.Name, b.GetType(colIndex))
+					col.Name, b.ColumnType(colIndex))
 			}
 		}
 	}
@@ -179,7 +179,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
-			typ := b.GetType(colIndex)
+			typ := b.ColumnType(colIndex)
 			var newArray array.Interface
 			prevData := b.Record.Column(colIndex).Data()
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
@@ -249,7 +249,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 	toFillCols, err := selectCols(b, colNames)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"bow.Fill%s error selecting columns [%s] on bow schema [%s]: %w",
+			"bow.Interpolate%s error selecting columns [%s] on bow schema [%s]: %w",
 			method, colNames, b.Schema().String(), err)
 	}
 
@@ -267,7 +267,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
-			typ := b.GetType(colIndex)
+			typ := b.ColumnType(colIndex)
 			var newArray array.Interface
 			prevData := b.Record.Column(colIndex).Data()
 			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
@@ -404,7 +404,7 @@ func selectCols(b *bow, colNames []string) ([]bool, error) {
 		}
 	} else {
 		for _, colName := range colNames {
-			foundColIndex, err := b.GetColumnIndex(colName)
+			foundColIndex, err := b.ColumnIndex(colName)
 			if err != nil {
 				return nil, err
 			}

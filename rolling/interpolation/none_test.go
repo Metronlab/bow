@@ -1,4 +1,4 @@
-package fill
+package interpolation
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func TestNone(t *testing.T) {
 	t.Run("no options", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol), None(valueCol)).
+			Interpolate(WindowStart(timeCol), None(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 12, 13},
@@ -33,7 +33,7 @@ func TestNone(t *testing.T) {
 	t.Run("with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{Offset: 1})
 		filled, err := r.
-			Fill(WindowStart(timeCol), None(valueCol)).
+			Interpolate(WindowStart(timeCol), None(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{9, 10, 11, 13},

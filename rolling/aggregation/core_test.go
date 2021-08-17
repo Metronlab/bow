@@ -86,7 +86,7 @@ type bowTest struct {
 }
 
 func runTestCases(t *testing.T,
-	aggrConstruct rolling.ColumnAggregationConstruct, aggrTransforms []transform.Transform,
+	aggrConstruct rolling.ColAggregationConstruct, aggrTransforms []transform.Transform,
 	testCases []bowTest) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {

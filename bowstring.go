@@ -29,18 +29,18 @@ func (b *bow) String() string {
 
 	// Print col names on buffer
 	formatRow(func(colIndex int) string {
-		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.GetType(colIndex))
+		return fmt.Sprintf("%s:%v", b.Schema().Field(colIndex).Name, b.ColumnType(colIndex))
 	})
 
 	// Print each row on buffer
-	rowChan := b.RowMapIter()
+	rowChan := b.GetRowsChan()
 	for row := range rowChan {
 		formatRow(func(colIndex int) string {
 			return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
 		})
 	}
 
-	_, err := fmt.Fprintf(w, "metadata: %+v\n", b.GetMetadata())
+	_, err := fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
 	if err != nil {
 		panic(err)
 	}

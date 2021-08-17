@@ -14,22 +14,26 @@ import (
 // in order to expose low level Arrow decisions to Bow users
 // while Arrow is in beta.
 type Bow interface {
-
-	// Implements Stringer interface
 	String() string
+	Schema() *arrow.Schema
+	Column(colIndex int) array.Interface
+	ColumnName(colIndex int) string
+	NumRows() int
+	NumCols() int
 
-	// Getters
-	GetType(colIndex int) (colType Type)
-	GetName(colIndex int) (colName string, err error)
-	GetColumnIndex(colName string) (colIndex int, err error)
+	ColumnType(colIndex int) Type
+	ColumnIndex(colName string) (int, error)
+	Metadata() Metadata
+	SetMetadata(key, value string) Bow
 
-	GetRow(rowIndex int) (row map[string]interface{})
+	GetRow(rowIndex int) map[string]interface{}
+	GetRowsChan() chan map[string]interface{}
 
-	GetValueByName(colName string, rowIndex int) (value interface{})
-	GetValue(colIndex, rowIndex int) (value interface{})
+	GetValueByName(colName string, rowIndex int) interface{}
+	GetValue(colIndex, rowIndex int) interface{}
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetNextValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
-	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resultRowIndex int)
+	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetPreviousValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
 
 	GetInt64(colIndex, rowIndex int) (value int64, valid bool)
@@ -42,55 +46,33 @@ type Bow interface {
 	GetPreviousFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
 	GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 
-	FindFirst(colIndex int, value interface{}) (rowIndex int)
+	AddCols(newCols ...Series) (Bow, error)
+	NewColName(colIndex int, newName string) (Bow, error)
 
-	GetMetadata() Metadata
-	SetMetadata(key, value string) Bow
-
-	// Setters
-	SetColName(colIndex int, newName string) (Bow, error)
-
-	// Iterators
-	RowMapIter() (rows chan map[string]interface{})
-
-	// Joins
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
 
-	// Calculations
 	Diff(colNames ...string) (Bow, error)
-
-	Equal(other Bow) (equal bool)
-
-	MarshalJSON() (buf []byte, err error)
-	UnmarshalJSON(data []byte) error
-	NewValuesFromJSON(jsonB JSONBow) error
 
 	Slice(i, j int) Bow
 	Select(colNames ...string) (Bow, error)
-	NewEmpty() Bow
-	DropNil(colNames ...string) (Bow, error)
+	ClearRows() Bow
+	DropNils(colNames ...string) (Bow, error)
 	SortByCol(colName string) (Bow, error)
 
-	// Missing data handling
 	FillPrevious(colNames ...string) (Bow, error)
 	FillNext(colNames ...string) (Bow, error)
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refColName, toFillColName string) (Bow, error)
 
-	// Parquet file format
-	WriteParquet(path string, verbose bool) error
-
-	// Exposed from arrow.Record
-	Schema() *arrow.Schema
-	NumRows() int
-	NumCols() int
-
+	Equal(other Bow) bool
 	IsColEmpty(colIndex int) bool
 	IsColSorted(colIndex int) bool
-	IsEmpty() bool
 
-	AddCols(series ...Series) (Bow, error)
+	MarshalJSON() (buf []byte, err error)
+	UnmarshalJSON(data []byte) error
+	NewValuesFromJSON(jsonB JSONBow) error
+	WriteParquet(path string, verbose bool) error
 }
 
 type bow struct {
@@ -162,13 +144,13 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowData []
 	return NewBowFromColBasedInterfaces(colNames, colTypes, columnBasedRows)
 }
 
-func (b *bow) NewEmpty() Bow {
+func (b *bow) ClearRows() Bow {
 	return b.Slice(0, 0)
 }
 
-// DropNil drops any row that contains a nil for any of `colNames`.
+// DropNils drops any row that contains a nil for any of `colNames`.
 // `colNames` defaults to all columns.
-func (b *bow) DropNil(colNames ...string) (Bow, error) {
+func (b *bow) DropNils(colNames ...string) (Bow, error) {
 	// default = all columns
 	if len(colNames) == 0 {
 		for _, field := range b.Schema().Fields() {
@@ -181,7 +163,7 @@ func (b *bow) DropNil(colNames ...string) (Bow, error) {
 	nilColIndexes := make([]int, len(colNames))
 	for i := 0; i < len(colNames); i++ {
 		var err error
-		nilColIndexes[i], err = b.GetColumnIndex(colNames[i])
+		nilColIndexes[i], err = b.ColumnIndex(colNames[i])
 		if err != nil {
 			return nil, err
 		}
@@ -226,14 +208,14 @@ func dedupStrings(s []string) []string {
 	return s[:writeIndex]
 }
 
-func (b *bow) RowMapIter() chan map[string]interface{} {
+func (b *bow) GetRowsChan() chan map[string]interface{} {
 	rows := make(chan map[string]interface{})
-	go b.rowMapIter(rows)
+	go b.getRowsChan(rows)
 
 	return rows
 }
 
-func (b *bow) rowMapIter(rows chan map[string]interface{}) {
+func (b *bow) getRowsChan(rows chan map[string]interface{}) {
 	defer close(rows)
 
 	if b.Record == nil || b.NumRows() <= 0 {
@@ -269,8 +251,8 @@ func (b *bow) Equal(other Bow) bool {
 		return false
 	}
 
-	b1Chan := b.RowMapIter()
-	b2Chan := b2.RowMapIter()
+	b1Chan := b.GetRowsChan()
+	b2Chan := b2.GetRowsChan()
 
 	for {
 		i1, ok1 := <-b1Chan
@@ -369,5 +351,5 @@ func (b *bow) AddCols(series ...Series) (Bow, error) {
 		newSeries[bowNumCols+i] = s
 		addedColNames[s.Name] = nil
 	}
-	return NewBowWithMetadata(b.GetMetadata(), newSeries...)
+	return NewBowWithMetadata(b.Metadata(), newSeries...)
 }

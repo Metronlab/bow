@@ -78,12 +78,12 @@ func TestBow_IsEmpty(t *testing.T) {
 			{"three", 3.0},
 		})
 		require.NoError(t, err)
-		assert.False(t, b.IsEmpty())
+		assert.False(t, b.NumRows() == 0)
 	})
 
 	t.Run("new bow empty", func(t *testing.T) {
 		b := NewBowEmpty()
-		assert.True(t, b.IsEmpty())
+		assert.True(t, b.NumRows() == 0)
 	})
 
 	t.Run("empty bow from existing", func(t *testing.T) {
@@ -94,8 +94,8 @@ func TestBow_IsEmpty(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		b := original.NewEmpty()
-		assert.True(t, b.IsEmpty())
+		b := original.ClearRows()
+		assert.True(t, b.NumRows() == 0)
 	})
 }
 

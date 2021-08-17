@@ -19,7 +19,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 	var rowIndex int
 	var order = orderUndefined
 
-	switch b.GetType(colIndex) {
+	switch b.ColumnType(colIndex) {
 	case Int64:
 		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
 		values := arr.Int64Values()

@@ -1,11 +1,11 @@
-package fill
+package interpolation
 
 import (
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
 )
 
-func StepPrevious(colName string) rolling.ColumnInterpolation {
+func StepPrevious(colName string) rolling.ColInterpolation {
 	var prevVal interface{}
 	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool, bow.String},
 		func(colIndexToFill int, w rolling.Window, fullBow, prevRow bow.Bow) (interface{}, error) {

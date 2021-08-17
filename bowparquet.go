@@ -200,7 +200,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	}
 
 	var metadata []*parquet.KeyValue
-	m := b.GetMetadata()
+	m := b.Metadata()
 	values := m.Values()
 
 	var colTypesMeta []parquetColTypesMeta
@@ -233,7 +233,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 
 	optionalRepType := parquet.FieldRepetitionType_OPTIONAL
 	for i, f := range b.Schema().Fields() {
-		typ := typeBowToParquetMap[b.GetType(i)]
+		typ := typeBowToParquetMap[b.ColumnType(i)]
 		se = parquet.NewSchemaElement()
 		se.Type = &typ
 		se.RepetitionType = &optionalRepType
@@ -265,7 +265,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		pw.SchemaHandler.SchemaElements[i].LogicalType = lt
 	}
 
-	for row := range b.RowMapIter() {
+	for row := range b.GetRowsChan() {
 		rowJSON, err := json.Marshal(row)
 		if err != nil {
 			return fmt.Errorf("bow.WriteParquet: json.Marshal: %w", err)

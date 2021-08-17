@@ -15,15 +15,15 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 	})
 	r, _ := IntervalRolling(b, timeCol, 10, Options{})
 
-	timeAggr := NewColumnAggregation(timeCol, false, bow.Int64,
+	timeAggr := NewColAggregation(timeCol, false, bow.Int64,
 		func(col int, w Window) (interface{}, error) {
 			return w.Start, nil
 		})
-	valueAggr := NewColumnAggregation(valueCol, false, bow.Float64,
+	valueAggr := NewColAggregation(valueCol, false, bow.Float64,
 		func(col int, w Window) (interface{}, error) {
 			return float64(w.Bow.NumRows()), nil
 		})
-	doubleAggr := NewColumnAggregation(valueCol, false, bow.Float64,
+	doubleAggr := NewColAggregation(valueCol, false, bow.Float64,
 		func(col int, w Window) (interface{}, error) {
 			return float64(w.Bow.NumRows()) * 2, nil
 		})
@@ -108,7 +108,7 @@ func TestIntervalRolling_Aggregate(t *testing.T) {
 	})
 
 	t.Run("invalid colIndex", func(t *testing.T) {
-		_, err := r.Aggregate(timeAggr, NewColumnAggregation("-", false, bow.Int64,
+		_, err := r.Aggregate(timeAggr, NewColAggregation("-", false, bow.Int64,
 			func(col int, w Window) (interface{}, error) { return nil, nil })).Bow()
 		assert.EqualError(t, err, "rolling.Aggregate error: no column '-'")
 	})

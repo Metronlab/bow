@@ -1,4 +1,4 @@
-package fill
+package interpolation
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ func TestLinear(t *testing.T) {
 	t.Run("ascendant no options", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -42,7 +42,7 @@ func TestLinear(t *testing.T) {
 	t.Run("descendant no options", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -58,7 +58,7 @@ func TestLinear(t *testing.T) {
 	t.Run("ascendant with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -74,7 +74,7 @@ func TestLinear(t *testing.T) {
 	t.Run("descendant with offset", func(t *testing.T) {
 		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
 		filled, err := r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
@@ -95,7 +95,7 @@ func TestLinear(t *testing.T) {
 		require.NoError(t, err)
 		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
 		_, err = r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type utf8")
 	})
@@ -108,7 +108,7 @@ func TestLinear(t *testing.T) {
 		require.NoError(t, err)
 		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
 		res, err := r.
-			Fill(WindowStart(timeCol), Linear(valueCol)).
+			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
 		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type bool",
 			"have res: %v", res)
