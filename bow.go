@@ -125,7 +125,7 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 	return NewBow(seriesSlice...)
 }
 
-// NewBowFromRowBasedInterfaces returns a new bow from rowData
+// NewBowFromRowBasedInterfaces returns a new bow from row based data
 // TODO: improve performance of this function
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedData [][]interface{}) (Bow, error) {
 	columnBasedRows := make([][]interface{}, len(colNames))
@@ -138,8 +138,8 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 			return nil, errors.New(
 				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
 		}
-		for colI := range colNames {
-			columnBasedRows[colI][rowIndex] = row[colI]
+		for colIndex := range colNames {
+			columnBasedRows[colIndex][rowIndex] = row[colIndex]
 		}
 	}
 
