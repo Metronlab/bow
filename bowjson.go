@@ -88,17 +88,17 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		    =============== =================
 	*/
 
-	for i, f := range jsonB.Schema.Fields {
-		if _, ok := mapArrowNameToBowTypes[f.Type]; ok {
+	for fieldIndex, field := range jsonB.Schema.Fields {
+		if _, ok := mapArrowNameToBowTypes[field.Type]; ok {
 			continue
 		}
-		switch f.Type {
+		switch field.Type {
 		case "integer":
-			jsonB.Schema.Fields[i].Type = "int64"
+			jsonB.Schema.Fields[fieldIndex].Type = "int64"
 		case "number":
-			jsonB.Schema.Fields[i].Type = "float64"
+			jsonB.Schema.Fields[fieldIndex].Type = "float64"
 		case "boolean":
-			jsonB.Schema.Fields[i].Type = "bool"
+			jsonB.Schema.Fields[fieldIndex].Type = "bool"
 		}
 	}
 
@@ -120,7 +120,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		return nil
 	}
 
-	for i, field := range jsonB.Schema.Fields {
+	for fieldIndex, field := range jsonB.Schema.Fields {
 		fieldType := getBowTypeFromArrowName(field.Type)
 		buf, err := NewBufferFromInterfacesIter(fieldType, len(jsonB.RowBasedData), func() chan interface{} {
 			cellsChan := make(chan interface{})
@@ -145,7 +145,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 			return err
 		}
 
-		seriesSlice[i] = NewSeries(field.Name, fieldType, buf.Value, buf.Valid)
+		seriesSlice[fieldIndex] = NewSeries(field.Name, fieldType, buf.Value, buf.Valid)
 	}
 
 	tmpBow, err := NewBow(seriesSlice...)
