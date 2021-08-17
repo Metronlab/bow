@@ -10,7 +10,7 @@ import (
 
 func TestBow_IsColSorted(t *testing.T) {
 	t.Run("int64", func(t *testing.T) {
-		intBobow, _ := NewBowFromRowBasedInterfaces(
+		b, _ := NewBowFromRowBasedInterfaces(
 			[]string{"a", "b", "c", "d", "e"},
 			[]Type{Int64, Int64, Int64, Int64, Int64},
 			[][]interface{}{
@@ -21,20 +21,20 @@ func TestBow_IsColSorted(t *testing.T) {
 				{13, nil, nil, nil, nil},
 				{20, 6, 30, 400, -10},
 			})
-		sorted := intBobow.IsColSorted(0)
+		sorted := b.IsColSorted(0)
 		assert.True(t, sorted)
-		sorted = intBobow.IsColSorted(1)
+		sorted = b.IsColSorted(1)
 		assert.True(t, sorted)
-		sorted = intBobow.IsColSorted(2)
+		sorted = b.IsColSorted(2)
 		assert.True(t, sorted)
-		sorted = intBobow.IsColSorted(3)
+		sorted = b.IsColSorted(3)
 		assert.False(t, sorted)
-		sorted = intBobow.IsColSorted(4)
+		sorted = b.IsColSorted(4)
 		assert.False(t, sorted)
 	})
 
 	t.Run("float64", func(t *testing.T) {
-		floatBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
+		b, _ := NewBowFromRowBasedInterfaces([]string{"a", "b", "c", "d", "e"}, []Type{Float64, Float64, Float64, Float64, Float64}, [][]interface{}{
 			{-2.0, 1.0, nil, nil, -8.0},
 			{0.0, nil, 3.0, 4.0, 0.0},
 			{1.0, nil, nil, 120.0, nil},
@@ -42,20 +42,20 @@ func TestBow_IsColSorted(t *testing.T) {
 			{13.0, nil, nil, nil, nil},
 			{20.0, 6.0, 30.0, 400.0, -10.0},
 		})
-		sorted := floatBobow.IsColSorted(0)
+		sorted := b.IsColSorted(0)
 		assert.True(t, sorted)
-		sorted = floatBobow.IsColSorted(1)
+		sorted = b.IsColSorted(1)
 		assert.True(t, sorted)
-		sorted = floatBobow.IsColSorted(2)
+		sorted = b.IsColSorted(2)
 		assert.True(t, sorted)
-		sorted = floatBobow.IsColSorted(3)
+		sorted = b.IsColSorted(3)
 		assert.False(t, sorted)
-		sorted = floatBobow.IsColSorted(4)
+		sorted = b.IsColSorted(4)
 		assert.False(t, sorted)
 	})
 
 	t.Run("string (unsupported type)", func(t *testing.T) {
-		stringBobow, _ := NewBowFromRowBasedInterfaces([]string{"a", "b"}, []Type{String, String}, [][]interface{}{
+		b, _ := NewBowFromRowBasedInterfaces([]string{"a", "b"}, []Type{String, String}, [][]interface{}{
 			{"egr", "rgr"},
 			{"zrr", nil},
 			{"zrfr", nil},
@@ -63,39 +63,10 @@ func TestBow_IsColSorted(t *testing.T) {
 			{"zfer", nil},
 			{"sffe", "srre"},
 		})
-		sorted := stringBobow.IsColSorted(0)
+		sorted := b.IsColSorted(0)
 		assert.False(t, sorted)
-		sorted = stringBobow.IsColSorted(1)
+		sorted = b.IsColSorted(1)
 		assert.False(t, sorted)
-	})
-}
-
-func TestBow_IsEmpty(t *testing.T) {
-	t.Run("not an empty bow", func(t *testing.T) {
-		b, err := NewBowFromRowBasedInterfaces([]string{"str", "nbr"}, []Type{String, Float64}, [][]interface{}{
-			{"one", 1.0},
-			{"two", 2.0},
-			{"three", 3.0},
-		})
-		require.NoError(t, err)
-		assert.False(t, b.NumRows() == 0)
-	})
-
-	t.Run("new bow empty", func(t *testing.T) {
-		b := NewBowEmpty()
-		assert.True(t, b.NumRows() == 0)
-	})
-
-	t.Run("empty bow from existing", func(t *testing.T) {
-		original, err := NewBowFromRowBasedInterfaces([]string{"str", "nbr"}, []Type{String, Float64}, [][]interface{}{
-			{"one", 1.0},
-			{"two", 2.0},
-			{"three", 3.0},
-		})
-		require.NoError(t, err)
-
-		b := original.ClearRows()
-		assert.True(t, b.NumRows() == 0)
 	})
 }
 
@@ -143,4 +114,23 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 			}
 		})
 	}
+}
+
+func TestBow_IsColEmpty(t *testing.T) {
+	b, err := NewBowFromRowBasedInterfaces(
+		[]string{"a", "b", "c"},
+		[]Type{Int64, Int64, Int64},
+		[][]interface{}{
+			{-2, 1, nil},
+			{0, nil, nil},
+			{1, nil, nil},
+		})
+	require.NoError(t, err)
+
+	empty := b.IsColEmpty(0)
+	assert.False(t, empty)
+	empty = b.IsColEmpty(1)
+	assert.False(t, empty)
+	empty = b.IsColEmpty(2)
+	assert.True(t, empty)
 }

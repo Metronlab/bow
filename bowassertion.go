@@ -21,7 +21,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 
 	switch b.ColumnType(colIndex) {
 	case Int64:
-		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
+		arr := array.NewInt64Data(b.Column(colIndex).Data())
 		values := arr.Int64Values()
 		for arr.IsNull(rowIndex) {
 			rowIndex++
@@ -48,7 +48,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 			curr = next
 		}
 	case Float64:
-		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+		arr := array.NewFloat64Data(b.Column(colIndex).Data())
 		values := arr.Float64Values()
 		for arr.IsNull(rowIndex) {
 			rowIndex++
@@ -87,9 +87,4 @@ func (b *bow) IsColEmpty(colIndex int) bool {
 		rowIndex++
 	}
 	return rowIndex == arr.Len()
-}
-
-// IsEmpty returns true if the dataframe contains no data, false otherwise.
-func (b *bow) IsEmpty() bool {
-	return b.NumRows() == 0
 }

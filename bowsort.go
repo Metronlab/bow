@@ -11,30 +11,36 @@ import (
 )
 
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
-// The only type currently supported for the column to sort by is Int64
-// Returns the same Bow if the column is already sorted
+// The only type currently supported for the column to sort by is Int64, without nil values.
+// Returns the same Bow if the column is already sorted.
 func (b *bow) SortByCol(colName string) (Bow, error) {
 	if b.NumCols() == 0 {
 		return nil, fmt.Errorf("bow.SortByCol: empty bow")
 	}
 
-	colIndex, err := b.ColumnIndex(colName)
+	colToSortByIndex, err := b.ColumnIndex(colName)
 	if err != nil {
-		return nil, fmt.Errorf("bow.SortByCol: column to sort by not found")
+		return nil, fmt.Errorf("bow.SortByCol: %w", err)
 	}
 
-	if b.IsEmpty() {
+	if b.Column(colToSortByIndex).NullN() != 0 {
+		return nil, fmt.Errorf(
+			"bow.SortByCol: column %s to sort by has %d nil values",
+			colName, b.Column(colToSortByIndex).NullN())
+	}
+
+	if b.NumRows() == 0 {
 		return b, nil
 	}
 
-	var colToSortBy Int64Col
+	var colToSortBy Int64Slice
 	var newArray array.Interface
-	prevData := b.Record.Column(colIndex).Data()
+	prevData := b.Record.Column(colToSortByIndex).Data()
 	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	switch b.ColumnType(colIndex) {
+	switch b.ColumnType(colToSortByIndex) {
 	case Int64:
-		// Build the Int64Col interface to store the row indices before sorting
-		colToSortBy.Indices = func() []int {
+		// Build the Int64Slice interface to store the row indices before sorting
+		colToSortBy.indices = func() []int {
 			res := make([]int, b.NumRows())
 			for i := range res {
 				res[i] = i
@@ -42,11 +48,11 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			return res
 		}()
 		prevValues := array.NewInt64Data(prevData)
-		colToSortBy.Values = prevValues.Int64Values()
-		colToSortBy.Valids = getValids(prevValues, b.NumRows())
+		colToSortBy.values = prevValues.Int64Values()
+		colToSortBy.valid = getValid(prevValues, b.NumRows())
 
 		// Stop if sort by column is already sorted
-		if Int64ColIsSorted(colToSortBy) {
+		if IsInt64SliceSorted(colToSortBy) {
 			return b, nil
 		}
 
@@ -54,7 +60,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		sort.Sort(colToSortBy)
 
 		builder := array.NewInt64Builder(pool)
-		builder.AppendValues(colToSortBy.Values, colToSortBy.Valids)
+		builder.AppendValues(colToSortBy.values, colToSortBy.valid)
 		newArray = builder.NewArray()
 	default:
 		return nil, fmt.Errorf("bow.SortByCol: unsupported type for the column to sort by (Int64 only)")
@@ -62,7 +68,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 
 	// Interpolate the sort by column with sorted values
 	sortedSeries := make([]Series, b.NumCols())
-	sortedSeries[colIndex] = Series{
+	sortedSeries[colToSortByIndex] = Series{
 		Name:  colName,
 		Array: newArray,
 	}
@@ -86,8 +92,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				prevValues := array.NewInt64Data(prevData)
 				newValues := make([]int64, b.NumRows())
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
-					if prevValues.IsValid(colToSortBy.Indices[i]) {
+					newValues[i] = prevValues.Value(colToSortBy.indices[i])
+					if prevValues.IsValid(colToSortBy.indices[i]) {
 						newValids[i] = true
 					}
 				}
@@ -98,8 +104,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				prevValues := array.NewFloat64Data(prevData)
 				newValues := make([]float64, b.NumRows())
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
-					if prevValues.IsValid(colToSortBy.Indices[i]) {
+					newValues[i] = prevValues.Value(colToSortBy.indices[i])
+					if prevValues.IsValid(colToSortBy.indices[i]) {
 						newValids[i] = true
 					}
 				}
@@ -110,8 +116,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				prevValues := array.NewBooleanData(prevData)
 				newValues := make([]bool, b.NumRows())
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
-					if prevValues.IsValid(colToSortBy.Indices[i]) {
+					newValues[i] = prevValues.Value(colToSortBy.indices[i])
+					if prevValues.IsValid(colToSortBy.indices[i]) {
 						newValids[i] = true
 					}
 				}
@@ -122,8 +128,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				prevValues := array.NewStringData(prevData)
 				newValues := make([]string, b.NumRows())
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.Indices[i])
-					if prevValues.IsValid(colToSortBy.Indices[i]) {
+					newValues[i] = prevValues.Value(colToSortBy.indices[i])
+					if prevValues.IsValid(colToSortBy.indices[i]) {
 						newValids[i] = true
 					}
 				}
@@ -142,26 +148,24 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBowWithMetadata(
-		Metadata{b.Schema().Metadata()},
-		sortedSeries...)
+	return NewBowWithMetadata(b.Metadata(), sortedSeries...)
 }
 
-// Int64ColIsSorted tests whether a column of int64s is sorted in increasing order.
-func Int64ColIsSorted(col Int64Col) bool { return sort.IsSorted(col) }
+// IsInt64SliceSorted tests whether a column of int64s is sorted in increasing order.
+func IsInt64SliceSorted(col Int64Slice) bool { return sort.IsSorted(col) }
 
-// Int64Col implements the methods of sort.Interface, sorting in increasing order
+// Int64Slice implements the methods of sort.Interface, sorting in increasing order
 // (not-a-number values are treated as less than other values).
-type Int64Col struct {
-	Values  []int64
-	Valids  []bool
-	Indices []int
+type Int64Slice struct {
+	values  []int64
+	valid   []bool
+	indices []int
 }
 
-func (p Int64Col) Len() int           { return len(p.Indices) }
-func (p Int64Col) Less(i, j int) bool { return p.Values[i] < p.Values[j] }
-func (p Int64Col) Swap(i, j int) {
-	p.Values[i], p.Values[j] = p.Values[j], p.Values[i]
-	p.Valids[i], p.Valids[j] = p.Valids[j], p.Valids[i]
-	p.Indices[i], p.Indices[j] = p.Indices[j], p.Indices[i]
+func (p Int64Slice) Len() int           { return len(p.indices) }
+func (p Int64Slice) Less(i, j int) bool { return p.values[i] < p.values[j] }
+func (p Int64Slice) Swap(i, j int) {
+	p.values[i], p.values[j] = p.values[j], p.values[i]
+	p.valid[i], p.valid[j] = p.valid[j], p.valid[i]
+	p.indices[i], p.indices[j] = p.indices[j], p.indices[i]
 }

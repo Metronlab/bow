@@ -16,16 +16,17 @@ func (b *bow) GetRow(rowIndex int) map[string]interface{} {
 		}
 		row[b.Schema().Field(colIndex).Name] = val
 	}
+
 	return row
 }
 
 func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
 	for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
-		name := b.Schema().Field(colIndex).Name
-		if colName == name {
+		if colName == b.Schema().Field(colIndex).Name {
 			return b.GetValue(colIndex, rowIndex)
 		}
 	}
+
 	return nil
 }
 
@@ -52,73 +53,60 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 			return vd.Value(rowIndex)
 		}
 	default:
-		panic(fmt.Errorf("bow: unhandled type %s", b.ColumnType(colIndex)))
+		panic(fmt.Errorf("bow.GetValue: unsupported type %s", b.ColumnType(colIndex)))
 	}
 	return nil
 }
 
 func (b *bow) GetNextValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return nil, nil, -1
-	}
-
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
 		v1, rowIndex = b.GetNextValue(colIndex1, rowIndex)
-		v2, row2 := b.GetNextValue(colIndex2, rowIndex)
-		if rowIndex == row2 {
+		v2, rowIndex2 := b.GetNextValue(colIndex2, rowIndex)
+		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
-
 		rowIndex++
 	}
+
 	return nil, nil, -1
 }
 
 func (b *bow) GetNextValue(colIndex, rowIndex int) (interface{}, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return nil, -1
-	}
-
-	for rowIndex < b.NumRows() {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value := b.GetValue(colIndex, rowIndex)
 		if value != nil {
 			return value, rowIndex
 		}
 		rowIndex++
 	}
+
 	return nil, -1
 }
 
 func (b *bow) GetPreviousValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return nil, nil, -1
-	}
-
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
 		v1, rowIndex = b.GetPreviousValue(colIndex1, rowIndex)
-		v2, row2 := b.GetPreviousValue(colIndex2, rowIndex)
-		if rowIndex == row2 {
+		v2, rowIndex2 := b.GetPreviousValue(colIndex2, rowIndex)
+		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
 		rowIndex--
 	}
+
 	return nil, nil, -1
 }
 
 func (b *bow) GetPreviousValue(colIndex, rowIndex int) (interface{}, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return nil, -1
-	}
-
-	for rowIndex >= 0 {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value := b.GetValue(colIndex, rowIndex)
 		if value != nil {
 			return value, rowIndex
 		}
 		rowIndex--
 	}
+
 	return nil, -1
 }
 
@@ -139,38 +127,32 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 		}
 		return 0, vd.IsValid(rowIndex)
 	default:
-		panic(fmt.Sprintf("bow: unhandled type %s",
+		panic(fmt.Sprintf("bow.GetInt64: unsupported type %s",
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 }
 
 func (b *bow) GetNextInt64(colIndex, rowIndex int) (int64, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return 0., -1
-	}
-
-	for rowIndex < b.NumRows() {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value, ok := b.GetInt64(colIndex, rowIndex)
 		if ok {
 			return value, rowIndex
 		}
 		rowIndex++
 	}
+
 	return 0., -1
 }
 
 func (b *bow) GetPreviousInt64(colIndex, rowIndex int) (int64, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return 0., -1
-	}
-
-	for rowIndex >= 0 {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value, ok := b.GetInt64(colIndex, rowIndex)
 		if ok {
 			return value, rowIndex
 		}
 		rowIndex--
 	}
+
 	return 0., -1
 }
 
@@ -200,24 +182,19 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Sprintf("bow: unhandled type %s",
+		panic(fmt.Sprintf("bow.GetFloat64: unsupported type %s",
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 }
 
 func (b *bow) GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (float64, float64, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return 0., 0., -1
-	}
-
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 float64
 		v1, rowIndex = b.GetNextFloat64(colIndex1, rowIndex)
-		v2, row2 := b.GetNextFloat64(colIndex2, rowIndex)
-		if rowIndex == row2 {
+		v2, rowIndex2 := b.GetNextFloat64(colIndex2, rowIndex)
+		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
-
 		rowIndex++
 	}
 
@@ -225,33 +202,25 @@ func (b *bow) GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (float64, floa
 }
 
 func (b *bow) GetNextFloat64(colIndex, rowIndex int) (float64, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return 0., -1
-	}
-
-	for rowIndex < b.NumRows() {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value, ok := b.GetFloat64(colIndex, rowIndex)
 		if ok {
 			return value, rowIndex
 		}
 		rowIndex++
 	}
+
 	return 0., -1
 }
 
 func (b *bow) GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (float64, float64, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return 0., 0., -1
-	}
-
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 float64
 		v1, rowIndex = b.GetPreviousFloat64(colIndex1, rowIndex)
-		v2, row2 := b.GetPreviousFloat64(colIndex2, rowIndex)
-		if rowIndex == row2 {
+		v2, rowIndex2 := b.GetPreviousFloat64(colIndex2, rowIndex)
+		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
-
 		rowIndex--
 	}
 
@@ -259,31 +228,28 @@ func (b *bow) GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (float64, 
 }
 
 func (b *bow) GetPreviousFloat64(colIndex, rowIndex int) (float64, int) {
-	if rowIndex < 0 || rowIndex >= b.NumRows() {
-		return 0., -1
-	}
-
-	for rowIndex >= 0 {
+	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value, ok := b.GetFloat64(colIndex, rowIndex)
 		if ok {
 			return value, rowIndex
 		}
 		rowIndex--
 	}
+
 	return 0., -1
 }
 
 func (b *bow) ColumnType(colIndex int) Type {
-	return getTypeFromArrowType(b.Schema().Field(colIndex).Type)
+	return getBowTypeFromArrowType(b.Schema().Field(colIndex).Type)
 }
 
 func (b *bow) ColumnIndex(colName string) (int, error) {
-	indices := b.Schema().FieldIndices(colName)
-	if len(indices) == 0 {
+	colIndices := b.Schema().FieldIndices(colName)
+	if len(colIndices) == 0 {
 		return -1, fmt.Errorf("no column '%s'", colName)
 	}
-	if len(indices) > 1 {
-		return -1, fmt.Errorf("too many columns with name '%s'", colName)
+	if len(colIndices) > 1 {
+		return -1, fmt.Errorf("several columns '%s'", colName)
 	}
-	return indices[0], nil
+	return colIndices[0], nil
 }

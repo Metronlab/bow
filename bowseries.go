@@ -1,6 +1,8 @@
 package bow
 
 import (
+	"encoding/json"
+
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/memory"
 )
@@ -11,10 +13,10 @@ type Series struct {
 	Array array.Interface
 }
 
-func NewSeries(name string, t Type, dataArray interface{}, validArray []bool) Series {
+func NewSeries(name string, typ Type, dataArray interface{}, validArray []bool) Series {
 	var newArray array.Interface
 	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	switch t {
+	switch typ {
 	case Float64:
 		b := array.NewFloat64Builder(pool)
 		defer b.Release()
@@ -42,15 +44,33 @@ func NewSeries(name string, t Type, dataArray interface{}, validArray []bool) Se
 	}
 }
 
-func NewSeriesFromInterfaces(name string, typeOf Type, cells []interface{}) (series Series, err error) {
-	if typeOf == Unknown {
-		if typeOf, err = seekType(cells); err != nil {
+func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (series Series, err error) {
+	if typ == Unknown {
+		if typ, err = seekType(cells); err != nil {
 			return
 		}
 	}
-	buf, err := NewBufferFromInterfaces(typeOf, cells)
+	buf, err := NewBufferFromInterfaces(typ, cells)
 	if err != nil {
 		return Series{}, err
 	}
-	return NewSeries(name, typeOf, buf.Value, buf.Valid), nil
+	return NewSeries(name, typ, buf.Value, buf.Valid), nil
+}
+
+func seekType(cells []interface{}) (Type, error) {
+	for _, val := range cells {
+		if val != nil {
+			switch val.(type) {
+			case float64, json.Number:
+				return Float64, nil
+			case int, int64:
+				return Int64, nil
+			case string:
+				return String, nil
+			case bool:
+				return Bool, nil
+			}
+		}
+	}
+	return Float64, nil
 }

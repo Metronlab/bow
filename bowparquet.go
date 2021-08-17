@@ -14,14 +14,14 @@ import (
 	"github.com/xitongsys/parquet-go/writer"
 )
 
-var typeParquetToBowMap = map[parquet.Type]Type{
+var mapParquetToBowTypes = map[parquet.Type]Type{
 	parquet.Type_BOOLEAN:    Bool,
 	parquet.Type_INT64:      Int64,
 	parquet.Type_DOUBLE:     Float64,
 	parquet.Type_BYTE_ARRAY: String,
 }
 
-var typeBowToParquetMap = map[Type]parquet.Type{
+var mapBowToParquetTypes = map[Type]parquet.Type{
 	Bool:    parquet.Type_BOOLEAN,
 	Int64:   parquet.Type_INT64,
 	Float64: parquet.Type_DOUBLE,
@@ -99,7 +99,7 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 
 		var ok bool
 		var vd = make([]bool, len(values))
-		switch typeParquetToBowMap[col.GetType()] {
+		switch mapParquetToBowTypes[col.GetType()] {
 		case Int64:
 			var vs = make([]int64, len(values))
 			for i, v := range values {
@@ -149,7 +149,8 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 
 	for r, rg := range pr.Footer.RowGroups {
 		for c := range rg.Columns {
-			pr.Footer.RowGroups[r].Columns[c].MetaData.PathInSchema = originalRowGroups[r].Columns[c].MetaData.PathInSchema
+			pr.Footer.RowGroups[r].Columns[c].MetaData.PathInSchema = originalRowGroups[r].
+				Columns[c].MetaData.PathInSchema
 		}
 	}
 
@@ -233,7 +234,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 
 	optionalRepType := parquet.FieldRepetitionType_OPTIONAL
 	for i, f := range b.Schema().Fields() {
-		typ := typeBowToParquetMap[b.ColumnType(i)]
+		typ := mapBowToParquetTypes[b.ColumnType(i)]
 		se = parquet.NewSchemaElement()
 		se.Type = &typ
 		se.RepetitionType = &optionalRepType

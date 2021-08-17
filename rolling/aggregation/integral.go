@@ -14,13 +14,13 @@ func IntegralTrapezoid(col string) rolling.ColAggregation {
 
 			var sum float64
 			var ok bool
-			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, 0)
+			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColIndex, colIndex, 0)
 			if rowIndex < 0 {
 				return nil, nil
 			}
 
 			for rowIndex >= 0 {
-				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, rowIndex+1)
+				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColIndex, colIndex, rowIndex+1)
 				if nextRowIndex < 0 {
 					break
 				}
@@ -45,9 +45,9 @@ func IntegralStep(col string) rolling.ColAggregation {
 			}
 			var sum float64
 			var ok bool
-			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, 0)
+			t0, v0, rowIndex := w.Bow.GetNextFloat64s(w.IntervalColIndex, colIndex, 0)
 			for rowIndex >= 0 {
-				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColumnIndex, colIndex, rowIndex+1)
+				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColIndex, colIndex, rowIndex+1)
 				if nextRowIndex < 0 {
 					t1 = float64(w.End)
 				}

@@ -9,11 +9,11 @@ import (
 )
 
 func TestIntervalRolling_Fill(t *testing.T) {
-	timeInterp := NewColumnInterpolation(timeCol, []bow.Type{bow.Int64},
+	timeInterp := NewColInterpolation(timeCol, []bow.Type{bow.Int64},
 		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 			return w.Start, nil
 		})
-	valueInterp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
+	valueInterp := NewColInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
 		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 			return 9.9, nil
 		})
@@ -24,14 +24,14 @@ func TestIntervalRolling_Fill(t *testing.T) {
 			{1.0, 1.3},
 		})
 		r, _ := IntervalRolling(b, timeCol, 2, Options{})
-		interp := NewColumnInterpolation(valueCol, []bow.Type{bow.Int64, bow.Bool},
+		interp := NewColInterpolation(valueCol, []bow.Type{bow.Int64, bow.Bool},
 			func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 				return true, nil
 			})
 		_, err := r.
 			Interpolate(timeInterp, interp).
 			Bow()
-		assert.EqualError(t, err, "fill: interpolation accepts types [int64 bool], got type float64")
+		assert.EqualError(t, err, "interpolate: accepts types [int64 bool], got type float64")
 	})
 
 	t.Run("missing interval column", func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestIntervalRolling_Fill(t *testing.T) {
 		_, err := r.
 			Interpolate(valueInterp).
 			Bow()
-		assert.EqualError(t, err, fmt.Sprintf("fill: must keep interval column '%s'", timeCol))
+		assert.EqualError(t, err, fmt.Sprintf("interpolate: must keep interval column '%s'", timeCol))
 	})
 
 	t.Run("empty bow", func(t *testing.T) {

@@ -57,7 +57,7 @@ func (a *colAggregation) GetReturnType(input, iterator bow.Type) (typ bow.Type) 
 	case bow.IteratorDependent:
 		typ = iterator
 	default:
-		panic(fmt.Sprintf("invalid return type %s", a.Type()))
+		panic(fmt.Errorf("invalid return type %v", a.Type()))
 	}
 	return
 }
@@ -153,8 +153,7 @@ func (it *intervalRollingIter) indexedAggregations(aggrs []ColAggregation) (int,
 	}
 
 	if newIntervalCol == -1 {
-		name := it.bow.ColumnName(it.colIndex)
-		return -1, nil, fmt.Errorf("must keep interval column '%s'", name)
+		return -1, nil, fmt.Errorf("must keep interval column '%s'", it.bow.ColumnName(it.colIndex))
 	}
 
 	return newIntervalCol, aggrs, nil
@@ -217,7 +216,8 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggr
 		buf = bow.NewBuffer(it.numWindows, iType, true)
 		typ = iType
 	default:
-		return nil, bow.Unknown, fmt.Errorf("aggregation %d has invalid return type %s", colIndex, aggr.Type())
+		return nil, bow.Unknown, fmt.Errorf(
+			"aggregation %d has invalid return type %s", colIndex, aggr.Type())
 	}
 
 	for it.HasNext() {

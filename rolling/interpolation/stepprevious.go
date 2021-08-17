@@ -7,7 +7,7 @@ import (
 
 func StepPrevious(colName string) rolling.ColInterpolation {
 	var prevVal interface{}
-	return rolling.NewColumnInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool, bow.String},
+	return rolling.NewColInterpolation(colName, []bow.Type{bow.Int64, bow.Float64, bow.Bool, bow.String},
 		func(colIndexToFill int, w rolling.Window, fullBow, prevRow bow.Bow) (interface{}, error) {
 			// For the first window, add the previous row to interpolate correctly
 			if w.FirstIndex == 0 && prevRow != nil {
@@ -15,7 +15,7 @@ func StepPrevious(colName string) rolling.ColInterpolation {
 			}
 
 			var v interface{}
-			_, v, _ = fullBow.GetPreviousValues(w.IntervalColumnIndex, colIndexToFill, w.FirstIndex-1)
+			_, v, _ = fullBow.GetPreviousValues(w.IntervalColIndex, colIndexToFill, w.FirstIndex-1)
 			if v != nil {
 				prevVal = v
 			}

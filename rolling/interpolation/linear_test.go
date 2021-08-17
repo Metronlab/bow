@@ -97,7 +97,7 @@ func TestLinear(t *testing.T) {
 		_, err = r.
 			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
-		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type utf8")
+		assert.EqualError(t, err, "interpolate: accepts types [int64 float64], got type utf8")
 	})
 
 	t.Run("bool error", func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestLinear(t *testing.T) {
 		res, err := r.
 			Interpolate(WindowStart(timeCol), Linear(valueCol)).
 			Bow()
-		assert.EqualError(t, err, "fill: interpolation accepts types [int64 float64], got type bool",
+		assert.EqualError(t, err, "interpolate: accepts types [int64 float64], got type bool",
 			"have res: %v", res)
 	})
 }

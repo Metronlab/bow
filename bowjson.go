@@ -15,8 +15,8 @@ type JSONSchema struct {
 }
 
 type JSONBow struct {
-	Schema JSONSchema               `json:"schema"`
-	Data   []map[string]interface{} `json:"data"`
+	Schema       JSONSchema               `json:"schema"`
+	RowBasedData []map[string]interface{} `json:"data"`
 }
 
 func (b bow) MarshalJSON() ([]byte, error) {
@@ -29,7 +29,7 @@ func NewJSONBow(b Bow) (res JSONBow) {
 	}
 
 	res = JSONBow{
-		Data: make([]map[string]interface{}, 0, b.NumRows()),
+		RowBasedData: make([]map[string]interface{}, 0, b.NumRows()),
 	}
 	for _, col := range b.Schema().Fields() {
 		res.Schema.Fields = append(
@@ -44,7 +44,7 @@ func NewJSONBow(b Bow) (res JSONBow) {
 		if len(row) == 0 {
 			continue
 		}
-		res.Data = append(res.Data, row)
+		res.RowBasedData = append(res.RowBasedData, row)
 	}
 	return
 }
@@ -89,7 +89,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	*/
 
 	for i, f := range jsonB.Schema.Fields {
-		if _, ok := mapArrowDataTypeNameType[f.Type]; ok {
+		if _, ok := mapArrowNameToBowTypes[f.Type]; ok {
 			continue
 		}
 		switch f.Type {
@@ -102,16 +102,16 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		}
 	}
 
-	series := make([]Series, len(jsonB.Schema.Fields))
+	seriesSlice := make([]Series, len(jsonB.Schema.Fields))
 
-	if jsonB.Data == nil {
+	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
-			t := newTypeFromArrowName(field.Type)
+			t := getBowTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, t, true)
-			series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
+			seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 		}
 
-		tmpBow, err := NewBow(series...)
+		tmpBow, err := NewBow(seriesSlice...)
 		if err != nil {
 			return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 		}
@@ -121,13 +121,13 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	}
 
 	for i, field := range jsonB.Schema.Fields {
-		t := newTypeFromArrowName(field.Type)
+		t := getBowTypeFromArrowName(field.Type)
 		var buf Buffer
 		var err error
-		buf, err = NewBufferFromInterfacesIter(t, len(jsonB.Data), func() chan interface{} {
+		buf, err = NewBufferFromInterfacesIter(t, len(jsonB.RowBasedData), func() chan interface{} {
 			cellsChan := make(chan interface{})
 			go func(cellsChan chan interface{}, colName string) {
-				for _, row := range jsonB.Data {
+				for _, row := range jsonB.RowBasedData {
 					val, ok := row[colName]
 					if !ok {
 						cellsChan <- nil
@@ -146,10 +146,10 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		if err != nil {
 			return err
 		}
-		series[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
+		seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
 	}
 
-	tmpBow, err := NewBow(series...)
+	tmpBow, err := NewBow(seriesSlice...)
 	if err != nil {
 		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 	}

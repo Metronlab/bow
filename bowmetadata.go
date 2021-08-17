@@ -35,8 +35,8 @@ func (b *bow) SetMetadata(key, value string) Bow {
 	metadata = metadata.Set(key, value)
 	return &bow{Record: array.NewRecord(
 		arrow.NewSchema(b.Schema().Fields(), &metadata.Metadata),
-		b.Record.Columns(),
-		b.Record.NumCols())}
+		b.Columns(),
+		b.Record.NumRows())}
 }
 
 func (md *Metadata) Set(key, value string) Metadata {

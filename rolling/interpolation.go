@@ -1,7 +1,6 @@
 package rolling
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/metronlab/bow"
@@ -10,7 +9,7 @@ import (
 // ColInterpolationFunc provides a value at the start of `window`.
 type ColInterpolationFunc func(inputCol int, window Window, fullBow, prevRow bow.Bow) (interface{}, error)
 
-func NewColumnInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColInterpolation {
+func NewColInterpolation(colName string, inputTypes []bow.Type, fn ColInterpolationFunc) ColInterpolation {
 	return ColInterpolation{
 		colName:    colName,
 		inputTypes: inputTypes,
@@ -28,8 +27,6 @@ type ColInterpolation struct {
 
 // Interpolate fills each window by interpolating its start if missing
 func (it *intervalRollingIter) Interpolate(interps ...ColInterpolation) Rolling {
-	const logPrefix = "fill: "
-
 	if it.err != nil {
 		return it
 	}
@@ -37,12 +34,12 @@ func (it *intervalRollingIter) Interpolate(interps ...ColInterpolation) Rolling 
 	itCopy := *it
 	newIntervalCol, interps, err := itCopy.indexedInterpolations(interps)
 	if err != nil {
-		return itCopy.setError(errors.New(logPrefix + err.Error()))
+		return itCopy.setError(fmt.Errorf("interpolate: %w", err))
 	}
 
-	b, err := itCopy.fillWindows(interps)
+	b, err := itCopy.interpolateWindows(interps)
 	if err != nil {
-		return itCopy.setError(errors.New(logPrefix + err.Error()))
+		return itCopy.setError(fmt.Errorf("interpolate: %w", err))
 	}
 	if b == nil {
 		b = it.bow.ClearRows()
@@ -50,7 +47,7 @@ func (it *intervalRollingIter) Interpolate(interps ...ColInterpolation) Rolling 
 
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
 	if err != nil {
-		return itCopy.setError(errors.New(logPrefix + err.Error()))
+		return itCopy.setError(fmt.Errorf("interpolate: %w", err))
 	}
 
 	return newIt
@@ -73,8 +70,7 @@ func (it *intervalRollingIter) indexedInterpolations(interps []ColInterpolation)
 	}
 
 	if newIntervalCol == -1 {
-		name := it.bow.ColumnName(it.colIndex)
-		return -1, nil, fmt.Errorf("must keep interval column '%s'", name)
+		return -1, nil, fmt.Errorf("must keep interval column '%s'", it.bow.ColumnName(it.colIndex))
 	}
 
 	return newIntervalCol, interps, nil
@@ -91,7 +87,7 @@ func (it *intervalRollingIter) validateInterpolation(interp *ColInterpolation, n
 	interp.colIndex = readIndex
 
 	var typeOk bool
-	typ := it.bow.ColumnType(readIndex)
+	typ := it.bow.ColumnType(interp.colIndex)
 	for _, inputTyp := range interp.inputTypes {
 		if typ == inputTyp {
 			typeOk = true
@@ -99,14 +95,14 @@ func (it *intervalRollingIter) validateInterpolation(interp *ColInterpolation, n
 		}
 	}
 	if !typeOk {
-		return false, fmt.Errorf("interpolation accepts types %v, got type %s",
+		return false, fmt.Errorf("accepts types %v, got type %s",
 			interp.inputTypes, typ.String())
 	}
 
-	return readIndex == it.colIndex, nil
+	return interp.colIndex == it.colIndex, nil
 }
 
-func (it *intervalRollingIter) fillWindows(interps []ColInterpolation) (bow.Bow, error) {
+func (it *intervalRollingIter) interpolateWindows(interps []ColInterpolation) (bow.Bow, error) {
 	it2 := *it
 
 	bows := make([]bow.Bow, it2.numWindows)
@@ -117,7 +113,7 @@ func (it *intervalRollingIter) fillWindows(interps []ColInterpolation) (bow.Bow,
 			return nil, err
 		}
 
-		bows[winIndex], err = it2.fillWindow(interps, w)
+		bows[winIndex], err = it2.interpolateWindow(interps, w)
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +122,7 @@ func (it *intervalRollingIter) fillWindows(interps []ColInterpolation) (bow.Bow,
 	return bow.AppendBows(bows...)
 }
 
-func (it *intervalRollingIter) fillWindow(interps []ColInterpolation, w *Window) (bow.Bow, error) {
+func (it *intervalRollingIter) interpolateWindow(interps []ColInterpolation, w *Window) (bow.Bow, error) {
 	var firstColValue int64 = -1
 	if w.Bow.NumRows() > 0 {
 		firstColVal, i := w.Bow.GetNextFloat64(it.colIndex, 0)
@@ -150,18 +146,19 @@ func (it *intervalRollingIter) fillWindow(interps []ColInterpolation, w *Window)
 	// missing start
 	seriesSlice := make([]bow.Series, len(interps))
 	for colIndex, interpolation := range interps {
-		typ := w.Bow.ColumnType(interpolation.colIndex)
+		colType := w.Bow.ColumnType(interpolation.colIndex)
 
 		interpolatedValue, err := interpolation.fn(interpolation.colIndex, *w, it.bow, it.options.PrevRow)
 		if err != nil {
 			return nil, err
 		}
 
-		buf := bow.NewBuffer(1, typ, true)
+		buf := bow.NewBuffer(1, colType, true)
 		buf.SetOrDrop(0, interpolatedValue)
 
-		name := w.Bow.ColumnName(interpolation.colIndex)
-		seriesSlice[colIndex] = bow.NewSeries(name, typ, buf.Value, buf.Valid)
+		seriesSlice[colIndex] = bow.NewSeries(
+			w.Bow.ColumnName(interpolation.colIndex),
+			colType, buf.Value, buf.Valid)
 	}
 
 	startBow, err := bow.NewBow(seriesSlice...)

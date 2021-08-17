@@ -127,33 +127,33 @@ func TestWindow_UnsetInclusive(t *testing.T) {
 	assert.NoError(t, err)
 
 	inclusiveWindow := Window{
-		Bow:                 inclusiveBow,
-		FirstIndex:          0,
-		IntervalColumnIndex: 0,
-		Start:               0,
-		End:                 2,
-		IsInclusive:         true,
+		Bow:              inclusiveBow,
+		FirstIndex:       0,
+		IntervalColIndex: 0,
+		Start:            0,
+		End:              2,
+		IsInclusive:      true,
 	}
 
 	exclusiveWindow := inclusiveWindow.UnsetInclusive()
 	assert.True(t, exclusiveWindow.Bow.Equal(exclusiveBow))
 	exclusiveWindow.Bow = nil
 	assert.Equal(t, Window{
-		Bow:                 nil,
-		FirstIndex:          0,
-		IntervalColumnIndex: 0,
-		Start:               0,
-		End:                 2,
-		IsInclusive:         false,
+		Bow:              nil,
+		FirstIndex:       0,
+		IntervalColIndex: 0,
+		Start:            0,
+		End:              2,
+		IsInclusive:      false,
 	}, exclusiveWindow)
 
 	// inclusive window should not be modified
 	assert.Equal(t, Window{
-		Bow:                 inclusiveBow,
-		FirstIndex:          0,
-		IntervalColumnIndex: 0,
-		Start:               0,
-		End:                 2,
-		IsInclusive:         true,
+		Bow:              inclusiveBow,
+		FirstIndex:       0,
+		IntervalColIndex: 0,
+		Start:            0,
+		End:              2,
+		IsInclusive:      true,
 	}, inclusiveWindow)
 }
