@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIntervalRolling_Fill(t *testing.T) {
+func TestIntervalRollingIter_Interpolate(t *testing.T) {
 	timeInterp := NewColInterpolation(timeCol, []bow.Type{bow.Int64},
 		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 			return w.Start, nil

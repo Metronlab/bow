@@ -137,14 +137,13 @@ func validateIntervalOffset(interval, offset int64) (int64, error) {
 }
 
 func numWindows(b bow.Bow, colIndex int, start, interval int64) (int, error) {
-	numRows := b.NumRows()
-	if numRows == 0 {
-		return numRows, nil
+	if b.NumRows() == 0 {
+		return b.NumRows(), nil
 	}
 
-	last, irow := b.GetPreviousInt64(colIndex, numRows-1)
+	last, rowIndex := b.GetPreviousInt64(colIndex, b.NumRows()-1)
 
-	if irow == -1 || start > last {
+	if rowIndex == -1 || start > last {
 		return 0, nil
 	}
 

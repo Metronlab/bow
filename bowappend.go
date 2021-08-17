@@ -2,6 +2,9 @@ package bow
 
 import "fmt"
 
+// AppendBows attempts to append bows with equal schemas.
+// Different schemas will lead to undefined behavior.
+// Resulting metadata is copied from the first bow.
 func AppendBows(bows ...Bow) (Bow, error) {
 	if len(bows) == 0 {
 		return nil, nil
@@ -12,7 +15,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	}
 
 	refBow := bows[0]
-	var numRows int
+	numRows := 0
 	for _, b := range bows {
 		if !b.Schema().Equal(refBow.Schema()) {
 			return nil,

@@ -87,12 +87,11 @@ var (
 		})
 )
 
-func runTestCases(t *testing.T,
-	aggrConstruct rolling.ColAggregationConstruct, aggrTransforms []transform.Transform,
-	testCases []testCase) {
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			r, err := rolling.IntervalRolling(test.testedBow, timeCol, 10, rolling.Options{})
+func runTestCases(t *testing.T, aggrConstruct rolling.ColAggregationConstruct,
+	aggrTransforms []transform.Transform, testCases []testCase) {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			r, err := rolling.IntervalRolling(testCase.testedBow, timeCol, 10, rolling.Options{})
 			assert.NoError(t, err)
 			aggregated, err := r.
 				Aggregate(
@@ -102,8 +101,8 @@ func runTestCases(t *testing.T,
 			assert.NoError(t, err)
 			assert.NotNil(t, aggregated)
 
-			assert.Equal(t, true, aggregated.Equal(test.expectedBow),
-				fmt.Sprintf("expect:\n%v\nhave:\n%v", test.expectedBow, aggregated))
+			assert.Equal(t, true, aggregated.Equal(testCase.expectedBow),
+				fmt.Sprintf("expect:\n%v\nhave:\n%v", testCase.expectedBow, aggregated))
 		})
 	}
 }

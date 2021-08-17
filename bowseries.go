@@ -50,10 +50,12 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (series
 			return
 		}
 	}
+
 	buf, err := NewBufferFromInterfaces(typ, cells)
 	if err != nil {
 		return Series{}, err
 	}
+
 	return NewSeries(name, typ, buf.Value, buf.Valid), nil
 }
 
@@ -72,5 +74,6 @@ func seekType(cells []interface{}) (Type, error) {
 			}
 		}
 	}
+
 	return Float64, nil
 }

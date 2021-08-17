@@ -134,9 +134,9 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 	}
 
 	for rowIndex, row := range rowBasedData {
-		if len(colNames) < len(row) {
+		if len(row) != len(colNames) {
 			return nil, errors.New(
-				"bow.NewBowFromRowBasedInterfaces: mismatch between columnsNames names and row len")
+				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
 		}
 		for colI := range colNames {
 			columnBasedRows[colI][rowIndex] = row[colI]
@@ -167,7 +167,7 @@ func (b *bow) DropNils(colNames ...string) (Bow, error) {
 		var err error
 		nilColIndices[colIndex], err = b.ColumnIndex(colNames[colIndex])
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("bow.DropNils: %w", err)
 		}
 	}
 
@@ -187,9 +187,9 @@ func (b *bow) DropNils(colNames ...string) (Bow, error) {
 
 	bowSlice := make([]Bow, len(droppedRowIndices)+1)
 	var curr int
-	for i, di := range droppedRowIndices {
-		bowSlice[i] = b.Slice(curr, di)
-		curr = di + 1
+	for i, droppedRowIndex := range droppedRowIndices {
+		bowSlice[i] = b.Slice(curr, droppedRowIndex)
+		curr = droppedRowIndex + 1
 	}
 	bowSlice[len(droppedRowIndices)] = b.Slice(curr, b.NumRows())
 
