@@ -15,23 +15,23 @@ import (
 func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	refIndex, err := b.ColumnIndex(refColName)
 	if err != nil {
-		return nil, fmt.Errorf("bow: FillLinear: error with refColName: %w", err)
+		return nil, fmt.Errorf("bow.FillLinear: refColName: %w", err)
 	}
 
 	toFillIndex, err := b.ColumnIndex(toFillColName)
 	if err != nil {
-		return nil, fmt.Errorf("bow: FillLinear: error with toFillColName: %w", err)
+		return nil, fmt.Errorf("bow.FillLinear: toFillColName: %w", err)
 	}
 
 	if refIndex == toFillIndex {
-		return nil, fmt.Errorf("bow: FillLinear: refColName and toFillColName are equal")
+		return nil, fmt.Errorf("bow.FillLinear: refColName and toFillColName are equal")
 	}
 
 	switch b.ColumnType(refIndex) {
 	case Int64:
 	case Float64:
 	default:
-		return nil, fmt.Errorf("bow: FillLinear: refColName '%s' is of type '%s'",
+		return nil, fmt.Errorf("bow.FillLinear: refColName '%s' is of type '%s'",
 			refColName, b.ColumnType(refIndex))
 	}
 
@@ -40,7 +40,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	}
 
 	if !b.IsColSorted(refIndex) {
-		return nil, fmt.Errorf("bow: FillLinear: column '%s' is empty or not sorted", refColName)
+		return nil, fmt.Errorf("bow.FillLinear: column '%s' is empty or not sorted", refColName)
 	}
 
 	switch b.ColumnType(toFillIndex) {
@@ -48,7 +48,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	case Float64:
 	default:
 		return nil, fmt.Errorf(
-			"bow: FillLinear: toFillColName '%s' is of type '%s'",
+			"bow.FillLinear: toFillColName '%s' is of unsupported type '%s'",
 			toFillColName, b.ColumnType(toFillIndex))
 	}
 
@@ -142,9 +142,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	toFillCols, err := selectCols(b, colNames)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"bow: FillMean error selecting columns [%s] on bow schema [%s]: %w",
-			colNames, b.Schema().String(), err)
+		return nil, fmt.Errorf("bow: FillMean: %w", err)
 	}
 
 	for colIndex, col := range b.Schema().Fields() {
@@ -154,7 +152,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			case Float64:
 			default:
 				return nil, fmt.Errorf(
-					"bow: FillMean type error: column '%s' is of type '%s'",
+					"bow.FillMean: column '%s' is of unsupported type '%s'",
 					col.Name, b.ColumnType(colIndex))
 			}
 		}
@@ -231,7 +229,7 @@ func (b *bow) FillNext(colNames ...string) (Bow, error) {
 }
 
 // FillPrevious fills nil values of `colNames` columns (`colNames` defaults to all columns)
-// using LOCF (Last Obs. Carried Forward) method and returns a new Bow.
+// using LOCF (Last Obs. Carried Forward) method.
 func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 	return fill("Previous", b, colNames...)
 }
