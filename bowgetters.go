@@ -212,6 +212,7 @@ func (b *bow) GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (float64, floa
 		}
 		rowIndex++
 	}
+
 	return 0., 0., -1
 }
 
@@ -237,6 +238,7 @@ func (b *bow) GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (float64, 
 		}
 		rowIndex--
 	}
+
 	return 0., 0., -1
 }
 

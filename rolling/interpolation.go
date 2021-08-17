@@ -25,7 +25,7 @@ type ColInterpolation struct {
 	colIndex int
 }
 
-// Interpolate each window by interpolating its start if missing
+// Interpolate fills each window by interpolating its start if missing
 func (it *intervalRollingIter) Interpolate(interps ...ColInterpolation) Rolling {
 	if it.err != nil {
 		return it
