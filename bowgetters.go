@@ -16,6 +16,7 @@ func (b *bow) GetRow(rowIndex int) map[string]interface{} {
 		}
 		row[b.Schema().Field(colIndex).Name] = val
 	}
+
 	return row
 }
 
@@ -25,6 +26,7 @@ func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
 			return b.GetValue(colIndex, rowIndex)
 		}
 	}
+
 	return nil
 }
 
@@ -63,8 +65,8 @@ func (b *bow) GetNextValues(colIndex1, colIndex2, rowIndex int) (interface{}, in
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
 		v1, rowIndex = b.GetNextValue(colIndex1, rowIndex)
-		v2, row2 := b.GetNextValue(colIndex2, rowIndex)
-		if rowIndex == row2 {
+		v2, rowIndex2 := b.GetNextValue(colIndex2, rowIndex)
+		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
 		rowIndex++
@@ -101,8 +103,8 @@ func (b *bow) GetPreviousValues(colIndex1, colIndex2, rowIndex int) (interface{}
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
 		v1, rowIndex = b.GetPreviousValue(colIndex1, rowIndex)
-		v2, row2 := b.GetPreviousValue(colIndex2, rowIndex)
-		if rowIndex == row2 {
+		v2, rowIndex2 := b.GetPreviousValue(colIndex2, rowIndex)
+		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
 		rowIndex--
@@ -153,6 +155,7 @@ func (b *bow) GetNextInt64(colIndex, rowIndex int) (int64, int) {
 		}
 		rowIndex++
 	}
+
 	return 0., -1
 }
 
@@ -164,6 +167,7 @@ func (b *bow) GetPreviousInt64(colIndex, rowIndex int) (int64, int) {
 		}
 		rowIndex--
 	}
+
 	return 0., -1
 }
 
@@ -193,7 +197,7 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Sprintf("bow: unhandled type %s",
+		panic(fmt.Sprintf("bow.GetFloat64: unsupported type %s",
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 }
@@ -202,8 +206,8 @@ func (b *bow) GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (float64, floa
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 float64
 		v1, rowIndex = b.GetNextFloat64(colIndex1, rowIndex)
-		v2, row2 := b.GetNextFloat64(colIndex2, rowIndex)
-		if rowIndex == row2 {
+		v2, rowIndex2 := b.GetNextFloat64(colIndex2, rowIndex)
+		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
 		rowIndex++
@@ -219,6 +223,7 @@ func (b *bow) GetNextFloat64(colIndex, rowIndex int) (float64, int) {
 		}
 		rowIndex++
 	}
+
 	return 0., -1
 }
 
@@ -243,6 +248,7 @@ func (b *bow) GetPreviousFloat64(colIndex, rowIndex int) (float64, int) {
 		}
 		rowIndex--
 	}
+
 	return 0., -1
 }
 
@@ -256,7 +262,7 @@ func (b *bow) ColumnIndex(colName string) (int, error) {
 		return -1, fmt.Errorf("no column '%s'", colName)
 	}
 	if len(colIndices) > 1 {
-		return -1, fmt.Errorf("several columns '%s", colName)
+		return -1, fmt.Errorf("several columns '%s'", colName)
 	}
 	return colIndices[0], nil
 }

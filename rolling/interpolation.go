@@ -99,7 +99,7 @@ func (it *intervalRollingIter) validateInterpolation(interp *ColInterpolation, n
 			interp.inputTypes, typ.String())
 	}
 
-	return readIndex == it.colIndex, nil
+	return interp.colIndex == it.colIndex, nil
 }
 
 func (it *intervalRollingIter) interpolateWindows(interps []ColInterpolation) (bow.Bow, error) {

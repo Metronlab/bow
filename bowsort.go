@@ -51,7 +51,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	}()
 
 	// Stop if sort by column is already sorted
-	if Int64ColIsSorted(colToSortBy) {
+	if IsInt64SliceSorted(colToSortBy) {
 		return b, nil
 	}
 
@@ -163,15 +163,14 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBowWithMetadata(
-		Metadata{b.Schema().Metadata()},
-		sortedSeries...)
+	return NewBowWithMetadata(b.Metadata(), sortedSeries...)
 }
 
-// Int64ColIsSorted tests whether a column of int64s is sorted in increasing order.
-func Int64ColIsSorted(col Int64Slice) bool { return sort.IsSorted(col) }
+// IsInt64SliceSorted tests whether a column of int64s is sorted in increasing order.
+func IsInt64SliceSorted(col Int64Slice) bool { return sort.IsSorted(col) }
 
 // Int64Slice implements the methods of sort.Interface, sorting in increasing order
+// (not-a-number values are treated as less than other values).
 type Int64Slice struct {
 	values  []int64
 	indices []int

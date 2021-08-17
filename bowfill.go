@@ -140,9 +140,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBowWithMetadata(
-		Metadata{b.Schema().Metadata()},
-		filledSeries...)
+	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
 // FillMean fills nil values of `colNames` columns (`colNames` defaults to all columns)
@@ -234,9 +232,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBowWithMetadata(
-		Metadata{b.Schema().Metadata()},
-		filledSeries...)
+	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
 // FillNext fills nil values of `colNames` columns (`colNames` defaults to all columns)
@@ -365,9 +361,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBowWithMetadata(
-		Metadata{b.Schema().Metadata()},
-		filledSeries...)
+	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
 func getFillRowIndex(b Bow, method string, colIndex, rowIndex int) int {

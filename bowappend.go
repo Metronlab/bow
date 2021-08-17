@@ -104,7 +104,5 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		}
 	}
 
-	return NewBowWithMetadata(
-		Metadata{refBow.Schema().Metadata()},
-		seriesSlice...)
+	return NewBowWithMetadata(refBow.Metadata(), seriesSlice...)
 }

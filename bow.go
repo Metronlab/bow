@@ -299,9 +299,7 @@ func (b *bow) Slice(i, j int) Bow {
 
 func (b *bow) Select(colNames ...string) (Bow, error) {
 	if len(colNames) == 0 {
-		return NewBowWithMetadata(
-			Metadata{b.Schema().Metadata()},
-		)
+		return NewBowWithMetadata(b.Metadata())
 	}
 
 	selectedCols, err := selectCols(b, colNames)
@@ -316,9 +314,7 @@ func (b *bow) Select(colNames ...string) (Bow, error) {
 		}
 	}
 
-	return NewBowWithMetadata(
-		Metadata{b.Schema().Metadata()},
-		seriesSlice...)
+	return NewBowWithMetadata(b.Metadata(), seriesSlice...)
 }
 
 func (b *bow) NumRows() int {
