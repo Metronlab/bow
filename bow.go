@@ -143,7 +143,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 	for rowIndex, row := range rowBasedData {
 		if len(row) != len(colNames) {
 			return nil, errors.New(
-				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row len")
+				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
 		}
 		for colIndex := range colNames {
 			bufSlice[colIndex].SetOrDrop(rowIndex, row[colIndex])
