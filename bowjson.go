@@ -121,10 +121,8 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	}
 
 	for i, field := range jsonB.Schema.Fields {
-		t := getBowTypeFromArrowName(field.Type)
-		var buf Buffer
-		var err error
-		buf, err = NewBufferFromInterfacesIter(t, len(jsonB.RowBasedData), func() chan interface{} {
+		fieldType := getBowTypeFromArrowName(field.Type)
+		buf, err := NewBufferFromInterfacesIter(fieldType, len(jsonB.RowBasedData), func() chan interface{} {
 			cellsChan := make(chan interface{})
 			go func(cellsChan chan interface{}, colName string) {
 				for _, row := range jsonB.RowBasedData {
@@ -133,7 +131,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 						cellsChan <- nil
 					} else {
 						_, ok = val.(float64)
-						if t == Int64 && ok {
+						if fieldType == Int64 && ok {
 							val = int64(val.(float64))
 						}
 						cellsChan <- val
@@ -147,7 +145,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 			return err
 		}
 
-		seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
+		seriesSlice[i] = NewSeries(field.Name, fieldType, buf.Value, buf.Valid)
 	}
 
 	tmpBow, err := NewBow(seriesSlice...)
