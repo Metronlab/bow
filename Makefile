@@ -8,6 +8,9 @@ install:
 	@go get golang.org/x/perf/cmd/benchstat \
 		github.com/jstemmer/go-junit-report
 
+gen:
+	@go generate $PKG
+
 lint:
 	go fmt $(PKG)
 	golangci-lint run -v $(PKG)

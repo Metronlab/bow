@@ -1,0 +1,74 @@
+package bow
+
+import (
+    "fmt"
+)
+
+func NewBuffer(size int, typ Type, nullable bool) Buffer {
+	var valid []bool
+	if nullable {
+		valid = make([]bool, size)
+	}
+	switch typ {
+    {{range .Data.types -}}
+	case {{ .name }}:
+		return Buffer{
+			Value: make([]{{ .type }}, size),
+			Valid: valid,
+		}
+    {{end -}}
+	default:
+		panic(fmt.Errorf("bow.NewBuffer: unsupported type %v", typ))
+	}
+}
+
+
+func (b *bow) NewBufferFromCol(colIndex int) Buffer {
+	colType := b.ColumnType(colIndex)
+	colData := b.Column(colIndex).Data()
+	switch colType {
+    {{range .Data.types -}}
+    case {{ .name }}:
+        return Buffer{
+            Value: make([]{{ .type }}, size),
+            Valid: valid,
+        }
+    {{end -}}
+
+	case Int64:
+		colArray := array.NewInt64Data(colData)
+		return Buffer{
+			Value: colArray.Int64Values(),
+			Valid: getValid(colArray, b.NumRows()),
+		}
+	case Float64:
+		colArray := array.NewFloat64Data(colData)
+		return Buffer{
+			Value: colArray.Float64Values(),
+			Valid: getValid(colArray, b.NumRows()),
+		}
+	case Bool:
+		colArray := array.NewBooleanData(colData)
+		var v = make([]bool, colArray.Len())
+		for i := range v {
+			v[i] = colArray.Value(i)
+		}
+		return Buffer{
+			Value: v,
+			Valid: getValid(colArray, b.NumRows()),
+		}
+	case String:
+		colArray := array.NewStringData(colData)
+		var v = make([]string, colArray.Len())
+		for i := range v {
+			v[i] = colArray.Value(i)
+		}
+		return Buffer{
+			Value: v,
+			Valid: getValid(colArray, b.NumRows()),
+		}
+	default:
+		panic(fmt.Errorf("bow.NewBufferFromCol: unsupported type %+v", colType))
+	}
+}
+

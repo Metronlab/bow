@@ -2,85 +2,11 @@ package bow
 
 import (
 	"fmt"
-
-	"github.com/apache/arrow/go/arrow/array"
 )
 
 type Buffer struct {
 	Value interface{}
 	Valid []bool
-}
-
-func NewBuffer(size int, typ Type, nullable bool) Buffer {
-	var valid []bool
-	if nullable {
-		valid = make([]bool, size)
-	}
-	switch typ {
-	case Float64:
-		return Buffer{
-			Value: make([]float64, size),
-			Valid: valid,
-		}
-	case Int64:
-		return Buffer{
-			Value: make([]int64, size),
-			Valid: valid,
-		}
-	case Bool:
-		return Buffer{
-			Value: make([]bool, size),
-			Valid: valid,
-		}
-	case String:
-		return Buffer{
-			Value: make([]string, size),
-			Valid: valid,
-		}
-	default:
-		panic(fmt.Errorf("bow.NewBuffer: unsupported type %v", typ))
-	}
-}
-
-func (b *bow) NewBufferFromCol(colIndex int) Buffer {
-	colType := b.ColumnType(colIndex)
-	colData := b.Column(colIndex).Data()
-	switch colType {
-	case Int64:
-		colArray := array.NewInt64Data(colData)
-		return Buffer{
-			Value: colArray.Int64Values(),
-			Valid: getValid(colArray, b.NumRows()),
-		}
-	case Float64:
-		colArray := array.NewFloat64Data(colData)
-		return Buffer{
-			Value: colArray.Float64Values(),
-			Valid: getValid(colArray, b.NumRows()),
-		}
-	case Bool:
-		colArray := array.NewBooleanData(colData)
-		var v = make([]bool, colArray.Len())
-		for i := range v {
-			v[i] = colArray.Value(i)
-		}
-		return Buffer{
-			Value: v,
-			Valid: getValid(colArray, b.NumRows()),
-		}
-	case String:
-		colArray := array.NewStringData(colData)
-		var v = make([]string, colArray.Len())
-		for i := range v {
-			v[i] = colArray.Value(i)
-		}
-		return Buffer{
-			Value: v,
-			Valid: getValid(colArray, b.NumRows()),
-		}
-	default:
-		panic(fmt.Errorf("bow.NewBufferFromCol: unsupported type %+v", colType))
-	}
 }
 
 func NewBufferFromInterfaces(typ Type, cells []interface{}) (Buffer, error) {
