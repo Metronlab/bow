@@ -49,7 +49,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 		}()
 		prevValues := array.NewInt64Data(prevData)
 		colToSortBy.values = prevValues.Int64Values()
-		colToSortBy.valid = getValid(prevValues, b.NumRows())
+		colToSortBy.valid = getValiditySlice(prevValues)
 
 		// Stop if sort by column is already sorted
 		if IsInt64SliceSorted(colToSortBy) {

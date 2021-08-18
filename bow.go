@@ -96,12 +96,12 @@ func NewBow(series ...Series) (Bow, error) {
 	return &bow{Record: rec}, nil
 }
 
-// NewBowFromColBasedInterfaces returns a new Bow with:
-// - colNames containing the bow.Record fields names
-// - colTypes containing the bow.Record fields data types, and is not mandatory.
-//	 If nil, the types will be automatically seeked.
-// - colData containing the data to be store in bow.Record
-// - colNames and colData need to be of the same size
+// NewBowFromColBasedInterfaces returns a new Bow:
+// - colNames contains the bow.Record fields names
+// - colTypes contains the bow.Record fields data types, optional
+//   (if nil, the types will be automatically seeked)
+// - colData contains the data to be stored in bow.Record
+//   (colNames and colData need to be of the same size)
 func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colData) {
 		return nil, errors.New("bow.NewBowFromColBasedInterfaces: colNames and colData array lengths don't match")
@@ -346,13 +346,14 @@ func (b *bow) AddCols(seriesSlice ...Series) (Bow, error) {
 	return NewBowWithMetadata(b.Metadata(), newSeriesSlice...)
 }
 
-func getValid(arr array.Interface, length int) []bool {
-	valid := make([]bool, length)
+func getValiditySlice(arr array.Interface) []bool {
+	validitySlice := make([]bool, arr.Len())
 
-	for i := 0; i < length; i++ {
-		valid[i] = arr.IsValid(i)
+	for i := 0; i < arr.Len(); i++ {
+		validitySlice[i] = arr.IsValid(i)
 	}
-	return valid
+
+	return validitySlice
 }
 
 func (b *bow) NewSeriesFromCol(colIndex int) Series {

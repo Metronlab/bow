@@ -88,17 +88,17 @@ func (t Type) String() string {
 }
 
 func getBowTypeFromArrowName(arrowName string) Type {
-	t, ok := mapArrowNameToBowTypes[arrowName]
+	typ, ok := mapArrowNameToBowTypes[arrowName]
 	if !ok {
 		return Unknown
 	}
-	return t
+	return typ
 }
 
 func getBowTypeFromArrowType(arrowType arrow.DataType) Type {
-	t, ok := mapArrowToBowTypes[arrowType]
+	typ, ok := mapArrowToBowTypes[arrowType]
 	if !ok {
 		return Unknown
 	}
-	return t
+	return typ
 }

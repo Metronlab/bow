@@ -106,9 +106,9 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
-			t := getBowTypeFromArrowName(field.Type)
-			buf := NewBuffer(0, t, true)
-			seriesSlice[i] = NewSeries(field.Name, t, buf.Value, buf.Valid)
+			typ := getBowTypeFromArrowName(field.Type)
+			buf := NewBuffer(0, typ, true)
+			seriesSlice[i] = NewSeries(field.Name, typ, buf.Value, buf.Valid)
 		}
 
 		tmpBow, err := NewBow(seriesSlice...)

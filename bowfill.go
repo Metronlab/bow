@@ -70,7 +70,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			case Int64:
 				arr := array.NewInt64Data(colData)
 				values := arr.Int64Values()
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if valid[rowIndex] {
 						continue
@@ -99,7 +99,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			case Float64:
 				arr := array.NewFloat64Data(colData)
 				values := arr.Float64Values()
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if valid[rowIndex] {
 						continue
@@ -177,7 +177,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			case Int64:
 				arr := array.NewInt64Data(colData)
 				values := arr.Int64Values()
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if valid[rowIndex] {
 						continue
@@ -195,7 +195,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			case Float64:
 				arr := array.NewFloat64Data(colData)
 				values := arr.Float64Values()
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if valid[rowIndex] {
 						continue
@@ -256,11 +256,11 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 			typ := b.ColumnType(colIndex)
 			var newArray array.Interface
 			colData := b.Column(colIndex).Data()
-			pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+			mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 			switch typ {
 			case Int64:
 				arr := array.NewInt64Data(colData)
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				values := make([]int64, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if !valid[rowIndex] {
@@ -281,12 +281,12 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 						values[rowIndex] = arr.Value(rowIndex)
 					}
 				}
-				build := array.NewInt64Builder(pool)
+				build := array.NewInt64Builder(mem)
 				build.AppendValues(values, valid)
 				newArray = build.NewArray()
 			case Float64:
 				arr := array.NewFloat64Data(colData)
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				values := make([]float64, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if !valid[rowIndex] {
@@ -307,12 +307,12 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 						values[rowIndex] = arr.Value(rowIndex)
 					}
 				}
-				build := array.NewFloat64Builder(pool)
+				build := array.NewFloat64Builder(mem)
 				build.AppendValues(values, valid)
 				newArray = build.NewArray()
 			case Bool:
 				arr := array.NewBooleanData(colData)
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				values := make([]bool, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if !valid[rowIndex] {
@@ -333,12 +333,12 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 						values[rowIndex] = arr.Value(rowIndex)
 					}
 				}
-				build := array.NewBooleanBuilder(pool)
+				build := array.NewBooleanBuilder(mem)
 				build.AppendValues(values, valid)
 				newArray = build.NewArray()
 			case String:
 				arr := array.NewStringData(colData)
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				values := make([]string, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if !valid[rowIndex] {
@@ -359,7 +359,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 						values[rowIndex] = arr.Value(rowIndex)
 					}
 				}
-				build := array.NewStringBuilder(pool)
+				build := array.NewStringBuilder(mem)
 				build.AppendValues(values, valid)
 				newArray = build.NewArray()
 			default:
