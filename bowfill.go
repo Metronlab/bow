@@ -323,9 +323,9 @@ func fill(method string, b *bow, colNames ...string) error {
 				arr.Data().Buffers()[1].Reset(arrow.Float64Traits.CastToBytes(values))
 				filledSeries[colIndex] = Series{Name: colName, Array: arr}
 			case Bool:
-				pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 				arr := array.NewBooleanData(prevData)
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				values := make([]bool, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if valid[rowIndex] {
@@ -339,13 +339,13 @@ func fill(method string, b *bow, colNames ...string) error {
 						valid[rowIndex] = true
 					}
 				}
-				build := array.NewBooleanBuilder(pool)
+				build := array.NewBooleanBuilder(mem)
 				build.AppendValues(values, valid)
 				filledSeries[colIndex] = Series{Name: colName, Array: build.NewArray()}
 			case String:
-				pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
+				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 				arr := array.NewStringData(prevData)
-				valid := getValid(arr, b.NumRows())
+				valid := getValiditySlice(arr)
 				values := make([]string, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if valid[rowIndex] {
@@ -359,7 +359,7 @@ func fill(method string, b *bow, colNames ...string) error {
 						valid[rowIndex] = true
 					}
 				}
-				build := array.NewStringBuilder(pool)
+				build := array.NewStringBuilder(mem)
 				build.AppendValues(values, valid)
 				filledSeries[colIndex] = Series{Name: colName, Array: build.NewArray()}
 			default:

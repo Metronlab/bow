@@ -50,13 +50,13 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		colArray := array.NewInt64Data(colData)
 		return Buffer{
 			Value: colArray.Int64Values(),
-			Valid: getValid(colArray, b.NumRows()),
+			Valid: getValiditySlice(colArray),
 		}
 	case Float64:
 		colArray := array.NewFloat64Data(colData)
 		return Buffer{
 			Value: colArray.Float64Values(),
-			Valid: getValid(colArray, b.NumRows()),
+			Valid: getValiditySlice(colArray),
 		}
 	case Bool:
 		colArray := array.NewBooleanData(colData)
@@ -66,7 +66,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		}
 		return Buffer{
 			Value: v,
-			Valid: getValid(colArray, b.NumRows()),
+			Valid: getValiditySlice(colArray),
 		}
 	case String:
 		colArray := array.NewStringData(colData)
@@ -76,7 +76,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		}
 		return Buffer{
 			Value: v,
-			Valid: getValid(colArray, b.NumRows()),
+			Valid: getValiditySlice(colArray),
 		}
 	default:
 		panic(fmt.Errorf("bow.NewBufferFromCol: unsupported type %+v", colType))
