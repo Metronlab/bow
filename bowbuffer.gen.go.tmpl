@@ -1,0 +1,23 @@
+package bow
+
+import (
+    "fmt"
+)
+
+func NewBuffer(size int, typ Type, nullable bool) Buffer {
+	var valid []bool
+	if nullable {
+		valid = make([]bool, size)
+	}
+	switch typ {
+    {{range .Data.types -}}
+	case {{ .name }}:
+		return Buffer{
+			Value: make([]{{ .type }}, size),
+			Valid: valid,
+		}
+    {{end -}}
+	default:
+		panic(fmt.Errorf("bow.NewBuffer: unsupported type %v", typ))
+	}
+}

@@ -17,14 +17,14 @@ func NewBuffer(size int, typ Type, nullable bool) Buffer {
 		valid = make([]bool, size)
 	}
 	switch typ {
-	case Float64:
-		return Buffer{
-			Value: make([]float64, size),
-			Valid: valid,
-		}
 	case Int64:
 		return Buffer{
 			Value: make([]int64, size),
+			Valid: valid,
+		}
+	case Float64:
+		return Buffer{
+			Value: make([]float64, size),
 			Valid: valid,
 		}
 	case Bool:
