@@ -54,6 +54,8 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 			toFillColName, b.ColumnType(toFillIndex))
 	}
 
+	refBuf := b.NewBufferFromCol(refIndex)
+
 	var wg sync.WaitGroup
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
@@ -67,6 +69,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 			defer wg.Done()
 			bitsToSet := make([]byte, b.NumRows())
 			colData := b.Column(toFillIndex).Data()
+			colBuf := b.NewBufferFromCol(toFillIndex)
 			switch b.ColumnType(toFillIndex) {
 			case Int64:
 				arr := array.NewInt64Data(colData)
@@ -76,20 +79,20 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 					if arr.IsValid(rowIndex) {
 						continue
 					}
-					prevToFill, rowPrev := b.GetPreviousFloat64(toFillIndex, rowIndex-1)
-					nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
-					rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
-					prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
-					nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
+					prevToFill, rowPrev := colBuf.GetPreviousValue(rowIndex - 1)
+					nextToFill, rowNext := colBuf.GetNextValue(rowIndex + 1)
+					rowRef, valid1 := refBuf.GetFloat64(rowIndex)
+					prevRef, valid2 := refBuf.GetFloat64(rowPrev)
+					nextRef, valid3 := refBuf.GetFloat64(rowNext)
 					if valid1 && valid2 && valid3 {
 						if nextRef-prevRef != 0 {
 							tmp := rowRef - prevRef
 							tmp /= nextRef - prevRef
-							tmp *= nextToFill - prevToFill
-							tmp += prevToFill
+							tmp *= float64(nextToFill.(int64)) - float64(prevToFill.(int64))
+							tmp += float64(prevToFill.(int64))
 							values[rowIndex] = int64(math.Round(tmp))
 						} else {
-							values[rowIndex] = int64(prevToFill)
+							values[rowIndex] = prevToFill.(int64)
 						}
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
@@ -110,19 +113,19 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 					if arr.IsValid(rowIndex) {
 						continue
 					}
-					prevToFill, rowPrev := b.GetPreviousFloat64(toFillIndex, rowIndex-1)
-					nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
-					rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
-					prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
-					nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
+					prevToFill, rowPrev := colBuf.GetPreviousValue(rowIndex - 1)
+					nextToFill, rowNext := colBuf.GetNextValue(rowIndex + 1)
+					rowRef, valid1 := refBuf.GetFloat64(rowIndex)
+					prevRef, valid2 := refBuf.GetFloat64(rowPrev)
+					nextRef, valid3 := refBuf.GetFloat64(rowNext)
 					if valid1 && valid2 && valid3 {
 						if nextRef-prevRef != 0.0 {
 							values[rowIndex] = rowRef - prevRef
 							values[rowIndex] /= nextRef - prevRef
-							values[rowIndex] *= nextToFill - prevToFill
-							values[rowIndex] += prevToFill
+							values[rowIndex] *= nextToFill.(float64) - prevToFill.(float64)
+							values[rowIndex] += prevToFill.(float64)
 						} else {
-							values[rowIndex] = prevToFill
+							values[rowIndex] = prevToFill.(float64)
 						}
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
