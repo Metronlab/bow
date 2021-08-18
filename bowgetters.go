@@ -134,6 +134,9 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 	case arrow.INT64:
 		vd := array.NewInt64Data(b.Column(colIndex).Data())
 		return vd.Value(rowIndex), vd.IsValid(rowIndex)
+	case arrow.FLOAT64:
+		vd := array.NewFloat64Data(b.Column(colIndex).Data())
+		return int64(vd.Value(rowIndex)), vd.IsValid(rowIndex)
 	case arrow.BOOL:
 		vd := array.NewBooleanData(b.Column(colIndex).Data())
 		booleanValue := vd.Value(rowIndex)
@@ -141,6 +144,12 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 			return 1, vd.IsValid(rowIndex)
 		}
 		return 0, vd.IsValid(rowIndex)
+	case arrow.STRING:
+		vd := array.NewStringData(b.Column(colIndex).Data())
+		if vd.IsValid(rowIndex) {
+			return ToInt64(vd.Value(rowIndex))
+		}
+		return 0., false
 	default:
 		panic(fmt.Sprintf("bow.GetInt64: unsupported type %s",
 			b.Schema().Field(colIndex).Type.Name()))
