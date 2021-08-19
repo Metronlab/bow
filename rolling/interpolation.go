@@ -42,7 +42,7 @@ func (it *intervalRollingIter) Interpolate(interps ...ColInterpolation) Rolling 
 		return itCopy.setError(fmt.Errorf("interpolate: %w", err))
 	}
 	if b == nil {
-		b = it.bow.ClearRows()
+		b = it.bow.NewEmptySlice()
 	}
 
 	newIt, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)

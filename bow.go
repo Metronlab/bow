@@ -28,7 +28,7 @@ type Bow interface {
 	SetMetadata(key, value string) Bow
 
 	GetRow(rowIndex int) map[string]interface{}
-	GetRowsChan() chan map[string]interface{}
+	GetRowsChan() <-chan map[string]interface{}
 
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetValue(colIndex, rowIndex int) interface{}
@@ -48,7 +48,7 @@ type Bow interface {
 	GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 
 	AddCols(newCols ...Series) (Bow, error)
-	NewColName(colIndex int, newName string) (Bow, error)
+	RenameCol(colIndex int, newName string) (Bow, error)
 
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
@@ -57,7 +57,7 @@ type Bow interface {
 
 	Slice(i, j int) Bow
 	Select(colNames ...string) (Bow, error)
-	ClearRows() Bow
+	NewEmptySlice() Bow
 	DropNils(colNames ...string) (Bow, error)
 	SortByCol(colName string) (Bow, error)
 
@@ -146,7 +146,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 	return NewBowFromColBasedInterfaces(colNames, colTypes, columnBasedRows)
 }
 
-func (b *bow) ClearRows() Bow {
+func (b *bow) NewEmptySlice() Bow {
 	return b.Slice(0, 0)
 }
 
@@ -210,7 +210,7 @@ func dedupStrings(s []string) []string {
 	return s[:writeIndex]
 }
 
-func (b *bow) GetRowsChan() chan map[string]interface{} {
+func (b *bow) GetRowsChan() <-chan map[string]interface{} {
 	rows := make(chan map[string]interface{})
 	go b.getRowsChan(rows)
 
