@@ -97,52 +97,15 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 			return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 		}
 
-		var ok bool
-		var vd = make([]bool, len(values))
-		switch mapParquetToBowTypes[col.GetType()] {
-		case Int64:
-			var vs = make([]int64, len(values))
-			for i, v := range values {
-				vs[i], ok = ToInt64(v)
-				if ok {
-					vd[i] = true
-				}
-			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], Int64, vs, vd)
-
-		case Float64:
-			var vs = make([]float64, len(values))
-			for i, v := range values {
-				vs[i], ok = ToFloat64(v)
-				if ok {
-					vd[i] = true
-				}
-			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], Float64, vs, vd)
-
-		case Bool:
-			var vs = make([]bool, len(values))
-			for i, v := range values {
-				vs[i], ok = ToBool(v)
-				if ok {
-					vd[i] = true
-				}
-			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], Bool, vs, vd)
-
-		case String:
-			var vs = make([]string, len(values))
-			for i, v := range values {
-				vs[i], ok = ToString(v)
-				if ok {
-					vd[i] = true
-				}
-			}
-			series[valueColIndex] = NewSeries(originalColNames[colIndex], String, vs, vd)
-
-		default:
-			return nil, fmt.Errorf("bow.NewBowFromParquet: unsupported type %s", col.GetType())
+		buf := NewBuffer(len(values), mapParquetToBowTypes[col.GetType()], true)
+		for i, v := range values {
+			buf.SetOrDrop(i, v)
 		}
+		series[valueColIndex] = NewSeries(
+			originalColNames[colIndex],
+			mapParquetToBowTypes[col.GetType()],
+			buf.Value, buf.Valid)
+
 		pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
 		valueColIndex++
 	}

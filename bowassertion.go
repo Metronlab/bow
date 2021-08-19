@@ -82,10 +82,5 @@ func (b *bow) IsColSorted(colIndex int) bool {
 
 // IsColEmpty returns false if the column has at least one non-nil value, and true otherwise.
 func (b *bow) IsColEmpty(colIndex int) bool {
-	var rowIndex int
-	arr := b.Column(colIndex)
-	for rowIndex < arr.Len() && arr.IsNull(rowIndex) {
-		rowIndex++
-	}
-	return rowIndex == arr.Len()
+	return b.Column(colIndex).NullN() == b.Column(colIndex).Len()
 }

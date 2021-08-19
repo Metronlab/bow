@@ -1,6 +1,11 @@
 package bow
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
+)
 
 // AppendBows attempts to append bows with equal schemas.
 // Different schemas will lead to undefined behavior.
@@ -14,42 +19,90 @@ func AppendBows(bows ...Bow) (Bow, error) {
 		return bows[0], nil
 	}
 
-	refBow := bows[0]
 	numRows := 0
 	for _, b := range bows {
-		if !b.Schema().Equal(refBow.Schema()) {
-			return nil,
-				fmt.Errorf("bow.AppendBow: schema mismatch: got both\n%v\nand\n%v",
-					refBow.Schema(), b.Schema())
-		}
-
-		if b.Metadata().String() != refBow.Metadata().String() {
-			return nil,
-				fmt.Errorf("bow.AppendBow: schema Metadata mismatch: got both\n%v\nand\n%v",
-					refBow.Metadata(), b.Metadata())
-		}
-
 		numRows += b.NumRows()
 	}
 
+	refBow := bows[0]
 	seriesSlice := make([]Series, refBow.NumCols())
-	bufSlice := make([]Buffer, refBow.NumCols())
+
 	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
-		var rowOffset int
+		var newArray array.Interface
+		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 		typ := refBow.ColumnType(colIndex)
-		name := refBow.ColumnName(colIndex)
-		bufSlice[colIndex] = NewBuffer(numRows, typ, true)
-		for _, b := range bows {
-			for ri := 0; ri < b.NumRows(); ri++ {
-				bufSlice[colIndex].SetOrDrop(ri+rowOffset, b.GetValue(colIndex, ri))
+		switch typ {
+		case Int64:
+			builder := array.NewInt64Builder(mem)
+			for _, b := range bows {
+				if t := b.ColumnType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
+				data := b.Column(colIndex).Data()
+				arr := array.NewInt64Data(data)
+				v := arr.Int64Values()
+				valid := getValiditySlice(arr)
+				builder.AppendValues(v, valid)
 			}
-			rowOffset += b.NumRows()
+			newArray = builder.NewArray()
+		case Float64:
+			builder := array.NewFloat64Builder(mem)
+			for _, b := range bows {
+				if t := b.ColumnType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
+				data := b.Column(colIndex).Data()
+				arr := array.NewFloat64Data(data)
+				v := arr.Float64Values()
+				valid := getValiditySlice(arr)
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+		case Bool:
+			builder := array.NewBooleanBuilder(mem)
+			for _, b := range bows {
+				if t := b.ColumnType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
+				data := b.Column(colIndex).Data()
+				arr := array.NewBooleanData(data)
+				v := make([]bool, b.NumRows())
+				for i := range v {
+					v[i] = arr.Value(i)
+				}
+				valid := getValiditySlice(arr)
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+		case String:
+			builder := array.NewStringBuilder(mem)
+			for _, b := range bows {
+				if t := b.ColumnType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
+				data := b.Column(colIndex).Data()
+				arr := array.NewStringData(data)
+				v := make([]string, b.NumRows())
+				for i := range v {
+					v[i] = arr.Value(i)
+				}
+				valid := getValiditySlice(arr)
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+		default:
+			return nil, fmt.Errorf("bow.AppendBows: unsupported type %v", typ)
 		}
 
-		seriesSlice[colIndex] = NewSeries(name, typ, bufSlice[colIndex].Value, bufSlice[colIndex].Valid)
+		seriesSlice[colIndex] = Series{
+			Name:  refBow.ColumnName(colIndex),
+			Array: newArray,
+		}
 	}
 
-	return NewBowWithMetadata(
-		Metadata{refBow.Metadata().Metadata},
-		seriesSlice...)
+	return NewBowWithMetadata(refBow.Metadata(), seriesSlice...)
 }

@@ -23,6 +23,7 @@ type Bow interface {
 
 	ColumnType(colIndex int) Type
 	ColumnIndex(colName string) (int, error)
+	NewBufferFromCol(colIndex int) Buffer
 	NewSeriesFromCol(colIndex int) Series
 	Metadata() Metadata
 	SetMetadata(key, value string) Bow
@@ -34,8 +35,10 @@ type Bow interface {
 	GetValue(colIndex, rowIndex int) interface{}
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetNextValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
+	GetNextRowIndex(colIndex, rowIndex int) int
 	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetPreviousValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
+	GetPreviousRowIndex(colIndex, rowIndex int) int
 
 	GetInt64(colIndex, rowIndex int) (value int64, valid bool)
 	GetNextInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
@@ -126,11 +129,15 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 }
 
 // NewBowFromRowBasedInterfaces returns a new bow from row based data
-// TODO: improve performance of this function
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedData [][]interface{}) (Bow, error) {
-	columnBasedRows := make([][]interface{}, len(colNames))
-	for column := range colNames {
-		columnBasedRows[column] = make([]interface{}, len(rowBasedData))
+	if len(colNames) != len(colTypes) {
+		return nil, errors.New(
+			"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and colTypes len")
+	}
+
+	bufSlice := make([]Buffer, len(colNames))
+	for i := range bufSlice {
+		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i], true)
 	}
 
 	for rowIndex, row := range rowBasedData {
@@ -139,11 +146,16 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
 		}
 		for colIndex := range colNames {
-			columnBasedRows[colIndex][rowIndex] = row[colIndex]
+			bufSlice[colIndex].SetOrDrop(rowIndex, row[colIndex])
 		}
 	}
 
-	return NewBowFromColBasedInterfaces(colNames, colTypes, columnBasedRows)
+	seriesSlice := make([]Series, len(colNames))
+	for i := range colNames {
+		seriesSlice[i] = NewSeries(colNames[i], colTypes[i], bufSlice[i].Value, bufSlice[i].Valid)
+	}
+
+	return NewBow(seriesSlice...)
 }
 
 func (b *bow) NewEmptySlice() Bow {

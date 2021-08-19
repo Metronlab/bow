@@ -2,8 +2,12 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 
+	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/bitutil"
 	"github.com/apache/arrow/go/arrow/memory"
 )
 
@@ -14,34 +18,78 @@ type Series struct {
 }
 
 func NewSeries(name string, typ Type, dataArray interface{}, validArray []bool) Series {
-	var newArray array.Interface
-	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	switch typ {
 	case Float64:
-		b := array.NewFloat64Builder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]float64), validArray)
-		newArray = b.NewArray()
+		typedDataArray, ok := dataArray.([]float64)
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v", typ, reflect.TypeOf(dataArray)))
+		}
+		length := len(typedDataArray)
+		valid := setValid(validArray, length)
+		return Series{
+			Name: name,
+			Array: array.NewFloat64Data(
+				array.NewData(arrow.PrimitiveTypes.Float64, length,
+					[]*memory.Buffer{
+						memory.NewBufferBytes(valid),
+						memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(typedDataArray)),
+					}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
+			),
+		}
 	case Int64:
-		b := array.NewInt64Builder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]int64), validArray)
-		newArray = b.NewArray()
+		typedDataArray, ok := dataArray.([]int64)
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v", typ, reflect.TypeOf(dataArray)))
+		}
+		length := len(typedDataArray)
+		valid := setValid(validArray, length)
+		return Series{
+			Name: name,
+			Array: array.NewInt64Data(
+				array.NewData(arrow.PrimitiveTypes.Int64, length,
+					[]*memory.Buffer{
+						memory.NewBufferBytes(valid),
+						memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(typedDataArray)),
+					}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
+			),
+		}
 	case Bool:
-		b := array.NewBooleanBuilder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]bool), validArray)
-		newArray = b.NewArray()
+		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+		builder := array.NewBooleanBuilder(mem)
+		defer builder.Release()
+		builder.AppendValues(dataArray.([]bool), validArray)
+		return Series{Name: name, Array: builder.NewArray()}
 	case String:
-		b := array.NewStringBuilder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]string), validArray)
-		newArray = b.NewArray()
+		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+		builder := array.NewStringBuilder(mem)
+		defer builder.Release()
+		builder.AppendValues(dataArray.([]string), validArray)
+		return Series{Name: name, Array: builder.NewArray()}
+	default:
+		panic(fmt.Errorf("bow.NewSeries: unsupported type %v", typ))
 	}
-	return Series{
-		Name:  name,
-		Array: newArray,
+}
+
+func setValid(validArray []bool, length int) []byte {
+	var valid = make([]byte, length)
+	if len(validArray) == 0 {
+		for i := range valid {
+			bitutil.SetBit(valid, i)
+		}
+	} else if length == len(validArray) {
+		for i, vd := range validArray {
+			if vd == true {
+				bitutil.SetBit(valid, i)
+			}
+		}
+	} else {
+		panic(fmt.Errorf(
+			"bow.NewSeries: dataArray and validArray lengths don't match"))
 	}
+
+	return valid
 }
 
 func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (series Series, err error) {

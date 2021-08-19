@@ -29,40 +29,39 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	var wg sync.WaitGroup
 	calcSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
+		if !selectedCols[colIndex] {
+			calcSeries[colIndex] = b.NewSeriesFromCol(colIndex)
+			continue
+		}
+
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
-
-			typ := b.ColumnType(colIndex)
-			if selectedCols[colIndex] {
-				buf := NewBuffer(b.NumRows(), typ, true)
-				for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
-					valid := b.Column(colIndex).IsValid(rowIndex) && b.Column(colIndex).IsValid(rowIndex-1)
-					if valid {
-						switch typ {
-						case Int64:
-							currVal, _ := b.GetInt64(colIndex, rowIndex)
-							prevVal, _ := b.GetInt64(colIndex, rowIndex-1)
-							buf.SetOrDrop(rowIndex, currVal-prevVal)
-						case Float64:
-							currVal, _ := b.GetFloat64(colIndex, rowIndex)
-							prevVal, _ := b.GetFloat64(colIndex, rowIndex-1)
-							buf.SetOrDrop(rowIndex, currVal-prevVal)
-						case Bool:
-							currVal, _ := b.GetInt64(colIndex, rowIndex)
-							prevVal, _ := b.GetInt64(colIndex, rowIndex-1)
-							buf.SetOrDrop(rowIndex, currVal != prevVal)
-						}
-					}
+			colType := b.ColumnType(colIndex)
+			colBuf := b.NewBufferFromCol(colIndex)
+			calcBuf := NewBuffer(b.NumRows(), colType, true)
+			for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
+				valid := b.Column(colIndex).IsValid(rowIndex) && b.Column(colIndex).IsValid(rowIndex-1)
+				if !valid {
+					continue
 				}
-
-				calcSeries[colIndex] = NewSeries(colName, typ, buf.Value, buf.Valid)
-			} else {
-				calcSeries[colIndex] = Series{
-					Name:  colName,
-					Array: b.Record.Column(colIndex),
+				switch colType {
+				case Int64:
+					currVal := colBuf.GetValue(rowIndex).(int64)
+					prevVal := colBuf.GetValue(rowIndex - 1).(int64)
+					calcBuf.SetOrDrop(rowIndex, currVal-prevVal)
+				case Float64:
+					currVal := colBuf.GetValue(rowIndex).(float64)
+					prevVal := colBuf.GetValue(rowIndex - 1).(float64)
+					calcBuf.SetOrDrop(rowIndex, currVal-prevVal)
+				case Bool:
+					currVal := colBuf.GetValue(rowIndex).(bool)
+					prevVal := colBuf.GetValue(rowIndex - 1).(bool)
+					calcBuf.SetOrDrop(rowIndex, currVal != prevVal)
 				}
 			}
+			calcSeries[colIndex] = NewSeries(colName, colType, calcBuf.Value, calcBuf.Valid)
+
 		}(colIndex, col.Name)
 	}
 	wg.Wait()

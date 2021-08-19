@@ -54,40 +54,22 @@ func TestAppendBows(t *testing.T) {
 			"want:\n%v\nhave:\n%v", b, appended))
 	})
 
-	t.Run("schema type mismatch", func(t *testing.T) {
+	t.Run("schema mismatch", func(t *testing.T) {
 		b1, _ := NewBowFromColBasedInterfaces(
+			[]string{"i", "s"},
+			[]Type{Int64, String},
+			[][]interface{}{
+				{"hey"},
+				{1},
+			})
+		b2, _ := NewBowFromColBasedInterfaces(
 			[]string{"a"},
 			[]Type{Int64},
 			[][]interface{}{
 				{1},
 			})
-		b2, _ := NewBowFromColBasedInterfaces(
-			[]string{"a"},
-			[]Type{Float64},
-			[][]interface{}{
-				{.2},
-			})
-		appended, err := AppendBows(b1, b2)
-		assert.EqualError(t, err, "bow.AppendBow: schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - a: type=float64")
-		assert.Nil(t, appended)
-	})
 
-	t.Run("schema name mismatch", func(t *testing.T) {
-		b1, _ := NewBowFromColBasedInterfaces(
-			[]string{"a"},
-			[]Type{Int64},
-			[][]interface{}{
-				{1},
-			})
-		b2, _ := NewBowFromColBasedInterfaces(
-			[]string{"b"},
-			[]Type{Int64},
-			[][]interface{}{
-				{2},
-			})
-		appended, err := AppendBows(b1, b2)
-		assert.EqualError(t, err, "bow.AppendBow: schema mismatch: got both\nschema:\n  fields: 1\n    - a: type=int64\nand\nschema:\n  fields: 1\n    - b: type=int64")
-		assert.Nil(t, appended)
+		assert.Panics(t, func() { _, _ = AppendBows(b1, b2) })
 	})
 
 	t.Run("3 bows of 2 cols", func(t *testing.T) {
@@ -151,22 +133,26 @@ func TestAppendBows(t *testing.T) {
 		assert.Equal(t, expected.String(), appended.String())
 	})
 
-	t.Run("2 bows with different metadata", func(t *testing.T) {
-		b1, err := NewBowWithMetadata(NewMetadata([]string{"k1"}, []string{"v1"}),
-			NewSeries("time", Int64, []int64{1, 2}, nil),
-			NewSeries("value", Float64, []float64{.1, .2}, nil),
-		)
+	t.Run("same column names but different types", func(t *testing.T) {
+		b1, err := NewBowFromColBasedInterfaces(
+			[]string{"a", "b"},
+			[]Type{Int64, Float64},
+			[][]interface{}{
+				{1, 2},
+				{.1, .2},
+			})
+		require.NoError(t, err)
+		b2, err := NewBowFromColBasedInterfaces(
+			[]string{"a", "b"},
+			[]Type{Int64, Int64},
+			[][]interface{}{
+				{3},
+				{3},
+			})
 		require.NoError(t, err)
 
-		b2, err := NewBowWithMetadata(NewMetadata([]string{"k2"}, []string{"v2"}),
-			NewSeries("time", Int64, []int64{3, 4}, nil),
-			NewSeries("value", Float64, []float64{.3, .4}, nil),
-		)
-		require.NoError(t, err)
-
-		appended, err := AppendBows(b1, b2)
+		_, err = AppendBows(b1, b2)
 		assert.Error(t, err)
-		assert.Nil(t, appended)
 	})
 }
 

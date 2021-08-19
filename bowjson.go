@@ -122,27 +122,9 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	for fieldIndex, field := range jsonB.Schema.Fields {
 		fieldType := getBowTypeFromArrowName(field.Type)
-		buf, err := NewBufferFromInterfacesIter(fieldType, len(jsonB.RowBasedData), func() chan interface{} {
-			cellsChan := make(chan interface{})
-			go func(cellsChan chan interface{}, colName string) {
-				for _, row := range jsonB.RowBasedData {
-					val, ok := row[colName]
-					if !ok {
-						cellsChan <- nil
-					} else {
-						_, ok = val.(float64)
-						if fieldType == Int64 && ok {
-							val = int64(val.(float64))
-						}
-						cellsChan <- val
-					}
-				}
-				close(cellsChan)
-			}(cellsChan, field.Name)
-			return cellsChan
-		}())
-		if err != nil {
-			return err
+		buf := NewBuffer(len(jsonB.RowBasedData), fieldType, true)
+		for rowIndex, row := range jsonB.RowBasedData {
+			buf.SetOrDrop(rowIndex, row[field.Name])
 		}
 
 		seriesSlice[fieldIndex] = NewSeries(field.Name, fieldType, buf.Value, buf.Valid)
