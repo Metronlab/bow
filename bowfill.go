@@ -14,42 +14,42 @@ import (
 // FillLinear fills the column toFillColName using the Linear interpolation method according
 // to the reference column refColName, which has to be sorted.
 // Fills only int64 and float64 types.
-func (b *bow) FillLinear(refColName, toFillColName string) error {
+func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	refIndex, err := b.ColumnIndex(refColName)
 	if err != nil {
-		return fmt.Errorf("bow.FillLinear: refColName: %w", err)
+		return nil, fmt.Errorf("bow.FillLinear: refColName: %w", err)
 	}
 
 	toFillIndex, err := b.ColumnIndex(toFillColName)
 	if err != nil {
-		return fmt.Errorf("bow.FillLinear: toFillColName: %w", err)
+		return nil, fmt.Errorf("bow.FillLinear: toFillColName: %w", err)
 	}
 
 	if refIndex == toFillIndex {
-		return fmt.Errorf("bow.FillLinear: refColName and toFillColName are equal")
+		return nil, fmt.Errorf("bow.FillLinear: refColName and toFillColName are equal")
 	}
 
 	switch b.ColumnType(refIndex) {
 	case Int64:
 	case Float64:
 	default:
-		return fmt.Errorf("bow.FillLinear: refColName '%s' is of type '%s'",
+		return nil, fmt.Errorf("bow.FillLinear: refColName '%s' is of type '%s'",
 			refColName, b.ColumnType(refIndex))
 	}
 
 	if b.IsColEmpty(refIndex) {
-		return nil
+		return b, nil
 	}
 
 	if !b.IsColSorted(refIndex) {
-		return fmt.Errorf("bow.FillLinear: column '%s' is empty or not sorted", refColName)
+		return nil, fmt.Errorf("bow.FillLinear: column '%s' is empty or not sorted", refColName)
 	}
 
 	switch b.ColumnType(toFillIndex) {
 	case Int64:
 	case Float64:
 	default:
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"bow.FillLinear: toFillColName '%s' is of unsupported type '%s'",
 			toFillColName, b.ColumnType(toFillIndex))
 	}
@@ -99,11 +99,9 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 					}
 				}
 
-				filledSeries[toFillIndex] = Series{Name: colName, Array: arr}
+				filledSeries[toFillIndex] = NewSeries(colName, b.ColumnType(toFillIndex), colBuf.Value, colBuf.Valid)
 			case Float64:
 				arr := array.NewFloat64Data(colData)
-				values := arr.Float64Values()
-				valid := arr.NullBitmapBytes()
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if arr.IsValid(rowIndex) {
 						continue
@@ -115,14 +113,13 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 					nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
 					if valid1 && valid2 && valid3 {
 						if nextRef-prevRef != 0.0 {
-							values[rowIndex] = rowRef - prevRef
-							values[rowIndex] /= nextRef - prevRef
-							values[rowIndex] *= nextToFill - prevToFill
-							values[rowIndex] += prevToFill
-							colBuf.SetRegardless(rowIndex, int64(math.Round(tmp)))
+							tmp := rowRef - prevRef
+							tmp /= nextRef - prevRef
+							tmp *= nextToFill - prevToFill
+							tmp += prevToFill
+							colBuf.SetRegardless(rowIndex, tmp)
 						} else {
-							values[rowIndex] = prevToFill
-							colBuf.SetRegardless(rowIndex, int64(math.Round(tmp)))
+							colBuf.SetRegardless(rowIndex, prevToFill)
 						}
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
@@ -133,19 +130,13 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 					}
 				}
 
-				filledSeries[toFillIndex] = Series{Name: colName, Array: arr}
+				filledSeries[toFillIndex] = NewSeries(colName, b.ColumnType(toFillIndex), colBuf.Value, colBuf.Valid)
 			}
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
 
-	tmpBow, err := NewBowWithMetadata(b.Metadata(), filledSeries...)
-	if err != nil {
-		return fmt.Errorf("bow.FillLinear: %w", err)
-	}
-
-	b.Record = tmpBow.(*bow).Record
-	return nil
+	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
 // FillMean fills nil values of `colNames` columns (`colNames` defaults to all columns)

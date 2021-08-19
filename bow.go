@@ -67,7 +67,7 @@ type Bow interface {
 	FillPrevious(colNames ...string) error
 	FillNext(colNames ...string) error
 	FillMean(colNames ...string) error
-	FillLinear(refColName, toFillColName string) error
+	FillLinear(refColName, toFillColName string) (Bow, error)
 
 	Equal(other Bow) bool
 	IsColEmpty(colIndex int) bool
