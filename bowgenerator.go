@@ -173,7 +173,7 @@ func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Serie
 		panic("unsupported data type")
 	}
 
-	return NewSeries(name, typ, buf.Data, buf.nullBitmapBytes)
+	return NewSeriesFromBuffer(name, buf)
 }
 
 func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
@@ -196,7 +196,7 @@ func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
 		}
 	}
 
-	return NewSeries(name, typ, buf.Data, buf.nullBitmapBytes)
+	return NewSeriesFromBuffer(name, buf)
 }
 
 func newRandomIncreasingNumber(typ Type, base interface{}) interface{} {

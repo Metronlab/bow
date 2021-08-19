@@ -153,7 +153,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 
 	seriesSlice := make([]Series, len(colNames))
 	for i := range colNames {
-		seriesSlice[i] = NewSeries(colNames[i], colTypes[i], bufSlice[i].Data, bufSlice[i].nullBitmapBytes)
+		seriesSlice[i] = NewSeriesFromBuffer(colNames[i], bufSlice[i])
 	}
 
 	return NewBow(seriesSlice...)

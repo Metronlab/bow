@@ -67,7 +67,7 @@ func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (
 
 		if b.NumRows() == 0 {
 			buf := bow.NewBuffer(0, typ)
-			seriesSlice[writeColIndex] = bow.NewSeriesFromBuffer(name, &buf)
+			seriesSlice[writeColIndex] = bow.NewSeriesFromBuffer(name, buf)
 			continue
 		}
 
@@ -107,7 +107,7 @@ func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (
 		}
 
 		buf.SetOrDrop(0, val)
-		seriesSlice[writeColIndex] = bow.NewSeriesFromBuffer(name, &buf)
+		seriesSlice[writeColIndex] = bow.NewSeriesFromBuffer(name, buf)
 	}
 
 	return bow.NewBow(seriesSlice...)

@@ -154,7 +154,7 @@ func TestBow_Select(t *testing.T) {
 	})
 }
 
-func TestBow_DropNil(t *testing.T) {
+func TestBow_DropNils(t *testing.T) {
 	filledBow, _ := NewBowFromColBasedInterfaces(
 		[]string{"a", "b", "c"},
 		[]Type{Int64, Int64, Int64},
@@ -276,7 +276,7 @@ func TestBow_DropNil(t *testing.T) {
 	})
 }
 
-func TestAddCols(t *testing.T) {
+func TestBow_AddCols(t *testing.T) {
 	bow1, err := NewBowFromRowBasedInterfaces(
 		[]string{"time", "a", "b"},
 		[]Type{Int64, Float64, Float64},

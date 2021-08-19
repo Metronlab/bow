@@ -47,7 +47,7 @@ func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
 	switch valid := validityArray.(type) {
 	case nil:
 		res = make([]byte, nullBitmapLength)
-		for i := range res {
+		for i := 0; i < dataLength; i++ {
 			bitutil.SetBit(res, i)
 		}
 	case []bool:
@@ -55,7 +55,7 @@ func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
 			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
 		res = make([]byte, nullBitmapLength)
-		for i := range res {
+		for i := 0; i < dataLength; i++ {
 			if valid[i] {
 				bitutil.SetBit(res, i)
 			}
@@ -101,8 +101,11 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	default:
 		panic(fmt.Errorf("unsupported type %T", v))
 	}
+
 	if valid {
 		bitutil.SetBit(b.nullBitmapBytes, i)
+	} else {
+		bitutil.ClearBit(b.nullBitmapBytes, i)
 	}
 }
 
