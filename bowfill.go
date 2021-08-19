@@ -86,9 +86,9 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 							tmp /= nextRef - prevRef
 							tmp *= nextToFill - prevToFill
 							tmp += prevToFill
-							colBuf.SetRegardless(rowIndex, int64(math.Round(tmp)))
+							colBuf.Value.([]int64)[rowIndex] = int64(math.Round(tmp))
 						} else {
-							colBuf.SetRegardless(rowIndex, int64(prevToFill))
+							colBuf.Value.([]int64)[rowIndex] = int64(prevToFill)
 						}
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
@@ -117,9 +117,9 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 							tmp /= nextRef - prevRef
 							tmp *= nextToFill - prevToFill
 							tmp += prevToFill
-							colBuf.SetRegardless(rowIndex, tmp)
+							colBuf.Value.([]float64)[rowIndex] = tmp
 						} else {
-							colBuf.SetRegardless(rowIndex, prevToFill)
+							colBuf.Value.([]float64)[rowIndex] = prevToFill
 						}
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
