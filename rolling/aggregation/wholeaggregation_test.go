@@ -218,7 +218,7 @@ func TestAggregate(t *testing.T) {
 	t.Run("bool", func(t *testing.T) {
 		b, _ := bow.NewBowFromColBasedInterfaces(
 			[]string{timeCol, valueCol},
-			[]bow.Type{bow.Int64, bow.Bool},
+			[]bow.Type{bow.Int64, bow.Boolean},
 			[][]interface{}{
 				{10, 20, 30},
 				{true, true, false},

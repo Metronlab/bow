@@ -46,7 +46,7 @@ func TestFirst(t *testing.T) {
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
-					[]bow.Type{bow.Int64, bow.Bool},
+					[]bow.Type{bow.Int64, bow.Boolean},
 					[][]interface{}{
 						{10, true},
 						{20, nil},
@@ -120,7 +120,7 @@ func TestLast(t *testing.T) {
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
-					[]bow.Type{bow.Int64, bow.Bool},
+					[]bow.Type{bow.Int64, bow.Boolean},
 					[][]interface{}{
 						{10, true},
 						{20, nil},

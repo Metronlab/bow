@@ -52,7 +52,7 @@ func TestGenerator(t *testing.T) {
 		bow, err := NewGenBow(
 			GenCols(4),
 			GenColNames([]string{"A", "B", "C", "D"}),
-			GenDataTypes([]Type{Int64, Float64, String, Bool}),
+			GenDataTypes([]Type{Int64, Float64, String, Boolean}),
 			GenRefCol(0, true),
 		)
 		assert.Nil(t, err)
@@ -72,6 +72,6 @@ func TestGenerator(t *testing.T) {
 		assert.Equal(t, Int64, bow.ColumnType(0))
 		assert.Equal(t, Float64, bow.ColumnType(1))
 		assert.Equal(t, String, bow.ColumnType(2))
-		assert.Equal(t, Bool, bow.ColumnType(3))
+		assert.Equal(t, Boolean, bow.ColumnType(3))
 	})
 }

@@ -60,7 +60,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 				builder.AppendValues(v, valid)
 			}
 			newArray = builder.NewArray()
-		case Bool:
+		case Boolean:
 			builder := array.NewBooleanBuilder(mem)
 			for _, b := range bows {
 				if t := b.ColumnType(colIndex); t != typ {
@@ -105,4 +105,14 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	}
 
 	return NewBowWithMetadata(refBow.Metadata(), seriesSlice...)
+}
+
+func getValiditySlice(arr array.Interface) []bool {
+	valid := make([]bool, arr.Len())
+
+	for i := 0; i < arr.Len(); i++ {
+		valid[i] = arr.IsValid(i)
+	}
+
+	return valid
 }

@@ -322,7 +322,7 @@ func fill(method string, b *bow, colNames ...string) error {
 				arr.Data().Buffers()[0].Reset(valid)
 				arr.Data().Buffers()[1].Reset(arrow.Float64Traits.CastToBytes(values))
 				filledSeries[colIndex] = Series{Name: colName, Array: arr}
-			case Bool:
+			case Boolean:
 				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 				arr := array.NewBooleanData(prevData)
 				valid := getValiditySlice(arr)

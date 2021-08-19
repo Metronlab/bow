@@ -383,7 +383,7 @@ func TestFill(t *testing.T) {
 		t.Run("Previous", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Bool, String},
+				[]Type{Int64, Boolean, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -397,7 +397,7 @@ func TestFill(t *testing.T) {
 
 			expected, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Bool, String},
+				[]Type{Int64, Boolean, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -416,7 +416,7 @@ func TestFill(t *testing.T) {
 		t.Run("Next", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Bool, String},
+				[]Type{Int64, Boolean, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -430,7 +430,7 @@ func TestFill(t *testing.T) {
 
 			expected, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Bool, String},
+				[]Type{Int64, Boolean, String},
 				[][]interface{}{
 					{20, false, "dgr"},
 					{13, false, "sfr"},
@@ -449,7 +449,7 @@ func TestFill(t *testing.T) {
 		t.Run("Mean", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Bool, String},
+				[]Type{Int64, Boolean, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -467,7 +467,7 @@ func TestFill(t *testing.T) {
 		t.Run("Linear", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Bool, String},
+				[]Type{Int64, Boolean, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},

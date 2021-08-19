@@ -137,7 +137,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 
 	bufSlice := make([]Buffer, len(colNames))
 	for i := range bufSlice {
-		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i], true)
+		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i])
 	}
 
 	for rowIndex, row := range rowBasedData {
@@ -145,6 +145,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 			return nil, errors.New(
 				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
 		}
+
 		for colIndex := range colNames {
 			bufSlice[colIndex].SetOrDrop(rowIndex, row[colIndex])
 		}
@@ -152,7 +153,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 
 	seriesSlice := make([]Series, len(colNames))
 	for i := range colNames {
-		seriesSlice[i] = NewSeries(colNames[i], colTypes[i], bufSlice[i].Value, bufSlice[i].Valid)
+		seriesSlice[i] = NewSeries(colNames[i], colTypes[i], bufSlice[i].Data, bufSlice[i].nullBitmapBytes)
 	}
 
 	return NewBow(seriesSlice...)
@@ -356,16 +357,6 @@ func (b *bow) AddCols(seriesSlice ...Series) (Bow, error) {
 	}
 
 	return NewBowWithMetadata(b.Metadata(), newSeriesSlice...)
-}
-
-func getValiditySlice(arr array.Interface) []bool {
-	validitySlice := make([]bool, arr.Len())
-
-	for i := 0; i < arr.Len(); i++ {
-		validitySlice[i] = arr.IsValid(i)
-	}
-
-	return validitySlice
 }
 
 func (b *bow) NewSeriesFromCol(colIndex int) Series {

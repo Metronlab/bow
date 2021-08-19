@@ -31,7 +31,7 @@ func TestJSON(t *testing.T) {
 		t.Run("simple", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Float64, Bool},
+				[]Type{Int64, Float64, Boolean},
 				[][]interface{}{
 					{100, 200., false},
 					{110, 220., true},
@@ -82,7 +82,7 @@ func TestJSON(t *testing.T) {
 		t.Run("simple", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Float64, Bool},
+				[]Type{Int64, Float64, Boolean},
 				[][]interface{}{
 					{100, 200., false},
 					{110, 220., true},
@@ -104,7 +104,7 @@ func TestJSON(t *testing.T) {
 		t.Run("simple no data", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Float64, Bool},
+				[]Type{Int64, Float64, Boolean},
 				[][]interface{}{})
 			require.NoError(t, err)
 
@@ -127,7 +127,7 @@ func BenchmarkBow_MarshalJSON(b *testing.B) {
 			data, err := NewGenBow(
 				GenRows(rows),
 				GenCols(4),
-				GenDataTypes([]Type{Int64, Float64, String, Bool}),
+				GenDataTypes([]Type{Int64, Float64, String, Boolean}),
 				GenMissingData(true),
 				GenRefCol(0, false),
 				GenColNames([]string{"int64", "float64", "bool", "string"}))
@@ -152,7 +152,7 @@ func BenchmarkBow_UnmarshalJSON(b *testing.B) {
 			data, err := NewGenBow(
 				GenRows(rows),
 				GenCols(4),
-				GenDataTypes([]Type{Int64, Float64, String, Bool}),
+				GenDataTypes([]Type{Int64, Float64, String, Boolean}),
 				GenMissingData(true),
 				GenRefCol(0, false),
 				GenColNames([]string{"int64", "float64", "bool", "string"}))

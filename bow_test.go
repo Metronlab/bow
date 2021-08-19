@@ -28,7 +28,7 @@ func TestNewBowFromColumnBasedInterface(t *testing.T) {
 
 		expected, err := NewBowFromColBasedInterfaces(
 			[]string{"int", "float", "string", "bool"},
-			[]Type{Int64, Float64, String, Bool},
+			[]Type{Int64, Float64, String, Boolean},
 			[][]interface{}{
 				{10, 2},
 				{10., 2.},
@@ -289,7 +289,7 @@ func TestAddCols(t *testing.T) {
 	require.NoError(t, err)
 	serieC := NewSeries("c", Int64, []int64{1, 2, 3, 4}, nil)
 	serieD := NewSeries("d", String, []string{"one", "two", "three", "four"}, nil)
-	serieE := NewSeries("e", Bool, []bool{true, false, true, false}, nil)
+	serieE := NewSeries("e", Boolean, []bool{true, false, true, false}, nil)
 
 	t.Run("empty", func(t *testing.T) {
 		b := NewBowEmpty()
@@ -312,7 +312,7 @@ func TestAddCols(t *testing.T) {
 	t.Run("valid series", func(t *testing.T) {
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b", "c", "d", "e"},
-			[]Type{Int64, Float64, Float64, Int64, String, Bool},
+			[]Type{Int64, Float64, Float64, Int64, String, Boolean},
 			[][]interface{}{
 				{1, 1.1, 2.1, 1, "one", true},
 				{2, 1.2, 2.2, 2, "two", false},

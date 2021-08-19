@@ -28,7 +28,7 @@ func TestBow_SortByCol(t *testing.T) {
 	t.Run("unsorted with all types", func(t *testing.T) {
 		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "i", "f", "b", "s"},
-			[]Type{Int64, Int64, Float64, Bool, String},
+			[]Type{Int64, Int64, Float64, Boolean, String},
 			[][]interface{}{
 				{10, 2, 3.1, true, "ho"},
 				{11, 2, 5.9, false, "la"},
@@ -38,7 +38,7 @@ func TestBow_SortByCol(t *testing.T) {
 		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "i", "f", "b", "s"},
-			[]Type{Int64, Int64, Float64, Bool, String},
+			[]Type{Int64, Int64, Float64, Boolean, String},
 			[][]interface{}{
 				{10, 2, 3.1, true, "ho"},
 				{11, 2, 5.9, false, "la"},
@@ -80,7 +80,7 @@ func TestBow_SortByCol(t *testing.T) {
 	t.Run("unsorted with nil values and all types", func(t *testing.T) {
 		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "int", "float", "string", "bool"},
-			[]Type{Int64, Int64, Float64, String, Bool},
+			[]Type{Int64, Int64, Float64, String, Boolean},
 			[][]interface{}{
 				{10, 5, nil, "bonjour", true},
 				{11, 2, 56., "comment", false},
@@ -90,7 +90,7 @@ func TestBow_SortByCol(t *testing.T) {
 		require.NoError(t, err)
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "int", "float", "string", "bool"},
-			[]Type{Int64, Int64, Float64, String, Bool},
+			[]Type{Int64, Int64, Float64, String, Boolean},
 			[][]interface{}{
 				{10, 5, nil, "bonjour", true},
 				{11, 2, 56., "comment", false},

@@ -18,7 +18,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 		switch b.ColumnType(colIndex) {
 		case Int64:
 		case Float64:
-		case Bool:
+		case Boolean:
 		default:
 			return nil, fmt.Errorf(
 				"bow.Diff: column '%s' is of unsupported type '%v'",
@@ -39,7 +39,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 			defer wg.Done()
 			colType := b.ColumnType(colIndex)
 			colBuf := b.NewBufferFromCol(colIndex)
-			calcBuf := NewBuffer(b.NumRows(), colType, true)
+			calcBuf := NewBuffer(b.NumRows(), colType)
 			for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
 				valid := b.Column(colIndex).IsValid(rowIndex) && b.Column(colIndex).IsValid(rowIndex-1)
 				if !valid {
@@ -54,13 +54,13 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 					currVal := colBuf.GetValue(rowIndex).(float64)
 					prevVal := colBuf.GetValue(rowIndex - 1).(float64)
 					calcBuf.SetOrDrop(rowIndex, currVal-prevVal)
-				case Bool:
+				case Boolean:
 					currVal := colBuf.GetValue(rowIndex).(bool)
 					prevVal := colBuf.GetValue(rowIndex - 1).(bool)
 					calcBuf.SetOrDrop(rowIndex, currVal != prevVal)
 				}
 			}
-			calcSeries[colIndex] = NewSeries(colName, colType, calcBuf.Value, calcBuf.Valid)
+			calcSeries[colIndex] = NewSeries(colName, colType, calcBuf.Data, calcBuf.nullBitmapBytes)
 
 		}(colIndex, col.Name)
 	}

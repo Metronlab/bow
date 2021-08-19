@@ -153,12 +153,10 @@ func (it *intervalRollingIter) interpolateWindow(interps []ColInterpolation, w *
 			return nil, err
 		}
 
-		buf := bow.NewBuffer(1, colType, true)
+		buf := bow.NewBuffer(1, colType)
 		buf.SetOrDrop(0, interpolatedValue)
 
-		seriesSlice[colIndex] = bow.NewSeries(
-			w.Bow.ColumnName(interpolation.colIndex),
-			colType, buf.Value, buf.Valid)
+		seriesSlice[colIndex] = bow.NewSeriesFromBuffer(w.Bow.ColumnName(interpolation.colIndex), &buf)
 	}
 
 	startBow, err := bow.NewBow(seriesSlice...)

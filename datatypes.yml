@@ -1,9 +1,9 @@
 types:
-  - name: Int64
-    type: int64
-  - name: Float64
+  - Type: Float64
     type: float64
-  - name: Bool
+  - Type: Int64
+    type: int64
+  - Type: Boolean
     type: bool
-  - name: String
+  - Type: String
     type: string
