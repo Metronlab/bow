@@ -91,13 +91,6 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				for rowIndex := range bitsToSet {
-					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						colBuf.SetAsValid(rowIndex)
-					}
-				}
-
-				filledSeries[toFillIndex] = NewSeries(colName, b.ColumnType(toFillIndex), colBuf.Value, colBuf.Valid)
 			case Float64:
 				arr := array.NewFloat64Data(colData)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
@@ -122,14 +115,15 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				for rowIndex := range bitsToSet {
-					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						colBuf.SetAsValid(rowIndex)
-					}
-				}
-
-				filledSeries[toFillIndex] = NewSeries(colName, b.ColumnType(toFillIndex), colBuf.Value, colBuf.Valid)
 			}
+			for rowIndex := range bitsToSet {
+				if bitutil.BitIsSet(bitsToSet, rowIndex) {
+					colBuf.SetAsValid(rowIndex)
+				}
+			}
+
+			filledSeries[toFillIndex] = NewSeries(colName, b.ColumnType(toFillIndex), colBuf.Value, colBuf.Valid)
+
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
