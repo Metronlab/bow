@@ -41,7 +41,8 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 			colBuf := b.NewBufferFromCol(colIndex)
 			calcBuf := NewBuffer(b.NumRows(), colType)
 			for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
-				valid := b.Column(colIndex).IsValid(rowIndex) && b.Column(colIndex).IsValid(rowIndex-1)
+				valid := b.Column(colIndex).IsValid(rowIndex) &&
+					b.Column(colIndex).IsValid(rowIndex-1)
 				if !valid {
 					continue
 				}
@@ -60,7 +61,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 					calcBuf.SetOrDrop(rowIndex, currVal != prevVal)
 				}
 			}
-			calcSeries[colIndex] = NewSeries(colName, colType, calcBuf.Data, calcBuf.nullBitmapBytes)
+			calcSeries[colIndex] = NewSeriesFromBuffer(colName, calcBuf)
 
 		}(colIndex, col.Name)
 	}
