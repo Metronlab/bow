@@ -38,7 +38,7 @@ func NewBuffer(size int, typ Type, nullable bool) Buffer {
 			Valid: valid,
 		}
 	default:
-		panic(fmt.Errorf("bow.NewBuffer: unsupported type %v", typ))
+		panic(fmt.Errorf("unsupported type %v", typ))
 	}
 }
 
@@ -79,7 +79,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 			Valid: getValiditySlice(colArray),
 		}
 	default:
-		panic(fmt.Errorf("bow.NewBufferFromCol: unsupported type %+v", colType))
+		panic(fmt.Errorf("unsupported type %+v", colType))
 	}
 }
 
@@ -102,7 +102,7 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	case []string:
 		v[i], b.Valid[i] = String.Convert(value).(string)
 	default:
-		panic(fmt.Errorf("bow.Buffer.SetOrDrop: unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type %T", v))
 	}
 }
 
@@ -144,10 +144,6 @@ func (b *Buffer) GetValue(i int) interface{} {
 		}
 		return v[i]
 	default:
-		panic(fmt.Errorf("bow.Buffer.GetValue: unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type %T", v))
 	}
-}
-
-func (b *Buffer) SetAsValid(rowIndex int) {
-	b.Valid[rowIndex] = true
 }

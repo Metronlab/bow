@@ -27,7 +27,7 @@ func Last(col string) rolling.ColAggregation {
 				return nil, nil
 			}
 
-			value, irow := w.Bow.GetPreviousValue(col, w.Bow.NumRows()-1)
+			value, irow := w.Bow.GetPrevValue(col, w.Bow.NumRows()-1)
 			if irow == -1 {
 				return nil, nil
 			}

@@ -45,7 +45,7 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 	case String:
 		return array.NewStringData(b.Column(colIndex).Data()).Value(rowIndex)
 	default:
-		panic(fmt.Errorf("bow.GetValue: unsupported type %s", b.ColumnType(colIndex)))
+		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
 	}
 }
 
@@ -87,7 +87,7 @@ func (b *bow) GetNextRowIndex(colIndex, rowIndex int) int {
 	return -1
 }
 
-func (b *bow) GetPreviousValue(colIndex, rowIndex int) (interface{}, int) {
+func (b *bow) GetPrevValue(colIndex, rowIndex int) (interface{}, int) {
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value := b.GetValue(colIndex, rowIndex)
 		if value != nil {
@@ -99,11 +99,11 @@ func (b *bow) GetPreviousValue(colIndex, rowIndex int) (interface{}, int) {
 	return nil, -1
 }
 
-func (b *bow) GetPreviousValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
+func (b *bow) GetPrevValues(colIndex1, colIndex2, rowIndex int) (interface{}, interface{}, int) {
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 interface{}
-		v1, rowIndex = b.GetPreviousValue(colIndex1, rowIndex)
-		v2, rowIndex2 := b.GetPreviousValue(colIndex2, rowIndex)
+		v1, rowIndex = b.GetPrevValue(colIndex1, rowIndex)
+		v2, rowIndex2 := b.GetPrevValue(colIndex2, rowIndex)
 		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
@@ -113,7 +113,7 @@ func (b *bow) GetPreviousValues(colIndex1, colIndex2, rowIndex int) (interface{}
 	return nil, nil, -1
 }
 
-func (b *bow) GetPreviousRowIndex(colIndex, rowIndex int) int {
+func (b *bow) GetPrevRowIndex(colIndex, rowIndex int) int {
 	col := b.Column(colIndex)
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		if col.IsValid(rowIndex) {
@@ -151,7 +151,7 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Sprintf("bow.GetInt64: unsupported type %s",
+		panic(fmt.Errorf("unsupported type '%s'",
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 }
@@ -168,7 +168,7 @@ func (b *bow) GetNextInt64(colIndex, rowIndex int) (int64, int) {
 	return 0., -1
 }
 
-func (b *bow) GetPreviousInt64(colIndex, rowIndex int) (int64, int) {
+func (b *bow) GetPrevInt64(colIndex, rowIndex int) (int64, int) {
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value, ok := b.GetInt64(colIndex, rowIndex)
 		if ok {
@@ -206,7 +206,7 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Sprintf("bow.GetFloat64: unsupported type %s",
+		panic(fmt.Sprintf("unsupported type '%s'",
 			b.Schema().Field(colIndex).Type.Name()))
 	}
 }
@@ -237,11 +237,11 @@ func (b *bow) GetNextFloat64(colIndex, rowIndex int) (float64, int) {
 	return 0., -1
 }
 
-func (b *bow) GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (float64, float64, int) {
+func (b *bow) GetPrevFloat64s(colIndex1, colIndex2, rowIndex int) (float64, float64, int) {
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		var v1 float64
-		v1, rowIndex = b.GetPreviousFloat64(colIndex1, rowIndex)
-		v2, rowIndex2 := b.GetPreviousFloat64(colIndex2, rowIndex)
+		v1, rowIndex = b.GetPrevFloat64(colIndex1, rowIndex)
+		v2, rowIndex2 := b.GetPrevFloat64(colIndex2, rowIndex)
 		if rowIndex == rowIndex2 {
 			return v1, v2, rowIndex
 		}
@@ -251,7 +251,7 @@ func (b *bow) GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (float64, 
 	return 0., 0., -1
 }
 
-func (b *bow) GetPreviousFloat64(colIndex, rowIndex int) (float64, int) {
+func (b *bow) GetPrevFloat64(colIndex, rowIndex int) (float64, int) {
 	for rowIndex >= 0 && rowIndex < b.NumRows() {
 		value, ok := b.GetFloat64(colIndex, rowIndex)
 		if ok {
@@ -270,10 +270,12 @@ func (b *bow) ColumnType(colIndex int) Type {
 func (b *bow) ColumnIndex(colName string) (int, error) {
 	colIndices := b.Schema().FieldIndices(colName)
 	if len(colIndices) == 0 {
-		return -1, fmt.Errorf("no column '%s'", colName)
+		return -1, fmt.Errorf("bow.ColumnIndex: no column '%s'", colName)
 	}
+
 	if len(colIndices) > 1 {
-		return -1, fmt.Errorf("several columns '%s'", colName)
+		return -1, fmt.Errorf("bow.ColumnIndex: several columns '%s'", colName)
 	}
+
 	return colIndices[0], nil
 }

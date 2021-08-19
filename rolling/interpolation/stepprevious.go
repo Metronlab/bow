@@ -15,7 +15,7 @@ func StepPrevious(colName string) rolling.ColInterpolation {
 			}
 
 			var v interface{}
-			_, v, _ = fullBow.GetPreviousValues(w.IntervalColIndex, colIndexToFill, w.FirstIndex-1)
+			_, v, _ = fullBow.GetPrevValues(w.IntervalColIndex, colIndexToFill, w.FirstIndex-1)
 			if v != nil {
 				prevVal = v
 			}

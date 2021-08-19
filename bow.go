@@ -33,22 +33,22 @@ type Bow interface {
 
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetValue(colIndex, rowIndex int) interface{}
+	GetPrevValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
+	GetPrevValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
 	GetNextValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
+	GetPrevRowIndex(colIndex, rowIndex int) int
 	GetNextRowIndex(colIndex, rowIndex int) int
-	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
-	GetPreviousValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
-	GetPreviousRowIndex(colIndex, rowIndex int) int
 
 	GetInt64(colIndex, rowIndex int) (value int64, valid bool)
+	GetPrevInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
 	GetNextInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
-	GetPreviousInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
 
 	GetFloat64(colIndex, rowIndex int) (value float64, valid bool)
+	GetPrevFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
 	GetNextFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
+	GetPrevFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 	GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
-	GetPreviousFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
-	GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 
 	AddCols(newCols ...Series) (Bow, error)
 	RenameCol(colIndex int, newName string) (Bow, error)
