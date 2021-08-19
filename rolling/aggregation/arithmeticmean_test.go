@@ -8,11 +8,11 @@ import (
 )
 
 func TestArithmeticMean(t *testing.T) {
-	runTestCases(t, ArithmeticMean, nil, []bowTest{
+	runTestCases(t, ArithmeticMean, nil, []testCase{
 		{
-			Name:      "empty",
-			TestedBow: empty,
-			ExpectedBow: func() bow.Bow {
+			name:      "empty",
+			testedBow: emptyBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
 					bow.NewSeries("time", bow.Int64, []int64{}, nil),
 					bow.NewSeries("value", bow.Float64, []float64{}, nil),
@@ -22,9 +22,9 @@ func TestArithmeticMean(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse",
-			TestedBow: sparseFloatBow,
-			ExpectedBow: func() bow.Bow {
+			name:      "sparse",
+			testedBow: sparseFloatBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
 					[]bow.Type{bow.Int64, bow.Float64},
@@ -41,9 +41,9 @@ func TestArithmeticMean(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse bool",
-			TestedBow: sparseBoolBow,
-			ExpectedBow: func() bow.Bow {
+			name:      "sparse bool",
+			testedBow: sparseBoolBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
 					[]bow.Type{bow.Int64, bow.Float64},
@@ -60,9 +60,9 @@ func TestArithmeticMean(t *testing.T) {
 			}(),
 		},
 		{
-			Name:      "sparse string",
-			TestedBow: sparseStringBow,
-			ExpectedBow: func() bow.Bow {
+			name:      "sparse string",
+			testedBow: sparseStringBow,
+			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{"time", "value"},
 					[]bow.Type{bow.Int64, bow.Float64},

@@ -5,10 +5,10 @@ import (
 	"github.com/metronlab/bow/rolling"
 )
 
-func Mode(col string) rolling.ColumnAggregation {
-	return rolling.NewColumnAggregation(col, false, bow.InputDependent,
+func Mode(col string) rolling.ColAggregation {
+	return rolling.NewColAggregation(col, false, bow.InputDependent,
 		func(col int, w rolling.Window) (interface{}, error) {
-			if w.Bow.IsEmpty() {
+			if w.Bow.NumRows() == 0 {
 				return nil, nil
 			}
 

@@ -22,8 +22,8 @@ func TestJSON(t *testing.T) {
 			require.NoError(t, err)
 
 			expected := JSONBow{
-				Schema: JSONSchema{},
-				Data:   []map[string]interface{}{},
+				Schema:       JSONSchema{},
+				RowBasedData: []map[string]interface{}{},
 			}
 			assert.Equal(t, expected, jsonB)
 		})
@@ -54,7 +54,7 @@ func TestJSON(t *testing.T) {
 						{Name: "c", Type: "bool"},
 					},
 				},
-				Data: []map[string]interface{}{
+				RowBasedData: []map[string]interface{}{
 					{"a": 100., "b": 200., "c": false},
 					{"a": 110., "b": 220., "c": true},
 					{"a": 111., "b": 222., "c": false},

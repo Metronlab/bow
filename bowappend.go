@@ -2,29 +2,31 @@ package bow
 
 import "fmt"
 
+// AppendBows attempts to append bows with equal schemas.
+// Different schemas will lead to undefined behavior.
+// Resulting metadata is copied from the first bow.
 func AppendBows(bows ...Bow) (Bow, error) {
 	if len(bows) == 0 {
 		return nil, nil
 	}
+
 	if len(bows) == 1 {
 		return bows[0], nil
 	}
+
 	refBow := bows[0]
-	refSchema := refBow.Schema()
-	var err error
-	var numRows int
+	numRows := 0
 	for _, b := range bows {
-		schema := b.Schema()
-		if !schema.Equal(refSchema) {
+		if !b.Schema().Equal(refBow.Schema()) {
 			return nil,
 				fmt.Errorf("bow.AppendBow: schema mismatch: got both\n%v\nand\n%v",
-					refSchema, schema)
+					refBow.Schema(), b.Schema())
 		}
 
-		if schema.Metadata().String() != refSchema.Metadata().String() {
+		if b.Metadata().String() != refBow.Metadata().String() {
 			return nil,
 				fmt.Errorf("bow.AppendBow: schema Metadata mismatch: got both\n%v\nand\n%v",
-					refSchema.Metadata(), schema.Metadata())
+					refBow.Metadata(), b.Metadata())
 		}
 
 		numRows += b.NumRows()
@@ -32,26 +34,22 @@ func AppendBows(bows ...Bow) (Bow, error) {
 
 	seriesSlice := make([]Series, refBow.NumCols())
 	bufSlice := make([]Buffer, refBow.NumCols())
-	var name string
-	for ci := 0; ci < refBow.NumCols(); ci++ {
+	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
 		var rowOffset int
-		typ := refBow.GetType(ci)
-		name, err = refBow.GetName(ci)
-		if err != nil {
-			return nil, err
-		}
-		bufSlice[ci] = NewBuffer(numRows, typ, true)
+		typ := refBow.ColumnType(colIndex)
+		name := refBow.ColumnName(colIndex)
+		bufSlice[colIndex] = NewBuffer(numRows, typ, true)
 		for _, b := range bows {
 			for ri := 0; ri < b.NumRows(); ri++ {
-				bufSlice[ci].SetOrDrop(ri+rowOffset, b.GetValue(ci, ri))
+				bufSlice[colIndex].SetOrDrop(ri+rowOffset, b.GetValue(colIndex, ri))
 			}
 			rowOffset += b.NumRows()
 		}
 
-		seriesSlice[ci] = NewSeries(name, typ, bufSlice[ci].Value, bufSlice[ci].Valid)
+		seriesSlice[colIndex] = NewSeries(name, typ, bufSlice[colIndex].Value, bufSlice[colIndex].Valid)
 	}
 
 	return NewBowWithMetadata(
-		Metadata{refSchema.Metadata()},
+		Metadata{refBow.Metadata().Metadata},
 		seriesSlice...)
 }

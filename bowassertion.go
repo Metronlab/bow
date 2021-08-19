@@ -19,9 +19,9 @@ func (b *bow) IsColSorted(colIndex int) bool {
 	var rowIndex int
 	var order = orderUndefined
 
-	switch b.GetType(colIndex) {
+	switch b.ColumnType(colIndex) {
 	case Int64:
-		arr := array.NewInt64Data(b.Record.Column(colIndex).Data())
+		arr := array.NewInt64Data(b.Column(colIndex).Data())
 		values := arr.Int64Values()
 		for arr.IsNull(rowIndex) {
 			rowIndex++
@@ -48,7 +48,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 			curr = next
 		}
 	case Float64:
-		arr := array.NewFloat64Data(b.Record.Column(colIndex).Data())
+		arr := array.NewFloat64Data(b.Column(colIndex).Data())
 		values := arr.Float64Values()
 		for arr.IsNull(rowIndex) {
 			rowIndex++
@@ -80,6 +80,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 	return true
 }
 
+// IsColEmpty returns false if the column has at least one non-nil value, and true otherwise.
 func (b *bow) IsColEmpty(colIndex int) bool {
 	var rowIndex int
 	arr := b.Column(colIndex)
@@ -87,9 +88,4 @@ func (b *bow) IsColEmpty(colIndex int) bool {
 		rowIndex++
 	}
 	return rowIndex == arr.Len()
-}
-
-// IsEmpty returns true if the dataframe contains no data, false otherwise.
-func (b *bow) IsEmpty() bool {
-	return b.NumRows() == 0
 }

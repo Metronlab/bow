@@ -596,9 +596,7 @@ func benchInnerJoin(rows int, typ Type, b *testing.B) {
 		GenMissingData(true),
 		GenRefCol(0, false),
 		GenColNames([]string{"A", "B"}))
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(b, err)
 
 	rightBow, err := NewGenBow(
 		GenRows(rows),
@@ -607,9 +605,7 @@ func benchInnerJoin(rows int, typ Type, b *testing.B) {
 		GenMissingData(true),
 		GenRefCol(0, false),
 		GenColNames([]string{"A", "C"}))
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(b, err)
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -625,9 +621,7 @@ func benchOuterJoin(rows int, typ Type, b *testing.B) {
 		GenMissingData(true),
 		GenRefCol(0, false),
 		GenColNames([]string{"A", "B"}))
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(b, err)
 
 	rightBow, err := NewGenBow(
 		GenRows(rows),
@@ -636,9 +630,7 @@ func benchOuterJoin(rows int, typ Type, b *testing.B) {
 		GenMissingData(true),
 		GenRefCol(0, false),
 		GenColNames([]string{"A", "C"}))
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(b, err)
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
