@@ -100,6 +100,28 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
+func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
+	var valid bool
+	switch v := b.Data.(type) {
+	case []int64:
+		v[i], valid = value.(int64)
+	case []float64:
+		v[i], valid = value.(float64)
+	case []bool:
+		v[i], valid = value.(bool)
+	case []string:
+		v[i], valid = value.(string)
+	default:
+		panic(fmt.Errorf("unsupported type %T", v))
+	}
+
+	if valid {
+		bitutil.SetBit(b.nullBitmapBytes, i)
+	} else {
+		bitutil.ClearBit(b.nullBitmapBytes, i)
+	}
+}
+
 func (b *Buffer) GetValue(i int) interface{} {
 	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
 		return nil
@@ -123,27 +145,39 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 	switch b.ColumnType(colIndex) {
 	case Int64:
 		arr := array.NewInt64Data(data)
+		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
+		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
+		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
 			Data:            Int64Values(arr),
-			nullBitmapBytes: arr.NullBitmapBytes(),
+			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	case Float64:
 		arr := array.NewFloat64Data(data)
+		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
+		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
+		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
 			Data:            Float64Values(arr),
-			nullBitmapBytes: arr.NullBitmapBytes(),
+			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	case Boolean:
 		arr := array.NewBooleanData(data)
+		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
+		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
+		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
 			Data:            BooleanValues(arr),
-			nullBitmapBytes: arr.NullBitmapBytes(),
+			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	case String:
 		arr := array.NewStringData(data)
+		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
+		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
+		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
 			Data:            StringValues(arr),
-			nullBitmapBytes: arr.NullBitmapBytes(),
+			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	default:
 		panic(fmt.Errorf(

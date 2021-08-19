@@ -58,3 +58,7 @@ func (b *Buffer) IsValid(rowIndex int) bool {
 func (b *Buffer) IsNull(rowIndex int) bool {
 	return bitutil.BitIsNotSet(b.nullBitmapBytes, rowIndex)
 }
+
+func (b *Buffer) SetAsValid(rowIndex int) {
+	bitutil.SetBit(b.nullBitmapBytes, rowIndex)
+}
