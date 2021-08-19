@@ -76,7 +76,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 		NewMetadata(keys, values),
 		newSeries...)
 	if err != nil {
-		panic(err.Error())
+		panic(fmt.Errorf("bow.OuterJoin: %w", err))
 	}
 
 	return newBow
@@ -93,7 +93,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 		for i := 0; i < newNumRows; i++ {
 			newValid[i] = false
 		}
-		switch left.GetType(colIndex) {
+		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
 			newArray := make([]int64, newNumRows)
@@ -149,7 +149,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
@@ -206,7 +206,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		case Bool:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
@@ -263,7 +263,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
@@ -320,7 +320,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 
 			(*newSeries)[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		}
 	}
@@ -341,7 +341,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		switch right.GetType(rightCol) {
+		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())
 			newArray := make([]int64, newNumRows)
@@ -383,7 +383,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
@@ -427,7 +427,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		case Bool:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
@@ -471,7 +471,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
@@ -515,7 +515,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 			}
 			(*newSeries)[colIndex] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		}
 		rightCol++
@@ -575,7 +575,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		for i := 0; i < newNumRows; i++ {
 			newValid[i] = false
 		}
-		switch left.GetType(colIndex) {
+		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
 			newArray := make([]int64, newNumRows)
@@ -591,7 +591,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
@@ -608,7 +608,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		case Bool:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
@@ -625,7 +625,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
@@ -642,7 +642,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[colIndex] = NewSeries(
 				left.ColumnName(colIndex),
-				left.GetType(colIndex),
+				left.ColumnType(colIndex),
 				newArray, newValid)
 		}
 	}
@@ -657,7 +657,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		switch right.GetType(rightCol) {
+		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())
 			newArray := make([]int64, newNumRows)
@@ -674,7 +674,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
@@ -692,7 +692,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		case Bool:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
@@ -710,7 +710,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
@@ -728,7 +728,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			}
 			newSeries[col] = NewSeries(
 				right.ColumnName(rightCol),
-				right.GetType(rightCol),
+				right.ColumnType(rightCol),
 				newArray, newValid)
 		}
 		rightCol++
@@ -745,7 +745,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		NewMetadata(keys, values),
 		newSeries...)
 	if err != nil {
-		panic(err.Error())
+		panic(fmt.Errorf("bow.InnerJoin: %w", err))
 	}
 
 	return newBow

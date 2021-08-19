@@ -1,4 +1,4 @@
-package fill
+package interpolation
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func TestStepPrevious(t *testing.T) {
 		})
 		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
+			Interpolate(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 12, 13},
@@ -40,7 +40,7 @@ func TestStepPrevious(t *testing.T) {
 		})
 		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
+			Interpolate(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
 			{10, 12, 13},
@@ -58,7 +58,7 @@ func TestStepPrevious(t *testing.T) {
 		})
 		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
+			Interpolate(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
 			{10, 12, 13},
@@ -76,7 +76,7 @@ func TestStepPrevious(t *testing.T) {
 		})
 		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{Offset: 1})
 		filled, err := r.
-			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
+			Interpolate(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{9, 10, 11, 13},
@@ -94,7 +94,7 @@ func TestStepPrevious(t *testing.T) {
 		})
 		r, _ := rolling.IntervalRolling(b, timeCol, 2, rolling.Options{})
 		filled, err := r.
-			Fill(WindowStart(timeCol), StepPrevious(valueCol)).
+			Interpolate(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
 		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
 			{10, 11, 12, 13, 14, 15},

@@ -8,16 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	timeCol  = "time"
-	valueCol = "value"
-)
-
-func TestBow_Aggregate(t *testing.T) {
+func TestAggregate(t *testing.T) {
 	t.Run("empty bow", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{{}, {}})
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{{}, {}})
 		actual, err := Aggregate(b, timeCol,
 			WindowStart(timeCol),
@@ -29,7 +28,9 @@ func TestBow_Aggregate(t *testing.T) {
 	})
 
 	t.Run("keep columns", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{1., 2., 3.},
@@ -39,7 +40,9 @@ func TestBow_Aggregate(t *testing.T) {
 			ArithmeticMean(valueCol),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10},
 				{2.},
@@ -50,7 +53,9 @@ func TestBow_Aggregate(t *testing.T) {
 	})
 
 	t.Run("swap columns", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{1., 2., 3.},
@@ -60,7 +65,9 @@ func TestBow_Aggregate(t *testing.T) {
 			WindowStart(timeCol),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{valueCol, timeCol}, []bow.Type{bow.Float64, bow.Int64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{valueCol, timeCol},
+			[]bow.Type{bow.Float64, bow.Int64},
 			[][]interface{}{
 				{2.},
 				{10},
@@ -71,7 +78,9 @@ func TestBow_Aggregate(t *testing.T) {
 	})
 
 	t.Run("rename columns", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{1., 2., 3.},
@@ -81,7 +90,9 @@ func TestBow_Aggregate(t *testing.T) {
 			ArithmeticMean(valueCol).Rename("b"),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{"a", "b"}, []bow.Type{bow.Int64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{"a", "b"},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10},
 				{2.},
@@ -92,7 +103,9 @@ func TestBow_Aggregate(t *testing.T) {
 	})
 
 	t.Run("less columns than original", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{1., 2., 3.},
@@ -101,7 +114,9 @@ func TestBow_Aggregate(t *testing.T) {
 			ArithmeticMean(valueCol),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{valueCol}, []bow.Type{bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{valueCol},
+			[]bow.Type{bow.Float64},
 			[][]interface{}{
 				{2.},
 			})
@@ -111,7 +126,9 @@ func TestBow_Aggregate(t *testing.T) {
 	})
 
 	t.Run("more columns than original", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{1., 2., 3.},
@@ -122,7 +139,9 @@ func TestBow_Aggregate(t *testing.T) {
 			ArithmeticMean(valueCol).Rename("c"),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{"a", "b", "c"}, []bow.Type{bow.Float64, bow.Float64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{"a", "b", "c"},
+			[]bow.Type{bow.Float64, bow.Float64, bow.Float64},
 			[][]interface{}{
 				{2.},
 				{2.},
@@ -134,7 +153,9 @@ func TestBow_Aggregate(t *testing.T) {
 	})
 
 	t.Run("invalid column", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{1., 2., 3.},
@@ -145,11 +166,11 @@ func TestBow_Aggregate(t *testing.T) {
 		require.Nil(t, actual)
 		require.EqualError(t, err, "aggregate on 'time': no column '-'")
 	})
-}
 
-func TestAggregate(t *testing.T) {
 	t.Run("float", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{1., 2., 3.},
@@ -159,7 +180,9 @@ func TestAggregate(t *testing.T) {
 			ArithmeticMean(valueCol),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10},
 				{2.},
@@ -169,7 +192,9 @@ func TestAggregate(t *testing.T) {
 			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
 	})
 	t.Run("float only nil", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10, 20, 30},
 				{nil, nil, nil},
@@ -179,7 +204,9 @@ func TestAggregate(t *testing.T) {
 			WeightedAverageLinear(valueCol),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10},
 				{nil},
@@ -189,7 +216,9 @@ func TestAggregate(t *testing.T) {
 			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
 	})
 	t.Run("bool", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Bool},
 			[][]interface{}{
 				{10, 20, 30},
 				{true, true, false},
@@ -199,7 +228,9 @@ func TestAggregate(t *testing.T) {
 			ArithmeticMean(valueCol),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10},
 				{2. / 3.},
@@ -209,7 +240,9 @@ func TestAggregate(t *testing.T) {
 			fmt.Sprintf("expected: %v\nactual: %v", expected, actual))
 	})
 	t.Run("string", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String},
+		b, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.String},
 			[][]interface{}{
 				{10, 20, 30},
 				{"1.", "2.", "test"},
@@ -219,7 +252,9 @@ func TestAggregate(t *testing.T) {
 			ArithmeticMean(valueCol),
 		)
 		require.Nil(t, err)
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64},
+		expected, _ := bow.NewBowFromColBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
 			[][]interface{}{
 				{10},
 				{3. / 2.},

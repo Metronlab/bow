@@ -11,20 +11,18 @@ import (
 func (b *bow) Diff(colNames ...string) (Bow, error) {
 	selectedCols, err := selectCols(b, colNames)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"bow.Diff error selecting columns [%s] on bow schema [%s]: %w",
-			colNames, b.Schema().String(), err)
+		return nil, fmt.Errorf("bow.Diff: %w", err)
 	}
 
 	for colIndex, col := range b.Schema().Fields() {
-		switch b.GetType(colIndex) {
+		switch b.ColumnType(colIndex) {
 		case Int64:
 		case Float64:
 		case Bool:
 		default:
 			return nil, fmt.Errorf(
-				"bow.Diff type error: column '%s' is of type '%s'",
-				col.Name, b.GetType(colIndex))
+				"bow.Diff: column '%s' is of unsupported type '%v'",
+				col.Name, b.ColumnType(colIndex))
 		}
 	}
 
@@ -35,7 +33,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 		go func(colIndex int, colName string) {
 			defer wg.Done()
 
-			typ := b.GetType(colIndex)
+			typ := b.ColumnType(colIndex)
 			if selectedCols[colIndex] {
 				buf := NewBuffer(b.NumRows(), typ, true)
 				for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
@@ -69,7 +67,5 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBowWithMetadata(
-		Metadata{b.Schema().Metadata()},
-		calcSeries...)
+	return NewBowWithMetadata(b.Metadata(), calcSeries...)
 }

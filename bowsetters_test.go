@@ -19,18 +19,18 @@ func TestBow_SetColName(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid", func(t *testing.T) {
-		res, err := b.SetColName(0, "newName")
+		res, err := b.RenameCol(0, "newName")
 		require.NoError(t, err)
 		assert.EqualValues(t, expected.String(), res.String())
 	})
 
 	t.Run("invalid colIndex", func(t *testing.T) {
-		_, err = b.SetColName(1, "newName")
+		_, err = b.RenameCol(1, "newName")
 		require.Error(t, err)
 	})
 
 	t.Run("invalid newName", func(t *testing.T) {
-		_, err = b.SetColName(0, "")
+		_, err = b.RenameCol(0, "")
 		require.Error(t, err)
 	})
 }

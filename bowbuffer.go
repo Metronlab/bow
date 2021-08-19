@@ -1,7 +1,6 @@
 package bow
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -11,12 +10,12 @@ type Buffer struct {
 	Valid []bool
 }
 
-func NewBuffer(size int, t Type, nullable bool) Buffer {
+func NewBuffer(size int, typ Type, nullable bool) Buffer {
 	var valid []bool
 	if nullable {
 		valid = make([]bool, size)
 	}
-	switch t {
+	switch typ {
 	case Float64:
 		return Buffer{
 			Value: make([]float64, size),
@@ -38,7 +37,7 @@ func NewBuffer(size int, t Type, nullable bool) Buffer {
 			Valid: valid,
 		}
 	default:
-		panic(fmt.Errorf("unknown type for buffer: %v", t))
+		panic(fmt.Errorf("bow.NewBuffer: unsupported type %v", typ))
 	}
 }
 
@@ -55,17 +54,17 @@ func NewBufferFromInterfaces(t Type, cells []interface{}) (Buffer, error) {
 	}())
 }
 
-func NewBufferFromInterfacesIter(t Type, length int, cells chan interface{}) (Buffer, error) {
-	if !t.IsSupported() {
+func NewBufferFromInterfacesIter(typ Type, length int, cells chan interface{}) (Buffer, error) {
+	if !typ.IsSupported() {
 		return Buffer{}, errors.New("bow: cannot create buffer of unknown type")
 	}
-	buff := NewBuffer(length, t, true)
+	buf := NewBuffer(length, typ, true)
 	i := 0
 	for c := range cells {
-		buff.SetOrDrop(i, c)
+		buf.SetOrDrop(i, c)
 		i++
 	}
-	return buff, nil
+	return buf, nil
 }
 
 func (b *Buffer) SetOrDrop(i int, value interface{}) {
@@ -79,24 +78,6 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	case []string:
 		v[i], b.Valid[i] = String.Convert(value).(string)
 	default:
-		panic(fmt.Errorf("unsupported buffer type %T", v))
+		panic(fmt.Errorf("bow.Buffer.SetOrDrop: unsupported type %T", v))
 	}
-}
-
-func seekType(cells []interface{}) (Type, error) {
-	for _, val := range cells {
-		if val != nil {
-			switch val.(type) {
-			case float64, json.Number:
-				return Float64, nil
-			case int, int64:
-				return Int64, nil
-			case string:
-				return String, nil
-			case bool:
-				return Bool, nil
-			}
-		}
-	}
-	return Float64, nil
 }
