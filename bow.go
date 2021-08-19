@@ -69,6 +69,10 @@ type Bow interface {
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refColName, toFillColName string) (Bow, error)
 
+	Find(columnIndex int, value interface{}) int
+	FindNext(columnIndex, rowIndex int, value interface{}) int
+	Contains(columnIndex int, value interface{}) bool
+
 	Equal(other Bow) bool
 	IsColEmpty(colIndex int) bool
 	IsColSorted(colIndex int) bool

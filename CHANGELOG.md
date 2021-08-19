@@ -1,3 +1,7 @@
+v0.16.0 [2021-08-?]
+-------------------
+- changed Find method and add Contains and FindNext
+
 v0.15.0 [2021-08-04]
 -------------------
 - Benchmarks and Profiling:
