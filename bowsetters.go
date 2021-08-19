@@ -2,13 +2,13 @@ package bow
 
 import "fmt"
 
-func (b *bow) NewColName(colIndex int, newName string) (Bow, error) {
+func (b *bow) RenameCol(colIndex int, newName string) (Bow, error) {
 	if colIndex >= b.NumCols() {
-		return nil, fmt.Errorf("bow.NewColName: column index out of bound")
+		return nil, fmt.Errorf("bow.RenameCol: column index out of bound")
 	}
 
 	if newName == "" {
-		return nil, fmt.Errorf("bow.NewColName: newName cannot be empty")
+		return nil, fmt.Errorf("bow.RenameCol: newName cannot be empty")
 	}
 
 	seriesSlice := make([]Series, b.NumCols())
