@@ -365,3 +365,13 @@ func (b *bow) NewSeriesFromCol(colIndex int) Series {
 		Array: b.Column(colIndex),
 	}
 }
+
+func getValiditySlice(arr array.Interface) []bool {
+	valid := make([]bool, arr.Len())
+
+	for i := 0; i < arr.Len(); i++ {
+		valid[i] = arr.IsValid(i)
+	}
+
+	return valid
+}

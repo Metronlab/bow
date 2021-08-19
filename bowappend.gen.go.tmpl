@@ -1,0 +1,62 @@
+package bow
+
+import (
+	"fmt"
+
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
+)
+
+// AppendBows attempts to append bows with equal schemas.
+// Different schemas will lead to undefined behavior.
+// Resulting metadata is copied from the first bow.
+func AppendBows(bows ...Bow) (Bow, error) {
+	if len(bows) == 0 {
+		return nil, nil
+	}
+
+	if len(bows) == 1 {
+		return bows[0], nil
+	}
+
+	numRows := 0
+	for _, b := range bows {
+		numRows += b.NumRows()
+	}
+
+	refBow := bows[0]
+	seriesSlice := make([]Series, refBow.NumCols())
+
+	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
+		var newArray array.Interface
+		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+		typ := refBow.ColumnType(colIndex)
+        switch typ {
+        {{range .Data.types -}}
+        case {{ .Type }}:
+			builder := array.New{{ .Type }}Builder(mem)
+			for _, b := range bows {
+				if t := b.ColumnType(colIndex); t != typ {
+					return nil, fmt.Errorf(
+						"bow.AppendBows: incompatible types %v and %v", typ, t)
+				}
+				data := b.Column(colIndex).Data()
+				arr := array.New{{ .Type }}Data(data)
+				v := {{ .Type }}Values(arr)
+				valid := getValiditySlice(arr)
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+        {{end -}}
+		default:
+			return nil, fmt.Errorf("unsupported type %v", typ)
+		}
+
+		seriesSlice[colIndex] = Series{
+			Name:  refBow.ColumnName(colIndex),
+			Array: newArray,
+		}
+	}
+
+	return NewBowWithMetadata(refBow.Metadata(), seriesSlice...)
+}
