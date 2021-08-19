@@ -1,12 +1,7 @@
 name: golangci-lint
-on:
-  push:
-    tags:
-      - v*
-    branches:
-      - main
-      - dev
-  pull_request:
+
+on: [push]
+
 jobs:
   golangci:
     name: lint
