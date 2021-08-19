@@ -67,11 +67,10 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 			defer wg.Done()
 			bitsToSet := make([]byte, b.NumRows())
 			colData := b.Column(toFillIndex).Data()
+			colBuf := b.NewBufferFromCol(toFillIndex)
 			switch b.ColumnType(toFillIndex) {
 			case Int64:
 				arr := array.NewInt64Data(colData)
-				values := arr.Int64Values()
-				valid := arr.NullBitmapBytes()
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if arr.IsValid(rowIndex) {
 						continue
@@ -87,20 +86,19 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 							tmp /= nextRef - prevRef
 							tmp *= nextToFill - prevToFill
 							tmp += prevToFill
-							values[rowIndex] = int64(math.Round(tmp))
+							colBuf.SetRegardless(rowIndex, int64(math.Round(tmp)))
 						} else {
-							values[rowIndex] = int64(prevToFill)
+							colBuf.SetRegardless(rowIndex, int64(prevToFill))
 						}
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
 				for rowIndex := range bitsToSet {
 					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						bitutil.SetBit(valid, rowIndex)
+						colBuf.SetAsValid(rowIndex)
 					}
 				}
-				arr.Data().Buffers()[0].Reset(valid)
-				arr.Data().Buffers()[1].Reset(arrow.Int64Traits.CastToBytes(values))
+
 				filledSeries[toFillIndex] = Series{Name: colName, Array: arr}
 			case Float64:
 				arr := array.NewFloat64Data(colData)
@@ -121,19 +119,20 @@ func (b *bow) FillLinear(refColName, toFillColName string) error {
 							values[rowIndex] /= nextRef - prevRef
 							values[rowIndex] *= nextToFill - prevToFill
 							values[rowIndex] += prevToFill
+							colBuf.SetRegardless(rowIndex, int64(math.Round(tmp)))
 						} else {
 							values[rowIndex] = prevToFill
+							colBuf.SetRegardless(rowIndex, int64(math.Round(tmp)))
 						}
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
 				for rowIndex := range bitsToSet {
 					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						bitutil.SetBit(valid, rowIndex)
+						colBuf.SetAsValid(rowIndex)
 					}
 				}
-				arr.Data().Buffers()[0].Reset(valid)
-				arr.Data().Buffers()[1].Reset(arrow.Float64Traits.CastToBytes(values))
+
 				filledSeries[toFillIndex] = Series{Name: colName, Array: arr}
 			}
 		}(colIndex, col.Name)
