@@ -108,7 +108,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		for i, field := range jsonB.Schema.Fields {
 			typ := getBowTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, typ)
-			seriesSlice[i] = NewSeries(field.Name, typ, buf.Data, buf.nullBitmapBytes)
+			seriesSlice[i] = NewSeriesFromBuffer(field.Name, buf)
 		}
 
 		tmpBow, err := NewBow(seriesSlice...)
@@ -127,7 +127,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 			buf.SetOrDrop(rowIndex, row[field.Name])
 		}
 
-		seriesSlice[fieldIndex] = NewSeries(field.Name, fieldType, buf.Data, buf.nullBitmapBytes)
+		seriesSlice[fieldIndex] = NewSeriesFromBuffer(field.Name, buf)
 	}
 
 	tmpBow, err := NewBow(seriesSlice...)

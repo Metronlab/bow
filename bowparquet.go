@@ -97,14 +97,12 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 			return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 		}
 
-		buf := NewBuffer(len(values), mapParquetToBowTypes[col.GetType()])
+		typ := mapParquetToBowTypes[col.GetType()]
+		buf := NewBuffer(len(values), typ)
 		for i, v := range values {
 			buf.SetOrDrop(i, v)
 		}
-		series[valueColIndex] = NewSeries(
-			originalColNames[colIndex],
-			mapParquetToBowTypes[col.GetType()],
-			buf.Data, buf.nullBitmapBytes)
+		series[valueColIndex] = NewSeriesFromBuffer(originalColNames[colIndex], buf)
 
 		pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
 		valueColIndex++

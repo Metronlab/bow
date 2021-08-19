@@ -122,10 +122,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
 
@@ -171,10 +168,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		case Boolean:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
 
@@ -220,10 +214,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
 
@@ -269,10 +260,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		}
 	}
 }
@@ -326,10 +314,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
 
@@ -367,10 +352,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		case Boolean:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
 
@@ -408,10 +390,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
 
@@ -449,10 +428,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		}
 		rightCol++
 	}
@@ -507,10 +483,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
@@ -522,10 +495,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		case Boolean:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
@@ -537,10 +507,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
@@ -552,15 +519,12 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeries(
-				left.ColumnName(colIndex),
-				left.ColumnType(colIndex),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
 		}
 	}
 
 	// Fill right bow columns
-	for col := left.NumCols(); col < newNumCols; col++ {
+	for colIndex := left.NumCols(); colIndex < newNumCols; colIndex++ {
 		newRow = 0
 		commonRow = 0
 		newBuf := NewBuffer(newNumRows, right.ColumnType(rightCol))
@@ -580,10 +544,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[col] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
 			// Fill common rows from right bow
@@ -596,10 +557,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[col] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		case Boolean:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
 			// Fill common rows from right bow
@@ -612,10 +570,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[col] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
 			// Fill common rows from right bow
@@ -628,10 +583,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 					commonRow++
 				}
 			}
-			newSeries[col] = NewSeries(
-				right.ColumnName(rightCol),
-				right.ColumnType(rightCol),
-				newBuf.Data, newBuf.nullBitmapBytes)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
 		}
 		rightCol++
 	}
