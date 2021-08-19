@@ -106,22 +106,6 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
-// SetRegardless of the validity bitmap
-func (b *Buffer) SetRegardless(i int, value interface{}) {
-	switch v := b.Value.(type) {
-	case []int64:
-		v[i], _ = value.(int64)
-	case []float64:
-		v[i], _ = value.(float64)
-	case []bool:
-		v[i], _ = value.(bool)
-	case []string:
-		v[i], _ = value.(string)
-	default:
-		panic(fmt.Errorf("unsupported type %T", v))
-	}
-}
-
 func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	switch v := b.Value.(type) {
 	case []int64:

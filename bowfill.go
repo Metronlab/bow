@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/bitutil"
 )
 
 // FillLinear fills the column toFillColName using the Linear interpolation method according
@@ -63,7 +62,6 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 		wg.Add(1)
 		go func(toFillIndex int, colName string) {
 			defer wg.Done()
-			bitsToSet := make([]byte, b.NumRows())
 			colData := b.Column(toFillIndex).Data()
 			colBuf := b.NewBufferFromCol(toFillIndex)
 			switch b.ColumnType(toFillIndex) {
@@ -84,11 +82,10 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 							tmp /= nextRef - prevRef
 							tmp *= nextToFill - prevToFill
 							tmp += prevToFill
-							colBuf.SetRegardless(rowIndex, int64(math.Round(tmp)))
+							colBuf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
 						} else {
-							colBuf.SetRegardless(rowIndex, int64(prevToFill))
+							colBuf.SetOrDropStrict(rowIndex, int64(prevToFill))
 						}
-						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
 			case Float64:
@@ -108,17 +105,11 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 							tmp /= nextRef - prevRef
 							tmp *= nextToFill - prevToFill
 							tmp += prevToFill
-							colBuf.SetRegardless(rowIndex, tmp)
+							colBuf.SetOrDropStrict(rowIndex, tmp)
 						} else {
-							colBuf.SetRegardless(rowIndex, prevToFill)
+							colBuf.SetOrDropStrict(rowIndex, prevToFill)
 						}
-						bitutil.SetBit(bitsToSet, rowIndex)
 					}
-				}
-			}
-			for rowIndex := range bitsToSet {
-				if bitutil.BitIsSet(bitsToSet, rowIndex) {
-					colBuf.SetAsValid(rowIndex)
 				}
 			}
 
@@ -164,7 +155,6 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
-			bitsToSet := make([]byte, b.NumRows())
 			colData := b.Column(colIndex).Data()
 			buf := b.NewBufferFromCol(colIndex)
 			switch b.ColumnType(colIndex) {
@@ -177,8 +167,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 					if prevRow > -1 && nextRow > -1 {
-						buf.SetRegardless(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
-						bitutil.SetBit(bitsToSet, rowIndex)
+						buf.SetOrDropStrict(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
 					}
 				}
 			case Float64:
@@ -190,14 +179,8 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 					prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 					if prevRow > -1 && nextRow > -1 {
-						buf.SetRegardless(rowIndex, (prevVal+nextVal)/2)
-						bitutil.SetBit(bitsToSet, rowIndex)
+						buf.SetOrDropStrict(rowIndex, (prevVal+nextVal)/2)
 					}
-				}
-			}
-			for rowIndex := range bitsToSet {
-				if bitutil.BitIsSet(bitsToSet, rowIndex) {
-					buf.SetAsValid(rowIndex)
 				}
 			}
 			filledSeries[colIndex] = NewSeries(colName, b.ColumnType(colIndex), buf.Value, buf.Valid)
@@ -238,7 +221,6 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
-			bitsToSet := make([]byte, b.NumRows())
 			prevData := b.Column(colIndex).Data()
 			buf := b.NewBufferFromCol(colIndex)
 			switch b.ColumnType(colIndex) {
@@ -250,8 +232,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
-						bitutil.SetBit(bitsToSet, rowIndex)
+						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
 			case Float64:
@@ -262,8 +243,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
-						bitutil.SetBit(bitsToSet, rowIndex)
+						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
 			case Bool:
@@ -274,8 +254,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
-						bitutil.SetBit(bitsToSet, rowIndex)
+						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
 			case String:
@@ -286,17 +265,11 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
-						bitutil.SetBit(bitsToSet, rowIndex)
+						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
 			default:
 				filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
-			}
-			for rowIndex := range bitsToSet {
-				if bitutil.BitIsSet(bitsToSet, rowIndex) {
-					buf.SetAsValid(rowIndex)
-				}
 			}
 			filledSeries[colIndex] = NewSeries(colName, b.ColumnType(colIndex), buf.Value, buf.Valid)
 		}(colIndex, col.Name)
