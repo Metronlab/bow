@@ -270,11 +270,11 @@ func (b *bow) ColumnType(colIndex int) Type {
 func (b *bow) ColumnIndex(colName string) (int, error) {
 	colIndices := b.Schema().FieldIndices(colName)
 	if len(colIndices) == 0 {
-		return -1, fmt.Errorf("bow.ColumnIndex: no column '%s'", colName)
+		return -1, fmt.Errorf("no column '%s'", colName)
 	}
 
 	if len(colIndices) > 1 {
-		return -1, fmt.Errorf("bow.ColumnIndex: several columns '%s'", colName)
+		return -1, fmt.Errorf("several columns '%s'", colName)
 	}
 
 	return colIndices[0], nil

@@ -57,7 +57,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
-		if colIndex != toFillIndex {
+		if colIndex != toFillIndex || b.Column(colIndex).NullN() == 0 {
 			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			continue
 		}
