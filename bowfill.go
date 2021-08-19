@@ -266,10 +266,10 @@ func fill(method string, b *bow, colNames ...string) error {
 			defer wg.Done()
 			bitsToSet := make([]byte, b.NumRows())
 			prevData := b.Column(colIndex).Data()
+			buf := b.NewBufferFromCol(colIndex)
 			switch b.ColumnType(colIndex) {
 			case Int64:
 				arr := array.NewInt64Data(prevData)
-				values := arr.Int64Values()
 				valid := arr.NullBitmapBytes()
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if arr.IsValid(rowIndex) {
@@ -277,7 +277,7 @@ func fill(method string, b *bow, colNames ...string) error {
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						values[rowIndex] = arr.Value(fillRowIndex)
+						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
@@ -286,8 +286,6 @@ func fill(method string, b *bow, colNames ...string) error {
 						bitutil.SetBit(valid, rowIndex)
 					}
 				}
-				arr.Data().Buffers()[0].Reset(valid)
-				arr.Data().Buffers()[1].Reset(arrow.Int64Traits.CastToBytes(values))
 				filledSeries[colIndex] = Series{Name: colName, Array: arr}
 			case Float64:
 				arr := array.NewFloat64Data(prevData)
