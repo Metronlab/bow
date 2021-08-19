@@ -5,7 +5,6 @@ import (
 	"math"
 	"sync"
 
-	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/bitutil"
 )
@@ -141,10 +140,10 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 // FillMean fills nil values of `colNames` columns (`colNames` defaults to all columns)
 // with the mean between the previous and the next values of the same column.
 // Fills only int64 and float64 types.
-func (b *bow) FillMean(colNames ...string) error {
+func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	toFillCols, err := selectCols(b, colNames)
 	if err != nil {
-		return fmt.Errorf("bow.FillMean: %w", err)
+		return nil, fmt.Errorf("bow.FillMean: %w", err)
 	}
 
 	for colIndex, col := range b.Schema().Fields() {
@@ -153,7 +152,7 @@ func (b *bow) FillMean(colNames ...string) error {
 			case Int64:
 			case Float64:
 			default:
-				return fmt.Errorf(
+				return nil, fmt.Errorf(
 					"bow.FillMean: column '%s' is of unsupported type '%s'",
 					col.Name, b.ColumnType(colIndex))
 			}
@@ -173,11 +172,10 @@ func (b *bow) FillMean(colNames ...string) error {
 			defer wg.Done()
 			bitsToSet := make([]byte, b.NumRows())
 			colData := b.Column(colIndex).Data()
+			buf := b.NewBufferFromCol(colIndex)
 			switch b.ColumnType(colIndex) {
 			case Int64:
 				arr := array.NewInt64Data(colData)
-				values := arr.Int64Values()
-				valid := arr.NullBitmapBytes()
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if arr.IsValid(rowIndex) {
 						continue
@@ -185,22 +183,12 @@ func (b *bow) FillMean(colNames ...string) error {
 					prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 					if prevRow > -1 && nextRow > -1 {
-						values[rowIndex] = int64(math.Round((prevVal + nextVal) / 2))
+						buf.SetRegardless(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				for rowIndex := range bitsToSet {
-					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						bitutil.SetBit(valid, rowIndex)
-					}
-				}
-				arr.Data().Buffers()[0].Reset(valid)
-				arr.Data().Buffers()[1].Reset(arrow.Int64Traits.CastToBytes(values))
-				filledSeries[colIndex] = Series{Name: colName, Array: arr}
 			case Float64:
 				arr := array.NewFloat64Data(colData)
-				values := arr.Float64Values()
-				valid := arr.NullBitmapBytes()
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if arr.IsValid(rowIndex) {
 						continue
@@ -208,30 +196,23 @@ func (b *bow) FillMean(colNames ...string) error {
 					prevVal, prevRow := b.GetPreviousFloat64(colIndex, rowIndex-1)
 					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
 					if prevRow > -1 && nextRow > -1 {
-						values[rowIndex] = (prevVal + nextVal) / 2
+						buf.SetRegardless(rowIndex, (prevVal+nextVal)/2)
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				for rowIndex := range bitsToSet {
-					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						bitutil.SetBit(valid, rowIndex)
-					}
-				}
-				arr.Data().Buffers()[0].Reset(valid)
-				arr.Data().Buffers()[1].Reset(arrow.Float64Traits.CastToBytes(values))
-				filledSeries[colIndex] = Series{Name: colName, Array: arr}
 			}
+			for rowIndex := range bitsToSet {
+				if bitutil.BitIsSet(bitsToSet, rowIndex) {
+					buf.SetAsValid(rowIndex)
+				}
+			}
+			filledSeries[colIndex] = NewSeries(colName, b.ColumnType(colIndex), buf.Value, buf.Valid)
+
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
 
-	tmpBow, err := NewBowWithMetadata(b.Metadata(), filledSeries...)
-	if err != nil {
-		return fmt.Errorf("bow.FillMean: %w", err)
-	}
-
-	b.Record = tmpBow.(*bow).Record
-	return nil
+	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
 // FillNext fills nil values of `colNames` columns (`colNames` defaults to all columns)

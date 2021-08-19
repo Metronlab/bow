@@ -45,7 +45,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean("b"))
+			b, err = b.FillMean("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -66,7 +67,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean())
+			b, err = b.FillMean()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -226,7 +228,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean("b"))
+			b, err = b.FillMean("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -247,7 +250,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean())
+			b, err = b.FillMean()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -474,8 +478,8 @@ func TestFill(t *testing.T) {
 					{-2, false, "ioi"},
 				})
 			require.NoError(t, err)
-
-			assert.Error(t, b.FillMean())
+			_, err = b.FillMean()
+			assert.Error(t, err)
 		})
 
 		t.Run("Linear", func(t *testing.T) {
@@ -543,7 +547,8 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.NoError(t, b3.FillMean())
+		b3, err = b3.FillMean()
+		require.NoError(t, err)
 		assert.Equal(t, expected.String(), b3.String())
 
 		// Linear
@@ -620,7 +625,8 @@ func benchFillMean(rows, cols int, typ Type, b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		require.NoError(b, data.FillMean())
+		data, err = data.FillMean()
+		require.NoError(b, err)
 	}
 }
 
