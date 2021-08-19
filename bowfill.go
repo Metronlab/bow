@@ -14,6 +14,7 @@ import (
 // FillLinear fills the column toFillColName using the Linear interpolation method according
 // to the reference column refColName, which has to be sorted.
 // Fills only int64 and float64 types.
+// TODO: use buffers
 func (b *bow) FillLinear(refColName, toFillColName string) error {
 	refIndex, err := b.ColumnIndex(refColName)
 	if err != nil {
