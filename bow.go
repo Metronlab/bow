@@ -64,8 +64,8 @@ type Bow interface {
 	DropNils(colNames ...string) (Bow, error)
 	SortByCol(colName string) (Bow, error)
 
-	FillPrevious(colNames ...string) error
-	FillNext(colNames ...string) error
+	FillPrevious(colNames ...string) (Bow, error)
+	FillNext(colNames ...string) (Bow, error)
 	FillMean(colNames ...string) error
 	FillLinear(refColName, toFillColName string) (Bow, error)
 

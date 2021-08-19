@@ -86,8 +86,8 @@ func TestFill(t *testing.T) {
 					{-2, 1, nil, nil, -8},
 				})
 			require.NoError(t, err)
-
-			require.NoError(t, b.FillNext("b"))
+			b, err = b.FillNext("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -108,7 +108,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext())
+			b, err = b.FillNext()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -129,7 +130,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious("b"))
+			b, err = b.FillPrevious("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -150,7 +152,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious())
+			b, err = b.FillPrevious()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -265,7 +268,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext("b"))
+			b, err = b.FillNext("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -286,7 +290,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext())
+			b, err = b.FillNext()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -307,7 +312,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious("b"))
+			b, err = b.FillPrevious("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -328,7 +334,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious())
+			b, err = b.FillPrevious()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -414,7 +421,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious())
+			b, err = b.FillPrevious()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -447,7 +455,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext())
+			b, err = b.FillNext()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -502,7 +511,8 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.NoError(t, b1.FillPrevious())
+		b1, err = b1.FillPrevious()
+		require.NoError(t, err)
 		assert.Equal(t, expected.String(), b1.String())
 
 		// Next
@@ -517,7 +527,8 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.NoError(t, b2.FillNext())
+		b2, err = b2.FillNext()
+		require.NoError(t, err)
 		assert.Equal(t, expected.String(), b2.String())
 
 		// Mean
@@ -581,7 +592,8 @@ func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		require.NoError(b, data.FillPrevious())
+		data, err = data.FillPrevious()
+		require.NoError(b, err)
 	}
 }
 
@@ -594,7 +606,8 @@ func benchFillNext(rows, cols int, typ Type, b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		require.NoError(b, data.FillNext())
+		data, err = data.FillNext()
+		require.NoError(b, err)
 	}
 }
 

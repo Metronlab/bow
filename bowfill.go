@@ -8,7 +8,6 @@ import (
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/bitutil"
-	"github.com/apache/arrow/go/arrow/memory"
 )
 
 // FillLinear fills the column toFillColName using the Linear interpolation method according
@@ -237,20 +236,20 @@ func (b *bow) FillMean(colNames ...string) error {
 
 // FillNext fills nil values of `colNames` columns (`colNames` defaults to all columns)
 // using NOCB (Next Obs. Carried Backward) method.
-func (b *bow) FillNext(colNames ...string) error {
+func (b *bow) FillNext(colNames ...string) (Bow, error) {
 	return fill("Next", b, colNames...)
 }
 
 // FillPrevious fills nil values of `colNames` columns (`colNames` defaults to all columns)
 // using LOCF (Last Obs. Carried Forward) method.
-func (b *bow) FillPrevious(colNames ...string) error {
+func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
 	return fill("Previous", b, colNames...)
 }
 
-func fill(method string, b *bow, colNames ...string) error {
+func fill(method string, b *bow, colNames ...string) (Bow, error) {
 	toFillCols, err := selectCols(b, colNames)
 	if err != nil {
-		return fmt.Errorf("bow.Fill%s: %w", method, err)
+		return nil, fmt.Errorf("bow.Fill%s: %w", method, err)
 	}
 
 	var wg sync.WaitGroup
@@ -270,7 +269,6 @@ func fill(method string, b *bow, colNames ...string) error {
 			switch b.ColumnType(colIndex) {
 			case Int64:
 				arr := array.NewInt64Data(prevData)
-				valid := arr.NullBitmapBytes()
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if arr.IsValid(rowIndex) {
 						continue
@@ -281,89 +279,56 @@ func fill(method string, b *bow, colNames ...string) error {
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				for rowIndex := range bitsToSet {
-					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						bitutil.SetBit(valid, rowIndex)
-					}
-				}
-				filledSeries[colIndex] = Series{Name: colName, Array: arr}
 			case Float64:
 				arr := array.NewFloat64Data(prevData)
-				values := arr.Float64Values()
-				valid := arr.NullBitmapBytes()
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if arr.IsValid(rowIndex) {
 						continue
 					}
-
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						values[rowIndex] = arr.Value(fillRowIndex)
+						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
 						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				for rowIndex := range bitsToSet {
-					if bitutil.BitIsSet(bitsToSet, rowIndex) {
-						bitutil.SetBit(valid, rowIndex)
-					}
-				}
-				arr.Data().Buffers()[0].Reset(valid)
-				arr.Data().Buffers()[1].Reset(arrow.Float64Traits.CastToBytes(values))
-				filledSeries[colIndex] = Series{Name: colName, Array: arr}
 			case Bool:
-				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 				arr := array.NewBooleanData(prevData)
-				valid := getValiditySlice(arr)
-				values := make([]bool, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if valid[rowIndex] {
-						values[rowIndex] = arr.Value(rowIndex)
+					if arr.IsValid(rowIndex) {
 						continue
 					}
-
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						values[rowIndex] = arr.Value(fillRowIndex)
-						valid[rowIndex] = true
+						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
+						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				build := array.NewBooleanBuilder(mem)
-				build.AppendValues(values, valid)
-				filledSeries[colIndex] = Series{Name: colName, Array: build.NewArray()}
 			case String:
-				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 				arr := array.NewStringData(prevData)
-				valid := getValiditySlice(arr)
-				values := make([]string, b.NumRows())
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if valid[rowIndex] {
-						values[rowIndex] = arr.Value(rowIndex)
+					if arr.IsValid(rowIndex) {
 						continue
 					}
-
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						values[rowIndex] = arr.Value(fillRowIndex)
-						valid[rowIndex] = true
+						buf.SetRegardless(rowIndex, arr.Value(fillRowIndex))
+						bitutil.SetBit(bitsToSet, rowIndex)
 					}
 				}
-				build := array.NewStringBuilder(mem)
-				build.AppendValues(values, valid)
-				filledSeries[colIndex] = Series{Name: colName, Array: build.NewArray()}
 			default:
 				filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			}
+			for rowIndex := range bitsToSet {
+				if bitutil.BitIsSet(bitsToSet, rowIndex) {
+					buf.SetAsValid(rowIndex)
+				}
+			}
+			filledSeries[colIndex] = NewSeries(colName, b.ColumnType(colIndex), buf.Value, buf.Valid)
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
 
-	tmpBow, err := NewBowWithMetadata(b.Metadata(), filledSeries...)
-	if err != nil {
-		return fmt.Errorf("bow.Fill%s: %w", method, err)
-	}
-
-	b.Record = tmpBow.(*bow).Record
-	return nil
+	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
 func getFillRowIndex(b Bow, method string, colIndex, rowIndex int) int {
