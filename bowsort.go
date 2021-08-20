@@ -64,8 +64,8 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	arr := builder.NewArray()
 
 	// Fill the sort by column with sorted values
-	sortedSeries := make([]Series, b.NumCols())
-	sortedSeries[colToSortByIndex] = Series{Name: colName, Array: arr}
+	sortedSeries := make([]PrevSeries, b.NumCols())
+	sortedSeries[colToSortByIndex] = PrevSeries{Name: colName, Array: arr}
 
 	// Reflect row order changes to fill the other columns
 	var wg sync.WaitGroup
@@ -90,7 +90,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 					}
 				}
 
-				sortedSeries[colIndex] = Series{
+				sortedSeries[colIndex] = PrevSeries{
 					Name: b.ColumnName(colIndex),
 					Array: array.NewInt64Data(
 						array.NewData(arrow.PrimitiveTypes.Int64, b.NumRows(),
@@ -111,7 +111,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 					}
 				}
 
-				sortedSeries[colIndex] = Series{
+				sortedSeries[colIndex] = PrevSeries{
 					Name: b.ColumnName(colIndex),
 					Array: array.NewFloat64Data(
 						array.NewData(arrow.PrimitiveTypes.Float64, b.NumRows(),
@@ -134,7 +134,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 				builder := array.NewBooleanBuilder(mem)
 				builder.AppendValues(newValues, newValid)
-				sortedSeries[colIndex] = Series{
+				sortedSeries[colIndex] = PrevSeries{
 					Name:  b.ColumnName(colIndex),
 					Array: builder.NewArray(),
 				}
@@ -151,7 +151,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 				builder := array.NewStringBuilder(mem)
 				builder.AppendValues(newValues, newValid)
-				sortedSeries[colIndex] = Series{
+				sortedSeries[colIndex] = PrevSeries{
 					Name:  b.ColumnName(colIndex),
 					Array: builder.NewArray(),
 				}

@@ -56,7 +56,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	}
 	buf := b.NewBufferFromCol(toFillIndex)
 
-	filledSeries := make([]Series, b.NumCols())
+	filledSeries := make([]PrevSeries, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		if colIndex != toFillIndex {
 			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
@@ -97,7 +97,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			}
 		}
 
-		filledSeries[toFillIndex] = NewSeriesFromBuffer(col.Name, buf)
+		filledSeries[toFillIndex] = NewPrevSeriesFromBuffer(col.Name, buf)
 	}
 
 	return NewBowWithMetadata(b.Metadata(), filledSeries...)
@@ -126,7 +126,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	}
 
 	var wg sync.WaitGroup
-	filledSeries := make([]Series, b.NumCols())
+	filledSeries := make([]PrevSeries, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		if !toFillCols[colIndex] || b.Column(colIndex).NullN() == 0 {
 			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
@@ -154,7 +154,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 				}
 			}
 
-			filledSeries[colIndex] = NewSeriesFromBuffer(colName, buf)
+			filledSeries[colIndex] = NewPrevSeriesFromBuffer(colName, buf)
 
 		}(colIndex, col.Name)
 	}
@@ -182,7 +182,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 	}
 
 	var wg sync.WaitGroup
-	filledSeries := make([]Series, b.NumCols())
+	filledSeries := make([]PrevSeries, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		if !toFillCols[colIndex] || b.Column(colIndex).NullN() == 0 {
 			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
@@ -244,7 +244,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 				filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			}
 
-			filledSeries[colIndex] = NewSeriesFromBuffer(colName, buf)
+			filledSeries[colIndex] = NewPrevSeriesFromBuffer(colName, buf)
 
 		}(colIndex, col.Name)
 	}

@@ -115,7 +115,7 @@ func NewGenBow(options ...Option) (Bow, error) {
 		return nil, fmt.Errorf("bow.NewGenBow: GenRefCol cannot be of type Boolean")
 	}
 
-	seriesSlice := make([]Series, f.cols)
+	seriesSlice := make([]PrevSeries, f.cols)
 	for i := range seriesSlice {
 		if i == f.refCol {
 			seriesSlice[i] = newSortedRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.descSort)
@@ -127,8 +127,8 @@ func NewGenBow(options ...Option) (Bow, error) {
 	return NewBow(seriesSlice...)
 }
 
-func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Series {
-	buf := NewBuffer(size, typ)
+func newSortedRandomSeries(name string, typ Type, size int, descSort bool) PrevSeries {
+	buf := NewSeries(size, typ)
 	switch typ {
 	case Int64:
 		var base int64
@@ -173,11 +173,11 @@ func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Serie
 		panic("unsupported data type")
 	}
 
-	return NewSeriesFromBuffer(name, buf)
+	return NewPrevSeriesFromBuffer(name, buf)
 }
 
-func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
-	buf := NewBuffer(size, typ)
+func newRandomSeries(name string, typ Type, size int, missingData bool) PrevSeries {
+	buf := NewSeries(size, typ)
 	for row := 0; row < size; row++ {
 		buf.SetOrDrop(row, newRandomNumber(typ))
 	}
@@ -196,7 +196,7 @@ func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
 		}
 	}
 
-	return NewSeriesFromBuffer(name, buf)
+	return NewPrevSeriesFromBuffer(name, buf)
 }
 
 func newRandomIncreasingNumber(typ Type, base interface{}) interface{} {

@@ -3,6 +3,7 @@ package bow
 import (
 	"errors"
 	"fmt"
+	"github.com/apache/arrow/go/arrow/bitutil"
 	"reflect"
 
 	"github.com/apache/arrow/go/arrow"
@@ -23,7 +24,6 @@ type Bow interface {
 
 	ColumnType(colIndex int) Type
 	ColumnIndex(colName string) (int, error)
-	NewBufferFromCol(colIndex int) Buffer
 	NewSeriesFromCol(colIndex int) Series
 	Metadata() Metadata
 	SetMetadata(key, value string) Bow
@@ -135,25 +135,18 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 			"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and colTypes len")
 	}
 
-	bufSlice := make([]Buffer, len(colNames))
-	for i := range bufSlice {
-		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i])
-	}
-
-	for rowIndex, row := range rowBasedData {
-		if len(row) != len(colNames) {
-			return nil, errors.New(
-				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
-		}
-
-		for colIndex := range colNames {
-			bufSlice[colIndex].SetOrDrop(rowIndex, row[colIndex])
-		}
-	}
-
 	seriesSlice := make([]Series, len(colNames))
-	for i := range colNames {
-		seriesSlice[i] = NewSeriesFromBuffer(colNames[i], bufSlice[i])
+	for i := range seriesSlice {
+		seriesSlice[i] = NewSeries(colNames[i], len(rowBasedData), colTypes[i])
+
+		for rowIndex, row := range rowBasedData {
+			if len(row) != len(colNames) {
+				return nil, errors.New(
+					"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
+			}
+
+			seriesSlice[i].SetOrDrop(rowIndex, row[i])
+		}
 	}
 
 	return NewBow(seriesSlice...)
@@ -357,13 +350,6 @@ func (b *bow) AddCols(seriesSlice ...Series) (Bow, error) {
 	}
 
 	return NewBowWithMetadata(b.Metadata(), newSeriesSlice...)
-}
-
-func (b *bow) NewSeriesFromCol(colIndex int) Series {
-	return Series{
-		Name:  b.ColumnName(colIndex),
-		Array: b.Column(colIndex),
-	}
 }
 
 func getValiditySlice(arr array.Interface) []bool {

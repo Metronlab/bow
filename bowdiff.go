@@ -28,7 +28,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	}
 
 	var wg sync.WaitGroup
-	calcSeries := make([]Series, b.NumCols())
+	calcSeries := make([]PrevSeries, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		if !selectedCols[colIndex] {
 			calcSeries[colIndex] = b.NewSeriesFromCol(colIndex)
@@ -40,7 +40,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 			defer wg.Done()
 			colType := b.ColumnType(colIndex)
 			colBuf := b.NewBufferFromCol(colIndex)
-			calcBuf := NewBuffer(b.NumRows(), colType)
+			calcBuf := NewSeries(b.NumRows(), colType)
 			for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
 				valid := b.Column(colIndex).IsValid(rowIndex) &&
 					b.Column(colIndex).IsValid(rowIndex-1)
@@ -63,7 +63,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 				}
 			}
 
-			calcSeries[colIndex] = NewSeriesFromBuffer(colName, calcBuf)
+			calcSeries[colIndex] = NewPrevSeriesFromBuffer(colName, calcBuf)
 
 		}(colIndex, col.Name)
 	}

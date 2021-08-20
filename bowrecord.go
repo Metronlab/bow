@@ -19,10 +19,10 @@ func newRecord(metadata Metadata, series ...Series) (array.Record, error) {
 
 	for _, s := range series {
 		if s.Array == nil {
-			return nil, errors.New("empty Series")
+			return nil, errors.New("empty PrevSeries")
 		}
 		if s.Name == "" {
-			return nil, errors.New("empty Series name")
+			return nil, errors.New("empty PrevSeries name")
 		}
 		if getBowTypeFromArrowType(s.Array.DataType()) == Unknown {
 			return nil, fmt.Errorf("unsupported type: %s", s.Array.DataType().Name())
@@ -30,7 +30,7 @@ func newRecord(metadata Metadata, series ...Series) (array.Record, error) {
 		if int64(s.Array.Len()) != nRows {
 			return nil,
 				fmt.Errorf(
-					"bow.Series '%s' has a length of %d, which is different from the previous ones",
+					"bow.PrevSeries '%s' has a length of %d, which is different from the previous ones",
 					s.Name, s.Array.Len())
 		}
 		fields = append(fields, arrow.Field{Name: s.Name, Type: s.Array.DataType()})

@@ -177,8 +177,8 @@ func (it *intervalRollingIter) validateAggregation(aggr ColAggregation, newIndex
 }
 
 // For each colIndex aggregation, gives a series with each point resulting from a window aggregation.
-func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.Series, error) {
-	seriesSlice := make([]bow.Series, len(aggrs))
+func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.PrevSeries, error) {
+	seriesSlice := make([]bow.PrevSeries, len(aggrs))
 
 	for colIndex, aggregation := range aggrs {
 		itCopy := *it
@@ -193,24 +193,24 @@ func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.S
 			colName = itCopy.bow.ColumnName(aggregation.InputIndex())
 		}
 
-		seriesSlice[colIndex] = bow.NewSeriesFromBuffer(colName, buf)
+		seriesSlice[colIndex] = bow.NewPrevSeriesFromBuffer(colName, buf)
 	}
 
 	return seriesSlice, nil
 }
 
-func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggregation) (bow.Buffer, error) {
-	var buf bow.Buffer
+func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggregation) (bow.Series, error) {
+	var buf bow.Series
 
 	switch aggr.Type() {
 	case bow.Int64, bow.Float64, bow.Boolean:
-		buf = bow.NewBuffer(it.numWindows, aggr.Type())
+		buf = bow.NewSeries(it.numWindows, aggr.Type())
 	case bow.InputDependent:
 		cType := it.bow.ColumnType(aggr.InputIndex())
-		buf = bow.NewBuffer(it.numWindows, cType)
+		buf = bow.NewSeries(it.numWindows, cType)
 	case bow.IteratorDependent:
 		iType := it.bow.ColumnType(it.colIndex)
-		buf = bow.NewBuffer(it.numWindows, iType)
+		buf = bow.NewSeries(it.numWindows, iType)
 	default:
 		return buf, fmt.Errorf(
 			"aggregation %d has invalid return type %s", colIndex, aggr.Type())

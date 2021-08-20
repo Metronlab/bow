@@ -11,10 +11,10 @@ func (b *bow) RenameCol(colIndex int, newName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.RenameCol: newName cannot be empty")
 	}
 
-	seriesSlice := make([]Series, b.NumCols())
+	seriesSlice := make([]PrevSeries, b.NumCols())
 	for i, col := range b.Columns() {
 		if i == colIndex {
-			seriesSlice[i] = Series{
+			seriesSlice[i] = PrevSeries{
 				Name:  newName,
 				Array: col,
 			}

@@ -53,7 +53,7 @@ func validateAggr(b bow.Bow, aggr rolling.ColAggregation) error {
 
 // TODO: optimize this function with concurrency and less memory usage for accessing intervalCol data
 func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (bow.Bow, error) {
-	seriesSlice := make([]bow.Series, len(aggrs))
+	seriesSlice := make([]bow.PrevSeries, len(aggrs))
 
 	for writeColIndex, aggr := range aggrs {
 		name := aggr.OutputName()
@@ -66,12 +66,12 @@ func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (
 			b.ColumnType(aggr.InputIndex()))
 
 		if b.NumRows() == 0 {
-			buf := bow.NewBuffer(0, typ)
-			seriesSlice[writeColIndex] = bow.NewSeriesFromBuffer(name, buf)
+			buf := bow.NewSeries(0, typ)
+			seriesSlice[writeColIndex] = bow.NewPrevSeriesFromBuffer(name, buf)
 			continue
 		}
 
-		buf := bow.NewBuffer(1, typ)
+		buf := bow.NewSeries(1, typ)
 
 		firstIndex := -1
 		if b.NumRows() > 0 {
@@ -107,7 +107,7 @@ func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (
 		}
 
 		buf.SetOrDrop(0, val)
-		seriesSlice[writeColIndex] = bow.NewSeriesFromBuffer(name, buf)
+		seriesSlice[writeColIndex] = bow.NewPrevSeriesFromBuffer(name, buf)
 	}
 
 	return bow.NewBow(seriesSlice...)

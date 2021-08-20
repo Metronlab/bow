@@ -144,7 +144,7 @@ func (it *intervalRollingIter) interpolateWindow(interps []ColInterpolation, w *
 	}
 
 	// missing start
-	seriesSlice := make([]bow.Series, len(interps))
+	seriesSlice := make([]bow.PrevSeries, len(interps))
 	for colIndex, interpolation := range interps {
 		colType := w.Bow.ColumnType(interpolation.colIndex)
 
@@ -153,10 +153,10 @@ func (it *intervalRollingIter) interpolateWindow(interps []ColInterpolation, w *
 			return nil, err
 		}
 
-		buf := bow.NewBuffer(1, colType)
+		buf := bow.NewSeries(1, colType)
 		buf.SetOrDrop(0, interpolatedValue)
 
-		seriesSlice[colIndex] = bow.NewSeriesFromBuffer(w.Bow.ColumnName(interpolation.colIndex), buf)
+		seriesSlice[colIndex] = bow.NewPrevSeriesFromBuffer(w.Bow.ColumnName(interpolation.colIndex), buf)
 	}
 
 	startBow, err := bow.NewBow(seriesSlice...)
