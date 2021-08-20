@@ -1,0 +1,35 @@
+package bow
+
+import (
+	"fmt"
+	"reflect"
+)
+
+func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
+	switch typ {
+    {{range .Data.types -}}
+	case {{ .Type }}:
+		data, ok := dataArray.([]{{ .type }})
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(dataArray)))
+		}
+		return new{{ .Type }}Series(name, data,
+			buildNullBitmapBytes(len(data), validityArray))
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type %v", typ))
+	}
+}
+
+func NewSeriesFromBuffer(name string, buf Buffer) Series {
+	switch data := buf.Data.(type) {
+    {{range .Data.types -}}
+	case []{{ .type }}:
+		return new{{ .Type }}Series(name, data, buf.nullBitmapBytes)
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type '%T'", buf.Data))
+	}
+}

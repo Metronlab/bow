@@ -70,7 +70,7 @@ func ToFloat64(i interface{}) (float64, bool) {
 	}
 }
 
-func ToBool(i interface{}) (bool, bool) {
+func ToBoolean(i interface{}) (bool, bool) {
 	switch v := i.(type) {
 	case bool:
 		return v, true

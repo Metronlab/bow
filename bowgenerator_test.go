@@ -9,69 +9,69 @@ import (
 
 func TestGenerator(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
-		bow, err := NewGenBow()
+		b, err := NewGenBow()
 		assert.Nil(t, err)
-		assert.Equal(t, 10, bow.NumRows())
-		assert.Equal(t, 10, bow.NumCols())
-		assert.Equal(t, Int64, bow.ColumnType(0))
+		assert.Equal(t, 10, b.NumRows())
+		assert.Equal(t, 10, b.NumCols())
+		assert.Equal(t, Int64, b.ColumnType(0))
 
-		bow2, err := bow.DropNils()
+		b2, err := b.DropNils()
 		assert.Nil(t, err)
-		assert.Equal(t, bow, bow2)
-		assert.True(t, bow2.Equal(bow), fmt.Sprintf("want %v\ngot %v", bow, bow2))
+		assert.Equal(t, b, b2)
+		assert.True(t, b2.Equal(b), fmt.Sprintf("want %v\ngot %v", b, b2))
 	})
 
 	t.Run("with missing data", func(t *testing.T) {
-		bow, err := NewGenBow(GenMissingData(true))
+		b, err := NewGenBow(GenMissingData(true))
 		assert.Nil(t, err)
-		bow2, err := bow.DropNils()
+		b2, err := b.DropNils()
 		assert.Nil(t, err)
-		assert.Less(t, bow2.NumRows(), bow.NumRows())
+		assert.Less(t, b2.NumRows(), b.NumRows())
 	})
 
 	t.Run("float64 with first column sorted", func(t *testing.T) {
-		bow, err := NewGenBow(GenRows(8), GenCols(2), GenDataType(Float64), GenRefCol(0, false))
+		b, err := NewGenBow(GenRows(8), GenCols(2), GenDataType(Float64), GenRefCol(0, false))
 		assert.Nil(t, err)
 
-		assert.Equal(t, 8, bow.NumRows())
-		assert.Equal(t, 2, bow.NumCols())
-		assert.Equal(t, Float64, bow.ColumnType(0))
-		assert.Equal(t, Float64, bow.ColumnType(1))
-		sorted := bow.IsColSorted(0)
+		assert.Equal(t, 8, b.NumRows())
+		assert.Equal(t, 2, b.NumCols())
+		assert.Equal(t, Float64, b.ColumnType(0))
+		assert.Equal(t, Float64, b.ColumnType(1))
+		sorted := b.IsColSorted(0)
 		assert.True(t, sorted)
 	})
 
 	t.Run("descending sort on last column", func(t *testing.T) {
-		bow, err := NewGenBow(GenRefCol(9, true))
+		b, err := NewGenBow(GenRefCol(9, true))
 		assert.Nil(t, err)
-		sorted := bow.IsColSorted(9)
+		sorted := b.IsColSorted(9)
 		assert.True(t, sorted)
 	})
 
 	t.Run("custom names and types", func(t *testing.T) {
-		bow, err := NewGenBow(
+		b, err := NewGenBow(
 			GenCols(4),
 			GenColNames([]string{"A", "B", "C", "D"}),
-			GenDataTypes([]Type{Int64, Float64, String, Bool}),
+			GenDataTypes([]Type{Int64, Float64, String, Boolean}),
 			GenRefCol(0, true),
 		)
 		assert.Nil(t, err)
 
-		sorted := bow.IsColSorted(0)
+		sorted := b.IsColSorted(0)
 		assert.True(t, sorted)
 
-		n := bow.ColumnName(0)
+		n := b.ColumnName(0)
 		assert.Equal(t, "A", n)
-		n = bow.ColumnName(1)
+		n = b.ColumnName(1)
 		assert.Equal(t, "B", n)
-		n = bow.ColumnName(2)
+		n = b.ColumnName(2)
 		assert.Equal(t, "C", n)
-		n = bow.ColumnName(3)
+		n = b.ColumnName(3)
 		assert.Equal(t, "D", n)
 
-		assert.Equal(t, Int64, bow.ColumnType(0))
-		assert.Equal(t, Float64, bow.ColumnType(1))
-		assert.Equal(t, String, bow.ColumnType(2))
-		assert.Equal(t, Bool, bow.ColumnType(3))
+		assert.Equal(t, Int64, b.ColumnType(0))
+		assert.Equal(t, Float64, b.ColumnType(1))
+		assert.Equal(t, String, b.ColumnType(2))
+		assert.Equal(t, Boolean, b.ColumnType(3))
 	})
 }
