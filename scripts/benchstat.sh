@@ -1,6 +1,9 @@
 #!/bin/bash
 
-: ${BENCH_COMPARISON_RESULTS:="benchstat.txt"}
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+
+: ${BENCH_RESULTS_DIR_PATH:=/tmp/benchmarks}
+: ${BENCH_COMPARISON_FILE_PATH:=/tmp/benchmarks/benchstat.${TIMESTAMP}.txt}
 
 old_bench_file=$1
 new_bench_file=$2
@@ -20,4 +23,6 @@ then
     exit 0
 fi
 
-benchstat -delta-test none "$old_bench_file" "$new_bench_file" | tee "${BENCH_COMPARISON_RESULTS}"
+mkdir -p ${BENCH_RESULTS_DIR_PATH}
+
+benchstat -delta-test none "$old_bench_file" "$new_bench_file" | tee "${BENCH_COMPARISON_FILE_PATH}"

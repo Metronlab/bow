@@ -37,7 +37,7 @@ jobs:
       BENCH_RESULTS_DIR_PATH: benchmarks
       BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
       BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
-      BENCH_COMPARISON_RESULTS: ${{ format('benchmarks/comparison-{0}-versus-{1}.txt', github.base_ref, github.sha) }}
+      BENCH_COMPARISON_FILE_PATH: ${{ format('benchmarks/comparison-{0}-vs-{1}.txt', github.base_ref, github.sha) }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -56,11 +56,19 @@ jobs:
         run: |
           go get golang.org/x/perf/cmd/benchstat
           bash -c ./scripts/benchmark.sh
+
       - name: ${{ format('Compare benchmarks of current branch with {0}', github.base_ref) }}
         run: |
           bash ./scripts/benchstat.sh $BENCH_RESULTS_FILE_PATH $BENCH_RESULTS_CURR_FILE_PATH
+
       - name: Upload artifact of base branch benchmark results
         uses: actions/upload-artifact@v2
         with:
+          name: base-branch-benchmark-results
+          path: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
+
+      - name: Upload artifact of benchmark comparison results
+        uses: actions/upload-artifact@v2
+        with:
           name: benchmark-comparison-results
-          path: ${{ format('benchmarks/comparison-{0}-versus-{1}.txt', github.base_ref, github.sha) }}
+          path: ${{ format('benchmarks/comparison-{0}-vs-{1}.txt', github.base_ref, github.sha) }}
