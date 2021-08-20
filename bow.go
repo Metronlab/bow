@@ -58,7 +58,7 @@ type Bow interface {
 
 	Diff(colNames ...string) (Bow, error)
 
-	Slice(i, j int) Bow
+	NewSlice(i, j int) Bow
 	Select(colNames ...string) (Bow, error)
 	NewEmptySlice() Bow
 	DropNils(colNames ...string) (Bow, error)
@@ -160,7 +160,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 }
 
 func (b *bow) NewEmptySlice() Bow {
-	return b.Slice(0, 0)
+	return b.NewSlice(0, 0)
 }
 
 // DropNils drops any row that contains a nil for any of `colNames`.
@@ -201,10 +201,10 @@ func (b *bow) DropNils(colNames ...string) (Bow, error) {
 	bowSlice := make([]Bow, len(droppedRowIndices)+1)
 	var curr int
 	for i, droppedRowIndex := range droppedRowIndices {
-		bowSlice[i] = b.Slice(curr, droppedRowIndex)
+		bowSlice[i] = b.NewSlice(curr, droppedRowIndex)
 		curr = droppedRowIndex + 1
 	}
-	bowSlice[len(droppedRowIndices)] = b.Slice(curr, b.NumRows())
+	bowSlice[len(droppedRowIndices)] = b.NewSlice(curr, b.NumRows())
 
 	return AppendBows(bowSlice...)
 }
@@ -292,7 +292,7 @@ func (b *bow) Equal(other Bow) bool {
 	return true
 }
 
-func (b *bow) Slice(i, j int) Bow {
+func (b *bow) NewSlice(i, j int) Bow {
 	return &bow{
 		Record: b.Record.NewSlice(int64(i), int64(j)),
 	}

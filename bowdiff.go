@@ -62,6 +62,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 					calcBuf.SetOrDrop(rowIndex, currVal != prevVal)
 				}
 			}
+
 			calcSeries[colIndex] = NewSeriesFromBuffer(colName, calcBuf)
 
 		}(colIndex, col.Name)

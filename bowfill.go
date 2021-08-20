@@ -54,59 +54,46 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	if b.Column(toFillIndex).NullN() == 0 {
 		return b, nil
 	}
+	buf := b.NewBufferFromCol(toFillIndex)
 
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
-		if colIndex != toFillIndex || b.Column(colIndex).NullN() == 0 {
+		if colIndex != toFillIndex {
 			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			continue
 		}
 
-		buf := b.NewBufferFromCol(toFillIndex)
-		switch b.ColumnType(toFillIndex) {
-		case Int64:
-			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-				if b.Column(toFillIndex).IsValid(rowIndex) {
-					continue
-				}
-				prevToFill, rowPrev := b.GetPrevFloat64(toFillIndex, rowIndex-1)
-				nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
-				rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
-				prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
-				nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
-				if valid1 && valid2 && valid3 {
-					if nextRef-prevRef != 0 {
-						tmp := rowRef - prevRef
-						tmp /= nextRef - prevRef
-						tmp *= nextToFill - prevToFill
-						tmp += prevToFill
-						buf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
-					} else {
-						buf.SetOrDropStrict(rowIndex, int64(prevToFill))
-					}
+		for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
+			if buf.IsValid(rowIndex) {
+				continue
+			}
+			prevToFill, rowPrev := b.GetPrevFloat64(toFillIndex, rowIndex-1)
+			nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
+			rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
+			prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
+			nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
+			if !valid1 || !valid2 || !valid3 {
+				continue
+			}
+
+			if nextRef-prevRef == 0 {
+				switch b.ColumnType(toFillIndex) {
+				case Int64:
+					buf.SetOrDropStrict(rowIndex, int64(prevToFill))
+				case Float64:
+					buf.SetOrDropStrict(rowIndex, prevToFill)
 				}
 			}
-		case Float64:
-			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-				if b.Column(toFillIndex).IsValid(rowIndex) {
-					continue
-				}
-				prevToFill, rowPrev := b.GetPrevFloat64(toFillIndex, rowIndex-1)
-				nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
-				rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
-				prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
-				nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
-				if valid1 && valid2 && valid3 {
-					if nextRef-prevRef != 0.0 {
-						tmp := rowRef - prevRef
-						tmp /= nextRef - prevRef
-						tmp *= nextToFill - prevToFill
-						tmp += prevToFill
-						buf.SetOrDropStrict(rowIndex, tmp)
-					} else {
-						buf.SetOrDropStrict(rowIndex, prevToFill)
-					}
-				}
+
+			tmp := rowRef - prevRef
+			tmp /= nextRef - prevRef
+			tmp *= nextToFill - prevToFill
+			tmp += prevToFill
+			switch b.ColumnType(toFillIndex) {
+			case Int64:
+				buf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
+			case Float64:
+				buf.SetOrDropStrict(rowIndex, tmp)
 			}
 		}
 
@@ -149,27 +136,19 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
+
 			buf := b.NewBufferFromCol(colIndex)
-			switch b.ColumnType(colIndex) {
-			case Int64:
-				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if b.Column(colIndex).IsValid(rowIndex) {
-						continue
-					}
-					prevVal, prevRow := b.GetPrevFloat64(colIndex, rowIndex-1)
-					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
-					if prevRow > -1 && nextRow > -1 {
-						buf.SetOrDropStrict(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
-					}
+			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
+				if buf.IsValid(rowIndex) {
+					continue
 				}
-			case Float64:
-				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if b.Column(colIndex).IsValid(rowIndex) {
-						continue
-					}
-					prevVal, prevRow := b.GetPrevFloat64(colIndex, rowIndex-1)
-					nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
-					if prevRow > -1 && nextRow > -1 {
+				prevVal, prevRow := b.GetPrevFloat64(colIndex, rowIndex-1)
+				nextVal, nextRow := b.GetNextFloat64(colIndex, rowIndex+1)
+				if prevRow > -1 && nextRow > -1 {
+					switch b.ColumnType(colIndex) {
+					case Int64:
+						buf.SetOrDropStrict(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
+					case Float64:
 						buf.SetOrDropStrict(rowIndex, (prevVal+nextVal)/2)
 					}
 				}
@@ -213,13 +192,14 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 		wg.Add(1)
 		go func(colIndex int, colName string) {
 			defer wg.Done()
+
 			data := b.Column(colIndex).Data()
 			buf := b.NewBufferFromCol(colIndex)
 			switch b.ColumnType(colIndex) {
 			case Int64:
 				arr := array.NewInt64Data(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if arr.IsValid(rowIndex) {
+					if buf.IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
@@ -230,7 +210,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 			case Float64:
 				arr := array.NewFloat64Data(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if arr.IsValid(rowIndex) {
+					if buf.IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
@@ -241,7 +221,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 			case Boolean:
 				arr := array.NewBooleanData(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if arr.IsValid(rowIndex) {
+					if buf.IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
@@ -252,7 +232,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 			case String:
 				arr := array.NewStringData(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if arr.IsValid(rowIndex) {
+					if buf.IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
@@ -265,6 +245,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 			}
 
 			filledSeries[colIndex] = NewSeriesFromBuffer(colName, buf)
+
 		}(colIndex, col.Name)
 	}
 	wg.Wait()

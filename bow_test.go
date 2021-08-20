@@ -41,7 +41,7 @@ func TestNewBowFromColumnBasedInterface(t *testing.T) {
 	})
 }
 
-func TestBow_Slice(t *testing.T) {
+func TestBow_NewSlice(t *testing.T) {
 	origin, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
 		NewSeries("time", Int64, []int64{1, 2, 3}, nil),
 		NewSeries("value", Float64, []float64{.1, .2, .3}, nil),
@@ -55,7 +55,7 @@ func TestBow_Slice(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	res := origin.Slice(0, 1)
+	res := origin.NewSlice(0, 1)
 	assert.True(t, expected.Equal(res),
 		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 
@@ -66,7 +66,7 @@ func TestBow_Slice(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	res = origin.Slice(1, 3)
+	res = origin.NewSlice(1, 3)
 	assert.True(t, expected.Equal(res),
 		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 
@@ -77,7 +77,7 @@ func TestBow_Slice(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	res = res.Slice(1, 1)
+	res = res.NewSlice(1, 1)
 	assert.True(t, expected.Equal(res),
 		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 }

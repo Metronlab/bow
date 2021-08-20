@@ -88,6 +88,7 @@ func TestFill(t *testing.T) {
 					{-2, 1, nil, nil, -8},
 				})
 			require.NoError(t, err)
+
 			b, err = b.FillNext("b")
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())

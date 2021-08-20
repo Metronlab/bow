@@ -29,17 +29,18 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	refBow := bows[0]
 	seriesSlice := make([]Series, refBow.NumCols())
 
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
 		var newArray array.Interface
-		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-		typ := refBow.ColumnType(colIndex)
-		switch typ {
+		refType := refBow.ColumnType(colIndex)
+		switch refType {
 		case Int64:
 			builder := array.NewInt64Builder(mem)
+			builder.Resize(numRows)
 			for _, b := range bows {
-				if t := b.ColumnType(colIndex); t != typ {
+				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", typ, t)
+						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewInt64Data(data)
@@ -50,10 +51,11 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			newArray = builder.NewArray()
 		case Float64:
 			builder := array.NewFloat64Builder(mem)
+			builder.Resize(numRows)
 			for _, b := range bows {
-				if t := b.ColumnType(colIndex); t != typ {
+				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", typ, t)
+						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewFloat64Data(data)
@@ -64,10 +66,11 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			newArray = builder.NewArray()
 		case Boolean:
 			builder := array.NewBooleanBuilder(mem)
+			builder.Resize(numRows)
 			for _, b := range bows {
-				if t := b.ColumnType(colIndex); t != typ {
+				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", typ, t)
+						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewBooleanData(data)
@@ -78,10 +81,11 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			newArray = builder.NewArray()
 		case String:
 			builder := array.NewStringBuilder(mem)
+			builder.Resize(numRows)
 			for _, b := range bows {
-				if t := b.ColumnType(colIndex); t != typ {
+				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", typ, t)
+						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
 				data := b.Column(colIndex).Data()
 				arr := array.NewStringData(data)
@@ -91,7 +95,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			}
 			newArray = builder.NewArray()
 		default:
-			return nil, fmt.Errorf("unsupported type %v", typ)
+			return nil, fmt.Errorf("unsupported type %v", refType)
 		}
 
 		seriesSlice[colIndex] = Series{

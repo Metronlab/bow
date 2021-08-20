@@ -234,7 +234,7 @@ func (it *intervalRollingIter) Next() (windowIndex int, w *Window, err error) {
 	if lastIndex == -1 {
 		b = it.bow.NewEmptySlice()
 	} else {
-		b = it.bow.Slice(firstIndex, lastIndex+1)
+		b = it.bow.NewSlice(firstIndex, lastIndex+1)
 	}
 
 	return windowIndex, &Window{

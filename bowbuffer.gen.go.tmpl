@@ -103,9 +103,12 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
     {{range .Data.types -}}
 	case {{ .Type }}:
 		arr := array.New{{ .Type }}Data(data)
+		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
+		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
+		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
 			Data:            {{ .Type }}Values(arr),
-			nullBitmapBytes: arr.NullBitmapBytes(),
+			nullBitmapBytes: nullBitmapBytesCopy,
 		}
     {{end -}}
 	default:

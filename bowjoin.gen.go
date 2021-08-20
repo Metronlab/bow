@@ -77,7 +77,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		leftRow = 0
 		commonRow = 0
-		newBuf := NewBuffer(newNumRows, left.ColumnType(colIndex))
+		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
 		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
@@ -85,13 +85,13 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDrop(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -119,25 +119,25 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					newBuf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
 
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDrop(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -165,25 +165,25 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					newBuf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		case Boolean:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
 
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDrop(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -211,25 +211,25 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					newBuf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
 
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDrop(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -257,12 +257,12 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					newBuf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
 
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		}
 	}
 }
@@ -278,7 +278,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		newBuf := NewBuffer(newNumRows, right.ColumnType(rightCol))
+		buf := NewBuffer(newNumRows, right.ColumnType(rightCol))
 		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())
@@ -288,7 +288,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -311,12 +311,12 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						newBuf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDrop(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
 
@@ -325,7 +325,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -348,12 +348,12 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						newBuf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDrop(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		case Boolean:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
 
@@ -362,7 +362,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -385,12 +385,12 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						newBuf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDrop(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
 
@@ -399,7 +399,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -422,12 +422,12 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						newBuf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDrop(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		}
 		rightCol++
 	}
@@ -441,15 +441,15 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	}
 
 	if left.NumCols() == 0 && right.NumCols() == 0 {
-		return left.Slice(0, 0)
+		return left.NewSlice(0, 0)
 	}
 
 	if left.NumCols() > 0 && right.NumCols() == 0 {
-		return left.Slice(0, 0)
+		return left.NewSlice(0, 0)
 	}
 
 	if left.NumCols() == 0 && right.NumCols() > 0 {
-		return right.Slice(0, 0)
+		return right.NewSlice(0, 0)
 	}
 
 	// Get common columns indexes
@@ -469,56 +469,56 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		newRow = 0
 		commonRow = 0
-		newBuf := NewBuffer(newNumRows, left.ColumnType(colIndex))
+		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
 		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		case Float64:
 			leftData := array.NewFloat64Data(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		case Boolean:
 			leftData := array.NewBooleanData(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		case String:
 			leftData := array.NewStringData(left.Column(colIndex).Data())
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						newBuf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDrop(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 		}
 	}
 
@@ -526,7 +526,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for colIndex := left.NumCols(); colIndex < newNumCols; colIndex++ {
 		newRow = 0
 		commonRow = 0
-		newBuf := NewBuffer(newNumRows, right.ColumnType(rightCol))
+		buf := NewBuffer(newNumRows, right.ColumnType(rightCol))
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
@@ -537,52 +537,52 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		case Float64:
 			rightData := array.NewFloat64Data(right.Column(rightCol).Data())
 			// Fill common rows from right bow
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		case Boolean:
 			rightData := array.NewBooleanData(right.Column(rightCol).Data())
 			// Fill common rows from right bow
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		case String:
 			rightData := array.NewStringData(right.Column(rightCol).Data())
 			// Fill common rows from right bow
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						newBuf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), newBuf)
+			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		}
 		rightCol++
 	}
@@ -615,14 +615,14 @@ func getCommonCols(left, right Bow) map[string][]Buffer {
 
 		if len(rFields) > 1 {
 			panic(fmt.Errorf(
-				"bow Join: too many columns have the same name: right:%+v left:%+v",
+				"bow.Join: too many columns have the same name: right:%+v left:%+v",
 				right.String(), left.String()))
 		}
 
 		rField := rFields[0]
 		if rField.Type.ID() != lField.Type.ID() {
 			panic(fmt.Errorf(
-				"bow Join: left and right bow on join columns are of incompatible types: %s",
+				"bow.Join: left and right bow on join columns are of incompatible types: %s",
 				lField.Name))
 		}
 
