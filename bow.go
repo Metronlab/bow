@@ -3,7 +3,6 @@ package bow
 import (
 	"errors"
 	"fmt"
-	"github.com/apache/arrow/go/arrow/bitutil"
 	"reflect"
 
 	"github.com/apache/arrow/go/arrow"
