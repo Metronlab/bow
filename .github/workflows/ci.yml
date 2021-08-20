@@ -38,7 +38,7 @@ jobs:
     env:
       BENCH_RESULTS_DIR_PATH: benchmarks
       BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
-      BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
+      BENCH_RESULTS_CURR_FILE_PATH: ${{ format('benchmarks/comparison-{0}.txt', github.sha) }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -62,8 +62,8 @@ jobs:
         run: |
           bash ./scripts/benchstat.sh $BENCH_RESULTS_FILE_PATH $BENCH_RESULTS_CURR_FILE_PATH
 
-      - name: Upload artifact of base branch benchmark results
+      - name: Upload artifact of base branch benchmark results comparison
         uses: actions/upload-artifact@v2
         with:
-          name: base-branch-benchmark-results
-          path: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
+          name: benchmark-comparison-results
+          path: ${{ format('benchmarks/comparison-{0}.txt', github.sha) }}
