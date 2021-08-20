@@ -21,21 +21,6 @@ func NewBuffer(size int, typ Type) Buffer {
 	}
 }
 
-func NewBufferFromData(dataArray interface{}, validityArray interface{}) Buffer {
-	switch data := dataArray.(type) {
-    {{range .Data.types -}}
-	case []{{ .type }}:
-		return Buffer{
-			Data:            dataArray,
-			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
-		}
-    {{end -}}
-	default:
-		panic(fmt.Errorf("unsupported type %T", dataArray))
-	}
-}
-
-
 func (b *Buffer) Len() int {
 	switch data := b.Data.(type) {
     {{range .Data.types -}}

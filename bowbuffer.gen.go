@@ -36,33 +36,6 @@ func NewBuffer(size int, typ Type) Buffer {
 	}
 }
 
-func NewBufferFromData(dataArray interface{}, validityArray interface{}) Buffer {
-	switch data := dataArray.(type) {
-	case []int64:
-		return Buffer{
-			Data:            dataArray,
-			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
-		}
-	case []float64:
-		return Buffer{
-			Data:            dataArray,
-			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
-		}
-	case []bool:
-		return Buffer{
-			Data:            dataArray,
-			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
-		}
-	case []string:
-		return Buffer{
-			Data:            dataArray,
-			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
-		}
-	default:
-		panic(fmt.Errorf("unsupported type %T", dataArray))
-	}
-}
-
 func (b *Buffer) Len() int {
 	switch data := b.Data.(type) {
 	case []int64:

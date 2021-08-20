@@ -85,13 +85,13 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					buf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -119,7 +119,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDropStrict(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
@@ -131,13 +131,13 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					buf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -165,7 +165,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDropStrict(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
@@ -177,13 +177,13 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					buf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -211,7 +211,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDropStrict(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
@@ -223,13 +223,13 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					buf.SetOrDrop(newRow, leftData.Value(leftRow))
+					buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -257,7 +257,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					buf.SetOrDrop(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					buf.SetOrDropStrict(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
@@ -288,7 +288,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -311,7 +311,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						buf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDropStrict(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
@@ -325,7 +325,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -348,7 +348,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						buf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDropStrict(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
@@ -362,7 +362,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -385,7 +385,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						buf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDropStrict(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
@@ -399,7 +399,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -422,7 +422,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						buf.SetOrDrop(newRow, rightData.Value(rightRow))
+						buf.SetOrDropStrict(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
@@ -476,7 +476,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
@@ -488,7 +488,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
@@ -500,7 +500,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
@@ -512,7 +512,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDrop(newRow, leftData.Value(leftRow))
+						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
@@ -537,7 +537,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
@@ -550,7 +550,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
@@ -563,7 +563,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
@@ -576,7 +576,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDrop(newRow, rightData.Value(commonRows.r[commonRow]))
+						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
