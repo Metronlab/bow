@@ -141,7 +141,7 @@ func numWindows(b bow.Bow, colIndex int, start, interval int64) (int, error) {
 		return 0, nil
 	}
 
-	last, rowIndex := b.GetPreviousInt64(colIndex, b.NumRows()-1)
+	last, rowIndex := b.GetPrevInt64(colIndex, b.NumRows()-1)
 
 	if rowIndex == -1 || start > last {
 		return 0, nil

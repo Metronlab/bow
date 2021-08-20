@@ -81,7 +81,7 @@ func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (
 		if startIndex == -1 {
 			start = -1
 		}
-		end, endIndex := b.GetPreviousFloat64(refColIndex, b.NumRows()-1)
+		end, endIndex := b.GetPrevFloat64(refColIndex, b.NumRows()-1)
 		if endIndex == -1 {
 			end = -1
 		}

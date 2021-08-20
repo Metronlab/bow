@@ -100,6 +100,28 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
+func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
+	var valid bool
+	switch v := b.Data.(type) {
+	case []int64:
+		v[i], valid = value.(int64)
+	case []float64:
+		v[i], valid = value.(float64)
+	case []bool:
+		v[i], valid = value.(bool)
+	case []string:
+		v[i], valid = value.(string)
+	default:
+		panic(fmt.Errorf("unsupported type %T", v))
+	}
+
+	if valid {
+		bitutil.SetBit(b.nullBitmapBytes, i)
+	} else {
+		bitutil.ClearBit(b.nullBitmapBytes, i)
+	}
+}
+
 func (b *Buffer) GetValue(i int) interface{} {
 	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
 		return nil

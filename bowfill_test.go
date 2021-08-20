@@ -45,7 +45,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean("b"))
+			b, err = b.FillMean("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -66,7 +67,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean())
+			b, err = b.FillMean()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -86,8 +88,8 @@ func TestFill(t *testing.T) {
 					{-2, 1, nil, nil, -8},
 				})
 			require.NoError(t, err)
-
-			require.NoError(t, b.FillNext("b"))
+			b, err = b.FillNext("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -108,7 +110,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext())
+			b, err = b.FillNext()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -129,7 +132,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious("b"))
+			b, err = b.FillPrevious("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -150,7 +154,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious())
+			b, err = b.FillPrevious()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -170,9 +175,9 @@ func TestFill(t *testing.T) {
 					{-2, 1, nil, nil, -8},
 				})
 			require.NoError(t, err)
-
-			require.NoError(t, b.FillLinear("a", "b"))
-			assert.EqualValues(t, expected.String(), b.String())
+			res, err := b.FillLinear("a", "b")
+			require.NoError(t, err)
+			assert.EqualValues(t, expected.String(), res.String())
 		})
 
 		t.Run("Linear refCol a toFillCol e (asc)", func(t *testing.T) {
@@ -192,14 +197,16 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillLinear("a", "e"))
-			assert.EqualValues(t, expected.String(), b.String())
+			res, err := b.FillLinear("a", "e")
+			require.NoError(t, err)
+			assert.EqualValues(t, expected.String(), res.String())
 		})
 
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
 			b := newFreshBow(t, Int64)
 
-			assert.Error(t, b.FillLinear("d", "b"))
+			_, err := b.FillLinear("d", "b")
+			require.Error(t, err)
 		})
 	})
 
@@ -221,7 +228,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean("b"))
+			b, err = b.FillMean("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -242,7 +250,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillMean())
+			b, err = b.FillMean()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -263,7 +272,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext("b"))
+			b, err = b.FillNext("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -284,7 +294,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext())
+			b, err = b.FillNext()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -305,7 +316,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious("b"))
+			b, err = b.FillPrevious("b")
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -326,7 +338,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious())
+			b, err = b.FillPrevious()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -347,8 +360,9 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillLinear("a", "b"))
-			assert.EqualValues(t, expected.String(), b.String())
+			res, err := b.FillLinear("a", "b")
+			require.NoError(t, err)
+			assert.EqualValues(t, expected.String(), res.String())
 		})
 
 		t.Run("Linear refCol a toFillCol e (asc)", func(t *testing.T) {
@@ -368,14 +382,16 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillLinear("a", "e"))
-			assert.EqualValues(t, expected.String(), b.String())
+			res, err := b.FillLinear("a", "e")
+			require.NoError(t, err)
+			assert.EqualValues(t, expected.String(), res.String())
 		})
 
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
 			b := newFreshBow(t, Float64)
 
-			assert.Error(t, b.FillLinear("d", "b"))
+			_, err := b.FillLinear("d", "b")
+			require.Error(t, err)
 		})
 	})
 
@@ -409,7 +425,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillPrevious())
+			b, err = b.FillPrevious()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -442,7 +459,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			require.NoError(t, b.FillNext())
+			b, err = b.FillNext()
+			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
 
@@ -460,8 +478,8 @@ func TestFill(t *testing.T) {
 					{-2, false, "ioi"},
 				})
 			require.NoError(t, err)
-
-			assert.Error(t, b.FillMean())
+			_, err = b.FillMean()
+			assert.Error(t, err)
 		})
 
 		t.Run("Linear", func(t *testing.T) {
@@ -479,7 +497,8 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			assert.Error(t, b.FillLinear("a", "b"))
+			_, err = b.FillLinear("a", "b")
+			assert.Error(t, err)
 		})
 	})
 
@@ -496,7 +515,8 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.NoError(t, b1.FillPrevious())
+		b1, err = b1.FillPrevious()
+		require.NoError(t, err)
 		assert.Equal(t, expected.String(), b1.String())
 
 		// Next
@@ -511,7 +531,8 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.NoError(t, b2.FillNext())
+		b2, err = b2.FillNext()
+		require.NoError(t, err)
 		assert.Equal(t, expected.String(), b2.String())
 
 		// Mean
@@ -526,7 +547,8 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.NoError(t, b3.FillMean())
+		b3, err = b3.FillMean()
+		require.NoError(t, err)
 		assert.Equal(t, expected.String(), b3.String())
 
 		// Linear
@@ -541,8 +563,9 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.NoError(t, b4.FillLinear("int", "float"))
-		assert.Equal(t, expected.String(), b4.String())
+		res, err := b4.FillLinear("int", "float")
+		require.NoError(t, err)
+		assert.EqualValues(t, expected.String(), res.String())
 	})
 }
 
@@ -574,7 +597,8 @@ func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		require.NoError(b, data.FillPrevious())
+		data, err = data.FillPrevious()
+		require.NoError(b, err)
 	}
 }
 
@@ -587,7 +611,8 @@ func benchFillNext(rows, cols int, typ Type, b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		require.NoError(b, data.FillNext())
+		data, err = data.FillNext()
+		require.NoError(b, err)
 	}
 }
 
@@ -600,7 +625,8 @@ func benchFillMean(rows, cols int, typ Type, b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		require.NoError(b, data.FillMean())
+		data, err = data.FillMean()
+		require.NoError(b, err)
 	}
 }
 
@@ -614,6 +640,7 @@ func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		require.NoError(b, data.FillLinear("0", "1"))
+		_, err := data.FillLinear("0", "1")
+		require.NoError(b, err)
 	}
 }
