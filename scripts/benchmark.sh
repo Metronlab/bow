@@ -9,13 +9,12 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 : ${TIMEOUT:="1h"}
 : ${BENCH_RESULTS_DIR_PATH:=/tmp/benchmarks}
 : ${BENCH_RESULTS_FILE_PATH:=/tmp/benchmarks/${TIMESTAMP}.txt}
-: ${RUN:=XXX}
+: ${RUN:=".*"}
 
 mkdir -p ${BENCH_RESULTS_DIR_PATH}
 
 printf "Running benchmarks to %s\n" "${BENCH_RESULTS_FILE_PATH}"
-echo "${RUN}"
-go test ${PKG} -run="XXX" -bench="${RUN}" -benchmem -timeout ${TIMEOUT} | tee "${BENCH_RESULTS_FILE_PATH}"
+go test ${PKG} -run XXX -bench ${RUN} -benchmem -timeout ${TIMEOUT} | tee "${BENCH_RESULTS_FILE_PATH}"
 
 printf "Running benchstat on %s\n" "${BENCH_RESULTS_FILE_PATH}"
 benchstat "${BENCH_RESULTS_FILE_PATH}"
