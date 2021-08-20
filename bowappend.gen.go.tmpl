@@ -27,14 +27,15 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	refBow := bows[0]
 	seriesSlice := make([]Series, refBow.NumCols())
 
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
 		var newArray array.Interface
-		mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 		typ := refBow.ColumnType(colIndex)
         switch typ {
         {{range .Data.types -}}
         case {{ .Type }}:
 			builder := array.New{{ .Type }}Builder(mem)
+            builder.Resize(numRows)
 			for _, b := range bows {
 				if t := b.ColumnType(colIndex); t != typ {
 					return nil, fmt.Errorf(
