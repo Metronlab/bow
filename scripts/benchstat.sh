@@ -1,5 +1,7 @@
 #!/bin/bash
 
+: ${BENCH_COMPARISON_RESULTS:="benchstat.txt"}
+
 old_bench_file=$1
 new_bench_file=$2
 
@@ -18,4 +20,4 @@ then
     exit 0
 fi
 
-benchstat -delta-test none "$old_bench_file" "$new_bench_file"
+benchstat -delta-test none "$old_bench_file" "$new_bench_file" | tee "${BENCH_COMPARISON_RESULTS}"
