@@ -18,4 +18,4 @@ then
     exit 0
 fi
 
-benchstat -delta-test none "$old_bench_file" "$new_bench_file"
+benchstat -delta-test none "$old_bench_file" "$new_bench_file" | tee "${BENCH_COMPARISON_RESULTS}"
