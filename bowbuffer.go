@@ -3,151 +3,58 @@ package bow
 import (
 	"fmt"
 
-	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/bitutil"
 )
 
 type Buffer struct {
-	Value interface{}
-	Valid []bool
+	Data            interface{}
+	nullBitmapBytes []byte
 }
 
-func NewBuffer(size int, typ Type, nullable bool) Buffer {
-	var valid []bool
-	if nullable {
-		valid = make([]bool, size)
-	}
-	switch typ {
-	case Int64:
-		return Buffer{
-			Value: make([]int64, size),
-			Valid: valid,
-		}
-	case Float64:
-		return Buffer{
-			Value: make([]float64, size),
-			Valid: valid,
-		}
-	case Bool:
-		return Buffer{
-			Value: make([]bool, size),
-			Valid: valid,
-		}
-	case String:
-		return Buffer{
-			Value: make([]string, size),
-			Valid: valid,
-		}
-	default:
-		panic(fmt.Errorf("bow.NewBuffer: unsupported type %v", typ))
-	}
-}
+func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
+	var res []byte
+	nullBitmapLength := bitutil.CeilByte(dataLength) / 8
 
-func (b *bow) NewBufferFromCol(colIndex int) Buffer {
-	colType := b.ColumnType(colIndex)
-	colData := b.Column(colIndex).Data()
-	switch colType {
-	case Int64:
-		colArray := array.NewInt64Data(colData)
-		return Buffer{
-			Value: colArray.Int64Values(),
-			Valid: getValiditySlice(colArray),
+	switch valid := validityArray.(type) {
+	case nil:
+		res = make([]byte, nullBitmapLength)
+		for i := 0; i < dataLength; i++ {
+			bitutil.SetBit(res, i)
 		}
-	case Float64:
-		colArray := array.NewFloat64Data(colData)
-		return Buffer{
-			Value: colArray.Float64Values(),
-			Valid: getValiditySlice(colArray),
+	case []bool:
+		if len(valid) != dataLength {
+			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
-	case Bool:
-		colArray := array.NewBooleanData(colData)
-		var v = make([]bool, colArray.Len())
-		for i := range v {
-			v[i] = colArray.Value(i)
+		res = make([]byte, nullBitmapLength)
+		for i := 0; i < dataLength; i++ {
+			if valid[i] {
+				bitutil.SetBit(res, i)
+			}
 		}
-		return Buffer{
-			Value: v,
-			Valid: getValiditySlice(colArray),
+	case []byte:
+		if len(valid) != nullBitmapLength {
+			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
-	case String:
-		colArray := array.NewStringData(colData)
-		var v = make([]string, colArray.Len())
-		for i := range v {
-			v[i] = colArray.Value(i)
-		}
-		return Buffer{
-			Value: v,
-			Valid: getValiditySlice(colArray),
-		}
+		return valid
 	default:
-		panic(fmt.Errorf("bow.NewBufferFromCol: unsupported type %+v", colType))
+		panic(fmt.Errorf("unsupported type %T", valid))
 	}
+
+	return res
 }
 
 func NewBufferFromInterfaces(typ Type, cells []interface{}) (Buffer, error) {
-	buf := NewBuffer(len(cells), typ, true)
+	buf := NewBuffer(len(cells), typ)
 	for i, c := range cells {
 		buf.SetOrDrop(i, c)
 	}
 	return buf, nil
 }
 
-func (b *Buffer) SetOrDrop(i int, value interface{}) {
-	switch v := b.Value.(type) {
-	case []int64:
-		v[i], b.Valid[i] = Int64.Convert(value).(int64)
-	case []float64:
-		v[i], b.Valid[i] = Float64.Convert(value).(float64)
-	case []bool:
-		v[i], b.Valid[i] = Bool.Convert(value).(bool)
-	case []string:
-		v[i], b.Valid[i] = String.Convert(value).(string)
-	default:
-		panic(fmt.Errorf("bow.Buffer.SetOrDrop: unsupported type %T", v))
-	}
+func (b *Buffer) IsValid(rowIndex int) bool {
+	return bitutil.BitIsSet(b.nullBitmapBytes, rowIndex)
 }
 
-func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
-	switch v := b.Value.(type) {
-	case []int64:
-		v[i], b.Valid[i] = value.(int64)
-	case []float64:
-		v[i], b.Valid[i] = value.(float64)
-	case []bool:
-		v[i], b.Valid[i] = value.(bool)
-	case []string:
-		v[i], b.Valid[i] = value.(string)
-	default:
-		panic(fmt.Errorf("unsupported type %T", v))
-	}
-}
-
-func (b *Buffer) GetValue(i int) interface{} {
-	switch v := b.Value.(type) {
-	case []int64:
-		if !b.Valid[i] {
-			return nil
-		}
-		return v[i]
-	case []float64:
-		if !b.Valid[i] {
-			return nil
-		}
-		return v[i]
-	case []bool:
-		if !b.Valid[i] {
-			return nil
-		}
-		return v[i]
-	case []string:
-		if !b.Valid[i] {
-			return nil
-		}
-		return v[i]
-	default:
-		panic(fmt.Errorf("bow.Buffer.GetValue: unsupported type %T", v))
-	}
-}
-
-func (b *Buffer) SetAsValid(rowIndex int) {
-	b.Valid[rowIndex] = true
+func (b *Buffer) IsNull(rowIndex int) bool {
+	return bitutil.BitIsNotSet(b.nullBitmapBytes, rowIndex)
 }

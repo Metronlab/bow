@@ -121,7 +121,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 							}, nil, 0, 0),
 					),
 				}
-			case Bool:
+			case Boolean:
 				prevValues := array.NewBooleanData(prevData)
 				newValues := make([]bool, b.NumRows())
 				newValid := make([]bool, b.NumRows())

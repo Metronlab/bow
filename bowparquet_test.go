@@ -32,7 +32,7 @@ func TestParquet(t *testing.T) {
 	t.Run("bow supported types with rows and nils", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
 			[]string{"int", "float", "bool", "string"},
-			[]Type{Int64, Float64, Bool, String},
+			[]Type{Int64, Float64, Boolean, String},
 			[][]interface{}{
 				{1, 1., true, "hi"},
 				{2, 2., false, "ho"},
@@ -55,7 +55,7 @@ func TestParquet(t *testing.T) {
 	t.Run("bow supported types without rows", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
 			[]string{"int", "float", "bool", "string"},
-			[]Type{Int64, Float64, Bool, String},
+			[]Type{Int64, Float64, Boolean, String},
 			[][]interface{}{})
 		require.NoError(t, err)
 

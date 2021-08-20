@@ -28,7 +28,7 @@ func TestNewBowFromColumnBasedInterface(t *testing.T) {
 
 		expected, err := NewBowFromColBasedInterfaces(
 			[]string{"int", "float", "string", "bool"},
-			[]Type{Int64, Float64, String, Bool},
+			[]Type{Int64, Float64, String, Boolean},
 			[][]interface{}{
 				{10, 2},
 				{10., 2.},
@@ -41,7 +41,7 @@ func TestNewBowFromColumnBasedInterface(t *testing.T) {
 	})
 }
 
-func TestBow_Slice(t *testing.T) {
+func TestBow_NewSlice(t *testing.T) {
 	origin, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
 		NewSeries("time", Int64, []int64{1, 2, 3}, nil),
 		NewSeries("value", Float64, []float64{.1, .2, .3}, nil),
@@ -55,7 +55,7 @@ func TestBow_Slice(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	res := origin.Slice(0, 1)
+	res := origin.NewSlice(0, 1)
 	assert.True(t, expected.Equal(res),
 		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 
@@ -66,7 +66,7 @@ func TestBow_Slice(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	res = origin.Slice(1, 3)
+	res = origin.NewSlice(1, 3)
 	assert.True(t, expected.Equal(res),
 		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 
@@ -77,7 +77,7 @@ func TestBow_Slice(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	res = res.Slice(1, 1)
+	res = res.NewSlice(1, 1)
 	assert.True(t, expected.Equal(res),
 		fmt.Sprintf("Have:\n%v,\nExpect:\n%v", res, expected))
 }
@@ -154,7 +154,7 @@ func TestBow_Select(t *testing.T) {
 	})
 }
 
-func TestBow_DropNil(t *testing.T) {
+func TestBow_DropNils(t *testing.T) {
 	filledBow, _ := NewBowFromColBasedInterfaces(
 		[]string{"a", "b", "c"},
 		[]Type{Int64, Int64, Int64},
@@ -276,7 +276,7 @@ func TestBow_DropNil(t *testing.T) {
 	})
 }
 
-func TestAddCols(t *testing.T) {
+func TestBow_AddCols(t *testing.T) {
 	bow1, err := NewBowFromRowBasedInterfaces(
 		[]string{"time", "a", "b"},
 		[]Type{Int64, Float64, Float64},
@@ -289,7 +289,7 @@ func TestAddCols(t *testing.T) {
 	require.NoError(t, err)
 	serieC := NewSeries("c", Int64, []int64{1, 2, 3, 4}, nil)
 	serieD := NewSeries("d", String, []string{"one", "two", "three", "four"}, nil)
-	serieE := NewSeries("e", Bool, []bool{true, false, true, false}, nil)
+	serieE := NewSeries("e", Boolean, []bool{true, false, true, false}, nil)
 
 	t.Run("empty", func(t *testing.T) {
 		b := NewBowEmpty()
@@ -312,7 +312,7 @@ func TestAddCols(t *testing.T) {
 	t.Run("valid series", func(t *testing.T) {
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"time", "a", "b", "c", "d", "e"},
-			[]Type{Int64, Float64, Float64, Int64, String, Bool},
+			[]Type{Int64, Float64, Float64, Int64, String, Boolean},
 			[][]interface{}{
 				{1, 1.1, 2.1, 1, "one", true},
 				{2, 1.2, 2.2, 2, "two", false},

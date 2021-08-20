@@ -71,18 +71,18 @@ func benchmarkBow(b *testing.B) {
 	seriesSlice := make([]bow.Series, 2)
 	rand.Seed(42)
 	seriesSlice[0] = func(size int64) bow.Series {
-		buf := bow.NewBuffer(int(size), bow.Int64, true)
+		buf := bow.NewBuffer(int(size), bow.Int64)
 		for i := int64(0); i < size; i++ {
-			buf.Value.([]int64)[i], buf.Valid[i] = i, true
+			buf.SetOrDrop(int(i), i)
 		}
-		return bow.NewSeries("time", bow.Int64, buf.Value, buf.Valid)
+		return bow.NewSeriesFromBuffer("time", buf)
 	}(BenchSize)
 	seriesSlice[1] = func(size int64) bow.Series {
-		buf := bow.NewBuffer(int(size), bow.Float64, true)
+		buf := bow.NewBuffer(int(size), bow.Float64)
 		for i := int64(0); i < size; i++ {
-			buf.Value.([]float64)[i], buf.Valid[i] = rand.Float64(), true
+			buf.SetOrDrop(int(i), rand.Float64())
 		}
-		return bow.NewSeries("value", bow.Float64, buf.Value, buf.Valid)
+		return bow.NewSeriesFromBuffer("value", buf)
 	}(BenchSize)
 
 	b.Run("NewBow with validity bitmap", func(b *testing.B) {
@@ -95,18 +95,18 @@ func benchmarkBow(b *testing.B) {
 	seriesSlice = make([]bow.Series, 2)
 	rand.Seed(42)
 	seriesSlice[0] = func(size int64) bow.Series {
-		buf := bow.NewBuffer(int(size), bow.Int64, false)
+		buf := bow.NewBuffer(int(size), bow.Int64)
 		for i := int64(0); i < size; i++ {
-			buf.Value.([]int64)[i] = i
+			buf.Data.([]int64)[i] = i
 		}
-		return bow.NewSeries("time", bow.Int64, buf.Value, nil)
+		return bow.NewSeries("time", bow.Int64, buf.Data, nil)
 	}(BenchSize)
 	seriesSlice[1] = func(size int64) bow.Series {
-		buf := bow.NewBuffer(int(size), bow.Float64, false)
+		buf := bow.NewBuffer(int(size), bow.Float64)
 		for i := int64(0); i < size; i++ {
-			buf.Value.([]float64)[i] = rand.Float64()
+			buf.Data.([]float64)[i] = rand.Float64()
 		}
-		return bow.NewSeries("value", bow.Float64, buf.Value, nil)
+		return bow.NewSeries("value", bow.Float64, buf.Data, nil)
 	}(BenchSize)
 
 	b.Run("NewBow without validity bitmap", func(b *testing.B) {

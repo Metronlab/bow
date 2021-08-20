@@ -50,7 +50,7 @@ type ColAggregationFunc func(colIndex int, w Window) (interface{}, error)
 
 func (a *colAggregation) GetReturnType(input, iterator bow.Type) (typ bow.Type) {
 	switch a.Type() {
-	case bow.Int64, bow.Float64, bow.Bool, bow.String:
+	case bow.Int64, bow.Float64, bow.Boolean, bow.String:
 		typ = a.Type()
 	case bow.InputDependent:
 		typ = input
@@ -183,7 +183,7 @@ func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.S
 	for colIndex, aggregation := range aggrs {
 		itCopy := *it
 
-		buf, outputType, err := itCopy.windowsAggregateBuffer(colIndex, aggregation)
+		buf, err := itCopy.windowsAggregateBuffer(colIndex, aggregation)
 		if err != nil {
 			return nil, err
 		}
@@ -193,37 +193,33 @@ func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.S
 			colName = itCopy.bow.ColumnName(aggregation.InputIndex())
 		}
 
-		seriesSlice[colIndex] = bow.NewSeries(colName, outputType, buf.Value, buf.Valid)
+		seriesSlice[colIndex] = bow.NewSeriesFromBuffer(colName, buf)
 	}
 
 	return seriesSlice, nil
 }
 
-func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggregation) (*bow.Buffer, bow.Type, error) {
+func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggregation) (bow.Buffer, error) {
 	var buf bow.Buffer
-	var typ bow.Type
 
 	switch aggr.Type() {
-	case bow.Int64, bow.Float64, bow.Bool:
-		buf = bow.NewBuffer(it.numWindows, aggr.Type(), true)
-		typ = aggr.Type()
+	case bow.Int64, bow.Float64, bow.Boolean:
+		buf = bow.NewBuffer(it.numWindows, aggr.Type())
 	case bow.InputDependent:
 		cType := it.bow.ColumnType(aggr.InputIndex())
-		buf = bow.NewBuffer(it.numWindows, cType, true)
-		typ = cType
+		buf = bow.NewBuffer(it.numWindows, cType)
 	case bow.IteratorDependent:
 		iType := it.bow.ColumnType(it.colIndex)
-		buf = bow.NewBuffer(it.numWindows, iType, true)
-		typ = iType
+		buf = bow.NewBuffer(it.numWindows, iType)
 	default:
-		return nil, bow.Unknown, fmt.Errorf(
+		return buf, fmt.Errorf(
 			"aggregation %d has invalid return type %s", colIndex, aggr.Type())
 	}
 
 	for it.HasNext() {
 		winIndex, w, err := it.Next()
 		if err != nil {
-			return nil, bow.Unknown, err
+			return buf, err
 		}
 
 		var val interface{}
@@ -233,12 +229,12 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggr
 			val, err = aggr.Func()(aggr.InputIndex(), *w)
 		}
 		if err != nil {
-			return nil, bow.Unknown, err
+			return buf, err
 		}
 		for _, trans := range aggr.Transforms() {
 			val, err = trans(val)
 			if err != nil {
-				return nil, bow.Unknown, err
+				return buf, err
 			}
 		}
 		if val == nil {
@@ -248,5 +244,5 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggr
 		buf.SetOrDrop(winIndex, val)
 	}
 
-	return &buf, typ, nil
+	return buf, nil
 }

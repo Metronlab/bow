@@ -33,22 +33,22 @@ type Bow interface {
 
 	GetValueByName(colName string, rowIndex int) interface{}
 	GetValue(colIndex, rowIndex int) interface{}
+	GetPrevValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
+	GetPrevValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
 	GetNextValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
+	GetPrevRowIndex(colIndex, rowIndex int) int
 	GetNextRowIndex(colIndex, rowIndex int) int
-	GetPreviousValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
-	GetPreviousValues(colIndex1, colIndex2, rowIndex int) (value1, value2 interface{}, resRowIndex int)
-	GetPreviousRowIndex(colIndex, rowIndex int) int
 
 	GetInt64(colIndex, rowIndex int) (value int64, valid bool)
+	GetPrevInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
 	GetNextInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
-	GetPreviousInt64(colIndex, rowIndex int) (value int64, resRowIndex int)
 
 	GetFloat64(colIndex, rowIndex int) (value float64, valid bool)
+	GetPrevFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
 	GetNextFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
+	GetPrevFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 	GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
-	GetPreviousFloat64(colIndex, rowIndex int) (value float64, resRowIndex int)
-	GetPreviousFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 
 	AddCols(newCols ...Series) (Bow, error)
 	RenameCol(colIndex int, newName string) (Bow, error)
@@ -58,7 +58,7 @@ type Bow interface {
 
 	Diff(colNames ...string) (Bow, error)
 
-	Slice(i, j int) Bow
+	NewSlice(i, j int) Bow
 	Select(colNames ...string) (Bow, error)
 	NewEmptySlice() Bow
 	DropNils(colNames ...string) (Bow, error)
@@ -137,7 +137,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 
 	bufSlice := make([]Buffer, len(colNames))
 	for i := range bufSlice {
-		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i], true)
+		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i])
 	}
 
 	for rowIndex, row := range rowBasedData {
@@ -145,6 +145,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 			return nil, errors.New(
 				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
 		}
+
 		for colIndex := range colNames {
 			bufSlice[colIndex].SetOrDrop(rowIndex, row[colIndex])
 		}
@@ -152,14 +153,14 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 
 	seriesSlice := make([]Series, len(colNames))
 	for i := range colNames {
-		seriesSlice[i] = NewSeries(colNames[i], colTypes[i], bufSlice[i].Value, bufSlice[i].Valid)
+		seriesSlice[i] = NewSeriesFromBuffer(colNames[i], bufSlice[i])
 	}
 
 	return NewBow(seriesSlice...)
 }
 
 func (b *bow) NewEmptySlice() Bow {
-	return b.Slice(0, 0)
+	return b.NewSlice(0, 0)
 }
 
 // DropNils drops any row that contains a nil for any of `colNames`.
@@ -200,10 +201,10 @@ func (b *bow) DropNils(colNames ...string) (Bow, error) {
 	bowSlice := make([]Bow, len(droppedRowIndices)+1)
 	var curr int
 	for i, droppedRowIndex := range droppedRowIndices {
-		bowSlice[i] = b.Slice(curr, droppedRowIndex)
+		bowSlice[i] = b.NewSlice(curr, droppedRowIndex)
 		curr = droppedRowIndex + 1
 	}
-	bowSlice[len(droppedRowIndices)] = b.Slice(curr, b.NumRows())
+	bowSlice[len(droppedRowIndices)] = b.NewSlice(curr, b.NumRows())
 
 	return AppendBows(bowSlice...)
 }
@@ -291,7 +292,7 @@ func (b *bow) Equal(other Bow) bool {
 	return true
 }
 
-func (b *bow) Slice(i, j int) Bow {
+func (b *bow) NewSlice(i, j int) Bow {
 	return &bow{
 		Record: b.Record.NewSlice(int64(i), int64(j)),
 	}
@@ -358,19 +359,19 @@ func (b *bow) AddCols(seriesSlice ...Series) (Bow, error) {
 	return NewBowWithMetadata(b.Metadata(), newSeriesSlice...)
 }
 
-func getValiditySlice(arr array.Interface) []bool {
-	validitySlice := make([]bool, arr.Len())
-
-	for i := 0; i < arr.Len(); i++ {
-		validitySlice[i] = arr.IsValid(i)
-	}
-
-	return validitySlice
-}
-
 func (b *bow) NewSeriesFromCol(colIndex int) Series {
 	return Series{
 		Name:  b.ColumnName(colIndex),
 		Array: b.Column(colIndex),
 	}
+}
+
+func getValiditySlice(arr array.Interface) []bool {
+	valid := make([]bool, arr.Len())
+
+	for i := 0; i < arr.Len(); i++ {
+		valid[i] = arr.IsValid(i)
+	}
+
+	return valid
 }

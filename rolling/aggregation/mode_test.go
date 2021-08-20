@@ -66,7 +66,7 @@ func TestMode(t *testing.T) {
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{timeCol, valueCol},
-					[]bow.Type{bow.Int64, bow.Bool},
+					[]bow.Type{bow.Int64, bow.Boolean},
 					[][]interface{}{
 						{10, true},
 						{20, nil},

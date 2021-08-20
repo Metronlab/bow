@@ -15,14 +15,14 @@ import (
 )
 
 var mapParquetToBowTypes = map[parquet.Type]Type{
-	parquet.Type_BOOLEAN:    Bool,
+	parquet.Type_BOOLEAN:    Boolean,
 	parquet.Type_INT64:      Int64,
 	parquet.Type_DOUBLE:     Float64,
 	parquet.Type_BYTE_ARRAY: String,
 }
 
 var mapBowToParquetTypes = map[Type]parquet.Type{
-	Bool:    parquet.Type_BOOLEAN,
+	Boolean: parquet.Type_BOOLEAN,
 	Int64:   parquet.Type_INT64,
 	Float64: parquet.Type_DOUBLE,
 	String:  parquet.Type_BYTE_ARRAY,
@@ -97,14 +97,12 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 			return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 		}
 
-		buf := NewBuffer(len(values), mapParquetToBowTypes[col.GetType()], true)
+		typ := mapParquetToBowTypes[col.GetType()]
+		buf := NewBuffer(len(values), typ)
 		for i, v := range values {
 			buf.SetOrDrop(i, v)
 		}
-		series[valueColIndex] = NewSeries(
-			originalColNames[colIndex],
-			mapParquetToBowTypes[col.GetType()],
-			buf.Value, buf.Valid)
+		series[valueColIndex] = NewSeriesFromBuffer(originalColNames[colIndex], buf)
 
 		pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
 		valueColIndex++

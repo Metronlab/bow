@@ -17,7 +17,7 @@ func Linear(colName string) rolling.ColInterpolation {
 				prevValid = prevValidT0 && prevValidV0
 			}
 
-			t0, v0, prevIndex := fullBow.GetPreviousFloat64s(w.IntervalColIndex, colIndexToFill, w.FirstIndex-1)
+			t0, v0, prevIndex := fullBow.GetPrevFloat64s(w.IntervalColIndex, colIndexToFill, w.FirstIndex-1)
 			if prevIndex == -1 {
 				if !prevValid {
 					return nil, nil
