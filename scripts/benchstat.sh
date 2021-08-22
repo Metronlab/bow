@@ -9,7 +9,7 @@ old_bench_file=$1
 new_bench_file=$2
 
 echo
-printf "Running benchstat to compare %s and %s\n" "$old_bench_file" "$new_bench_file"
+printf "Running benchstat to compare %s and %s in %s\n" "$old_bench_file" "$new_bench_file" "${BENCH_COMPARISON_FILE_PATH}"
 
 if [ ! -f "$old_bench_file" ]
 then
