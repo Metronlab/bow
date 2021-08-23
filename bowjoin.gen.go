@@ -510,10 +510,10 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for colIndex := left.NumCols(); colIndex < newNumCols; colIndex++ {
 		newRow = 0
 		commonRow = 0
-		newSeries[colIndex] = NewSeries(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
+		newSeries[colIndex] = NewSeries(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
 		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())
