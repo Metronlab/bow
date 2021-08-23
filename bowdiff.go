@@ -62,7 +62,6 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 					calcSeries[colIndex].SetOrDrop(rowIndex, currVal != prevVal)
 				}
 			}
-
 		}(colIndex, col.Name)
 	}
 	wg.Wait()

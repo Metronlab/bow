@@ -73,14 +73,14 @@ func benchmarkBow(b *testing.B) {
 	seriesSlice[0] = func(size int64) bow.Series {
 		series := bow.NewSeries("time", int(size), bow.Int64)
 		for i := int64(0); i < size; i++ {
-			series.SetOrDrop(int(i), i)
+			series.SetOrDropStrict(int(i), i)
 		}
 		return series
 	}(BenchSize)
 	seriesSlice[1] = func(size int64) bow.Series {
 		series := bow.NewSeries("value", int(size), bow.Float64)
 		for i := int64(0); i < size; i++ {
-			series.SetOrDrop(int(i), rand.Float64())
+			series.SetOrDropStrict(int(i), rand.Float64())
 		}
 		return series
 	}(BenchSize)

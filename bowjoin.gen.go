@@ -44,7 +44,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 	newNumRows := left.NumRows() + right.NumRows() +
 		len(commonRows.l) - uniquesLeft - uniquesRight
 
-	// Prepare new PrevSeries Slice
+	// Prepare new Series Slice
 	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
 	newSeries := make([]Series, newNumCols)
 
@@ -446,7 +446,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	// Get common rows indexes
 	commonRows := getCommonRows(left, right, commonCols)
 
-	// Prepare new PrevSeries Slice
+	// Prepare new Series Slice
 	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
 	newSeries := make([]Series, newNumCols)
 
