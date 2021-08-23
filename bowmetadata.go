@@ -15,8 +15,8 @@ func NewMetadata(keys, values []string) Metadata {
 	return Metadata{arrow.NewMetadata(keys, values)}
 }
 
-func NewBowWithMetadata(metadata Metadata, series ...Series) (Bow, error) {
-	rec, err := newRecord(metadata, series...)
+func NewBowWithMetadata(metadata Metadata, seriesSlice ...Series) (Bow, error) {
+	rec, err := newRecordFromSeries(metadata, seriesSlice...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBowWithMetadata: %w", err)
 	}

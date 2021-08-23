@@ -54,17 +54,16 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	if b.Column(toFillIndex).NullN() == 0 {
 		return b, nil
 	}
-	buf := b.NewBufferFromCol(toFillIndex)
 
-	filledSeries := make([]PrevSeries, b.NumCols())
-	for colIndex, col := range b.Schema().Fields() {
+	filledSeries := make([]Series, b.NumCols())
+	for colIndex := range b.Schema().Fields() {
+		filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 		if colIndex != toFillIndex {
-			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			continue
 		}
 
 		for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-			if buf.IsValid(rowIndex) {
+			if filledSeries[toFillIndex].IsValid(rowIndex) {
 				continue
 			}
 			prevToFill, rowPrev := b.GetPrevFloat64(toFillIndex, rowIndex-1)
@@ -79,9 +78,9 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			if nextRef-prevRef == 0 {
 				switch b.ColumnType(toFillIndex) {
 				case Int64:
-					buf.SetOrDropStrict(rowIndex, int64(prevToFill))
+					filledSeries[toFillIndex].SetOrDropStrict(rowIndex, int64(prevToFill))
 				case Float64:
-					buf.SetOrDropStrict(rowIndex, prevToFill)
+					filledSeries[toFillIndex].SetOrDropStrict(rowIndex, prevToFill)
 				}
 			}
 
@@ -91,13 +90,11 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			tmp += prevToFill
 			switch b.ColumnType(toFillIndex) {
 			case Int64:
-				buf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
+				filledSeries[toFillIndex].SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
 			case Float64:
-				buf.SetOrDropStrict(rowIndex, tmp)
+				filledSeries[toFillIndex].SetOrDropStrict(rowIndex, tmp)
 			}
 		}
-
-		filledSeries[toFillIndex] = NewPrevSeriesFromBuffer(col.Name, buf)
 	}
 
 	return NewBowWithMetadata(b.Metadata(), filledSeries...)
@@ -126,20 +123,19 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	}
 
 	var wg sync.WaitGroup
-	filledSeries := make([]PrevSeries, b.NumCols())
-	for colIndex, col := range b.Schema().Fields() {
+	filledSeries := make([]Series, b.NumCols())
+	for colIndex := range b.Schema().Fields() {
+		filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 		if !toFillCols[colIndex] || b.Column(colIndex).NullN() == 0 {
-			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			continue
 		}
 
 		wg.Add(1)
-		go func(colIndex int, colName string) {
+		go func(colIndex int) {
 			defer wg.Done()
 
-			buf := b.NewBufferFromCol(colIndex)
 			for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-				if buf.IsValid(rowIndex) {
+				if filledSeries[colIndex].IsValid(rowIndex) {
 					continue
 				}
 				prevVal, prevRow := b.GetPrevFloat64(colIndex, rowIndex-1)
@@ -147,16 +143,13 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 				if prevRow > -1 && nextRow > -1 {
 					switch b.ColumnType(colIndex) {
 					case Int64:
-						buf.SetOrDropStrict(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
+						filledSeries[colIndex].SetOrDropStrict(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
 					case Float64:
-						buf.SetOrDropStrict(rowIndex, (prevVal+nextVal)/2)
+						filledSeries[colIndex].SetOrDropStrict(rowIndex, (prevVal+nextVal)/2)
 					}
 				}
 			}
-
-			filledSeries[colIndex] = NewPrevSeriesFromBuffer(colName, buf)
-
-		}(colIndex, col.Name)
+		}(colIndex)
 	}
 	wg.Wait()
 
@@ -182,71 +175,65 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 	}
 
 	var wg sync.WaitGroup
-	filledSeries := make([]PrevSeries, b.NumCols())
-	for colIndex, col := range b.Schema().Fields() {
+	filledSeries := make([]Series, b.NumCols())
+	for colIndex := range b.Schema().Fields() {
+		filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 		if !toFillCols[colIndex] || b.Column(colIndex).NullN() == 0 {
-			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			continue
 		}
 
 		wg.Add(1)
-		go func(colIndex int, colName string) {
+		go func(colIndex int) {
 			defer wg.Done()
 
 			data := b.Column(colIndex).Data()
-			buf := b.NewBufferFromCol(colIndex)
 			switch b.ColumnType(colIndex) {
 			case Int64:
 				arr := array.NewInt64Data(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if buf.IsValid(rowIndex) {
+					if filledSeries[colIndex].IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
+						filledSeries[colIndex].SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
 			case Float64:
 				arr := array.NewFloat64Data(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if buf.IsValid(rowIndex) {
+					if filledSeries[colIndex].IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
+						filledSeries[colIndex].SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
 			case Boolean:
 				arr := array.NewBooleanData(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if buf.IsValid(rowIndex) {
+					if filledSeries[colIndex].IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
+						filledSeries[colIndex].SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
 			case String:
 				arr := array.NewStringData(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-					if buf.IsValid(rowIndex) {
+					if filledSeries[colIndex].IsValid(rowIndex) {
 						continue
 					}
 					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
 					if fillRowIndex > -1 {
-						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
+						filledSeries[colIndex].SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
-			default:
-				filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			}
-
-			filledSeries[colIndex] = NewPrevSeriesFromBuffer(colName, buf)
-
-		}(colIndex, col.Name)
+		}(colIndex)
 	}
 	wg.Wait()
 

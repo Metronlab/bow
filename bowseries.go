@@ -3,6 +3,8 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/bitutil"
 )
@@ -41,6 +43,61 @@ func NewSeries(name string, size int, typ Type) Series {
 		}
 	default:
 		panic(fmt.Errorf("unsupported type %s", typ))
+	}
+}
+
+func NewSeriesFromData(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
+	switch typ {
+	case Int64:
+		data, ok := dataArray.([]int64)
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(dataArray)))
+		}
+		return Series{
+			Name:            name,
+			Data:            data,
+			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
+		}
+	case Float64:
+		data, ok := dataArray.([]float64)
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(dataArray)))
+		}
+		return Series{
+			Name:            name,
+			Data:            data,
+			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
+		}
+	case Boolean:
+		data, ok := dataArray.([]bool)
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(dataArray)))
+		}
+		return Series{
+			Name:            name,
+			Data:            data,
+			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
+		}
+	case String:
+		data, ok := dataArray.([]string)
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(dataArray)))
+		}
+		return Series{
+			Name:            name,
+			Data:            data,
+			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
+		}
+	default:
+		panic(fmt.Errorf("unsupported type %v", typ))
 	}
 }
 
@@ -93,8 +150,8 @@ func (b *bow) NewSeriesFromCol(colIndex int) Series {
 	}
 }
 
-func (b *Series) Len() int {
-	switch data := b.Data.(type) {
+func (s *Series) Len() int {
+	switch data := s.Data.(type) {
 	case []int64:
 		return len(data)
 	case []float64:
@@ -104,13 +161,28 @@ func (b *Series) Len() int {
 	case []string:
 		return len(data)
 	default:
-		panic(fmt.Errorf("unsupported type '%T'", b.Data))
+		panic(fmt.Errorf("unsupported type '%T'", s.Data))
 	}
 }
 
-func (b *Series) SetOrDrop(i int, value interface{}) {
+func (s *Series) DataType() Type {
+	switch s.Data.(type) {
+	case []int64:
+		return Int64
+	case []float64:
+		return Float64
+	case []bool:
+		return Boolean
+	case []string:
+		return String
+	default:
+		panic(fmt.Errorf("unsupported type '%T'", s.Data))
+	}
+}
+
+func (s *Series) SetOrDrop(i int, value interface{}) {
 	var valid bool
-	switch v := b.Data.(type) {
+	switch v := s.Data.(type) {
 	case []int64:
 		v[i], valid = Int64.Convert(value).(int64)
 	case []float64:
@@ -124,15 +196,15 @@ func (b *Series) SetOrDrop(i int, value interface{}) {
 	}
 
 	if valid {
-		bitutil.SetBit(b.nullBitmapBytes, i)
+		bitutil.SetBit(s.nullBitmapBytes, i)
 	} else {
-		bitutil.ClearBit(b.nullBitmapBytes, i)
+		bitutil.ClearBit(s.nullBitmapBytes, i)
 	}
 }
 
-func (b *Series) SetOrDropStrict(i int, value interface{}) {
+func (s *Series) SetOrDropStrict(i int, value interface{}) {
 	var valid bool
-	switch v := b.Data.(type) {
+	switch v := s.Data.(type) {
 	case []int64:
 		v[i], valid = value.(int64)
 	case []float64:
@@ -146,18 +218,18 @@ func (b *Series) SetOrDropStrict(i int, value interface{}) {
 	}
 
 	if valid {
-		bitutil.SetBit(b.nullBitmapBytes, i)
+		bitutil.SetBit(s.nullBitmapBytes, i)
 	} else {
-		bitutil.ClearBit(b.nullBitmapBytes, i)
+		bitutil.ClearBit(s.nullBitmapBytes, i)
 	}
 }
 
-func (b *Series) GetValue(i int) interface{} {
-	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
+func (s *Series) GetValue(i int) interface{} {
+	if bitutil.BitIsNotSet(s.nullBitmapBytes, i) {
 		return nil
 	}
 
-	switch v := b.Data.(type) {
+	switch v := s.Data.(type) {
 	case []int64:
 		return v[i]
 	case []float64:
@@ -171,12 +243,12 @@ func (b *Series) GetValue(i int) interface{} {
 	}
 }
 
-func (b *Series) IsValid(rowIndex int) bool {
-	return bitutil.BitIsSet(b.nullBitmapBytes, rowIndex)
+func (s *Series) IsValid(rowIndex int) bool {
+	return bitutil.BitIsSet(s.nullBitmapBytes, rowIndex)
 }
 
-func (b *Series) IsNull(rowIndex int) bool {
-	return bitutil.BitIsNotSet(b.nullBitmapBytes, rowIndex)
+func (s *Series) IsNull(rowIndex int) bool {
+	return bitutil.BitIsNotSet(s.nullBitmapBytes, rowIndex)
 }
 
 func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (Series, error) {

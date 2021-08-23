@@ -35,8 +35,8 @@ func TestMode(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewPrevSeries(timeCol, bow.Int64, []int64{}, nil),
-					bow.NewPrevSeries(valueCol, bow.Float64, []float64{}, nil),
+					bow.NewSeriesFromData(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeriesFromData(valueCol, bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b

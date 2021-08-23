@@ -77,7 +77,7 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	pr.RenameSchema()
 
 	var valueColIndex int64
-	var series = make([]PrevSeries, pr.SchemaHandler.GetColumnNum())
+	var series = make([]Series, pr.SchemaHandler.GetColumnNum())
 	var typeMeta []parquetColTypesMeta
 	for colIndex, col := range pr.Footer.GetSchema() {
 		if col.NumChildren != nil {
@@ -98,11 +98,10 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 		}
 
 		typ := mapParquetToBowTypes[col.GetType()]
-		buf := NewSeries(len(values), typ)
+		series[valueColIndex] = NewSeries(originalColNames[colIndex], len(values), typ)
 		for i, v := range values {
-			buf.SetOrDrop(i, v)
+			series[valueColIndex].SetOrDrop(i, v)
 		}
-		series[valueColIndex] = NewPrevSeriesFromBuffer(originalColNames[colIndex], buf)
 
 		pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
 		valueColIndex++

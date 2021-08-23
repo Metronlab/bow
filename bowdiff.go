@@ -28,7 +28,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 	}
 
 	var wg sync.WaitGroup
-	calcSeries := make([]PrevSeries, b.NumCols())
+	calcSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
 		if !selectedCols[colIndex] {
 			calcSeries[colIndex] = b.NewSeriesFromCol(colIndex)
@@ -39,8 +39,8 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 		go func(colIndex int, colName string) {
 			defer wg.Done()
 			colType := b.ColumnType(colIndex)
-			colBuf := b.NewBufferFromCol(colIndex)
-			calcBuf := NewSeries(b.NumRows(), colType)
+			colSeries := b.NewSeriesFromCol(colIndex)
+			calcSeries[colIndex] = NewSeries(colName, b.NumRows(), colType)
 			for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
 				valid := b.Column(colIndex).IsValid(rowIndex) &&
 					b.Column(colIndex).IsValid(rowIndex-1)
@@ -49,21 +49,19 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 				}
 				switch colType {
 				case Int64:
-					currVal := colBuf.GetValue(rowIndex).(int64)
-					prevVal := colBuf.GetValue(rowIndex - 1).(int64)
-					calcBuf.SetOrDrop(rowIndex, currVal-prevVal)
+					currVal := colSeries.GetValue(rowIndex).(int64)
+					prevVal := colSeries.GetValue(rowIndex - 1).(int64)
+					calcSeries[colIndex].SetOrDrop(rowIndex, currVal-prevVal)
 				case Float64:
-					currVal := colBuf.GetValue(rowIndex).(float64)
-					prevVal := colBuf.GetValue(rowIndex - 1).(float64)
-					calcBuf.SetOrDrop(rowIndex, currVal-prevVal)
+					currVal := colSeries.GetValue(rowIndex).(float64)
+					prevVal := colSeries.GetValue(rowIndex - 1).(float64)
+					calcSeries[colIndex].SetOrDrop(rowIndex, currVal-prevVal)
 				case Boolean:
-					currVal := colBuf.GetValue(rowIndex).(bool)
-					prevVal := colBuf.GetValue(rowIndex - 1).(bool)
-					calcBuf.SetOrDrop(rowIndex, currVal != prevVal)
+					currVal := colSeries.GetValue(rowIndex).(bool)
+					prevVal := colSeries.GetValue(rowIndex - 1).(bool)
+					calcSeries[colIndex].SetOrDrop(rowIndex, currVal != prevVal)
 				}
 			}
-
-			calcSeries[colIndex] = NewPrevSeriesFromBuffer(colName, calcBuf)
 
 		}(colIndex, col.Name)
 	}

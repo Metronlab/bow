@@ -23,8 +23,8 @@ type testCase struct {
 
 var (
 	emptyBow, _ = bow.NewBow(
-		bow.NewPrevSeries(timeCol, bow.Int64, []int64{}, nil),
-		bow.NewPrevSeries(valueCol, bow.Float64, []float64{}, nil),
+		bow.NewSeriesFromData(timeCol, bow.Int64, []int64{}, nil),
+		bow.NewSeriesFromData(valueCol, bow.Float64, []float64{}, nil),
 	)
 	nilBow, _ = bow.NewBowFromRowBasedInterfaces(
 		[]string{timeCol, valueCol},

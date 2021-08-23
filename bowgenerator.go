@@ -115,7 +115,7 @@ func NewGenBow(options ...Option) (Bow, error) {
 		return nil, fmt.Errorf("bow.NewGenBow: GenRefCol cannot be of type Boolean")
 	}
 
-	seriesSlice := make([]PrevSeries, f.cols)
+	seriesSlice := make([]Series, f.cols)
 	for i := range seriesSlice {
 		if i == f.refCol {
 			seriesSlice[i] = newSortedRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.descSort)
@@ -127,19 +127,19 @@ func NewGenBow(options ...Option) (Bow, error) {
 	return NewBow(seriesSlice...)
 }
 
-func newSortedRandomSeries(name string, typ Type, size int, descSort bool) PrevSeries {
-	buf := NewSeries(size, typ)
+func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Series {
+	series := NewSeries(name, size, typ)
 	switch typ {
 	case Int64:
 		var base int64
 		for row := 0; row < size; row++ {
 			if descSort {
 				newValue, _ := ToInt64(newRandomIncreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
+				series.SetOrDrop(row, newValue)
 				base -= 100
 			} else {
 				newValue, _ := ToInt64(newRandomDecreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
+				series.SetOrDrop(row, newValue)
 				base += 100
 			}
 		}
@@ -148,11 +148,11 @@ func newSortedRandomSeries(name string, typ Type, size int, descSort bool) PrevS
 		for row := 0; row < size; row++ {
 			if descSort {
 				newValue, _ := ToFloat64(newRandomIncreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
+				series.SetOrDrop(row, newValue)
 				base -= 100
 			} else {
 				newValue, _ := ToFloat64(newRandomDecreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
+				series.SetOrDrop(row, newValue)
 				base += 100
 			}
 		}
@@ -161,11 +161,11 @@ func newSortedRandomSeries(name string, typ Type, size int, descSort bool) PrevS
 		for row := 0; row < size; row++ {
 			if descSort {
 				newValue, _ := ToString(newRandomIncreasingNumber(Int64, base))
-				buf.SetOrDrop(row, newValue)
+				series.SetOrDrop(row, newValue)
 				base -= 100
 			} else {
 				newValue, _ := ToString(newRandomDecreasingNumber(Int64, base))
-				buf.SetOrDrop(row, newValue)
+				series.SetOrDrop(row, newValue)
 				base += 100
 			}
 		}
@@ -173,13 +173,13 @@ func newSortedRandomSeries(name string, typ Type, size int, descSort bool) PrevS
 		panic("unsupported data type")
 	}
 
-	return NewPrevSeriesFromBuffer(name, buf)
+	return series
 }
 
-func newRandomSeries(name string, typ Type, size int, missingData bool) PrevSeries {
-	buf := NewSeries(size, typ)
+func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
+	series := NewSeries(name, size, typ)
 	for row := 0; row < size; row++ {
-		buf.SetOrDrop(row, newRandomNumber(typ))
+		series.SetOrDrop(row, newRandomNumber(typ))
 	}
 
 	if missingData {
@@ -192,11 +192,11 @@ func newRandomSeries(name string, typ Type, size int, missingData bool) PrevSeri
 			if err != nil {
 				panic(err)
 			}
-			buf.SetOrDrop(int(nils2.Int64()), nil)
+			series.SetOrDrop(int(nils2.Int64()), nil)
 		}
 	}
 
-	return NewPrevSeriesFromBuffer(name, buf)
+	return series
 }
 
 func newRandomIncreasingNumber(typ Type, base interface{}) interface{} {

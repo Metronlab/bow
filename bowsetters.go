@@ -1,6 +1,10 @@
 package bow
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/apache/arrow/go/arrow/array"
+)
 
 func (b *bow) RenameCol(colIndex int, newName string) (Bow, error) {
 	if colIndex >= b.NumCols() {
@@ -11,17 +15,21 @@ func (b *bow) RenameCol(colIndex int, newName string) (Bow, error) {
 		return nil, fmt.Errorf("bow.RenameCol: newName cannot be empty")
 	}
 
-	seriesSlice := make([]PrevSeries, b.NumCols())
+	var colNames []string
+	var arrays []array.Interface
 	for i, col := range b.Columns() {
 		if i == colIndex {
-			seriesSlice[i] = PrevSeries{
-				Name:  newName,
-				Array: col,
-			}
+			colNames = append(colNames, newName)
 		} else {
-			seriesSlice[i] = b.NewSeriesFromCol(i)
+			colNames = append(colNames, b.ColumnName(i))
 		}
+		arrays = append(arrays, col)
 	}
 
-	return NewBowWithMetadata(b.Metadata(), seriesSlice...)
+	rec, err := newRecordFromArrays(b.Metadata(), colNames, arrays)
+	if err != nil {
+		return nil, fmt.Errorf("bow.RenameCol: %w", err)
+	}
+
+	return &bow{Record: rec}, nil
 }

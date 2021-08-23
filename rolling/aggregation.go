@@ -177,49 +177,48 @@ func (it *intervalRollingIter) validateAggregation(aggr ColAggregation, newIndex
 }
 
 // For each colIndex aggregation, gives a series with each point resulting from a window aggregation.
-func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.PrevSeries, error) {
-	seriesSlice := make([]bow.PrevSeries, len(aggrs))
+func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.Series, error) {
+	seriesSlice := make([]bow.Series, len(aggrs))
 
+	var err error
 	for colIndex, aggregation := range aggrs {
 		itCopy := *it
-
-		buf, err := itCopy.windowsAggregateBuffer(colIndex, aggregation)
-		if err != nil {
-			return nil, err
-		}
 
 		colName := aggregation.OutputName()
 		if colName == "" {
 			colName = itCopy.bow.ColumnName(aggregation.InputIndex())
 		}
 
-		seriesSlice[colIndex] = bow.NewPrevSeriesFromBuffer(colName, buf)
+		seriesSlice[colIndex], err = itCopy.windowsAggregateBuffer(colName, colIndex, aggregation)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return seriesSlice, nil
 }
 
-func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggregation) (bow.Series, error) {
-	var buf bow.Series
+func (it *intervalRollingIter) windowsAggregateBuffer(colName string, colIndex int, aggr ColAggregation) (bow.Series, error) {
+	var series bow.Series
 
 	switch aggr.Type() {
 	case bow.Int64, bow.Float64, bow.Boolean:
-		buf = bow.NewSeries(it.numWindows, aggr.Type())
+		series = bow.NewSeries(colName, it.numWindows, aggr.Type())
 	case bow.InputDependent:
 		cType := it.bow.ColumnType(aggr.InputIndex())
-		buf = bow.NewSeries(it.numWindows, cType)
+		series = bow.NewSeries(colName, it.numWindows, cType)
 	case bow.IteratorDependent:
 		iType := it.bow.ColumnType(it.colIndex)
-		buf = bow.NewSeries(it.numWindows, iType)
+		series = bow.NewSeries(colName, it.numWindows, iType)
 	default:
-		return buf, fmt.Errorf(
+		return series, fmt.Errorf(
 			"aggregation %d has invalid return type %s", colIndex, aggr.Type())
 	}
 
 	for it.HasNext() {
 		winIndex, w, err := it.Next()
 		if err != nil {
-			return buf, err
+			return series, err
 		}
 
 		var val interface{}
@@ -229,20 +228,20 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggr
 			val, err = aggr.Func()(aggr.InputIndex(), *w)
 		}
 		if err != nil {
-			return buf, err
+			return series, err
 		}
 		for _, trans := range aggr.Transforms() {
 			val, err = trans(val)
 			if err != nil {
-				return buf, err
+				return series, err
 			}
 		}
 		if val == nil {
 			continue
 		}
 
-		buf.SetOrDrop(winIndex, val)
+		series.SetOrDrop(winIndex, val)
 	}
 
-	return buf, nil
+	return series, nil
 }

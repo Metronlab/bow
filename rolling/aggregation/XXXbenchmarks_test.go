@@ -68,48 +68,24 @@ func benchmarkBow(b *testing.B) {
 		}
 	})
 
-	seriesSlice := make([]bow.PrevSeries, 2)
+	seriesSlice := make([]bow.Series, 2)
 	rand.Seed(42)
-	seriesSlice[0] = func(size int64) bow.PrevSeries {
-		buf := bow.NewSeries(int(size), bow.Int64)
+	seriesSlice[0] = func(size int64) bow.Series {
+		series := bow.NewSeries("time", int(size), bow.Int64)
 		for i := int64(0); i < size; i++ {
-			buf.SetOrDrop(int(i), i)
+			series.SetOrDrop(int(i), i)
 		}
-		return bow.NewPrevSeriesFromBuffer("time", buf)
+		return series
 	}(BenchSize)
-	seriesSlice[1] = func(size int64) bow.PrevSeries {
-		buf := bow.NewSeries(int(size), bow.Float64)
+	seriesSlice[1] = func(size int64) bow.Series {
+		series := bow.NewSeries("value", int(size), bow.Float64)
 		for i := int64(0); i < size; i++ {
-			buf.SetOrDrop(int(i), rand.Float64())
+			series.SetOrDrop(int(i), rand.Float64())
 		}
-		return bow.NewPrevSeriesFromBuffer("value", buf)
+		return series
 	}(BenchSize)
 
 	b.Run("NewBow with validity bitmap", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			benchBow, err = bow.NewBow(seriesSlice...)
-			require.NoError(b, err)
-		}
-	})
-
-	seriesSlice = make([]bow.PrevSeries, 2)
-	rand.Seed(42)
-	seriesSlice[0] = func(size int64) bow.PrevSeries {
-		buf := bow.NewSeries(int(size), bow.Int64)
-		for i := int64(0); i < size; i++ {
-			buf.Data.([]int64)[i] = i
-		}
-		return bow.NewPrevSeries("time", bow.Int64, buf.Data, nil)
-	}(BenchSize)
-	seriesSlice[1] = func(size int64) bow.PrevSeries {
-		buf := bow.NewSeries(int(size), bow.Float64)
-		for i := int64(0); i < size; i++ {
-			buf.Data.([]float64)[i] = rand.Float64()
-		}
-		return bow.NewPrevSeries("value", bow.Float64, buf.Data, nil)
-	}(BenchSize)
-
-	b.Run("NewBow without validity bitmap", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			benchBow, err = bow.NewBow(seriesSlice...)
 			require.NoError(b, err)

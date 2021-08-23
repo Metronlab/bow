@@ -42,7 +42,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 	newNumRows := left.NumRows() + right.NumRows() +
 		len(commonRows.l) - uniquesLeft - uniquesRight
 
-	// Prepare new Series Slice
+	// Prepare new PrevSeries Slice
 	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
 	newSeries := make([]Series, newNumCols)
 
@@ -69,13 +69,13 @@ func (b *bow) OuterJoin(other Bow) Bow {
 }
 
 func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniquesLeft int,
-	commonCols map[string][]Buffer, commonRows struct{ l, r []int }) {
+	commonCols map[string][]Series, commonRows struct{ l, r []int }) {
 	var leftRow, commonRow int
 
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		leftRow = 0
 		commonRow = 0
-		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
+		(*newSeries)[colIndex] = NewSeries(left.ColumnName(colIndex), newNumRows, left.ColumnType(colIndex))
 		switch left.ColumnType(colIndex) {
         {{range .Data.types -}}
         case {{ .Type }}:
@@ -84,13 +84,13 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 			// Fill rows from left bow
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if left.Column(colIndex).IsValid(leftRow) {
-					buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
+					(*newSeries)[colIndex].SetOrDropStrict(newRow, leftData.Value(leftRow))
 				}
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow &&
 					newRow < newNumRows {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
+						(*newSeries)[colIndex].SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -118,19 +118,17 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 					}
 				}
 				if !isRowCommon {
-					buf.SetOrDropStrict(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
+					(*newSeries)[colIndex].SetOrDropStrict(newRow, commonCols[left.ColumnName(colIndex)][1].GetValue(rightRow))
 					newRow++
 				}
 			}
-
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
         {{end -}}
 		}
 	}
 }
 
 func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
-	newNumRows, uniquesLeft int, commonCols map[string][]Buffer,
+	newNumRows, uniquesLeft int, commonCols map[string][]Series,
 	commonRows struct{ l, r []int }) {
 	var leftRow, commonRow, rightCol int
 
@@ -140,7 +138,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		buf := NewBuffer(newNumRows, right.ColumnType(rightCol))
+		(*newSeries)[colIndex] = NewSeries(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
 		switch right.ColumnType(rightCol) {
         {{range .Data.types -}}
         case {{ .Type }}:
@@ -151,7 +149,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				for commonRow < len(commonRows.l) &&
 					commonRows.l[commonRow] == leftRow && newRow < newNumRows {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
+						(*newSeries)[colIndex].SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					if commonRow+1 < len(commonRows.l) &&
 						commonRows.l[commonRow+1] == leftRow {
@@ -174,12 +172,11 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 				if !isRowCommon {
 					if right.Column(rightCol).IsValid(rightRow) {
-						buf.SetOrDropStrict(newRow, rightData.Value(rightRow))
+						(*newSeries)[colIndex].SetOrDropStrict(newRow, rightData.Value(rightRow))
 					}
 					newRow++
 				}
 			}
-			(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
         {{end -}}
 		}
 		rightCol++
@@ -211,7 +208,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	// Get common rows indexes
 	commonRows := getCommonRows(left, right, commonCols)
 
-	// Prepare new Series Slice
+	// Prepare new PrevSeries Slice
 	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
 	newSeries := make([]Series, newNumCols)
 
@@ -222,7 +219,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		newRow = 0
 		commonRow = 0
-		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
+		newSeries[colIndex] = NewSeries(left.ColumnName(colIndex), newNumRows, left.ColumnType(colIndex))
 		switch left.ColumnType(colIndex) {
         {{range .Data.types -}}
         case {{ .Type }}:
@@ -230,13 +227,12 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if left.Column(colIndex).IsValid(leftRow) {
-						buf.SetOrDropStrict(newRow, leftData.Value(leftRow))
+						newSeries[colIndex].SetOrDropStrict(newRow, leftData.Value(leftRow))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
         {{end -}}
 		}
 	}
@@ -245,7 +241,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for colIndex := left.NumCols(); colIndex < newNumCols; colIndex++ {
 		newRow = 0
 		commonRow = 0
-		buf := NewBuffer(newNumRows, right.ColumnType(rightCol))
+		newSeries[colIndex] = NewSeries(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
@@ -257,13 +253,12 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			for leftRow = 0; leftRow < left.NumRows(); leftRow++ {
 				if commonRow < len(commonRows.l) && commonRows.l[commonRow] == leftRow {
 					if right.Column(rightCol).IsValid(commonRows.r[commonRow]) {
-						buf.SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
+						newSeries[colIndex].SetOrDropStrict(newRow, rightData.Value(commonRows.r[commonRow]))
 					}
 					newRow++
 					commonRow++
 				}
 			}
-			newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
         {{end -}}
 		}
 		rightCol++
@@ -287,8 +282,8 @@ func (b *bow) InnerJoin(other Bow) Bow {
 }
 
 // getCommonCols returns in key column names and corresponding buffers on left / right schemas
-func getCommonCols(left, right Bow) map[string][]Buffer {
-	commonCols := make(map[string][]Buffer)
+func getCommonCols(left, right Bow) map[string][]Series {
+	commonCols := make(map[string][]Series)
 	for _, lField := range left.Schema().Fields() {
 		rFields, commonCol := right.Schema().FieldsByName(lField.Name)
 		if !commonCol {
@@ -308,9 +303,9 @@ func getCommonCols(left, right Bow) map[string][]Buffer {
 				lField.Name))
 		}
 
-		commonCols[lField.Name] = []Buffer{
-			left.NewBufferFromCol(left.Schema().FieldIndices(lField.Name)[0]),
-			right.NewBufferFromCol(right.Schema().FieldIndices(lField.Name)[0])}
+		commonCols[lField.Name] = []Series{
+			left.NewSeriesFromCol(left.Schema().FieldIndices(lField.Name)[0]),
+			right.NewSeriesFromCol(right.Schema().FieldIndices(lField.Name)[0])}
 	}
 
 	return commonCols
@@ -320,7 +315,7 @@ type CommonRows struct {
 	l, r []int
 }
 
-func getCommonRows(left, right Bow, commonColBufs map[string][]Buffer) CommonRows {
+func getCommonRows(left, right Bow, commonColBufs map[string][]Series) CommonRows {
 	var commonRows CommonRows
 
 	if len(commonColBufs) == 0 {

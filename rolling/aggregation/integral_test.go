@@ -15,8 +15,8 @@ func TestIntegralStep(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewPrevSeries("time", bow.Int64, []int64{}, nil),
-					bow.NewPrevSeries("value", bow.Float64, []float64{}, nil),
+					bow.NewSeriesFromData("time", bow.Int64, []int64{}, nil),
+					bow.NewSeriesFromData("value", bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -98,8 +98,8 @@ func TestIntegralStep_scaled(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewPrevSeries("time", bow.Int64, []int64{}, nil),
-					bow.NewPrevSeries("value", bow.Float64, []float64{}, nil),
+					bow.NewSeriesFromData("time", bow.Int64, []int64{}, nil),
+					bow.NewSeriesFromData("value", bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -134,8 +134,8 @@ func TestIntegralTrapezoid(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewPrevSeries("time", bow.Int64, []int64{}, nil),
-					bow.NewPrevSeries("value", bow.Float64, []float64{}, nil),
+					bow.NewSeriesFromData("time", bow.Int64, []int64{}, nil),
+					bow.NewSeriesFromData("value", bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b

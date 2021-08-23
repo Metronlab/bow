@@ -89,8 +89,8 @@ func NewBowEmpty() Bow {
 	return &bow{Record: array.NewRecord(schema, arrays, 0)}
 }
 
-func NewBow(series ...Series) (Bow, error) {
-	rec, err := newRecord(Metadata{}, series...)
+func NewBow(seriesSlice ...Series) (Bow, error) {
+	rec, err := newRecordFromSeries(Metadata{}, seriesSlice...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBow: %w", err)
 	}

@@ -102,13 +102,12 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		}
 	}
 
-	seriesSlice := make([]PrevSeries, len(jsonB.Schema.Fields))
+	seriesSlice := make([]Series, len(jsonB.Schema.Fields))
 
 	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
 			typ := getBowTypeFromArrowName(field.Type)
-			buf := NewSeries(0, typ)
-			seriesSlice[i] = NewPrevSeriesFromBuffer(field.Name, buf)
+			seriesSlice[i] = NewSeries(field.Name, 0, typ)
 		}
 
 		tmpBow, err := NewBow(seriesSlice...)
@@ -122,12 +121,10 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	for fieldIndex, field := range jsonB.Schema.Fields {
 		fieldType := getBowTypeFromArrowName(field.Type)
-		buf := NewSeries(len(jsonB.RowBasedData), fieldType)
+		seriesSlice[fieldIndex] = NewSeries(field.Name, len(jsonB.RowBasedData), fieldType)
 		for rowIndex, row := range jsonB.RowBasedData {
-			buf.SetOrDrop(rowIndex, row[field.Name])
+			seriesSlice[fieldIndex].SetOrDrop(rowIndex, row[field.Name])
 		}
-
-		seriesSlice[fieldIndex] = NewPrevSeriesFromBuffer(field.Name, buf)
 	}
 
 	tmpBow, err := NewBow(seriesSlice...)

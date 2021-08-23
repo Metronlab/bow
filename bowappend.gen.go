@@ -27,7 +27,8 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	}
 
 	refBow := bows[0]
-	seriesSlice := make([]PrevSeries, refBow.NumCols())
+	var colNames []string
+	var arrays []array.Interface
 
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
@@ -98,11 +99,14 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			return nil, fmt.Errorf("unsupported type %v", refType)
 		}
 
-		seriesSlice[colIndex] = PrevSeries{
-			Name:  refBow.ColumnName(colIndex),
-			Array: newArray,
-		}
+		colNames = append(colNames, refBow.ColumnName(colIndex))
+		arrays = append(arrays, newArray)
 	}
 
-	return NewBowWithMetadata(refBow.Metadata(), seriesSlice...)
+	rec, err := newRecordFromArrays(refBow.Metadata(), colNames, arrays)
+	if err != nil {
+		return nil, fmt.Errorf("bow.AppendBows: %w", err)
+	}
+
+	return &bow{Record: rec}, nil
 }

@@ -506,13 +506,13 @@ func TestFill(t *testing.T) {
 	t.Run("with metadata", func(t *testing.T) {
 		// Previous
 		b1, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
-			NewPrevSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 1, 3}, []bool{true, true, true}),
-			NewPrevSeries("float", Float64, []float64{1., 1., 3.}, []bool{true, true, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 1, 3}, []bool{true, true, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 1., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -522,13 +522,13 @@ func TestFill(t *testing.T) {
 
 		// Next
 		b2, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
-			NewPrevSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 3, 3}, []bool{true, true, true}),
-			NewPrevSeries("float", Float64, []float64{1., 3., 3.}, []bool{true, true, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 3, 3}, []bool{true, true, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 3., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -538,13 +538,13 @@ func TestFill(t *testing.T) {
 
 		// Mean
 		b3, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
-			NewPrevSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 2, 3}, []bool{true, true, true}),
-			NewPrevSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, true, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 2, 3}, []bool{true, true, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 2., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -554,13 +554,13 @@ func TestFill(t *testing.T) {
 
 		// Linear
 		b4, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
-			NewPrevSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewPrevSeries("int", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
-			NewPrevSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, false, true}),
+			NewSeriesFromData("int", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
+			NewSeriesFromData("float", Float64, []float64{1., 2., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 

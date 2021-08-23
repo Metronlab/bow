@@ -9,12 +9,12 @@ import (
 
 func TestBow_SetColName(t *testing.T) {
 	b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-		NewPrevSeries("oldName", Float64, []float64{0.1, 0.2}, nil),
+		NewSeriesFromData("oldName", Float64, []float64{0.1, 0.2}, nil),
 	)
 	require.NoError(t, err)
 
 	expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-		NewPrevSeries("newName", Float64, []float64{0.1, 0.2}, nil),
+		NewSeriesFromData("newName", Float64, []float64{0.1, 0.2}, nil),
 	)
 	require.NoError(t, err)
 

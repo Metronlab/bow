@@ -5,10 +5,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/bitutil"
-	"github.com/apache/arrow/go/arrow/memory"
 )
 
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
@@ -58,14 +55,12 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	// Sort the column by ascending values
 	sort.Sort(colToSortBy)
 
-	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	builder := array.NewInt64Builder(mem)
-	builder.AppendValues(colToSortBy.values, nil)
-	arr := builder.NewArray()
-
-	// Fill the sort by column with sorted values
-	sortedSeries := make([]PrevSeries, b.NumCols())
-	sortedSeries[colToSortByIndex] = PrevSeries{Name: colName, Array: arr}
+	var seriesSlice = make([]Series, b.NumCols())
+	seriesSlice[colToSortByIndex] = Series{
+		Name:            b.ColumnName(colToSortByIndex),
+		Data:            colToSortBy.values,
+		nullBitmapBytes: b.Column(colToSortByIndex).NullBitmapBytes(),
+	}
 
 	// Reflect row order changes to fill the other columns
 	var wg sync.WaitGroup
@@ -81,79 +76,43 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			switch b.ColumnType(colIndex) {
 			case Int64:
 				prevValues := array.NewInt64Data(prevData)
-				newValues := make([]int64, b.NumRows())
-				newValid := make([]byte, b.NumRows())
+				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), Int64)
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.indices[i])
 					if prevValues.IsValid(colToSortBy.indices[i]) {
-						bitutil.SetBit(newValid, i)
+						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))
+					} else {
+						seriesSlice[colIndex].SetOrDropStrict(i, nil)
 					}
-				}
-
-				sortedSeries[colIndex] = PrevSeries{
-					Name: b.ColumnName(colIndex),
-					Array: array.NewInt64Data(
-						array.NewData(arrow.PrimitiveTypes.Int64, b.NumRows(),
-							[]*memory.Buffer{
-								memory.NewBufferBytes(newValid),
-								memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(newValues)),
-							}, nil, 0, 0),
-					),
 				}
 			case Float64:
 				prevValues := array.NewFloat64Data(prevData)
-				newValues := make([]float64, b.NumRows())
-				newValid := make([]byte, b.NumRows())
+				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), Float64)
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.indices[i])
 					if prevValues.IsValid(colToSortBy.indices[i]) {
-						bitutil.SetBit(newValid, i)
+						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))
+					} else {
+						seriesSlice[colIndex].SetOrDropStrict(i, nil)
 					}
-				}
-
-				sortedSeries[colIndex] = PrevSeries{
-					Name: b.ColumnName(colIndex),
-					Array: array.NewFloat64Data(
-						array.NewData(arrow.PrimitiveTypes.Float64, b.NumRows(),
-							[]*memory.Buffer{
-								memory.NewBufferBytes(newValid),
-								memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(newValues)),
-							}, nil, 0, 0),
-					),
 				}
 			case Boolean:
 				prevValues := array.NewBooleanData(prevData)
-				newValues := make([]bool, b.NumRows())
-				newValid := make([]bool, b.NumRows())
+				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), Boolean)
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.indices[i])
 					if prevValues.IsValid(colToSortBy.indices[i]) {
-						newValid[i] = true
+						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))
+					} else {
+						seriesSlice[colIndex].SetOrDropStrict(i, nil)
 					}
-				}
-				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-				builder := array.NewBooleanBuilder(mem)
-				builder.AppendValues(newValues, newValid)
-				sortedSeries[colIndex] = PrevSeries{
-					Name:  b.ColumnName(colIndex),
-					Array: builder.NewArray(),
 				}
 			case String:
 				prevValues := array.NewStringData(prevData)
-				newValues := make([]string, b.NumRows())
-				newValid := make([]bool, b.NumRows())
+				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), String)
 				for i := 0; i < b.NumRows(); i++ {
-					newValues[i] = prevValues.Value(colToSortBy.indices[i])
 					if prevValues.IsValid(colToSortBy.indices[i]) {
-						newValid[i] = true
+						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))
+					} else {
+						seriesSlice[colIndex].SetOrDropStrict(i, nil)
 					}
-				}
-				mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-				builder := array.NewStringBuilder(mem)
-				builder.AppendValues(newValues, newValid)
-				sortedSeries[colIndex] = PrevSeries{
-					Name:  b.ColumnName(colIndex),
-					Array: builder.NewArray(),
 				}
 			default:
 				panic(fmt.Sprintf("bow: SortByCol function: unhandled type %s",
@@ -163,7 +122,12 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 	}
 	wg.Wait()
 
-	return NewBowWithMetadata(b.Metadata(), sortedSeries...)
+	rec, err := newRecordFromSeries(b.Metadata(), seriesSlice...)
+	if err != nil {
+		return nil, fmt.Errorf("bow.SortByCol: %w", err)
+	}
+
+	return &bow{Record: rec}, nil
 }
 
 // IsInt64SliceSorted tests whether a column of int64s is sorted in increasing order.

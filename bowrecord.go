@@ -3,41 +3,37 @@ package bow
 import (
 	"errors"
 	"fmt"
-	"github.com/apache/arrow/go/arrow/bitutil"
-	"github.com/apache/arrow/go/arrow/memory"
 	"reflect"
 
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/bitutil"
+	"github.com/apache/arrow/go/arrow/memory"
 )
 
-func newRecord(metadata Metadata, seriesSlice ...Series) (array.Record, error) {
+func newRecordFromArrays(metadata Metadata, colNames []string, arrays []array.Interface) (array.Record, error) {
 	var fields []arrow.Field
-	var arrays []array.Interface
 	var nRows int64
 
-	if len(seriesSlice) != 0 && seriesSlice[0].Array != nil {
-		nRows = int64(seriesSlice[0].Array.Len())
+	if len(arrays) != 0 {
+		nRows = int64(arrays[0].Len())
 	}
 
-	for _, s := range seriesSlice {
-		if s.Array == nil {
-			return nil, errors.New("empty PrevSeries")
-		}
-		if s.Name == "" {
-			return nil, errors.New("empty PrevSeries name")
-		}
-		if getBowTypeFromArrowType(s.Array.DataType()) == Unknown {
-			return nil, fmt.Errorf("unsupported type: %s", s.Array.DataType().Name())
-		}
-		if int64(s.Array.Len()) != nRows {
+	if len(arrays) != len(colNames) {
+		return nil, fmt.Errorf(
+			"bow.newRecordFromArrays: arrays (%d) and colNames (%d) lengths are different",
+			len(arrays), len(colNames))
+	}
+
+	for i, arr := range arrays {
+		if int64(arr.Len()) != nRows {
 			return nil,
 				fmt.Errorf(
-					"bow.PrevSeries '%s' has a length of %d, which is different from the previous ones",
-					s.Name, s.Array.Len())
+					"bow.newRecordFromArrays: array %d has a length of %d, which is different from the previous ones",
+					i, arr.Len())
 		}
-		fields = append(fields, arrow.Field{Name: s.Name, Type: s.Array.DataType()})
-		arrays = append(arrays, s.Array)
+
+		fields = append(fields, arrow.Field{Name: colNames[i], Type: arr.DataType()})
 	}
 
 	return array.NewRecord(
@@ -45,47 +41,82 @@ func newRecord(metadata Metadata, seriesSlice ...Series) (array.Record, error) {
 		arrays, nRows), nil
 }
 
-func newSeriesFromData(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
-	switch typ {
-	case Int64:
-		data, ok := dataArray.([]int64)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeriesFromData: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newInt64Series(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
-	case Float64:
-		data, ok := dataArray.([]float64)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeriesFromData: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newFloat64Series(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
-	case Boolean:
-		data, ok := dataArray.([]bool)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeriesFromData: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newBooleanSeries(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
-	case String:
-		data, ok := dataArray.([]string)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeriesFromData: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newStringSeries(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
-	default:
-		panic(fmt.Errorf("unsupported type %v", typ))
+func newRecordFromSeries(metadata Metadata, seriesSlice ...Series) (array.Record, error) {
+	var fields []arrow.Field
+	var arrays []array.Interface
+	var nRows int64
+
+	if len(seriesSlice) != 0 {
+		nRows = int64(seriesSlice[0].Len())
 	}
+
+	for _, s := range seriesSlice {
+		if s.Name == "" {
+			return nil, errors.New("bow.newRecordFromSeries: empty Series name")
+		}
+
+		if int64(s.Len()) != nRows {
+			return nil,
+				fmt.Errorf(
+					"bow.newRecordFromSeries: Series '%s' has a length of %d, which is different from the previous ones",
+					s.Name, s.Len())
+		}
+
+		typ := s.DataType()
+
+		arrowType, ok := mapBowToArrowTypes[typ]
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.newRecordFromSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(s.Data)))
+		}
+		fields = append(fields, arrow.Field{Name: s.Name, Type: arrowType})
+
+		var arr array.Interface
+		switch typ {
+		case Int64:
+			data, ok := s.Data.([]int64)
+			if !ok {
+				panic(fmt.Errorf(
+					"bow.newRecordFromSeries: typ is %v, but have %v",
+					typ, reflect.TypeOf(s.Data)))
+			}
+			arr = newInt64Array(data, buildNullBitmapBytes(len(data), s.nullBitmapBytes))
+		case Float64:
+			data, ok := s.Data.([]float64)
+			if !ok {
+				panic(fmt.Errorf(
+					"bow.newRecordFromSeries: typ is %v, but have %v",
+					typ, reflect.TypeOf(s.Data)))
+			}
+			arr = newFloat64Array(data, buildNullBitmapBytes(len(data), s.nullBitmapBytes))
+		case Boolean:
+			data, ok := s.Data.([]bool)
+			if !ok {
+				panic(fmt.Errorf(
+					"bow.newRecordFromSeries: typ is %v, but have %v",
+					typ, reflect.TypeOf(s.Data)))
+			}
+			arr = newBooleanArray(data,
+				buildNullBitmapBytes(len(data), s.nullBitmapBytes))
+		case String:
+			data, ok := s.Data.([]string)
+			if !ok {
+				panic(fmt.Errorf(
+					"bow.newRecordFromSeries: typ is %v, but have %v",
+					typ, reflect.TypeOf(s.Data)))
+			}
+			arr = newStringArray(data, buildNullBitmapBytes(len(data), s.nullBitmapBytes))
+		default:
+			panic(fmt.Errorf("unsupported type %v", typ))
+		}
+
+		arrays = append(arrays, arr)
+	}
+
+	return array.NewRecord(
+		arrow.NewSchema(fields, &metadata.Metadata),
+		arrays, nRows), nil
 }
 
 func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
@@ -120,50 +151,42 @@ func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
 	return res
 }
 
-func newInt64Series(name string, data []int64, valid []byte) Series {
+func newInt64Array(data []int64, valid []byte) array.Interface {
 	length := len(data)
-	return Series{
-		Name: name,
-		Array: array.NewInt64Data(
-			array.NewData(arrow.PrimitiveTypes.Int64, length,
-				[]*memory.Buffer{
-					memory.NewBufferBytes(valid),
-					memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(data)),
-				}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
-		),
-	}
+	return array.NewInt64Data(
+		array.NewData(arrow.PrimitiveTypes.Int64, length,
+			[]*memory.Buffer{
+				memory.NewBufferBytes(valid),
+				memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(data)),
+			}, nil, length-bitutil.CountSetBits(valid, 0, length), 0))
 }
 
-func newFloat64Series(name string, data []float64, valid []byte) Series {
+func newFloat64Array(data []float64, valid []byte) array.Interface {
 	length := len(data)
-	return Series{
-		Name: name,
-		Array: array.NewFloat64Data(
-			array.NewData(arrow.PrimitiveTypes.Float64, length,
-				[]*memory.Buffer{
-					memory.NewBufferBytes(valid),
-					memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(data)),
-				}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
-		),
-	}
+	return array.NewFloat64Data(
+		array.NewData(arrow.PrimitiveTypes.Float64, length,
+			[]*memory.Buffer{
+				memory.NewBufferBytes(valid),
+				memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(data)),
+			}, nil, length-bitutil.CountSetBits(valid, 0, length), 0))
 }
 
-func newBooleanSeries(name string, data []bool, valid []byte) Series {
+func newBooleanArray(data []bool, valid []byte) array.Interface {
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	builder := array.NewBooleanBuilder(mem)
 	defer builder.Release()
 	builder.AppendValues(data,
 		buildNullBitmapBool(len(data), valid))
-	return Series{Name: name, Array: builder.NewArray()}
+	return builder.NewArray()
 }
 
-func newStringSeries(name string, data []string, valid []byte) Series {
+func newStringArray(data []string, valid []byte) array.Interface {
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	builder := array.NewStringBuilder(mem)
 	defer builder.Release()
 	builder.AppendValues(data,
 		buildNullBitmapBool(len(data), valid))
-	return Series{Name: name, Array: builder.NewArray()}
+	return builder.NewArray()
 }
 
 func buildNullBitmapBool(dataLength int, validityArray interface{}) []bool {
