@@ -21,5 +21,5 @@ go test ${PKG} -v -race -cover -covermode=atomic -coverprofile=${COVER_RESULTS}/
 go tool cover -html=${COVER_RESULTS}/coverage.cover -o ${COVER_RESULTS}/coverage.html
 
 echo "To open the html coverage file use one of the following commands:"
-echo "open $COVER_RESULTS/coverage.html on mac"
-echo "xdg-open $COVER_RESULTS/coverage.html on linux"
+echo "open file://$COVER_RESULTS/coverage.html on mac"
+echo "xdg-open file://$COVER_RESULTS/coverage.html on linux"
