@@ -19,10 +19,12 @@ jobs:
         run: |
           go get github.com/jstemmer/go-junit-report
           bash -c ./scripts/test.sh
+
       - name: Run benchmarks
         run: |
           go get golang.org/x/perf/cmd/benchstat
           bash -c ./scripts/benchmark.sh
+
       - name: Upload artifact of current branch benchmark results
         uses: actions/upload-artifact@v2
         with:
