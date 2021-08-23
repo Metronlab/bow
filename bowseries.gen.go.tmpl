@@ -1,0 +1,195 @@
+package bow
+
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/bitutil"
+)
+
+type Series struct {
+	Name            string
+	Data            interface{}
+	nullBitmapBytes []byte
+}
+
+func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
+	switch typ {
+    {{range .Data.types -}}
+    case {{ .Type }}:
+		data, ok := dataArray.([]{{ .type }})
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.NewSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(dataArray)))
+		}
+		return Series{
+			Name:            name,
+			Data:            data,
+			nullBitmapBytes: buildNullBitmapBytes(len(data), validityArray),
+		}
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type %v", typ))
+	}
+}
+
+func NewSeriesEmpty(name string, size int, typ Type) Series {
+	var res = Series{
+		Name:            name,
+		nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
+	}
+
+	switch typ {
+    {{range .Data.types -}}
+    case {{ .Type }}:
+		res.Data = make([]{{ .type }}, size)
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type %s", typ))
+	}
+
+	return res
+}
+
+func (b *bow) NewSeriesFromCol(colIndex int) Series {
+	var res = Series{
+		Name: b.ColumnName(colIndex),
+	}
+
+	data := b.Column(colIndex).Data()
+	switch b.ColumnType(colIndex) {
+    {{range .Data.types -}}
+    case {{ .Type }}:
+		arr := array.New{{ .Type }}Data(data)
+		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
+		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
+		copy(nullBitmapBytesCopy, nullBitmapBytes)
+		res.Data = {{ .Type }}Values(arr)
+		res.nullBitmapBytes = nullBitmapBytesCopy
+    {{end -}}
+	default:
+		panic(fmt.Errorf(
+			"unsupported type %+v", b.ColumnType(colIndex)))
+	}
+
+	return res
+}
+
+func (s *Series) Len() int {
+	switch data := s.Data.(type) {
+    {{range .Data.types -}}
+    case []{{ .type }}:
+		return len(data)
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type '%T'", s.Data))
+	}
+}
+
+func (s *Series) DataType() Type {
+	switch s.Data.(type) {
+    {{range .Data.types -}}
+    case []{{ .type }}:
+		return {{ .Type }}
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type '%T'", s.Data))
+	}
+}
+
+func (s *Series) SetOrDrop(i int, value interface{}) {
+	var valid bool
+	switch v := s.Data.(type) {
+    {{range .Data.types -}}
+    case []{{ .type }}:
+		v[i], valid = {{ .Type }}.Convert(value).({{ .type }})
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type %T", v))
+	}
+
+	if valid {
+		bitutil.SetBit(s.nullBitmapBytes, i)
+	} else {
+		bitutil.ClearBit(s.nullBitmapBytes, i)
+	}
+}
+
+func (s *Series) SetOrDropStrict(i int, value interface{}) {
+	var valid bool
+	switch v := s.Data.(type) {
+    {{range .Data.types -}}
+    case []{{ .type }}:
+		v[i], valid = value.({{ .type }})
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type %T", v))
+	}
+
+	if valid {
+		bitutil.SetBit(s.nullBitmapBytes, i)
+	} else {
+		bitutil.ClearBit(s.nullBitmapBytes, i)
+	}
+}
+
+func (s *Series) GetValue(i int) interface{} {
+	if bitutil.BitIsNotSet(s.nullBitmapBytes, i) {
+		return nil
+	}
+
+	switch v := s.Data.(type) {
+    {{range .Data.types -}}
+    case []{{ .type }}:
+		return v[i]
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type %T", v))
+	}
+}
+
+func (s *Series) IsValid(rowIndex int) bool {
+	return bitutil.BitIsSet(s.nullBitmapBytes, rowIndex)
+}
+
+func (s *Series) IsNull(rowIndex int) bool {
+	return bitutil.BitIsNotSet(s.nullBitmapBytes, rowIndex)
+}
+
+func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (Series, error) {
+	var err error
+	if typ == Unknown {
+		if typ, err = seekType(cells); err != nil {
+			return Series{}, err
+		}
+	}
+
+	series := NewSeriesEmpty(name, len(cells), typ)
+	for i, c := range cells {
+		series.SetOrDrop(i, c)
+	}
+
+	return series, nil
+}
+
+func seekType(cells []interface{}) (Type, error) {
+	for _, val := range cells {
+		if val != nil {
+			switch val.(type) {
+			case float64, json.Number:
+				return Float64, nil
+			case int, int64:
+				return Int64, nil
+			case string:
+				return String, nil
+			case bool:
+				return Boolean, nil
+			}
+		}
+	}
+
+	return Float64, nil
+}

@@ -98,7 +98,7 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 		}
 
 		typ := mapParquetToBowTypes[col.GetType()]
-		series[valueColIndex] = NewSeries(originalColNames[colIndex], len(values), typ)
+		series[valueColIndex] = NewSeriesEmpty(originalColNames[colIndex], len(values), typ)
 		for i, v := range values {
 			series[valueColIndex].SetOrDrop(i, v)
 		}

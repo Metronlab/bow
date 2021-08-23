@@ -10,26 +10,26 @@ import (
 func TestDiff(t *testing.T) {
 	t.Run("all columns all supported types with nils and metadata", func(t *testing.T) {
 		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeriesFromData("a", Int64,
+			NewSeries("a", Int64,
 				[]int64{1, 2, 3, 4, 0, 5},
 				[]bool{true, true, true, true, false, true}),
-			NewSeriesFromData("b", Float64,
+			NewSeries("b", Float64,
 				[]float64{1., 2., 3., 4., 0., 5.},
 				[]bool{true, true, true, true, false, true}),
-			NewSeriesFromData("c", Boolean,
+			NewSeries("c", Boolean,
 				[]bool{false, false, true, true, false, false},
 				[]bool{true, true, true, true, false, true}),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeriesFromData("a", Int64,
+			NewSeries("a", Int64,
 				[]int64{0, 1, 1, 1, 0, 0},
 				[]bool{false, true, true, true, false, false}),
-			NewSeriesFromData("b", Float64,
+			NewSeries("b", Float64,
 				[]float64{0., 1., 1., 1., 0., 0.},
 				[]bool{false, true, true, true, false, false}),
-			NewSeriesFromData("c", Boolean,
+			NewSeries("c", Boolean,
 				[]bool{false, false, true, false, false, false},
 				[]bool{false, true, true, true, false, false}),
 		)

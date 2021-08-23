@@ -76,7 +76,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 			switch b.ColumnType(colIndex) {
 			case Int64:
 				prevValues := array.NewInt64Data(prevData)
-				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), Int64)
+				seriesSlice[colIndex] = NewSeriesEmpty(b.ColumnName(colIndex), b.NumRows(), Int64)
 				for i := 0; i < b.NumRows(); i++ {
 					if prevValues.IsValid(colToSortBy.indices[i]) {
 						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))
@@ -86,7 +86,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				}
 			case Float64:
 				prevValues := array.NewFloat64Data(prevData)
-				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), Float64)
+				seriesSlice[colIndex] = NewSeriesEmpty(b.ColumnName(colIndex), b.NumRows(), Float64)
 				for i := 0; i < b.NumRows(); i++ {
 					if prevValues.IsValid(colToSortBy.indices[i]) {
 						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))
@@ -96,7 +96,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				}
 			case Boolean:
 				prevValues := array.NewBooleanData(prevData)
-				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), Boolean)
+				seriesSlice[colIndex] = NewSeriesEmpty(b.ColumnName(colIndex), b.NumRows(), Boolean)
 				for i := 0; i < b.NumRows(); i++ {
 					if prevValues.IsValid(colToSortBy.indices[i]) {
 						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))
@@ -106,7 +106,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				}
 			case String:
 				prevValues := array.NewStringData(prevData)
-				seriesSlice[colIndex] = NewSeries(b.ColumnName(colIndex), b.NumRows(), String)
+				seriesSlice[colIndex] = NewSeriesEmpty(b.ColumnName(colIndex), b.NumRows(), String)
 				for i := 0; i < b.NumRows(); i++ {
 					if prevValues.IsValid(colToSortBy.indices[i]) {
 						seriesSlice[colIndex].SetOrDropStrict(i, prevValues.Value(colToSortBy.indices[i]))

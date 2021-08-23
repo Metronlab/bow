@@ -80,8 +80,8 @@ func TestParquet(t *testing.T) {
 	t.Run("bow with context and col_types metadata", func(t *testing.T) {
 		var series = make([]Series, 2)
 
-		series[0] = NewSeriesFromData("time", Int64, []int64{0}, []bool{true})
-		series[1] = NewSeriesFromData("value", Float64, []float64{0.}, []bool{true})
+		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
+		series[1] = NewSeries("value", Float64, []float64{0.}, []bool{true})
 
 		var keys, values []string
 		type Unit struct {
@@ -122,8 +122,8 @@ func TestParquet(t *testing.T) {
 	t.Run("bow with wrong col_types metadata", func(t *testing.T) {
 		var series = make([]Series, 2)
 
-		series[0] = NewSeriesFromData("time", Int64, []int64{0}, []bool{true})
-		series[1] = NewSeriesFromData("value", Float64, []float64{0.}, []bool{true})
+		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
+		series[1] = NewSeries("value", Float64, []float64{0.}, []bool{true})
 
 		var keys, values []string
 

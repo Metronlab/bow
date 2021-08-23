@@ -203,13 +203,13 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colName string, colIndex i
 
 	switch aggr.Type() {
 	case bow.Int64, bow.Float64, bow.Boolean:
-		series = bow.NewSeries(colName, it.numWindows, aggr.Type())
+		series = bow.NewSeriesEmpty(colName, it.numWindows, aggr.Type())
 	case bow.InputDependent:
 		cType := it.bow.ColumnType(aggr.InputIndex())
-		series = bow.NewSeries(colName, it.numWindows, cType)
+		series = bow.NewSeriesEmpty(colName, it.numWindows, cType)
 	case bow.IteratorDependent:
 		iType := it.bow.ColumnType(it.colIndex)
-		series = bow.NewSeries(colName, it.numWindows, iType)
+		series = bow.NewSeriesEmpty(colName, it.numWindows, iType)
 	default:
 		return series, fmt.Errorf(
 			"aggregation %d has invalid return type %s", colIndex, aggr.Type())

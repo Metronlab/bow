@@ -128,7 +128,7 @@ func NewGenBow(options ...Option) (Bow, error) {
 }
 
 func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Series {
-	series := NewSeries(name, size, typ)
+	series := NewSeriesEmpty(name, size, typ)
 	switch typ {
 	case Int64:
 		var base int64
@@ -177,7 +177,7 @@ func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Serie
 }
 
 func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
-	series := NewSeries(name, size, typ)
+	series := NewSeriesEmpty(name, size, typ)
 	for row := 0; row < size; row++ {
 		series.SetOrDrop(row, newRandomNumber(typ))
 	}

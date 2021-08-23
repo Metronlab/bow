@@ -40,7 +40,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 			defer wg.Done()
 			colType := b.ColumnType(colIndex)
 			colSeries := b.NewSeriesFromCol(colIndex)
-			calcSeries[colIndex] = NewSeries(colName, b.NumRows(), colType)
+			calcSeries[colIndex] = NewSeriesEmpty(colName, b.NumRows(), colType)
 			for rowIndex := 1; rowIndex < b.NumRows(); rowIndex++ {
 				valid := b.Column(colIndex).IsValid(rowIndex) &&
 					b.Column(colIndex).IsValid(rowIndex-1)

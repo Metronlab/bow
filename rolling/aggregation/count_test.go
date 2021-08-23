@@ -14,8 +14,8 @@ func TestCount(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeriesFromData("time", bow.Int64, []int64{}, nil),
-					bow.NewSeriesFromData("value", bow.Int64, []int64{}, nil),
+					bow.NewSeries("time", bow.Int64, []int64{}, nil),
+					bow.NewSeries("value", bow.Int64, []int64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b

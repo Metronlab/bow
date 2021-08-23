@@ -77,7 +77,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		leftRow = 0
 		commonRow = 0
-		(*newSeries)[colIndex] = NewSeries(left.ColumnName(colIndex), newNumRows, left.ColumnType(colIndex))
+		(*newSeries)[colIndex] = NewSeriesEmpty(left.ColumnName(colIndex), newNumRows, left.ColumnType(colIndex))
 		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
@@ -270,7 +270,7 @@ func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		(*newSeries)[colIndex] = NewSeries(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
+		(*newSeries)[colIndex] = NewSeriesEmpty(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
 		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())
@@ -457,7 +457,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		newRow = 0
 		commonRow = 0
-		newSeries[colIndex] = NewSeries(left.ColumnName(colIndex), newNumRows, left.ColumnType(colIndex))
+		newSeries[colIndex] = NewSeriesEmpty(left.ColumnName(colIndex), newNumRows, left.ColumnType(colIndex))
 		switch left.ColumnType(colIndex) {
 		case Int64:
 			leftData := array.NewInt64Data(left.Column(colIndex).Data())
@@ -513,7 +513,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		for commonCols[right.ColumnName(rightCol)] != nil {
 			rightCol++
 		}
-		newSeries[colIndex] = NewSeries(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
+		newSeries[colIndex] = NewSeriesEmpty(right.ColumnName(rightCol), newNumRows, right.ColumnType(rightCol))
 		switch right.ColumnType(rightCol) {
 		case Int64:
 			rightData := array.NewInt64Data(right.Column(rightCol).Data())

@@ -136,7 +136,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 
 	seriesSlice := make([]Series, len(colNames))
 	for i := range seriesSlice {
-		seriesSlice[i] = NewSeries(colNames[i], len(rowBasedData), colTypes[i])
+		seriesSlice[i] = NewSeriesEmpty(colNames[i], len(rowBasedData), colTypes[i])
 
 		for rowIndex, row := range rowBasedData {
 			if len(row) != len(colNames) {

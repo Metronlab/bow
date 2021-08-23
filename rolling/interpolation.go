@@ -153,7 +153,7 @@ func (it *intervalRollingIter) interpolateWindow(interps []ColInterpolation, w *
 			return nil, err
 		}
 
-		seriesSlice[colIndex] = bow.NewSeries(w.Bow.ColumnName(interpolation.colIndex), 1, colType)
+		seriesSlice[colIndex] = bow.NewSeriesEmpty(w.Bow.ColumnName(interpolation.colIndex), 1, colType)
 		seriesSlice[colIndex].SetOrDrop(0, interpolatedValue)
 	}
 

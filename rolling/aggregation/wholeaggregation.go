@@ -66,11 +66,11 @@ func aggregateCols(b bow.Bow, refColIndex int, aggrs []rolling.ColAggregation) (
 			b.ColumnType(aggr.InputIndex()))
 
 		if b.NumRows() == 0 {
-			seriesSlice[writeColIndex] = bow.NewSeries(name, 0, typ)
+			seriesSlice[writeColIndex] = bow.NewSeriesEmpty(name, 0, typ)
 			continue
 		}
 
-		seriesSlice[writeColIndex] = bow.NewSeries(name, 1, typ)
+		seriesSlice[writeColIndex] = bow.NewSeriesEmpty(name, 1, typ)
 
 		firstIndex := -1
 		if b.NumRows() > 0 {
