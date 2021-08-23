@@ -1,0 +1,64 @@
+package bow
+
+import (
+	"errors"
+	"fmt"
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
+	"reflect"
+)
+
+func newRecordFromSeries(metadata Metadata, series ...Series) (array.Record, error) {
+	var fields []arrow.Field
+	var arrays []array.Interface
+	var nRows int64
+
+	if len(series) != 0 {
+		nRows = int64(series[0].Len())
+	}
+
+	for _, s := range series {
+		if s.Name == "" {
+			return nil, errors.New("bow.newRecordFromSeries: empty Series name")
+		}
+
+		if int64(s.Len()) != nRows {
+			return nil,
+				fmt.Errorf(
+					"bow.newRecordFromSeries: Series '%s' has a length of %d, which is different from the previous ones",
+					s.Name, s.Len())
+		}
+
+		typ := s.DataType()
+
+		arrowType, ok := mapBowToArrowTypes[typ]
+		if !ok {
+			panic(fmt.Errorf(
+				"bow.newRecordFromSeries: typ is %v, but have %v",
+				typ, reflect.TypeOf(s.Data)))
+		}
+		fields = append(fields, arrow.Field{Name: s.Name, Type: arrowType})
+
+		var arr array.Interface
+		switch typ {
+        {{range .Data.types -}}
+        case {{ .Type }}:
+			data, ok := s.Data.([]{{ .type }})
+			if !ok {
+				panic(fmt.Errorf(
+					"bow.newRecordFromSeries: typ is %v, but have %v",
+					typ, reflect.TypeOf(s.Data)))
+			}
+			arr = new{{ .Type }}Array(data, buildNullBitmapBytes(len(data), s.nullBitmapBytes))
+        {{end -}}
+		default:
+			panic(fmt.Errorf("unsupported type %v", typ))
+		}
+
+		arrays = append(arrays, arr)
+	}
+
+	return array.NewRecord(
+		arrow.NewSchema(fields, &metadata.Metadata),
+		arrays, nRows), nil
+}

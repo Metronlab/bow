@@ -1,9 +1,7 @@
 package bow
 
 import (
-	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
@@ -34,84 +32,6 @@ func newRecordFromArrays(metadata Metadata, colNames []string, arrays []array.In
 		}
 
 		fields = append(fields, arrow.Field{Name: colNames[i], Type: arr.DataType()})
-	}
-
-	return array.NewRecord(
-		arrow.NewSchema(fields, &metadata.Metadata),
-		arrays, nRows), nil
-}
-
-func newRecordFromSeries(metadata Metadata, seriesSlice ...Series) (array.Record, error) {
-	var fields []arrow.Field
-	var arrays []array.Interface
-	var nRows int64
-
-	if len(seriesSlice) != 0 {
-		nRows = int64(seriesSlice[0].Len())
-	}
-
-	for _, s := range seriesSlice {
-		if s.Name == "" {
-			return nil, errors.New("bow.newRecordFromSeries: empty Series name")
-		}
-
-		if int64(s.Len()) != nRows {
-			return nil,
-				fmt.Errorf(
-					"bow.newRecordFromSeries: Series '%s' has a length of %d, which is different from the previous ones",
-					s.Name, s.Len())
-		}
-
-		typ := s.DataType()
-
-		arrowType, ok := mapBowToArrowTypes[typ]
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.newRecordFromSeries: typ is %v, but have %v",
-				typ, reflect.TypeOf(s.Data)))
-		}
-		fields = append(fields, arrow.Field{Name: s.Name, Type: arrowType})
-
-		var arr array.Interface
-		switch typ {
-		case Int64:
-			data, ok := s.Data.([]int64)
-			if !ok {
-				panic(fmt.Errorf(
-					"bow.newRecordFromSeries: typ is %v, but have %v",
-					typ, reflect.TypeOf(s.Data)))
-			}
-			arr = newInt64Array(data, buildNullBitmapBytes(len(data), s.nullBitmapBytes))
-		case Float64:
-			data, ok := s.Data.([]float64)
-			if !ok {
-				panic(fmt.Errorf(
-					"bow.newRecordFromSeries: typ is %v, but have %v",
-					typ, reflect.TypeOf(s.Data)))
-			}
-			arr = newFloat64Array(data, buildNullBitmapBytes(len(data), s.nullBitmapBytes))
-		case Boolean:
-			data, ok := s.Data.([]bool)
-			if !ok {
-				panic(fmt.Errorf(
-					"bow.newRecordFromSeries: typ is %v, but have %v",
-					typ, reflect.TypeOf(s.Data)))
-			}
-			arr = newBooleanArray(data,
-				buildNullBitmapBytes(len(data), s.nullBitmapBytes))
-		case String:
-			data, ok := s.Data.([]string)
-			if !ok {
-				panic(fmt.Errorf(
-					"bow.newRecordFromSeries: typ is %v, but have %v",
-					typ, reflect.TypeOf(s.Data)))
-			}
-			arr = newStringArray(data, buildNullBitmapBytes(len(data), s.nullBitmapBytes))
-		default:
-			panic(fmt.Errorf("unsupported type %v", typ))
-		}
-
-		arrays = append(arrays, arr)
 	}
 
 	return array.NewRecord(
