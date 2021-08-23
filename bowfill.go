@@ -56,12 +56,8 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 	}
 
 	filledSeries := make([]Series, b.NumCols())
-	filledSeries[refIndex] = b.NewSeriesFromCol(refIndex)
 	for colIndex := range b.Schema().Fields() {
-		if colIndex != refIndex {
-			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
-		}
-
+		filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 		if colIndex != toFillIndex {
 			continue
 		}
@@ -72,9 +68,9 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			}
 			prevToFill, rowPrev := b.GetPrevFloat64(toFillIndex, rowIndex-1)
 			nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
-			rowRef, valid1 := filledSeries[refIndex].GetFloat64(rowIndex)
-			prevRef, valid2 := filledSeries[refIndex].GetFloat64(rowPrev)
-			nextRef, valid3 := filledSeries[refIndex].GetFloat64(rowNext)
+			rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
+			prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
+			nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
 			if !valid1 || !valid2 || !valid3 {
 				continue
 			}

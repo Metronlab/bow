@@ -2,7 +2,6 @@ package bow
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/apache/arrow/go/arrow/bitutil"
 )
@@ -11,32 +10,6 @@ type Series struct {
 	Name            string
 	Data            interface{}
 	nullBitmapBytes []byte
-}
-
-func (s *Series) GetFloat64(rowIndex int) (float64, bool) {
-	if rowIndex < 0 || rowIndex >= s.Len() {
-		return 0., false
-	}
-
-	switch s.DataType() {
-	case Float64:
-		return s.Data.([]float64)[rowIndex], s.IsValid(rowIndex)
-	case Int64:
-		return float64(s.Data.([]int64)[rowIndex]), s.IsValid(rowIndex)
-	case Boolean:
-		booleanValue := s.Data.([]bool)[rowIndex]
-		if booleanValue {
-			return 1., s.IsValid(rowIndex)
-		}
-		return 0., s.IsValid(rowIndex)
-	case String:
-		if s.IsValid(rowIndex) {
-			return ToFloat64(s.Data.([]string)[rowIndex])
-		}
-		return 0., false
-	default:
-		panic(fmt.Sprintf("unsupported type '%s'", s.DataType()))
-	}
 }
 
 func (s *Series) IsValid(rowIndex int) bool {
