@@ -4,49 +4,24 @@ package bow
 
 import (
 	"fmt"
-	"reflect"
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/bitutil"
+	"github.com/apache/arrow/go/arrow/memory"
 )
 
-func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
-	switch typ {
-	case Int64:
-		data, ok := dataArray.([]int64)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeries: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newInt64Series(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
-	case Float64:
-		data, ok := dataArray.([]float64)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeries: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newFloat64Series(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
-	case Boolean:
-		data, ok := dataArray.([]bool)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeries: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newBooleanSeries(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
-	case String:
-		data, ok := dataArray.([]string)
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeries: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return newStringSeries(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
+func NewSeries(name string, dataArray interface{}, validityArray interface{}) Series {
+	switch v := dataArray.(type) {
+	case []int64:
+		return newInt64Series(name, v, buildNullBitmapBytes(len(v), validityArray))
+	case []float64:
+		return newFloat64Series(name, v, buildNullBitmapBytes(len(v), validityArray))
+	case []bool:
+		return newBooleanSeries(name, v, buildNullBitmapBytes(len(v), validityArray))
+	case []string:
+		return newStringSeries(name, v, buildNullBitmapBytes(len(v), validityArray))
 	default:
-		panic(fmt.Errorf("unsupported type %v", typ))
+		panic(fmt.Errorf("unsupported type %T", v))
 	}
 }
 
@@ -63,4 +38,48 @@ func NewSeriesFromBuffer(name string, buf Buffer) Series {
 	default:
 		panic(fmt.Errorf("unsupported type '%T'", buf.Data))
 	}
+}
+
+func newInt64Series(name string, data []int64, valid []byte) Series {
+	length := len(data)
+	return Series{
+		Name: name,
+		Array: array.NewInt64Data(
+			array.NewData(mapBowToArrowTypes[Int64], length,
+				[]*memory.Buffer{
+					memory.NewBufferBytes(valid),
+					memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(data)),
+				}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
+		),
+	}
+}
+
+func newFloat64Series(name string, data []float64, valid []byte) Series {
+	length := len(data)
+	return Series{
+		Name: name,
+		Array: array.NewFloat64Data(
+			array.NewData(mapBowToArrowTypes[Float64], length,
+				[]*memory.Buffer{
+					memory.NewBufferBytes(valid),
+					memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(data)),
+				}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
+		),
+	}
+}
+
+func newBooleanSeries(name string, data []bool, valid []byte) Series {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	builder := array.NewBooleanBuilder(mem)
+	defer builder.Release()
+	builder.AppendValues(data, buildNullBitmapBool(len(data), valid))
+	return Series{Name: name, Array: builder.NewArray()}
+}
+
+func newStringSeries(name string, data []string, valid []byte) Series {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	builder := array.NewStringBuilder(mem)
+	defer builder.Release()
+	builder.AppendValues(data, buildNullBitmapBool(len(data), valid))
+	return Series{Name: name, Array: builder.NewArray()}
 }

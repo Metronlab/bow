@@ -2,24 +2,20 @@ package bow
 
 import (
 	"fmt"
-	"reflect"
+    "github.com/apache/arrow/go/arrow"
+    "github.com/apache/arrow/go/arrow/array"
+    "github.com/apache/arrow/go/arrow/bitutil"
+    "github.com/apache/arrow/go/arrow/memory"
 )
 
-func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
-	switch typ {
+func NewSeries(name string, dataArray interface{}, validityArray interface{}) Series {
+	switch v := dataArray.(type) {
     {{range .Data.types -}}
-	case {{ .Type }}:
-		data, ok := dataArray.([]{{ .type }})
-		if !ok {
-			panic(fmt.Errorf(
-				"bow.NewSeries: typ is %v, but have %v",
-				typ, reflect.TypeOf(dataArray)))
-		}
-		return new{{ .Type }}Series(name, data,
-			buildNullBitmapBytes(len(data), validityArray))
+	case []{{ .type }}:
+		return new{{ .Type }}Series(name, v, buildNullBitmapBytes(len(v), validityArray))
     {{end -}}
 	default:
-		panic(fmt.Errorf("unsupported type %v", typ))
+		panic(fmt.Errorf("unsupported type %T", v))
 	}
 }
 
@@ -33,3 +29,28 @@ func NewSeriesFromBuffer(name string, buf Buffer) Series {
 		panic(fmt.Errorf("unsupported type '%T'", buf.Data))
 	}
 }
+
+{{range .Data.types -}}
+func new{{ .Type }}Series(name string, data []{{ .type }}, valid []byte) Series {
+    {{ if .bufferMemoryMappingEqualArrow -}}
+	length := len(data)
+	return Series{
+		Name: name,
+		Array: array.New{{ .Type }}Data(
+			array.NewData(mapBowToArrowTypes[{{ .Type }}], length,
+				[]*memory.Buffer{
+					memory.NewBufferBytes(valid),
+					memory.NewBufferBytes(arrow.{{ .Type }}Traits.CastToBytes(data)),
+				}, nil, length-bitutil.CountSetBits(valid, 0, length), 0),
+		),
+	}
+	{{ else -}}
+    mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+    builder := array.New{{ .Type }}Builder(mem)
+    defer builder.Release()
+    builder.AppendValues(data, buildNullBitmapBool(len(data), valid))
+    return Series{Name: name, Array: builder.NewArray()}
+	{{ end -}}
+}
+
+{{end -}}

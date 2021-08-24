@@ -60,9 +60,9 @@ func TestOuterJoin(t *testing.T) {
 
 	t.Run("left and right without rows", func(t *testing.T) {
 		b1, err := NewBow(
-			NewSeries("index1", Int64, []int64{}, nil),
-			NewSeries("index2", Float64, []float64{}, nil),
-			NewSeries("col1", Int64, []int64{}, nil),
+			NewSeries("index1", []int64{}, nil),
+			NewSeries("index2", []float64{}, nil),
+			NewSeries("col1", []int64{}, nil),
 		)
 		require.NoError(t, err)
 
@@ -110,22 +110,22 @@ func TestOuterJoin(t *testing.T) {
 
 	t.Run("left and right bow without rows", func(t *testing.T) {
 		b1, err := NewBow(
-			NewSeries("index1", Int64, []int64{}, nil),
-			NewSeries("index2", Float64, []float64{}, nil),
-			NewSeries("col1", Int64, []int64{}, nil),
+			NewSeries("index1", []int64{}, nil),
+			NewSeries("index2", []float64{}, nil),
+			NewSeries("col1", []int64{}, nil),
 		)
 		require.NoError(t, err)
 		b2, err := NewBow(
-			NewSeries("index1", Int64, []int64{}, nil),
-			NewSeries("index2", Float64, []float64{}, nil),
-			NewSeries("col2", Int64, []int64{}, nil),
+			NewSeries("index1", []int64{}, nil),
+			NewSeries("index2", []float64{}, nil),
+			NewSeries("col2", []int64{}, nil),
 		)
 		require.NoError(t, err)
 		expected, err := NewBow(
-			NewSeries("index1", Int64, []int64{}, nil),
-			NewSeries("index2", Float64, []float64{}, nil),
-			NewSeries("col1", Int64, []int64{}, nil),
-			NewSeries("col2", Int64, []int64{}, nil),
+			NewSeries("index1", []int64{}, nil),
+			NewSeries("index2", []float64{}, nil),
+			NewSeries("col1", []int64{}, nil),
+			NewSeries("col2", []int64{}, nil),
 		)
 		require.NoError(t, err)
 
@@ -397,17 +397,17 @@ func TestOuterJoin(t *testing.T) {
 
 	t.Run("with metadata", func(t *testing.T) {
 		b1, err := NewBowWithMetadata(NewMetadata([]string{"k1"}, []string{"v1"}),
-			NewSeries("index1", Int64, []int64{1}, nil),
+			NewSeries("index1", []int64{1}, nil),
 		)
 		require.NoError(t, err)
 
 		b2, err := NewBowWithMetadata(NewMetadata([]string{"k2"}, []string{"v2"}),
-			NewSeries("index1", Int64, []int64{1}, nil),
+			NewSeries("index1", []int64{1}, nil),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k1", "k2"}, []string{"v1", "v2"}),
-			NewSeries("index1", Int64, []int64{1}, nil),
+			NewSeries("index1", []int64{1}, nil),
 		)
 		require.NoError(t, err)
 
@@ -484,23 +484,23 @@ func TestInnerJoin(t *testing.T) {
 
 	t.Run("no common rows", func(t *testing.T) {
 		b1, err := NewBow(
-			NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
-			NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
-			NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+			NewSeries("index1", []int64{1, 1, 2, 3, 4}, nil),
+			NewSeries("index2", []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+			NewSeries("col1", []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 		)
 		require.NoError(t, err)
 
 		b2, err := NewBow(
-			NewSeries("index1", Int64, []int64{10}, nil),
-			NewSeries("col2", Int64, []int64{10}, nil),
+			NewSeries("index1", []int64{10}, nil),
+			NewSeries("col2", []int64{10}, nil),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBow(
-			NewSeries("index1", Int64, []int64{}, nil),
-			NewSeries("index2", Float64, []float64{}, nil),
-			NewSeries("col1", Int64, []int64{}, []bool{}),
-			NewSeries("col2", Int64, []int64{}, nil),
+			NewSeries("index1", []int64{}, nil),
+			NewSeries("index2", []float64{}, nil),
+			NewSeries("col1", []int64{}, []bool{}),
+			NewSeries("col2", []int64{}, nil),
 		)
 		require.NoError(t, err)
 
@@ -510,14 +510,14 @@ func TestInnerJoin(t *testing.T) {
 
 	t.Run("incompatible types", func(t *testing.T) {
 		b1, err := NewBow(
-			NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
-			NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
-			NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+			NewSeries("index1", []int64{1, 1, 2, 3, 4}, nil),
+			NewSeries("index2", []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+			NewSeries("col1", []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 		)
 		require.NoError(t, err)
 
 		b2, err := NewBow(
-			NewSeries("index1", Float64, []float64{1}, nil),
+			NewSeries("index1", []float64{1}, nil),
 		)
 		require.NoError(t, err)
 
@@ -533,22 +533,22 @@ func TestInnerJoin(t *testing.T) {
 
 	t.Run("no common columns", func(t *testing.T) {
 		b1, err := NewBow(
-			NewSeries("index1", Int64, []int64{1, 1, 2, 3, 4}, nil),
-			NewSeries("index2", Float64, []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
-			NewSeries("col1", Int64, []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
+			NewSeries("index1", []int64{1, 1, 2, 3, 4}, nil),
+			NewSeries("index2", []float64{1.1, 1.1, 2.2, 3.3, 4.4}, []bool{true, true, false, true, true}),
+			NewSeries("col1", []int64{1, 2, 3, 4, 5}, []bool{true, false, true, true, true}),
 		)
 		require.NoError(t, err)
 
 		b2, err := NewBow(
-			NewSeries("index3", Float64, []float64{1.1}, nil),
+			NewSeries("index3", []float64{1.1}, nil),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBow(
-			NewSeries("index1", Int64, []int64{}, nil),
-			NewSeries("index2", Float64, []float64{}, nil),
-			NewSeries("col1", Int64, []int64{}, nil),
-			NewSeries("index3", Float64, []float64{}, []bool{}),
+			NewSeries("index1", []int64{}, nil),
+			NewSeries("index2", []float64{}, nil),
+			NewSeries("col1", []int64{}, nil),
+			NewSeries("index3", []float64{}, []bool{}),
 		)
 		require.NoError(t, err)
 
@@ -558,17 +558,17 @@ func TestInnerJoin(t *testing.T) {
 
 	t.Run("with metadata", func(t *testing.T) {
 		b1, err := NewBowWithMetadata(NewMetadata([]string{"k1"}, []string{"v1"}),
-			NewSeries("index1", Int64, []int64{1}, nil),
+			NewSeries("index1", []int64{1}, nil),
 		)
 		require.NoError(t, err)
 
 		b2, err := NewBowWithMetadata(NewMetadata([]string{"k2"}, []string{"v2"}),
-			NewSeries("index1", Int64, []int64{1}, nil),
+			NewSeries("index1", []int64{1}, nil),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k1", "k2"}, []string{"v1", "v2"}),
-			NewSeries("index1", Int64, []int64{1}, nil),
+			NewSeries("index1", []int64{1}, nil),
 		)
 		require.NoError(t, err)
 
