@@ -110,20 +110,20 @@ func TestAppendBows(t *testing.T) {
 
 	t.Run("2 bows with the same metadata", func(t *testing.T) {
 		b1, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("time", Int64, []int64{1, 2}, nil),
-			NewSeries("value", Float64, []float64{.1, .2}, nil),
+			NewSeries("time", []int64{1, 2}, nil),
+			NewSeries("value", []float64{.1, .2}, nil),
 		)
 		require.NoError(t, err)
 
 		b2, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("time", Int64, []int64{3, 4}, nil),
-			NewSeries("value", Float64, []float64{.3, .4}, nil),
+			NewSeries("time", []int64{3, 4}, nil),
+			NewSeries("value", []float64{.3, .4}, nil),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("time", Int64, []int64{1, 2, 3, 4}, nil),
-			NewSeries("value", Float64, []float64{.1, .2, .3, .4}, nil),
+			NewSeries("time", []int64{1, 2, 3, 4}, nil),
+			NewSeries("value", []float64{.1, .2, .3, .4}, nil),
 		)
 		require.NoError(t, err)
 
@@ -160,15 +160,15 @@ func BenchmarkAppendBows(b *testing.B) {
 	for rows := 0; rows <= 1000000; rows *= 100 {
 		b.Run(fmt.Sprintf("%d-rows", rows), func(b *testing.B) {
 			b1, err := NewBow(
-				NewSeries("time", Int64, make([]int64, rows), nil),
-				NewSeries("value", Float64, make([]float64, rows), nil))
+				NewSeries("time", make([]int64, rows), nil),
+				NewSeries("value", make([]float64, rows), nil))
 			if err != nil {
 				panic(err)
 			}
 
 			b2, err := NewBow(
-				NewSeries("time", Int64, make([]int64, rows), nil),
-				NewSeries("value", Float64, make([]float64, rows), nil))
+				NewSeries("time", make([]int64, rows), nil),
+				NewSeries("value", make([]float64, rows), nil))
 			if err != nil {
 				panic(err)
 			}

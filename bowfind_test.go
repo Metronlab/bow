@@ -7,18 +7,18 @@ import (
 )
 
 var sortedTestBow, _ = NewBow(
-	NewSeriesFromBuffer(Int64.String(), NewBufferFromData(
+	NewSeries(Int64.String(),
 		[]int64{0, 1, 0, 0},
-		[]bool{true, true, false, true})),
-	NewSeriesFromBuffer(Float64.String(), NewBufferFromData(
+		[]bool{true, true, false, true}),
+	NewSeries(Float64.String(),
 		[]float64{0., 1., 0., 0.},
-		[]bool{true, true, false, true})),
-	NewSeriesFromBuffer(String.String(), NewBufferFromData(
+		[]bool{true, true, false, true}),
+	NewSeries(String.String(),
 		[]string{"0", "1", "0", "0"},
-		[]bool{true, true, false, true})),
-	NewSeriesFromBuffer(Boolean.String(), NewBufferFromData(
+		[]bool{true, true, false, true}),
+	NewSeries(Boolean.String(),
 		[]bool{false, true, false, false},
-		[]bool{true, true, false, true})),
+		[]bool{true, true, false, true}),
 )
 
 func TestBow_Find(t *testing.T) {
