@@ -129,7 +129,7 @@ func BenchmarkBow_MarshalJSON(b *testing.B) {
 				OptionGenCols(4),
 				OptionGenDataTypes([]Type{Int64, Float64, String, Boolean}),
 				OptionGenMissingData(true),
-				OptionGenRefCol(0, false),
+				OptionGenRefCol(0),
 				OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
 				panic(err)
@@ -154,7 +154,7 @@ func BenchmarkBow_UnmarshalJSON(b *testing.B) {
 				OptionGenCols(4),
 				OptionGenDataTypes([]Type{Int64, Float64, String, Boolean}),
 				OptionGenMissingData(true),
-				OptionGenRefCol(0, false),
+				OptionGenRefCol(0),
 				OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
 				panic(err)

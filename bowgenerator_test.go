@@ -30,7 +30,11 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("float64 with first column sorted", func(t *testing.T) {
-		b, err := NewGenBow(OptionGenRows(8), OptionGenCols(2), OptionGenDataType(Float64), OptionGenRefCol(0, false))
+		b, err := NewGenBow(
+			OptionGenRows(8),
+			OptionGenCols(2),
+			OptionGenDataType(Float64),
+			OptionGenRefCol(0))
 		assert.Nil(t, err)
 
 		assert.Equal(t, 8, b.NumRows())
@@ -42,7 +46,10 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("descending sort on last column", func(t *testing.T) {
-		b, err := NewGenBow(OptionGenRefCol(9, true))
+		b, err := NewGenBow(
+			OptionGenRefCol(9),
+			OptionRefColGenType(GenTypeDecremental),
+		)
 		assert.Nil(t, err)
 		sorted := b.IsColSorted(9)
 		assert.True(t, sorted)
@@ -53,7 +60,8 @@ func TestGenerator(t *testing.T) {
 			OptionGenCols(4),
 			OptionGenColNames([]string{"A", "B", "C", "D"}),
 			OptionGenDataTypes([]Type{Int64, Float64, String, Boolean}),
-			OptionGenRefCol(0, true),
+			OptionGenRefCol(0),
+			OptionRefColGenType(GenTypeDecremental),
 		)
 		assert.Nil(t, err)
 

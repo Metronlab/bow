@@ -64,7 +64,7 @@ func OptionGenMissingData(hasMissingData bool) OptionGen {
 
 // OptionGenRefCol defines the index of a reference column,
 // which does not include missing data and is sorted for every type except bool
-func OptionGenRefCol(refCol int, descSort bool) OptionGen {
+func OptionGenRefCol(refCol int) OptionGen {
 	return func(f *optionGen) {
 		f.refCol = refCol
 	}
@@ -75,6 +75,14 @@ func OptionGenRefCol(refCol int, descSort bool) OptionGen {
 func OptionGenType(g GenType) OptionGen {
 	return func(f *optionGen) {
 		f.genType = g
+	}
+}
+
+// OptionRefColGenType defines the method used to generate reference column values,
+// default to GenTypeIncremental.
+func OptionRefColGenType(g GenType) OptionGen {
+	return func(f *optionGen) {
+		f.refColGenType = g
 	}
 }
 

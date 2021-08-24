@@ -77,7 +77,7 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				OptionGenRows(rows),
 				OptionGenCols(1),
 				OptionGenDataType(Float64),
-				OptionGenRefCol(0, false))
+				OptionGenRefCol(0))
 			if err != nil {
 				panic(err)
 			}

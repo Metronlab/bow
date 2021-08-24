@@ -594,7 +594,7 @@ func benchInnerJoin(rows int, typ Type, b *testing.B) {
 		OptionGenCols(2),
 		OptionGenDataType(typ),
 		OptionGenMissingData(true),
-		OptionGenRefCol(0, false),
+		OptionGenRefCol(0),
 		OptionGenColNames([]string{"A", "B"}))
 	require.NoError(b, err)
 
@@ -603,7 +603,7 @@ func benchInnerJoin(rows int, typ Type, b *testing.B) {
 		OptionGenCols(2),
 		OptionGenDataType(typ),
 		OptionGenMissingData(true),
-		OptionGenRefCol(0, false),
+		OptionGenRefCol(0),
 		OptionGenColNames([]string{"A", "C"}))
 	require.NoError(b, err)
 
@@ -619,7 +619,7 @@ func benchOuterJoin(rows int, typ Type, b *testing.B) {
 		OptionGenCols(2),
 		OptionGenDataType(typ),
 		OptionGenMissingData(true),
-		OptionGenRefCol(0, false),
+		OptionGenRefCol(0),
 		OptionGenColNames([]string{"A", "B"}))
 	require.NoError(b, err)
 
@@ -628,7 +628,7 @@ func benchOuterJoin(rows int, typ Type, b *testing.B) {
 		OptionGenCols(2),
 		OptionGenDataType(typ),
 		OptionGenMissingData(true),
-		OptionGenRefCol(0, false),
+		OptionGenRefCol(0),
 		OptionGenColNames([]string{"A", "C"}))
 	require.NoError(b, err)
 

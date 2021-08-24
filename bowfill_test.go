@@ -637,7 +637,7 @@ func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
 		OptionGenCols(cols),
 		OptionGenDataType(typ),
 		OptionGenMissingData(true),
-		OptionGenRefCol(0, false))
+		OptionGenRefCol(0))
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
