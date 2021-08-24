@@ -99,14 +99,14 @@ func benchmarkBow(b *testing.B) {
 		for i := int64(0); i < size; i++ {
 			buf.Data.([]int64)[i] = i
 		}
-		return bow.NewSeries("time", bow.Int64, buf.Data, nil)
+		return bow.NewSeries("time", buf.Data, nil)
 	}(BenchSize)
 	seriesSlice[1] = func(size int64) bow.Series {
 		buf := bow.NewBuffer(int(size), bow.Float64)
 		for i := int64(0); i < size; i++ {
 			buf.Data.([]float64)[i] = rand.Float64()
 		}
-		return bow.NewSeries("value", bow.Float64, buf.Data, nil)
+		return bow.NewSeries("value", buf.Data, nil)
 	}(BenchSize)
 
 	b.Run("NewBow without validity bitmap", func(b *testing.B) {

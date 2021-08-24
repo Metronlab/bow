@@ -169,14 +169,14 @@ func TestBow_SortByCol(t *testing.T) {
 
 	t.Run("with metadata", func(t *testing.T) {
 		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("time", Int64, []int64{1, 3, 2}, nil),
-			NewSeries("value", Float64, []float64{.1, .3, .2}, nil),
+			NewSeries("time", []int64{1, 3, 2}, nil),
+			NewSeries("value", []float64{.1, .3, .2}, nil),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("time", Int64, []int64{1, 2, 3}, nil),
-			NewSeries("value", Float64, []float64{.1, .2, .3}, nil),
+			NewSeries("time", []int64{1, 2, 3}, nil),
+			NewSeries("value", []float64{.1, .2, .3}, nil),
 		)
 		require.NoError(t, err)
 
