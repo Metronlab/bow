@@ -74,10 +74,10 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 	for rows := 10; rows <= 1000000; rows *= 100 {
 		b.Run(fmt.Sprintf("%dx1_%v_Sorted", rows, Float64), func(b *testing.B) {
 			data, err := NewGenBow(
-				GenRows(rows),
-				GenCols(1),
-				GenDataType(Float64),
-				GenRefCol(0, false))
+				OptionGenRows(rows),
+				OptionGenCols(1),
+				OptionGenDataType(Float64),
+				OptionGenRefCol(0, false))
 			if err != nil {
 				panic(err)
 			}
@@ -88,9 +88,9 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 		})
 		b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted", rows, Float64), func(b *testing.B) {
 			data, err := NewGenBow(
-				GenRows(rows),
-				GenCols(1),
-				GenDataType(Float64))
+				OptionGenRows(rows),
+				OptionGenCols(1),
+				OptionGenDataType(Float64))
 			if err != nil {
 				panic(err)
 			}
@@ -101,10 +101,10 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 		})
 		b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted_With_Missing_Data", rows, Float64), func(b *testing.B) {
 			data, err := NewGenBow(
-				GenRows(rows),
-				GenCols(1),
-				GenDataType(Float64),
-				GenMissingData(true))
+				OptionGenRows(rows),
+				OptionGenCols(1),
+				OptionGenDataType(Float64),
+				OptionGenMissingData(true))
 			if err != nil {
 				panic(err)
 			}

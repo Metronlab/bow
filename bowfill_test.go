@@ -591,10 +591,10 @@ func BenchmarkBow_Fill(b *testing.B) {
 
 func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
 	data, err := NewGenBow(
-		GenRows(rows),
-		GenCols(cols),
-		GenDataType(typ),
-		GenMissingData(true))
+		OptionGenRows(rows),
+		OptionGenCols(cols),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true))
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -605,10 +605,10 @@ func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
 
 func benchFillNext(rows, cols int, typ Type, b *testing.B) {
 	data, err := NewGenBow(
-		GenRows(rows),
-		GenCols(cols),
-		GenDataType(typ),
-		GenMissingData(true))
+		OptionGenRows(rows),
+		OptionGenCols(cols),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true))
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -619,10 +619,10 @@ func benchFillNext(rows, cols int, typ Type, b *testing.B) {
 
 func benchFillMean(rows, cols int, typ Type, b *testing.B) {
 	data, err := NewGenBow(
-		GenRows(rows),
-		GenCols(cols),
-		GenDataType(typ),
-		GenMissingData(true))
+		OptionGenRows(rows),
+		OptionGenCols(cols),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true))
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -633,11 +633,11 @@ func benchFillMean(rows, cols int, typ Type, b *testing.B) {
 
 func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
 	data, err := NewGenBow(
-		GenRows(rows),
-		GenCols(cols),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false))
+		OptionGenRows(rows),
+		OptionGenCols(cols),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true),
+		OptionGenRefCol(0, false))
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {

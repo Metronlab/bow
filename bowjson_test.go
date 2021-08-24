@@ -125,12 +125,12 @@ func BenchmarkBow_MarshalJSON(b *testing.B) {
 	for rows := 10; rows <= 1000000; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
 			data, err := NewGenBow(
-				GenRows(rows),
-				GenCols(4),
-				GenDataTypes([]Type{Int64, Float64, String, Boolean}),
-				GenMissingData(true),
-				GenRefCol(0, false),
-				GenColNames([]string{"int64", "float64", "bool", "string"}))
+				OptionGenRows(rows),
+				OptionGenCols(4),
+				OptionGenDataTypes([]Type{Int64, Float64, String, Boolean}),
+				OptionGenMissingData(true),
+				OptionGenRefCol(0, false),
+				OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
 				panic(err)
 			}
@@ -150,12 +150,12 @@ func BenchmarkBow_UnmarshalJSON(b *testing.B) {
 	for rows := 10; rows <= 1000000; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
 			data, err := NewGenBow(
-				GenRows(rows),
-				GenCols(4),
-				GenDataTypes([]Type{Int64, Float64, String, Boolean}),
-				GenMissingData(true),
-				GenRefCol(0, false),
-				GenColNames([]string{"int64", "float64", "bool", "string"}))
+				OptionGenRows(rows),
+				OptionGenCols(4),
+				OptionGenDataTypes([]Type{Int64, Float64, String, Boolean}),
+				OptionGenMissingData(true),
+				OptionGenRefCol(0, false),
+				OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
 			if err != nil {
 				panic(err)
 			}

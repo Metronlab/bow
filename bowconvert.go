@@ -77,6 +77,23 @@ func ToBoolean(i interface{}) (bool, bool) {
 	case string:
 		val, err := strconv.ParseBool(v)
 		return val, err == nil
+	case json.Number:
+		val, err := v.Float64()
+		return val != 0., err != nil
+	case int:
+		return v != 0, true
+	case int8:
+		return v != 0, true
+	case int16:
+		return v != 0, true
+	case int32:
+		return v != 0, true
+	case int64:
+		return v != 0, true
+	case float32:
+		return v != 0, true
+	case float64:
+		return v != 0, true
 	default:
 		return false, false
 	}
