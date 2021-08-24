@@ -1,8 +1,6 @@
 package bow
 
 import (
-	"fmt"
-
 	"github.com/apache/arrow/go/arrow"
 )
 
@@ -35,16 +33,6 @@ const (
 )
 
 var (
-	allType = func() []Type {
-		res := make([]Type, InputDependent)
-		for typ := Type(1); typ < InputDependent; typ++ {
-			fmt.Println(typ)
-			fmt.Println(int(typ))
-			res[typ-1] = typ
-		}
-		fmt.Println(res)
-		return res
-	}()
 	mapArrowToBowTypes = map[arrow.DataType]Type{
 		arrow.PrimitiveTypes.Float64:  Float64,
 		arrow.PrimitiveTypes.Int64:    Int64,
@@ -62,6 +50,13 @@ var (
 		res := make(map[string]Type)
 		for arrowDataType, bowType := range mapArrowToBowTypes {
 			res[arrowDataType.Name()] = bowType
+		}
+		return res
+	}()
+	allType = func() []Type {
+		res := make([]Type, InputDependent-1)
+		for typ := Type(1); typ < InputDependent; typ++ {
+			res[typ-1] = typ
 		}
 		return res
 	}()
@@ -115,4 +110,10 @@ func getBowTypeFromArrowType(arrowType arrow.DataType) Type {
 		return Unknown
 	}
 	return typ
+}
+
+func GetAllTypes() []Type {
+	res := make([]Type, len(allType))
+	copy(res, allType)
+	return res
 }

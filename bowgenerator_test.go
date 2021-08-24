@@ -21,9 +21,6 @@ func TestGenerator(t *testing.T) {
 		assert.True(t, b2.Equal(b), fmt.Sprintf("want %v\ngot %v", b, b2))
 	})
 
-	t.Run("stdDataset", func(t *testing.T) {
-		assert.Equal(t, "", stdDataSet.String())
-	})
 	t.Run("with missing data", func(t *testing.T) {
 		b, err := NewGenBow(OptionGenMissingData(true))
 		assert.Nil(t, err)
