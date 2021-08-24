@@ -92,7 +92,7 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				OptionGenCols(1),
 				OptionGenDataType(Float64),
 				OptionGenType(GenTypeRandom),
-				)
+			)
 			if err != nil {
 				panic(err)
 			}
@@ -108,7 +108,7 @@ func BenchmarkBow_IsColSorted(b *testing.B) {
 				OptionGenDataType(Float64),
 				OptionGenType(GenTypeRandom),
 				OptionGenMissingData(true),
-				)
+			)
 			if err != nil {
 				panic(err)
 			}
