@@ -40,6 +40,72 @@ func NewSeriesFromBuffer(name string, buf Buffer) Series {
 	}
 }
 
+func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series {
+	if typ == Unknown {
+		var err error
+		if typ, err = seekType(cells); err != nil {
+			panic(err)
+		}
+	}
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	switch typ {
+	case Int64:
+		builder := array.NewInt64Builder(mem)
+		defer builder.Release()
+		builder.Resize(len(cells))
+		for i := 0; i < len(cells); i++ {
+			v, ok := ToInt64(cells[i])
+			if !ok {
+				builder.AppendNull()
+				continue
+			}
+			builder.Append(v)
+		}
+		return Series{Name: name, Array: builder.NewArray()}
+	case Float64:
+		builder := array.NewFloat64Builder(mem)
+		defer builder.Release()
+		builder.Resize(len(cells))
+		for i := 0; i < len(cells); i++ {
+			v, ok := ToFloat64(cells[i])
+			if !ok {
+				builder.AppendNull()
+				continue
+			}
+			builder.Append(v)
+		}
+		return Series{Name: name, Array: builder.NewArray()}
+	case Boolean:
+		builder := array.NewBooleanBuilder(mem)
+		defer builder.Release()
+		builder.Resize(len(cells))
+		for i := 0; i < len(cells); i++ {
+			v, ok := ToBoolean(cells[i])
+			if !ok {
+				builder.AppendNull()
+				continue
+			}
+			builder.Append(v)
+		}
+		return Series{Name: name, Array: builder.NewArray()}
+	case String:
+		builder := array.NewStringBuilder(mem)
+		defer builder.Release()
+		builder.Resize(len(cells))
+		for i := 0; i < len(cells); i++ {
+			v, ok := ToString(cells[i])
+			if !ok {
+				builder.AppendNull()
+				continue
+			}
+			builder.Append(v)
+		}
+		return Series{Name: name, Array: builder.NewArray()}
+	default:
+		panic(fmt.Errorf("unhandled type %s", typ))
+	}
+}
+
 func newInt64Series(name string, data []int64, valid []byte) Series {
 	length := len(data)
 	return Series{

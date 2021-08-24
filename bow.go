@@ -123,7 +123,7 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 	var err error
 	seriesSlice := make([]Series, len(colNames))
 	for i, colName := range colNames {
-		seriesSlice[i], err = NewSeriesFromInterfaces(colName, colTypes[i], colData[i])
+		seriesSlice[i] = NewSeriesFromInterfaces(colName, colTypes[i], colData[i])
 		if err != nil {
 			return nil, err
 		}

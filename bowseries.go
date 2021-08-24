@@ -39,21 +39,6 @@ func buildNullBitmapBool(dataLength int, validityArray interface{}) []bool {
 	}
 }
 
-func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (series Series, err error) {
-	if typ == Unknown {
-		if typ, err = seekType(cells); err != nil {
-			return
-		}
-	}
-
-	buf, err := NewBufferFromInterfaces(typ, cells)
-	if err != nil {
-		return Series{}, err
-	}
-
-	return NewSeriesFromBuffer(name, buf), nil
-}
-
 func seekType(cells []interface{}) (Type, error) {
 	for _, val := range cells {
 		if val != nil {
