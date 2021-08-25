@@ -35,10 +35,19 @@ func TestToBool(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, false, v)
 
-	_, ok = ToBoolean(1)
-	require.False(t, ok)
-	_, ok = ToBoolean(0)
-	require.False(t, ok)
+	v, ok = ToBoolean(1)
+	require.True(t, v)
+	require.True(t, ok)
+	v, ok = ToBoolean(0)
+	require.False(t, v)
+	require.True(t, ok)
+
+	v, ok = ToBoolean(1.)
+	require.True(t, v)
+	require.True(t, ok)
+	v, ok = ToBoolean(0.)
+	require.False(t, v)
+	require.True(t, ok)
 }
 
 func TestToFloat64(t *testing.T) {

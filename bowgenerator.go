@@ -9,223 +9,188 @@ import (
 	"github.com/google/uuid"
 )
 
-type genBowOptions struct {
-	rows        int
-	cols        int
-	dataType    Type
-	colNames    []string
-	dataTypes   []Type
-	missingData bool
-	refCol      int
-	descSort    bool
+type optionGen struct {
+	rows          int
+	cols          int
+	dataType      Type
+	colNames      []string
+	dataTypes     []Type
+	missingData   bool
+	genType       GenType
+	refCol        int
+	refColGenType GenType
 }
 
-// Option is a type used for self-referential functions
-type Option func(*genBowOptions)
+// OptionGen is a type used for self-referential functions
+type OptionGen func(*optionGen)
 
-// GenRows sets the number of rows for NewGenBow
-func GenRows(rows int) Option {
-	return func(f *genBowOptions) {
+// OptionGenRows sets the number of rows for NewGenBow
+func OptionGenRows(rows int) OptionGen {
+	return func(f *optionGen) {
 		if rows < 1 {
-			panic("NewGenBow: GenRows must be positive")
+			panic("NewGenBow: OptionGenRows must be positive")
 		}
 		f.rows = rows
 	}
 }
 
-// GenCols sets the number of columns for NewGenBow
-func GenCols(cols int) Option {
-	return func(f *genBowOptions) {
+// OptionGenCols sets the number of columns for NewGenBow
+func OptionGenCols(cols int) OptionGen {
+	return func(f *optionGen) {
 		if cols < 1 {
-			panic("NewGenBow: GenCols must be positive")
+			panic("NewGenBow: OptionGenCols must be positive")
 		}
 		f.cols = cols
 	}
 }
 
-// GenDataType sets a unique data type for every columns of the NewGenBow
-func GenDataType(dataType Type) Option { return func(f *genBowOptions) { f.dataType = dataType } }
+// OptionGenDataType sets a unique data type for every columns of the NewGenBow
+func OptionGenDataType(dataType Type) OptionGen { return func(f *optionGen) { f.dataType = dataType } }
 
-// GenColNames sets the name of each column of the NewGenBow
-func GenColNames(colNames []string) Option { return func(f *genBowOptions) { f.colNames = colNames } }
-
-// GenDataTypes sets the data types of each column of the NewGenBow
-func GenDataTypes(dataTypes []Type) Option { return func(f *genBowOptions) { f.dataTypes = dataTypes } }
-
-// GenMissingData defines if the NewGenBow includes missing data at random rows in every columns except GenRefCol
-func GenMissingData(hasMissingData bool) Option {
-	return func(f *genBowOptions) { f.missingData = hasMissingData }
+// OptionGenColNames sets the name of each column of the NewGenBow
+func OptionGenColNames(colNames []string) OptionGen {
+	return func(f *optionGen) { f.colNames = colNames }
 }
 
-// GenRefCol defines the index of a reference column,
+// OptionGenDataTypes sets the data types of each column of the NewGenBow
+func OptionGenDataTypes(dataTypes []Type) OptionGen {
+	return func(f *optionGen) { f.dataTypes = dataTypes }
+}
+
+// OptionGenMissingData defines if the NewGenBow includes missing data at random rows in every columns except OptionGenRefCol
+func OptionGenMissingData(hasMissingData bool) OptionGen {
+	return func(f *optionGen) { f.missingData = hasMissingData }
+}
+
+// OptionGenRefCol defines the index of a reference column,
 // which does not include missing data and is sorted for every type except bool
-func GenRefCol(refCol int, descSort bool) Option {
-	return func(f *genBowOptions) {
+func OptionGenRefCol(refCol int) OptionGen {
+	return func(f *optionGen) {
 		f.refCol = refCol
-		f.descSort = descSort
+	}
+}
+
+// OptionGenType defines the method used to generate values,
+// default to GenTypeIncremental.
+func OptionGenType(g GenType) OptionGen {
+	return func(f *optionGen) {
+		f.genType = g
+	}
+}
+
+// OptionRefColGenType defines the method used to generate reference column values,
+// default to GenTypeIncremental.
+func OptionRefColGenType(g GenType) OptionGen {
+	return func(f *optionGen) {
+		f.refColGenType = g
 	}
 }
 
 // NewGenBow generates a new random bow filled with the following options:
-// GenRows(rows int): number of rows (default 10)
-// GenCols(cols int): number of columns (default 10)
-// GenDataType(typ Type): data type (default Int64)
-// GenMissingData(missing bool): enable random missing data (default false)
-// GenRefCol(refCol int, descSort bool): defines the index of a reference column and its sorting order,
+// OptionGenRows(rows int): number of rows (default 10)
+// OptionGenCols(cols int): number of columns (default 10)
+// OptionGenDataType(typ Type): data type (default Int64)
+// OptionGenMissingData(missing bool): enable random missing data (default false)
+// OptionGenRefCol(refCol int, descSort bool): defines the index of a reference column and its sorting order,
 // which does not include missing data and is sorted (default refCol = -1 (no column) and descSort = false)
-func NewGenBow(options ...Option) (Bow, error) {
+func NewGenBow(options ...OptionGen) (Bow, error) {
 	// Set default options
-	f := &genBowOptions{
-		rows:     10,
-		cols:     10,
-		dataType: Unknown,
-		refCol:   -1,
+	o := &optionGen{
+		rows:          10,
+		cols:          10,
+		dataType:      Unknown,
+		genType:       GenTypeIncremental,
+		refCol:        -1,
+		refColGenType: GenTypeIncremental,
 	}
 	for _, option := range options {
-		option(f)
+		option(o)
 	}
 
-	if len(f.dataTypes) > 0 && f.dataType != Unknown {
-		return nil, fmt.Errorf("bow.NewGenBow: either GenDataType or GenDataTypes must be set")
+	if len(o.dataTypes) > 0 && o.dataType != Unknown {
+		return nil, fmt.Errorf("bow.NewGenBow: either OptionGenDataType or OptionGenDataTypes must be set")
 	}
-	if len(f.dataTypes) > 0 && len(f.dataTypes) != f.cols {
-		return nil, fmt.Errorf("bow.NewGenBow: GenDataTypes array length must be equal to GenCols")
+	if len(o.dataTypes) > 0 && len(o.dataTypes) != o.cols {
+		return nil, fmt.Errorf("bow.NewGenBow: OptionGenDataTypes array length must be equal to OptionGenCols")
 	}
-	if len(f.dataTypes) == 0 && f.dataType == Unknown {
-		f.dataType = Int64
+	if len(o.dataTypes) == 0 && o.dataType == Unknown {
+		o.dataType = Int64
 	}
-	if len(f.dataTypes) == 0 {
-		for i := 0; i < f.cols; i++ {
-			f.dataTypes = append(f.dataTypes, f.dataType)
+	if len(o.dataTypes) == 0 {
+		for i := 0; i < o.cols; i++ {
+			o.dataTypes = append(o.dataTypes, o.dataType)
 		}
 	}
 
-	if len(f.colNames) > 0 && len(f.colNames) != f.cols {
-		return nil, fmt.Errorf("bow.NewGenBow: GenColNames array length must be equal to GenCols")
-	} else if len(f.colNames) == 0 {
-		for i := 0; i < f.cols; i++ {
-			f.colNames = append(f.colNames, strconv.Itoa(i))
+	if len(o.colNames) > 0 && len(o.colNames) != o.cols {
+		return nil, fmt.Errorf("bow.NewGenBow: OptionGenColNames array length must be equal to OptionGenCols")
+	} else if len(o.colNames) == 0 {
+		for i := 0; i < o.cols; i++ {
+			o.colNames = append(o.colNames, strconv.Itoa(i))
 		}
 	}
 
-	if f.refCol > f.cols-1 {
-		return nil, fmt.Errorf("bow.NewGenBow: GenRefCol is out of range")
+	if o.refCol > o.cols-1 {
+		return nil, fmt.Errorf("bow.NewGenBow: OptionGenRefCol is out of range")
 	}
-	if f.refCol > -1 && f.dataTypes[f.refCol] == Boolean {
-		return nil, fmt.Errorf("bow.NewGenBow: GenRefCol cannot be of type Boolean")
+	if o.refCol > -1 && o.dataTypes[o.refCol] == Boolean {
+		return nil, fmt.Errorf("bow.NewGenBow: OptionGenRefCol cannot be of type Boolean")
 	}
 
-	seriesSlice := make([]Series, f.cols)
+	seriesSlice := make([]Series, o.cols)
 	for i := range seriesSlice {
-		if i == f.refCol {
-			seriesSlice[i] = newSortedRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.descSort)
+		if i == o.refCol {
+			seriesSlice[i] = o.newGeneratedSeries(o.colNames[i], o.dataTypes[i], o.refColGenType)
 		} else {
-			seriesSlice[i] = newRandomSeries(f.colNames[i], f.dataTypes[i], f.rows, f.missingData)
+			seriesSlice[i] = o.newGeneratedSeries(o.colNames[i], o.dataTypes[i], o.genType)
 		}
 	}
 
 	return NewBow(seriesSlice...)
 }
 
-func newSortedRandomSeries(name string, typ Type, size int, descSort bool) Series {
-	buf := NewBuffer(size, typ)
-	switch typ {
-	case Int64:
-		var base int64
-		for row := 0; row < size; row++ {
-			if descSort {
-				newValue, _ := ToInt64(newRandomIncreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
-				base -= 100
-			} else {
-				newValue, _ := ToInt64(newRandomDecreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
-				base += 100
-			}
+func (o *optionGen) newGeneratedSeries(name string, typ Type, gt GenType) Series {
+	buf := NewBuffer(o.rows, typ)
+	for i := 0; i < o.rows; i++ {
+		if !o.missingData || newRandomNumber(Boolean).(bool) {
+			buf.SetOrDrop(i, gt(typ, i))
 		}
-	case Float64:
-		var base float64
-		for row := 0; row < size; row++ {
-			if descSort {
-				newValue, _ := ToFloat64(newRandomIncreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
-				base -= 100
-			} else {
-				newValue, _ := ToFloat64(newRandomDecreasingNumber(typ, base))
-				buf.SetOrDrop(row, newValue)
-				base += 100
-			}
-		}
-	case String:
-		var base int64
-		for row := 0; row < size; row++ {
-			if descSort {
-				newValue, _ := ToString(newRandomIncreasingNumber(Int64, base))
-				buf.SetOrDrop(row, newValue)
-				base -= 100
-			} else {
-				newValue, _ := ToString(newRandomDecreasingNumber(Int64, base))
-				buf.SetOrDrop(row, newValue)
-				base += 100
-			}
-		}
-	default:
-		panic("unsupported data type")
 	}
-
 	return NewSeriesFromBuffer(name, buf)
 }
 
-func newRandomSeries(name string, typ Type, size int, missingData bool) Series {
-	buf := NewBuffer(size, typ)
-	for row := 0; row < size; row++ {
-		buf.SetOrDrop(row, newRandomNumber(typ))
-	}
+type GenType func(typ Type, seed int) interface{}
 
-	if missingData {
-		nils, err := crand.Int(crand.Reader, big.NewInt(int64(size)))
-		if err != nil {
-			panic(err)
-		}
-		for j := 0; j < int(nils.Int64()); j++ {
-			nils2, err := crand.Int(crand.Reader, big.NewInt(int64(size)))
-			if err != nil {
-				panic(err)
-			}
-			buf.SetOrDrop(int(nils2.Int64()), nil)
-		}
-	}
-
-	return NewSeriesFromBuffer(name, buf)
+func GenTypeRandom(typ Type, seed int) interface{} {
+	return newRandomNumber(typ)
 }
 
-func newRandomIncreasingNumber(typ Type, base interface{}) interface{} {
+func GenTypeIncremental(typ Type, seed int) interface{} {
+	return typ.Convert(seed)
+}
+
+func GenTypeDecremental(typ Type, seed int) interface{} {
+	return typ.Convert(-seed)
+}
+
+func GenTypeIncrementalRandom(typ Type, seed int) interface{} {
+	i := int64(seed) * 100
 	switch typ {
-	case Int64:
-		base, _ := ToInt64(base)
-		add, _ := ToInt64(newRandomNumber(Int64))
-		return base + add
 	case Float64:
-		base, _ := ToFloat64(base)
 		add, _ := ToFloat64(newRandomNumber(Float64))
-		return base + add
+		return float64(i) + add
 	default:
-		panic("unsupported data type")
+		add, _ := ToInt64(newRandomNumber(Int64))
+		return typ.Convert(i + add)
 	}
 }
 
-func newRandomDecreasingNumber(typ Type, base interface{}) interface{} {
+func GenTypeDecrementalRandom(typ Type, seed int) interface{} {
+	i := -int64(seed) * 100
 	switch typ {
-	case Int64:
-		base, _ := ToInt64(base)
-		add, _ := ToInt64(newRandomNumber(Int64))
-		return base - add
-	case Float64:
-		base, _ := ToFloat64(base)
-		add, _ := ToFloat64(newRandomNumber(Float64))
-		return base - add
 	default:
-		panic("unsupported data type")
+		add, _ := ToInt64(newRandomNumber(Int64))
+		return typ.Convert(i - add)
 	}
 }
 

@@ -53,6 +53,13 @@ var (
 		}
 		return res
 	}()
+	allType = func() []Type {
+		res := make([]Type, InputDependent-1)
+		for typ := Type(1); typ < InputDependent; typ++ {
+			res[typ-1] = typ
+		}
+		return res
+	}()
 )
 
 func (t Type) Convert(i interface{}) interface{} {
@@ -103,4 +110,10 @@ func getBowTypeFromArrowType(arrowType arrow.DataType) Type {
 		return Unknown
 	}
 	return typ
+}
+
+func GetAllTypes() []Type {
+	res := make([]Type, len(allType))
+	copy(res, allType)
+	return res
 }

@@ -590,21 +590,21 @@ func BenchmarkBow_Join(b *testing.B) {
 
 func benchInnerJoin(rows int, typ Type, b *testing.B) {
 	leftBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "B"}))
+		OptionGenRows(rows),
+		OptionGenCols(2),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true),
+		OptionGenRefCol(0),
+		OptionGenColNames([]string{"A", "B"}))
 	require.NoError(b, err)
 
 	rightBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "C"}))
+		OptionGenRows(rows),
+		OptionGenCols(2),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true),
+		OptionGenRefCol(0),
+		OptionGenColNames([]string{"A", "C"}))
 	require.NoError(b, err)
 
 	b.ResetTimer()
@@ -615,21 +615,21 @@ func benchInnerJoin(rows int, typ Type, b *testing.B) {
 
 func benchOuterJoin(rows int, typ Type, b *testing.B) {
 	leftBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "B"}))
+		OptionGenRows(rows),
+		OptionGenCols(2),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true),
+		OptionGenRefCol(0),
+		OptionGenColNames([]string{"A", "B"}))
 	require.NoError(b, err)
 
 	rightBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "C"}))
+		OptionGenRows(rows),
+		OptionGenCols(2),
+		OptionGenDataType(typ),
+		OptionGenMissingData(true),
+		OptionGenRefCol(0),
+		OptionGenColNames([]string{"A", "C"}))
 	require.NoError(b, err)
 
 	b.ResetTimer()

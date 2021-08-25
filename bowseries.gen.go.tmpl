@@ -30,6 +30,35 @@ func NewSeriesFromBuffer(name string, buf Buffer) Series {
 	}
 }
 
+func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series {
+	if typ == Unknown {
+		var err error
+		if typ, err = seekType(cells); err != nil {
+			panic(err)
+		}
+	}
+    mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	switch typ {
+    {{range .Data.types -}}
+	case {{ .Type }}:
+		builder := array.New{{ .Type }}Builder(mem)
+		defer builder.Release()
+		builder.Resize(len(cells))
+		for i := 0; i < len(cells); i++ {
+			v, ok := To{{ .Type }}(cells[i])
+			if !ok {
+				builder.AppendNull()
+				continue
+			}
+            builder.Append(v)
+		}
+		return Series{Name: name, Array: builder.NewArray()}
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unhandled type %s", typ))
+	}
+}
+
 {{range .Data.types -}}
 func new{{ .Type }}Series(name string, data []{{ .type }}, valid []byte) Series {
     {{ if .bufferMemoryMappingEqualArrow -}}
