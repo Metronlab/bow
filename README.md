@@ -14,7 +14,7 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 
 **Data types handling**
 * [x] implement string, int64, float64, bool data types
-* [ ] use go gen as a palliative for the lack of generics in Go
+* [x] use go gen as a palliative for the lack of generics in Go
 * [ ] handle all Arrow data types
 
 **Serialization**
