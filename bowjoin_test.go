@@ -414,6 +414,53 @@ func TestBow_OuterJoin(t *testing.T) {
 		result := b1.OuterJoin(b2)
 		assert.EqualValues(t, expected.String(), result.String())
 	})
+
+	t.Run("with only nils in common rows", func(t *testing.T) {
+		b1, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "B"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{1, 56},
+				{nil, 78},
+				{4, 11},
+				{5, nil},
+				{6, nil},
+				{7, 15},
+				{9, 25},
+			})
+		require.NoError(t, err)
+
+		b2, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "C"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{1, 12},
+				{nil, nil},
+				{4, 21},
+				{nil, 69},
+				{6, 19},
+				{nil, 71},
+				{nil, 18},
+			})
+		require.NoError(t, err)
+
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "B", "C"},
+			[]Type{Int64, Int64, Int64}, [][]interface{}{
+				{1, 56, 12},
+				{nil, 78, nil},
+				{nil, 78, 69},
+				{nil, 78, 71},
+				{nil, 78, 18},
+				{4, 11, 21},
+				{5, nil, nil},
+				{6, nil, 19},
+				{7, 15, nil},
+				{9, 25, nil},
+			})
+		require.NoError(t, err)
+
+		result := b1.OuterJoin(b2)
+		assert.EqualValues(t, expected.String(), result.String())
+	})
 }
 
 func TestBow_InnerJoin(t *testing.T) {
@@ -576,19 +623,16 @@ func TestBow_InnerJoin(t *testing.T) {
 		assert.EqualValues(t, expected.String(), result.String())
 	})
 
-	t.Run("new", func(t *testing.T) {
+	t.Run("with only nils in common rows", func(t *testing.T) {
 		b1, err := NewBowFromRowBasedInterfaces(
 			[]string{"A", "B"},
 			[]Type{Int64, Int64}, [][]interface{}{
-				{0, 36},
 				{1, 56},
 				{nil, 78},
-				{3, 39},
 				{4, 11},
 				{5, nil},
 				{6, nil},
 				{7, 15},
-				{8, 15},
 				{9, 25},
 			})
 		require.NoError(t, err)
@@ -596,15 +640,12 @@ func TestBow_InnerJoin(t *testing.T) {
 		b2, err := NewBowFromRowBasedInterfaces(
 			[]string{"A", "C"},
 			[]Type{Int64, Int64}, [][]interface{}{
-				{0, 12},
 				{1, 12},
 				{nil, nil},
-				{3, 43},
 				{4, 21},
 				{nil, 69},
 				{6, 19},
 				{nil, 71},
-				{8, 26},
 				{nil, 18},
 			})
 		require.NoError(t, err)
@@ -612,46 +653,19 @@ func TestBow_InnerJoin(t *testing.T) {
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"A", "B", "C"},
 			[]Type{Int64, Int64, Int64}, [][]interface{}{
-				{0, 36, 12},
 				{1, 56, 12},
 				{nil, 78, nil},
-				{nil, nil, 69},
-				{nil, nil, 71},
-				{nil, nil, 18},
-				{3, 39, 43},
+				{nil, 78, 69},
+				{nil, 78, 71},
+				{nil, 78, 18},
 				{4, 11, 21},
 				{6, nil, 19},
-				{8, 15, 26},
 			})
 		require.NoError(t, err)
 
 		result := b1.InnerJoin(b2)
-		fmt.Printf("RES\n%+v\n", result)
 		assert.EqualValues(t, expected.String(), result.String())
 	})
-}
-
-func TestBow_InnerJoin2(t *testing.T) {
-	leftBow, err := NewGenBow(
-		OptionGenCols(2),
-		OptionGenRefCol(0),
-		OptionGenType(GenTypeRandom),
-		OptionGenMissingData(true),
-		OptionGenColNames([]string{"A", "B"}))
-	require.NoError(t, err)
-
-	rightBow, err := NewGenBow(
-		OptionGenCols(2),
-		OptionGenRefCol(0),
-		OptionGenType(GenTypeRandom),
-		OptionGenMissingData(true),
-		OptionGenColNames([]string{"A", "C"}))
-	require.NoError(t, err)
-
-	fmt.Printf("LEFT\n%+v\n", leftBow)
-	fmt.Printf("RIGHT\n%+v\n", rightBow)
-	fmt.Printf("INNER\n%+v\n", leftBow.InnerJoin(rightBow))
-
 }
 
 func BenchmarkBow_Join(b *testing.B) {
