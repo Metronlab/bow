@@ -578,9 +578,9 @@ func TestBow_InnerJoin(t *testing.T) {
 }
 
 func BenchmarkBow_Join(b *testing.B) {
-	for rows := 10; rows <= 4000; rows *= 20 {
-		b.StopTimer()
+	for rows := 10; rows <= 1000; rows *= 10 {
 		b.Run(fmt.Sprintf("Inner_%dx%d", rows, 2), func(b *testing.B) {
+			b.StopTimer()
 			leftBow, err := NewGenBow(
 				OptionGenRows(rows),
 				OptionGenCols(2),
