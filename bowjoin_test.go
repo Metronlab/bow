@@ -579,61 +579,53 @@ func TestInnerJoin(t *testing.T) {
 
 func BenchmarkBow_Join(b *testing.B) {
 	for rows := 10; rows <= 4000; rows *= 20 {
-		b.Run(fmt.Sprintf("%dx%d_%v_Inner", rows, 2, Float64), func(b *testing.B) {
-			benchInnerJoin(rows, Float64, b)
+		b.Run(fmt.Sprintf("Inner_%dx%d", rows, 2), func(b *testing.B) {
+			leftBow, err := NewGenBow(
+				OptionGenRows(rows),
+				OptionGenCols(2),
+				OptionGenType(GenTypeRandom),
+				OptionGenMissingData(true),
+				OptionGenRefCol(0),
+				OptionGenColNames([]string{"A", "B"}))
+			require.NoError(b, err)
+
+			rightBow, err := NewGenBow(
+				OptionGenRows(rows),
+				OptionGenCols(2),
+				OptionGenType(GenTypeRandom),
+				OptionGenMissingData(true),
+				OptionGenRefCol(0),
+				OptionGenColNames([]string{"A", "C"}))
+			require.NoError(b, err)
+
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				leftBow.InnerJoin(rightBow)
+			}
 		})
-		b.Run(fmt.Sprintf("%dx%d_%v_Outer", rows, 2, Float64), func(b *testing.B) {
-			benchOuterJoin(rows, Float64, b)
+		b.Run(fmt.Sprintf("Outer_%dx%d", rows, 2), func(b *testing.B) {
+			leftBow, err := NewGenBow(
+				OptionGenRows(rows),
+				OptionGenCols(2),
+				OptionGenRefCol(0),
+				OptionGenType(GenTypeRandom),
+				OptionGenMissingData(true),
+				OptionGenColNames([]string{"A", "B"}))
+			require.NoError(b, err)
+
+			rightBow, err := NewGenBow(
+				OptionGenRows(rows),
+				OptionGenCols(2),
+				OptionGenRefCol(0),
+				OptionGenType(GenTypeRandom),
+				OptionGenMissingData(true),
+				OptionGenColNames([]string{"A", "C"}))
+			require.NoError(b, err)
+
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				leftBow.OuterJoin(rightBow)
+			}
 		})
-	}
-}
-
-func benchInnerJoin(rows int, typ Type, b *testing.B) {
-	leftBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "B"}))
-	require.NoError(b, err)
-
-	rightBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "C"}))
-	require.NoError(b, err)
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		leftBow.InnerJoin(rightBow)
-	}
-}
-
-func benchOuterJoin(rows int, typ Type, b *testing.B) {
-	leftBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "B"}))
-	require.NoError(b, err)
-
-	rightBow, err := NewGenBow(
-		GenRows(rows),
-		GenCols(2),
-		GenDataType(typ),
-		GenMissingData(true),
-		GenRefCol(0, false),
-		GenColNames([]string{"A", "C"}))
-	require.NoError(b, err)
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		leftBow.OuterJoin(rightBow)
 	}
 }
