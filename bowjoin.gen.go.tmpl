@@ -6,39 +6,9 @@ import (
 	"github.com/apache/arrow/go/arrow/array"
 )
 
-func (b *bow) InnerJoin(other Bow) Bow {
-	left := b
-	right, ok := other.(*bow)
-	if !ok {
-		panic("bow.InnerJoin: non bow object passed as argument")
-	}
+func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,
+	commonRows struct{ l, r []int }) {
 
-	if left.NumCols() == 0 && right.NumCols() == 0 {
-		return left.NewSlice(0, 0)
-	}
-
-	if left.NumCols() > 0 && right.NumCols() == 0 {
-		return left.NewSlice(0, 0)
-	}
-
-	if left.NumCols() == 0 && right.NumCols() > 0 {
-		return right.NewSlice(0, 0)
-	}
-
-	// Get common columns indexes
-	commonCols := getCommonCols(left, right)
-
-	// Get common rows indexes
-	commonRows := getCommonRows(left, right, commonCols)
-
-	// Prepare new Series Slice
-	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
-	newSeries := make([]Series, newNumCols)
-
-	newNumRows := len(commonRows.l)
-	var rightCol int
-
-	// Fill left bow columns
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
 		switch left.ColumnType(colIndex) {
@@ -55,10 +25,14 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			panic(fmt.Errorf("unsupported type '%v'", left.ColumnType(colIndex)))
 		}
 
-		newSeries[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
+		(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
 	}
+}
 
-	// Fill right bow columns
+func innerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumRows, newNumCols int,
+	commonCols map[string][]Buffer, commonRows struct{ l, r []int }) {
+	var rightCol int
+
 	for colIndex := left.NumCols(); colIndex < newNumCols; colIndex++ {
 		buf := NewBuffer(newNumRows, right.ColumnType(rightCol))
 		for commonCols[right.ColumnName(rightCol)] != nil {
@@ -80,28 +54,12 @@ func (b *bow) InnerJoin(other Bow) Bow {
 			panic(fmt.Errorf("unsupported type '%v'", right.ColumnType(rightCol)))
 		}
 
-		newSeries[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
+		(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		rightCol++
 	}
-
-	// Join Metadata
-	var keys, values []string
-	keys = append(keys, left.Schema().Metadata().Keys()...)
-	keys = append(keys, right.Schema().Metadata().Keys()...)
-	values = append(values, left.Schema().Metadata().Values()...)
-	values = append(values, right.Schema().Metadata().Values()...)
-
-	newBow, err := NewBowWithMetadata(
-		NewMetadata(keys, values),
-		newSeries...)
-	if err != nil {
-		panic(fmt.Errorf("bow.InnerJoin: %w", err))
-	}
-
-	return newBow
 }
 
-func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniquesLeft int,
+func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uniquesLeft int,
 	commonCols map[string][]Buffer, commonRows struct{ l, r []int }) {
 	var leftRow, commonRow int
 
@@ -164,7 +122,7 @@ func fillLeftBowColumns(newSeries *[]Series, left, right *bow, newNumRows, uniqu
 	}
 }
 
-func fillRightBowColumns(newSeries *[]Series, left, right *bow, newNumCols,
+func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 	newNumRows, uniquesLeft int, commonCols map[string][]Buffer,
 	commonRows struct{ l, r []int }) {
 	var leftRow, commonRow, rightCol int

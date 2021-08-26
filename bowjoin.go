@@ -5,11 +5,63 @@ import (
 	"sort"
 )
 
+func (b *bow) InnerJoin(other Bow) Bow {
+	left := b
+	right, ok := other.(*bow)
+	if !ok {
+		panic("bow.InnerJoin: non bow object passed as argument")
+	}
+
+	if left.NumCols() == 0 && right.NumCols() == 0 {
+		return left.NewSlice(0, 0)
+	}
+
+	if left.NumCols() > 0 && right.NumCols() == 0 {
+		return left.NewSlice(0, 0)
+	}
+
+	if left.NumCols() == 0 && right.NumCols() > 0 {
+		return right.NewSlice(0, 0)
+	}
+
+	// Get common columns indices
+	commonCols := getCommonCols(left, right)
+
+	// Get common rows indices
+	commonRows := getCommonRows(left, right, commonCols)
+
+	// Prepare new Series Slice
+	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
+	newSeries := make([]Series, newNumCols)
+	newNumRows := len(commonRows.l)
+
+	innerFillLeftBowCols(&newSeries, left, right,
+		newNumRows, commonRows)
+	innerFillRightBowCols(&newSeries, left, right,
+		newNumRows, newNumCols, commonCols, commonRows)
+
+	// Join Metadata
+	var keys, values []string
+	keys = append(keys, left.Schema().Metadata().Keys()...)
+	keys = append(keys, right.Schema().Metadata().Keys()...)
+	values = append(values, left.Schema().Metadata().Values()...)
+	values = append(values, right.Schema().Metadata().Values()...)
+
+	newBow, err := NewBowWithMetadata(
+		NewMetadata(keys, values),
+		newSeries...)
+	if err != nil {
+		panic(fmt.Errorf("bow.InnerJoin: %w", err))
+	}
+
+	return newBow
+}
+
 func (b *bow) OuterJoin(other Bow) Bow {
 	left := b
 	right, ok := other.(*bow)
 	if !ok {
-		panic("bow: non bow object passed as argument")
+		panic("bow.OuterJoin: non bow object passed as argument")
 	}
 
 	// Get common columns indices
@@ -44,9 +96,9 @@ func (b *bow) OuterJoin(other Bow) Bow {
 	newNumCols := left.NumCols() + right.NumCols() - len(commonCols)
 	newSeries := make([]Series, newNumCols)
 
-	fillLeftBowColumns(&newSeries, left, right, newNumRows,
+	outerFillLeftBowCols(&newSeries, left, right, newNumRows,
 		uniquesLeft, commonCols, commonRows)
-	fillRightBowColumns(&newSeries, left, right, newNumCols,
+	outerFillRightBowCols(&newSeries, left, right, newNumCols,
 		newNumRows, uniquesLeft, commonCols, commonRows)
 
 	// Join Metadata
