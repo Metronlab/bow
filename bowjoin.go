@@ -176,8 +176,5 @@ func getCommonRows(left, right Bow, commonColBufs map[string][]Buffer) CommonRow
 		}
 	}
 
-	fmt.Printf("commonRows l: %+v\n", commonRows.l)
-	fmt.Printf("commonRows r: %+v\n", commonRows.r)
-
 	return commonRows
 }
