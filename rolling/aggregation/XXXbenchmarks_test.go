@@ -14,7 +14,7 @@ import (
 var BenchSize int64
 
 func BenchmarkBow(b *testing.B) {
-	for _, BenchSize = range []int64{1, 1e3, 1e5, 1e7} {
+	for _, BenchSize = range []int64{1, 1e3, 1e5} {
 		b.Run(fmt.Sprintf("Size %d", BenchSize), benchmarkBow)
 	}
 }

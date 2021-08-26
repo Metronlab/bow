@@ -1,6 +1,7 @@
 package bow
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -230,4 +231,25 @@ func TestBow_SortByCol(t *testing.T) {
 		_, err = b.SortByCol("time")
 		assert.Error(t, err)
 	})
+}
+
+func BenchmarkBow_SortByCol(b *testing.B) {
+	for rows := 10; rows <= 25000; rows *= 50 {
+		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				b.StopTimer()
+				data, err := NewGenBow(
+					OptionGenRows(rows),
+					OptionGenCols(4),
+					OptionGenDataTypes([]Type{Int64, Float64, String, Bool}),
+					OptionGenType(GenTypeRandom),
+					OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
+				require.NoError(b, err)
+
+				b.StartTimer()
+				_, err = data.SortByCol("int64")
+				require.NoError(b, err)
+			}
+		})
+	}
 }

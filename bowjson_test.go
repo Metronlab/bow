@@ -122,56 +122,49 @@ func TestJSON(t *testing.T) {
 }
 
 func BenchmarkBow_MarshalJSON(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 50 {
+	for rows := 10; rows <= 25000; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
-			data, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(4),
-				OptionGenDataTypes([]Type{Int64, Float64, String, Bool}),
-				OptionGenMissingData(true),
-				OptionGenRefCol(0),
-				OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
-			if err != nil {
-				panic(err)
-			}
-
-			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_, err := data.MarshalJSON()
-				if err != nil {
-					panic(err)
-				}
+				b.StopTimer()
+				data, err := NewGenBow(
+					OptionGenRows(rows),
+					OptionGenCols(4),
+					OptionGenDataTypes([]Type{Int64, Float64, String, Bool}),
+					OptionGenMissingData(true),
+					OptionGenRefCol(0),
+					OptionGenType(GenTypeRandom),
+					OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
+				require.NoError(b, err)
+
+				b.StartTimer()
+				_, err = data.MarshalJSON()
+				require.NoError(b, err)
 			}
 		})
 	}
 }
 
 func BenchmarkBow_UnmarshalJSON(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 50 {
+	for rows := 10; rows <= 25000; rows *= 50 {
 		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
-			data, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(4),
-				OptionGenDataTypes([]Type{Int64, Float64, String, Bool}),
-				OptionGenMissingData(true),
-				OptionGenRefCol(0),
-				OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
-			if err != nil {
-				panic(err)
-			}
-
-			var j []byte
-
-			j, err = data.MarshalJSON()
-			if err != nil {
-				panic(err)
-			}
-			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				err := NewBowEmpty().UnmarshalJSON(j)
-				if err != nil {
-					panic(err)
-				}
+				b.StopTimer()
+				data, err := NewGenBow(
+					OptionGenRows(rows),
+					OptionGenCols(4),
+					OptionGenDataTypes([]Type{Int64, Float64, String, Bool}),
+					OptionGenMissingData(true),
+					OptionGenRefCol(0),
+					OptionGenType(GenTypeRandom),
+					OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
+				require.NoError(b, err)
+
+				var j []byte
+				j, err = data.MarshalJSON()
+				require.NoError(b, err)
+
+				b.StartTimer()
+				require.NoError(b, NewBowEmpty().UnmarshalJSON(j))
 			}
 		})
 	}

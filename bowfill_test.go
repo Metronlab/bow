@@ -471,93 +471,85 @@ func TestFill(t *testing.T) {
 }
 
 func BenchmarkBow_Fill(b *testing.B) {
-	for cols := 2; cols <= 32; cols *= 8 {
-		for rows := 10; rows <= 1000000; rows *= 100 {
-			b.Run(fmt.Sprintf("%dx%d_%v_Previous", rows, cols, Float64), func(b *testing.B) {
-				benchFillPrevious(rows, cols, Float64, b)
+	for cols := 2; cols <= 8; cols *= 4 {
+		for rows := 10; rows <= 1000; rows *= 10 {
+			b.Run(fmt.Sprintf("Previous_%dx%d", rows, cols), func(b *testing.B) {
+				benchFillPrevious(rows, cols, b)
 			})
-			b.Run(fmt.Sprintf("%dx%d_%v_Next", rows, cols, Float64), func(b *testing.B) {
-				benchFillNext(rows, cols, Float64, b)
+			b.Run(fmt.Sprintf("Next_%dx%d", rows, cols), func(b *testing.B) {
+				benchFillNext(rows, cols, b)
 			})
-			b.Run(fmt.Sprintf("%dx%d_%v_Mean", rows, cols, Float64), func(b *testing.B) {
-				benchFillMean(rows, cols, Float64, b)
+			b.Run(fmt.Sprintf("Mean_%dx%d", rows, cols), func(b *testing.B) {
+				benchFillMean(rows, cols, b)
 			})
-			b.Run(fmt.Sprintf("%dx%d_%v_Linear", rows, cols, Float64), func(b *testing.B) {
-				benchFillLinear(rows, cols, Float64, b)
+			b.Run(fmt.Sprintf("Linear_%dx%d", rows, cols), func(b *testing.B) {
+				benchFillLinear(rows, cols, b)
 			})
 		}
 	}
 }
 
-func benchFillPrevious(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewGenBow(
-		OptionGenRows(rows),
-		OptionGenCols(cols),
-		OptionGenDataType(typ),
-		OptionGenMissingData(true))
-	if err != nil {
-		panic(err)
-	}
-	b.ResetTimer()
+func benchFillPrevious(rows, cols int, b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, err := data.FillPrevious()
-		if err != nil {
-			panic(err)
-		}
+		b.StopTimer()
+		data, err := NewGenBow(
+			OptionGenRows(rows),
+			OptionGenCols(cols),
+			OptionGenType(GenTypeRandom),
+			OptionGenMissingData(true))
+		require.NoError(b, err)
+
+		b.StartTimer()
+		_, err = data.FillPrevious()
+		require.NoError(b, err)
 	}
 }
 
-func benchFillNext(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewGenBow(
-		OptionGenRows(rows),
-		OptionGenCols(cols),
-		OptionGenDataType(typ),
-		OptionGenMissingData(true))
-	if err != nil {
-		panic(err)
-	}
-	b.ResetTimer()
+func benchFillNext(rows, cols int, b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, err := data.FillNext()
-		if err != nil {
-			panic(err)
-		}
+		b.StopTimer()
+		data, err := NewGenBow(
+			OptionGenRows(rows),
+			OptionGenCols(cols),
+			OptionGenType(GenTypeRandom),
+			OptionGenMissingData(true))
+		require.NoError(b, err)
+
+		b.StartTimer()
+		_, err = data.FillNext()
+		require.NoError(b, err)
 	}
 }
 
-func benchFillMean(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewGenBow(
-		OptionGenRows(rows),
-		OptionGenCols(cols),
-		OptionGenDataType(typ),
-		OptionGenMissingData(true))
-	if err != nil {
-		panic(err)
-	}
-	b.ResetTimer()
+func benchFillMean(rows, cols int, b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, err := data.FillMean()
-		if err != nil {
-			panic(err)
-		}
+		b.StopTimer()
+		data, err := NewGenBow(
+			OptionGenRows(rows),
+			OptionGenCols(cols),
+			OptionGenType(GenTypeRandom),
+			OptionGenMissingData(true))
+		require.NoError(b, err)
+
+		b.StartTimer()
+		_, err = data.FillMean()
+		require.NoError(b, err)
 	}
 }
 
-func benchFillLinear(rows, cols int, typ Type, b *testing.B) {
-	data, err := NewGenBow(
-		OptionGenRows(rows),
-		OptionGenCols(cols),
-		OptionGenDataType(typ),
-		OptionGenMissingData(true),
-		OptionGenRefCol(0))
-	if err != nil {
-		panic(err)
-	}
-	b.ResetTimer()
+func benchFillLinear(rows, cols int, b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, err := data.FillLinear("0", "1")
-		if err != nil {
-			panic(err)
-		}
+		b.StopTimer()
+		data, err := NewGenBow(
+			OptionGenRows(rows),
+			OptionGenCols(cols),
+			OptionGenType(GenTypeRandom),
+			OptionGenMissingData(true),
+			OptionGenRefCol(0))
+		require.NoError(b, err)
+
+		b.StartTimer()
+		_, err = data.FillLinear("0", "1")
+		require.NoError(b, err)
 	}
 }

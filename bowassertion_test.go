@@ -72,45 +72,43 @@ func TestBow_IsColSorted(t *testing.T) {
 
 func BenchmarkBow_IsColSorted(b *testing.B) {
 	for rows := 10; rows <= 1000000; rows *= 100 {
-		b.Run(fmt.Sprintf("%dx1_%v_Sorted", rows, Float64), func(b *testing.B) {
-			data, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(1),
-				OptionGenDataType(Float64),
-				OptionGenRefCol(0))
-			if err != nil {
-				panic(err)
-			}
-			b.ResetTimer()
+		b.Run(fmt.Sprintf("Sorted_%dx1", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_ = data.IsColSorted(0)
+				b.StopTimer()
+				data, err := NewGenBow(
+					OptionGenRows(rows),
+					OptionGenCols(1))
+				require.NoError(b, err)
+
+				b.StartTimer()
+				data.IsColSorted(0)
 			}
 		})
-		b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted", rows, Float64), func(b *testing.B) {
-			data, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(1),
-				OptionGenDataType(Float64))
-			if err != nil {
-				panic(err)
-			}
-			b.ResetTimer()
+		b.Run(fmt.Sprintf("Not_Sorted_%dx1", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_ = data.IsColSorted(0)
+				b.StopTimer()
+				data, err := NewGenBow(
+					OptionGenRows(rows),
+					OptionGenCols(1),
+					OptionGenType(GenTypeRandom))
+				require.NoError(b, err)
+
+				b.StartTimer()
+				data.IsColSorted(0)
 			}
 		})
-		b.Run(fmt.Sprintf("%dx1_%v_Not_Sorted_With_Missing_Data", rows, Float64), func(b *testing.B) {
-			data, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(1),
-				OptionGenDataType(Float64),
-				OptionGenMissingData(true))
-			if err != nil {
-				panic(err)
-			}
-			b.ResetTimer()
+		b.Run(fmt.Sprintf("Not_Sorted_With_Missing_Data_%dx1", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_ = data.IsColSorted(0)
+				b.StopTimer()
+				data, err := NewGenBow(
+					OptionGenRows(rows),
+					OptionGenCols(1),
+					OptionGenMissingData(true),
+					OptionGenType(GenTypeRandom))
+				require.NoError(b, err)
+
+				b.StartTimer()
+				data.IsColSorted(0)
 			}
 		})
 	}

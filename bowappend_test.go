@@ -171,33 +171,24 @@ func TestAppendBows(t *testing.T) {
 }
 
 func BenchmarkAppendBows(b *testing.B) {
-	for rows := 0; rows <= 1000000; rows *= 100 {
+	for rows := 10; rows <= 1000000; rows *= 100 {
 		b.Run(fmt.Sprintf("%d-rows", rows), func(b *testing.B) {
+			b.StopTimer()
 			b1, err := NewBow(
 				NewSeries("time", Int64, make([]int64, rows), nil),
 				NewSeries("value", Float64, make([]float64, rows), nil))
-			if err != nil {
-				panic(err)
-			}
+			require.NoError(b, err)
 
 			b2, err := NewBow(
 				NewSeries("time", Int64, make([]int64, rows), nil),
 				NewSeries("value", Float64, make([]float64, rows), nil))
-			if err != nil {
-				panic(err)
-			}
+			require.NoError(b, err)
 
-			b.ResetTimer()
+			b.StartTimer()
 			for n := 0; n < b.N; n++ {
 				_, err := AppendBows(b1, b2)
-				if err != nil {
-					panic(err)
-				}
+				require.NoError(b, err)
 			}
 		})
-
-		if rows == 0 {
-			rows = 1
-		}
 	}
 }
