@@ -152,7 +152,7 @@ func NewGenBow(options ...OptionGen) (Bow, error) {
 func (o *optionGen) newGeneratedSeries(name string, typ Type, gt GenType) Series {
 	buf := NewBuffer(o.rows, typ)
 	for i := 0; i < o.rows; i++ {
-		if !o.missingData || newRandomNumber(Boolean).(bool) {
+		if !o.missingData || (newRandomNumber(Int64).(int64) > 20) {
 			buf.SetOrDrop(i, gt(typ, i))
 		}
 	}
