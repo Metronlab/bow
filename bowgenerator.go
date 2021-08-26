@@ -152,7 +152,7 @@ func NewGenBow(options ...OptionGen) (Bow, error) {
 func (o *optionGen) newGeneratedSeries(name string, typ Type, gt GenType) Series {
 	buf := NewBuffer(o.rows, typ, true)
 	for i := 0; i < o.rows; i++ {
-		if !o.missingData || (newRandomNumber(Int64).(int64) > 20) {
+		if !o.missingData || newRandomNumber(Bool).(bool) {
 			buf.SetOrDrop(i, gt(typ, i))
 		}
 	}
@@ -174,7 +174,7 @@ func GenTypeDecremental(typ Type, seed int) interface{} {
 }
 
 func GenTypeIncrementalRandom(typ Type, seed int) interface{} {
-	i := int64(seed) * 100
+	i := int64(seed) * 10
 	switch typ {
 	case Float64:
 		add, _ := ToFloat64(newRandomNumber(Float64))
@@ -186,7 +186,7 @@ func GenTypeIncrementalRandom(typ Type, seed int) interface{} {
 }
 
 func GenTypeDecrementalRandom(typ Type, seed int) interface{} {
-	i := -int64(seed) * 100
+	i := -int64(seed) * 10
 	switch typ {
 	default:
 		add, _ := ToInt64(newRandomNumber(Int64))
@@ -195,7 +195,7 @@ func GenTypeDecrementalRandom(typ Type, seed int) interface{} {
 }
 
 func newRandomNumber(typ Type) interface{} {
-	n, err := crand.Int(crand.Reader, big.NewInt(100))
+	n, err := crand.Int(crand.Reader, big.NewInt(10))
 	if err != nil {
 		panic(err)
 	}
@@ -205,7 +205,7 @@ func newRandomNumber(typ Type) interface{} {
 	case Float64:
 		return float64(n.Int64()) + 0.5
 	case Bool:
-		return n.Int64() > 50
+		return n.Int64() > 5
 	case String:
 		return uuid.New().String()
 	default:

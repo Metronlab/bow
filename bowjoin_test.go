@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOuterJoin(t *testing.T) {
+func TestBow_OuterJoin(t *testing.T) {
 	t.Run("two empty bows", func(t *testing.T) {
 		b1 := NewBowEmpty()
 		b2 := NewBowEmpty()
@@ -416,7 +416,7 @@ func TestOuterJoin(t *testing.T) {
 	})
 }
 
-func TestInnerJoin(t *testing.T) {
+func TestBow_InnerJoin(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		b1, err := NewBowFromRowBasedInterfaces(
 			[]string{"index1", "index2", "col1"},
@@ -579,50 +579,44 @@ func TestInnerJoin(t *testing.T) {
 
 func BenchmarkBow_Join(b *testing.B) {
 	for rows := 10; rows <= 4000; rows *= 20 {
+		b.StopTimer()
 		b.Run(fmt.Sprintf("Inner_%dx%d", rows, 2), func(b *testing.B) {
 			leftBow, err := NewGenBow(
 				OptionGenRows(rows),
 				OptionGenCols(2),
-				OptionGenType(GenTypeRandom),
-				OptionGenMissingData(true),
-				OptionGenRefCol(0),
+				OptionGenType(GenTypeIncrementalRandom),
 				OptionGenColNames([]string{"A", "B"}))
 			require.NoError(b, err)
 
 			rightBow, err := NewGenBow(
 				OptionGenRows(rows),
 				OptionGenCols(2),
-				OptionGenType(GenTypeRandom),
-				OptionGenMissingData(true),
-				OptionGenRefCol(0),
+				OptionGenType(GenTypeIncrementalRandom),
 				OptionGenColNames([]string{"A", "C"}))
 			require.NoError(b, err)
 
-			b.ResetTimer()
+			b.StartTimer()
 			for n := 0; n < b.N; n++ {
 				leftBow.InnerJoin(rightBow)
 			}
 		})
 		b.Run(fmt.Sprintf("Outer_%dx%d", rows, 2), func(b *testing.B) {
+			b.StopTimer()
 			leftBow, err := NewGenBow(
 				OptionGenRows(rows),
 				OptionGenCols(2),
-				OptionGenRefCol(0),
-				OptionGenType(GenTypeRandom),
-				OptionGenMissingData(true),
+				OptionGenType(GenTypeIncrementalRandom),
 				OptionGenColNames([]string{"A", "B"}))
 			require.NoError(b, err)
 
 			rightBow, err := NewGenBow(
 				OptionGenRows(rows),
 				OptionGenCols(2),
-				OptionGenRefCol(0),
-				OptionGenType(GenTypeRandom),
-				OptionGenMissingData(true),
+				OptionGenType(GenTypeIncrementalRandom),
 				OptionGenColNames([]string{"A", "C"}))
 			require.NoError(b, err)
 
-			b.ResetTimer()
+			b.StartTimer()
 			for n := 0; n < b.N; n++ {
 				leftBow.OuterJoin(rightBow)
 			}
