@@ -414,6 +414,53 @@ func TestBow_OuterJoin(t *testing.T) {
 		result := b1.OuterJoin(b2)
 		assert.EqualValues(t, expected.String(), result.String())
 	})
+
+	t.Run("with only nils in common rows", func(t *testing.T) {
+		b1, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "B"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{1, 56},
+				{nil, 78},
+				{4, 11},
+				{5, nil},
+				{6, nil},
+				{7, 15},
+				{9, 25},
+			})
+		require.NoError(t, err)
+
+		b2, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "C"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{1, 12},
+				{nil, nil},
+				{4, 21},
+				{nil, 69},
+				{6, 19},
+				{nil, 71},
+				{nil, 18},
+			})
+		require.NoError(t, err)
+
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "B", "C"},
+			[]Type{Int64, Int64, Int64}, [][]interface{}{
+				{1, 56, 12},
+				{nil, 78, nil},
+				{nil, 78, 69},
+				{nil, 78, 71},
+				{nil, 78, 18},
+				{4, 11, 21},
+				{5, nil, nil},
+				{6, nil, 19},
+				{7, 15, nil},
+				{9, 25, nil},
+			})
+		require.NoError(t, err)
+
+		result := b1.OuterJoin(b2)
+		assert.EqualValues(t, expected.String(), result.String())
+	})
 }
 
 func TestBow_InnerJoin(t *testing.T) {
@@ -570,6 +617,50 @@ func TestBow_InnerJoin(t *testing.T) {
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k1", "k2"}, []string{"v1", "v2"}),
 			NewSeries("index1", []int64{1}, nil),
 		)
+		require.NoError(t, err)
+
+		result := b1.InnerJoin(b2)
+		assert.EqualValues(t, expected.String(), result.String())
+	})
+
+	t.Run("with only nils in common rows", func(t *testing.T) {
+		b1, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "B"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{1, 56},
+				{nil, 78},
+				{4, 11},
+				{5, nil},
+				{6, nil},
+				{7, 15},
+				{9, 25},
+			})
+		require.NoError(t, err)
+
+		b2, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "C"},
+			[]Type{Int64, Int64}, [][]interface{}{
+				{1, 12},
+				{nil, nil},
+				{4, 21},
+				{nil, 69},
+				{6, 19},
+				{nil, 71},
+				{nil, 18},
+			})
+		require.NoError(t, err)
+
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"A", "B", "C"},
+			[]Type{Int64, Int64, Int64}, [][]interface{}{
+				{1, 56, 12},
+				{nil, 78, nil},
+				{nil, 78, 69},
+				{nil, 78, 71},
+				{nil, 78, 18},
+				{4, 11, 21},
+				{6, nil, 19},
+			})
 		require.NoError(t, err)
 
 		result := b1.InnerJoin(b2)
