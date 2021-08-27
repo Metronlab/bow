@@ -5,6 +5,8 @@ import (
 	"sort"
 )
 
+// InnerJoin joins columns of two Bows on common columns and rows.
+// The Metadata of the two Bows are also joined by appending keys and values.
 func (b *bow) InnerJoin(other Bow) Bow {
 	left := b
 	right, ok := other.(*bow)
@@ -57,6 +59,8 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	return newBow
 }
 
+// OuterJoin joins columns of two Bows on common columns, and keeps all rows.
+// The Metadata of the two Bows are also joined by appending keys and values.
 func (b *bow) OuterJoin(other Bow) Bow {
 	left := b
 	right, ok := other.(*bow)
