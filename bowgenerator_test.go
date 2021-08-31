@@ -23,7 +23,9 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("with missing data", func(t *testing.T) {
-		b, err := NewGenBow(OptionGenMissingData([]int{0, 1, 2}))
+		b, err := NewGenBow(
+			OptionGenRows(1000000),
+			OptionGenMissingData([]int{0, 1, 2}))
 		assert.NoError(t, err)
 		b2, err := b.DropNils()
 		assert.NoError(t, err)
