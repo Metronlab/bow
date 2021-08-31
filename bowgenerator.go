@@ -10,15 +10,12 @@ import (
 )
 
 type optionGen struct {
-	rows          int
-	cols          int
-	dataType      Type
-	colNames      []string
-	dataTypes     []Type
-	missingData   bool
-	genType       GenType
-	refCol        int
-	refColGenType GenType
+	rows            int
+	cols            int
+	colNames        []string
+	colTypes        []Type
+	genStrategies   []GenStrategy
+	missingDataCols []int
 }
 
 // OptionGen is a type used for self-referential functions
@@ -44,82 +41,47 @@ func OptionGenCols(cols int) OptionGen {
 	}
 }
 
-// OptionGenDataType sets a unique data type for every columns of the NewGenBow
-func OptionGenDataType(dataType Type) OptionGen { return func(f *optionGen) { f.dataType = dataType } }
-
-// OptionGenColNames sets the name of each column of the NewGenBow
+// OptionGenColNames sets the names of each column of a NewGenBow
 func OptionGenColNames(colNames []string) OptionGen {
 	return func(f *optionGen) { f.colNames = colNames }
 }
 
-// OptionGenDataTypes sets the data types of each column of the NewGenBow
-func OptionGenDataTypes(dataTypes []Type) OptionGen {
-	return func(f *optionGen) { f.dataTypes = dataTypes }
+// OptionGenColTypes sets the data types of each column of a NewGenBow
+func OptionGenColTypes(colTypes []Type) OptionGen {
+	return func(f *optionGen) { f.colTypes = colTypes }
 }
 
-// OptionGenMissingData defines if the NewGenBow includes missing data at random rows in every columns except OptionGenRefCol
-func OptionGenMissingData(hasMissingData bool) OptionGen {
-	return func(f *optionGen) { f.missingData = hasMissingData }
+// OptionGenStrategies defines the strategy used to generate values for each column,
+// default to GenStrategyIncremental.
+func OptionGenStrategies(s []GenStrategy) OptionGen {
+	return func(f *optionGen) { f.genStrategies = s }
 }
 
-// OptionGenRefCol defines the index of a reference column,
-// which does not include missing data and is sorted for every type except bool
-func OptionGenRefCol(refCol int) OptionGen {
-	return func(f *optionGen) {
-		f.refCol = refCol
-	}
+// OptionGenMissingData defines if the NewGenBow includes missing data at random rows in selected columns
+func OptionGenMissingData(colIndices []int) OptionGen {
+	return func(f *optionGen) { f.missingDataCols = colIndices }
 }
 
-// OptionGenType defines the method used to generate values,
-// default to GenTypeIncremental.
-func OptionGenType(g GenType) OptionGen {
-	return func(f *optionGen) {
-		f.genType = g
-	}
-}
-
-// OptionRefColGenType defines the method used to generate reference column values,
-// default to GenTypeIncremental.
-func OptionRefColGenType(g GenType) OptionGen {
-	return func(f *optionGen) {
-		f.refColGenType = g
-	}
-}
+const (
+	genDefaultRows = 3
+	genDefaultCols = 2
+)
 
 // NewGenBow generates a new random bow filled with the following options:
-// OptionGenRows(rows int): number of rows (default 10)
-// OptionGenCols(cols int): number of columns (default 10)
-// OptionGenDataType(typ Type): data type (default Int64)
-// OptionGenMissingData(missing bool): enable random missing data (default false)
-// OptionGenRefCol(refCol int, descSort bool): defines the index of a reference column and its sorting order,
-// which does not include missing data and is sorted (default refCol = -1 (no column) and descSort = false)
+// OptionGenRows(rows int): sets the number of rows (default 3)
+// OptionGenCols(cols int): sets the number of columns (default 3)
+// OptionGenColNames(colNames []string): sets the names of each column (default colIndex)
+// OptionGenColTypes(colTypes []Type): sets data types of columns (default Int64)
+// OptionGenStrategies(s []GenStrategy): sets the data generation strategies (default GenStrategyIncremental)
+// OptionGenMissingData(colIndices []int): enables random missing data (default false)
 func NewGenBow(options ...OptionGen) (Bow, error) {
 	// Set default options
 	o := &optionGen{
-		rows:          10,
-		cols:          10,
-		dataType:      Unknown,
-		genType:       GenTypeIncremental,
-		refCol:        -1,
-		refColGenType: GenTypeIncremental,
+		rows: genDefaultRows,
+		cols: genDefaultCols,
 	}
 	for _, option := range options {
 		option(o)
-	}
-
-	if len(o.dataTypes) > 0 && o.dataType != Unknown {
-		return nil, fmt.Errorf("bow.NewGenBow: either OptionGenDataType or OptionGenDataTypes must be set")
-	}
-	if len(o.dataTypes) > 0 && len(o.dataTypes) != o.cols {
-		return nil, fmt.Errorf("bow.NewGenBow: OptionGenDataTypes array length must be equal to OptionGenCols")
-	}
-	if len(o.dataTypes) == 0 && o.dataType == Unknown {
-		o.dataType = Int64
-	}
-	if len(o.dataTypes) == 0 {
-		for i := 0; i < o.cols; i++ {
-			o.dataTypes = append(o.dataTypes, o.dataType)
-		}
 	}
 
 	if len(o.colNames) > 0 && len(o.colNames) != o.cols {
@@ -130,50 +92,68 @@ func NewGenBow(options ...OptionGen) (Bow, error) {
 		}
 	}
 
-	if o.refCol > o.cols-1 {
-		return nil, fmt.Errorf("bow.NewGenBow: OptionGenRefCol is out of range")
+	if len(o.colTypes) > 0 && len(o.colTypes) != o.cols {
+		return nil, fmt.Errorf("bow.NewGenBow: OptionGenColTypes array length must be equal to OptionGenCols")
 	}
-	if o.refCol > -1 && o.dataTypes[o.refCol] == Boolean {
-		return nil, fmt.Errorf("bow.NewGenBow: OptionGenRefCol cannot be of type Boolean")
+	if len(o.colTypes) == 0 {
+		for i := 0; i < o.cols; i++ {
+			o.colTypes = append(o.colTypes, Int64)
+		}
+	}
+
+	if len(o.genStrategies) > 0 && len(o.genStrategies) != o.cols {
+		return nil, fmt.Errorf("bow.NewGenBow: OptionGenStrategies array length must be equal to OptionGenCols")
+	}
+	if len(o.genStrategies) == 0 {
+		for i := 0; i < o.cols; i++ {
+			o.genStrategies = append(o.genStrategies, GenStrategyIncremental)
+		}
 	}
 
 	seriesSlice := make([]Series, o.cols)
-	for i := range seriesSlice {
-		if i == o.refCol {
-			seriesSlice[i] = o.newGeneratedSeries(o.colNames[i], o.dataTypes[i], o.refColGenType)
-		} else {
-			seriesSlice[i] = o.newGeneratedSeries(o.colNames[i], o.dataTypes[i], o.genType)
+	for seriesIndex := range seriesSlice {
+		missingData := false
+		for _, colIndex := range o.missingDataCols {
+			if seriesIndex == colIndex {
+				missingData = true
+			}
 		}
+		seriesSlice[seriesIndex] = o.newGeneratedSeries(
+			o.colNames[seriesIndex],
+			o.colTypes[seriesIndex],
+			o.genStrategies[seriesIndex],
+			missingData)
 	}
 
 	return NewBow(seriesSlice...)
 }
 
-func (o *optionGen) newGeneratedSeries(name string, typ Type, gt GenType) Series {
+func (o *optionGen) newGeneratedSeries(name string, typ Type, s GenStrategy, missingData bool) Series {
 	buf := NewBuffer(o.rows, typ)
-	for i := 0; i < o.rows; i++ {
-		if !o.missingData || (newRandomNumber(Int64).(int64) > 20) {
-			buf.SetOrDrop(i, gt(typ, i))
+	for rowIndex := 0; rowIndex < o.rows; rowIndex++ {
+		if !missingData || (newRandomNumber(Int64).(int64) > 2) {
+			buf.SetOrDrop(rowIndex, s(typ, rowIndex))
 		}
 	}
+
 	return NewSeriesFromBuffer(name, buf)
 }
 
-type GenType func(typ Type, seed int) interface{}
+type GenStrategy func(typ Type, seed int) interface{}
 
-func GenTypeRandom(typ Type, seed int) interface{} {
+func GenStrategyRandom(typ Type, seed int) interface{} {
 	return newRandomNumber(typ)
 }
 
-func GenTypeIncremental(typ Type, seed int) interface{} {
+func GenStrategyIncremental(typ Type, seed int) interface{} {
 	return typ.Convert(seed)
 }
 
-func GenTypeDecremental(typ Type, seed int) interface{} {
+func GenStrategyDecremental(typ Type, seed int) interface{} {
 	return typ.Convert(-seed)
 }
 
-func GenTypeIncrementalRandom(typ Type, seed int) interface{} {
+func GenStrategyRandomIncremental(typ Type, seed int) interface{} {
 	i := int64(seed) * 10
 	switch typ {
 	case Float64:
@@ -185,7 +165,7 @@ func GenTypeIncrementalRandom(typ Type, seed int) interface{} {
 	}
 }
 
-func GenTypeDecrementalRandom(typ Type, seed int) interface{} {
+func GenStrategyRandomDecremental(typ Type, seed int) interface{} {
 	i := -int64(seed) * 10
 	switch typ {
 	default:
@@ -207,7 +187,7 @@ func newRandomNumber(typ Type) interface{} {
 	case Boolean:
 		return n.Int64() > 5
 	case String:
-		return uuid.New().String()
+		return uuid.New().String()[:8]
 	default:
 		panic("unsupported data type")
 	}

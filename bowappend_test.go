@@ -158,7 +158,7 @@ func TestAppendBows(t *testing.T) {
 
 func BenchmarkAppendBows(b *testing.B) {
 	for rows := 10; rows <= 1000000; rows *= 100 {
-		b.Run(fmt.Sprintf("%d-rows", rows), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			b.StopTimer()
 			b1, err := NewBow(
 				NewSeries("time", make([]int64, rows), nil),

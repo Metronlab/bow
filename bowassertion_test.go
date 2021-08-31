@@ -70,50 +70,6 @@ func TestBow_IsColSorted(t *testing.T) {
 	})
 }
 
-func BenchmarkBow_IsColSorted(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 100 {
-		b.Run(fmt.Sprintf("Sorted_%dx1", rows), func(b *testing.B) {
-			for n := 0; n < b.N; n++ {
-				b.StopTimer()
-				data, err := NewGenBow(
-					OptionGenRows(rows),
-					OptionGenCols(1))
-				require.NoError(b, err)
-
-				b.StartTimer()
-				data.IsColSorted(0)
-			}
-		})
-		b.Run(fmt.Sprintf("Not_Sorted_%dx1", rows), func(b *testing.B) {
-			for n := 0; n < b.N; n++ {
-				b.StopTimer()
-				data, err := NewGenBow(
-					OptionGenRows(rows),
-					OptionGenCols(1),
-					OptionGenType(GenTypeRandom))
-				require.NoError(b, err)
-
-				b.StartTimer()
-				data.IsColSorted(0)
-			}
-		})
-		b.Run(fmt.Sprintf("Not_Sorted_With_Missing_Data_%dx1", rows), func(b *testing.B) {
-			for n := 0; n < b.N; n++ {
-				b.StopTimer()
-				data, err := NewGenBow(
-					OptionGenRows(rows),
-					OptionGenCols(1),
-					OptionGenMissingData(true),
-					OptionGenType(GenTypeRandom))
-				require.NoError(b, err)
-
-				b.StartTimer()
-				data.IsColSorted(0)
-			}
-		})
-	}
-}
-
 func TestBow_IsColEmpty(t *testing.T) {
 	b, err := NewBowFromRowBasedInterfaces(
 		[]string{"a", "b", "c"},
@@ -131,4 +87,21 @@ func TestBow_IsColEmpty(t *testing.T) {
 	assert.False(t, empty)
 	empty = b.IsColEmpty(2)
 	assert.True(t, empty)
+}
+
+func BenchmarkBow_IsColSorted(b *testing.B) {
+	for rows := 10; rows <= 100000; rows *= 10 {
+		data, err := NewBowFromParquet(fmt.Sprintf("%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+		require.NoError(b, err)
+		b.Run(fmt.Sprintf("sorted_%d_rows", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				data.IsColSorted(0)
+			}
+		})
+		b.Run(fmt.Sprintf("not_sorted_%d_rows", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				data.IsColSorted(1)
+			}
+		})
+	}
 }
