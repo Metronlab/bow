@@ -14,7 +14,7 @@ func BenchmarkNewBufferFromInterfaces(b *testing.B) {
 			cells[i] = int64(i)
 		}
 
-		b.Run(fmt.Sprintf("%d", rows), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				_, err := NewBufferFromInterfaces(Int64, cells)
 				require.NoError(b, err)
