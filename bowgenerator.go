@@ -51,13 +51,7 @@ func NewGenSeries(o OptionGenSeries) Series {
 	return o.genSeries()
 }
 
-// NewGenBow generates a new random bow filled with the following options:
-// OptionGenRows(rows int): sets the number of rows (default 3)
-// OptionGenCols(cols int): sets the number of columns (default 3)
-// OptionGenColNames(colNames []string): sets the names of each column (default colIndex)
-// OptionGenColTypes(colTypes []Type): sets data types of columns (default Int64)
-// OptionGenStrategies(s []GenStrategy): sets the data generation strategies (default GenStrategyIncremental)
-// OptionGenMissingData(colIndices []int): enables random missing data (default false)
+// NewGenBow generates a new random bow filled with the following for each column
 func NewGenBow(rowLen int, options ...OptionGenSeries) (Bow, error) {
 	seriesSlice := make([]Series, len(options))
 	nameMap := make(map[string]struct{})
