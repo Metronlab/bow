@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkNewSeries(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 100 {
+	for rows := 10; rows <= 100000; rows *= 10 {
 		dataArray := make([]int64, rows)
 		validArray := make([]bool, rows)
 		for i := range dataArray {
 			dataArray[i] = int64(i)
 			validArray[i] = i%2 == 0
 		}
-		b.Run(fmt.Sprintf("%d", rows), func(b *testing.B) {
+
+		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				NewSeries("test", Int64, dataArray, validArray)
 			}
@@ -24,15 +25,16 @@ func BenchmarkNewSeries(b *testing.B) {
 }
 
 func BenchmarkNewSeriesFromInterfaces(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 100 {
+	for rows := 10; rows <= 100000; rows *= 10 {
 		cells := make([]interface{}, rows)
 		for i := range cells {
 			cells[i] = int64(i)
 		}
-		b.Run(fmt.Sprintf("%d", rows), func(b *testing.B) {
+
+		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				_, err := NewSeriesFromInterfaces("test", Int64, cells)
-				require.NoError(b, err)
+				assert.NoError(b, err)
 			}
 		})
 	}

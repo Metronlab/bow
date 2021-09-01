@@ -121,49 +121,22 @@ func TestJSON(t *testing.T) {
 	})
 }
 
-func BenchmarkBow_MarshalJSON(b *testing.B) {
-	for rows := 10; rows <= 25000; rows *= 50 {
-		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
-			for n := 0; n < b.N; n++ {
-				b.StopTimer()
-				data, err := NewGenBow(
-					OptionGenRows(rows),
-					OptionGenCols(4),
-					OptionGenDataTypes([]Type{Int64, Float64, String, Bool}),
-					OptionGenMissingData(true),
-					OptionGenRefCol(0),
-					OptionGenType(GenTypeRandom),
-					OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
-				require.NoError(b, err)
+func BenchmarkBow_JSON(b *testing.B) {
+	for rows := 10; rows <= 100000; rows *= 10 {
+		data, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+		require.NoError(b, err)
 
-				b.StartTimer()
-				_, err = data.MarshalJSON()
+		var j []byte
+		b.Run(fmt.Sprintf("Marshal/%d_rows", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				j, err = data.MarshalJSON()
 				require.NoError(b, err)
 			}
 		})
-	}
-}
 
-func BenchmarkBow_UnmarshalJSON(b *testing.B) {
-	for rows := 10; rows <= 25000; rows *= 50 {
-		b.Run(fmt.Sprintf("%dx4", rows), func(b *testing.B) {
+		b.Run(fmt.Sprintf("Unmarshal/%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				b.StopTimer()
-				data, err := NewGenBow(
-					OptionGenRows(rows),
-					OptionGenCols(4),
-					OptionGenDataTypes([]Type{Int64, Float64, String, Bool}),
-					OptionGenMissingData(true),
-					OptionGenRefCol(0),
-					OptionGenType(GenTypeRandom),
-					OptionGenColNames([]string{"int64", "float64", "bool", "string"}))
-				require.NoError(b, err)
-
-				var j []byte
-				j, err = data.MarshalJSON()
-				require.NoError(b, err)
-
-				b.StartTimer()
 				require.NoError(b, NewBowEmpty().UnmarshalJSON(j))
 			}
 		})

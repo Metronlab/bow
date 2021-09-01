@@ -8,11 +8,12 @@ import (
 )
 
 func BenchmarkNewBufferFromInterfaces(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 100 {
+	for rows := 10; rows <= 100000; rows *= 10 {
 		cells := make([]interface{}, rows)
 		for i := range cells {
 			cells[i] = int64(i)
 		}
+
 		b.Run(fmt.Sprintf("%d", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				_, err := NewBufferFromInterfaces(Int64, cells)
