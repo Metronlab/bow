@@ -10,7 +10,7 @@ import (
 )
 
 func TestGeneratorForBenchmarks(t *testing.T) {
-	//t.Skip("comment this skip to generate new bows for benchmarks")
+	t.Skip("comment this skip to generate new bows for benchmarks")
 
 	for rows := 10; rows <= 100000; rows *= 10 {
 		b1, err := bow.NewGenBow(rows,
