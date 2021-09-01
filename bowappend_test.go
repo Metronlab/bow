@@ -157,7 +157,7 @@ func TestAppendBows(t *testing.T) {
 }
 
 func BenchmarkAppendBows(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 100 {
+	for rows := 10; rows <= 100000; rows *= 10 {
 		b1, err := NewBow(
 			NewSeries("time", make([]int64, rows), nil),
 			NewSeries("value", make([]float64, rows), nil))

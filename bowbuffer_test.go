@@ -8,7 +8,7 @@ import (
 )
 
 func BenchmarkNewBufferFromInterfaces(b *testing.B) {
-	for rows := 10; rows <= 1000000; rows *= 100 {
+	for rows := 10; rows <= 100000; rows *= 10 {
 		cells := make([]interface{}, rows)
 		for i := range cells {
 			cells[i] = int64(i)
