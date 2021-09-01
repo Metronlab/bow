@@ -669,45 +669,22 @@ func TestBow_InnerJoin(t *testing.T) {
 }
 
 func BenchmarkBow_Join(b *testing.B) {
-	for rows := 10; rows <= 1000; rows *= 10 {
-		b.Run(fmt.Sprintf("Inner_%dx%d", rows, 2), func(b *testing.B) {
-			b.StopTimer()
-			leftBow, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(2),
-				OptionGenType(GenTypeIncrementalRandom),
-				OptionGenColNames([]string{"A", "B"}))
-			require.NoError(b, err)
+	for rows := 10; rows <= 10000; rows *= 10 {
+		leftBow, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+		require.NoError(b, err)
 
-			rightBow, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(2),
-				OptionGenType(GenTypeIncrementalRandom),
-				OptionGenColNames([]string{"A", "C"}))
-			require.NoError(b, err)
+		rightBow, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow2-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+		require.NoError(b, err)
 
-			b.StartTimer()
+		b.Run(fmt.Sprintf("Inner_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				leftBow.InnerJoin(rightBow)
 			}
 		})
-		b.Run(fmt.Sprintf("Outer_%dx%d", rows, 2), func(b *testing.B) {
-			b.StopTimer()
-			leftBow, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(2),
-				OptionGenType(GenTypeIncrementalRandom),
-				OptionGenColNames([]string{"A", "B"}))
-			require.NoError(b, err)
 
-			rightBow, err := NewGenBow(
-				OptionGenRows(rows),
-				OptionGenCols(2),
-				OptionGenType(GenTypeIncrementalRandom),
-				OptionGenColNames([]string{"A", "C"}))
-			require.NoError(b, err)
-
-			b.StartTimer()
+		b.Run(fmt.Sprintf("Outer_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				leftBow.OuterJoin(rightBow)
 			}

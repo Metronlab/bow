@@ -571,85 +571,37 @@ func TestFill(t *testing.T) {
 }
 
 func BenchmarkBow_Fill(b *testing.B) {
-	for cols := 2; cols <= 8; cols *= 4 {
-		for rows := 10; rows <= 1000; rows *= 10 {
-			b.Run(fmt.Sprintf("Previous_%dx%d", rows, cols), func(b *testing.B) {
-				benchFillPrevious(rows, cols, b)
-			})
-			b.Run(fmt.Sprintf("Next_%dx%d", rows, cols), func(b *testing.B) {
-				benchFillNext(rows, cols, b)
-			})
-			b.Run(fmt.Sprintf("Mean_%dx%d", rows, cols), func(b *testing.B) {
-				benchFillMean(rows, cols, b)
-			})
-			b.Run(fmt.Sprintf("Linear_%dx%d", rows, cols), func(b *testing.B) {
-				benchFillLinear(rows, cols, b)
-			})
-		}
-	}
-}
-
-func benchFillPrevious(rows, cols int, b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		b.StopTimer()
-		data, err := NewGenBow(
-			OptionGenRows(rows),
-			OptionGenCols(cols),
-			OptionGenType(GenTypeRandom),
-			OptionGenMissingData(true))
+	for rows := 10; rows <= 100000; rows *= 10 {
+		data, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
 		require.NoError(b, err)
 
-		b.StartTimer()
-		_, err = data.FillPrevious()
-		require.NoError(b, err)
-	}
-}
+		b.Run(fmt.Sprintf("Previous_%d_rows", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				_, err = data.FillPrevious("Float64_bow1")
+				require.NoError(b, err)
+			}
+		})
 
-func benchFillNext(rows, cols int, b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		b.StopTimer()
-		data, err := NewGenBow(
-			OptionGenRows(rows),
-			OptionGenCols(cols),
-			OptionGenType(GenTypeRandom),
-			OptionGenMissingData(true))
-		require.NoError(b, err)
+		b.Run(fmt.Sprintf("Next_%d_rows", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				_, err = data.FillNext("Float64_bow1")
+				require.NoError(b, err)
+			}
+		})
 
-		b.StartTimer()
-		_, err = data.FillNext()
-		require.NoError(b, err)
-	}
-}
+		b.Run(fmt.Sprintf("Mean_%d_rows", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				_, err = data.FillMean("Float64_bow1")
+				require.NoError(b, err)
+			}
+		})
 
-func benchFillMean(rows, cols int, b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		b.StopTimer()
-		data, err := NewGenBow(
-			OptionGenRows(rows),
-			OptionGenCols(cols),
-			OptionGenType(GenTypeRandom),
-			OptionGenMissingData(true))
-		require.NoError(b, err)
-
-		b.StartTimer()
-		_, err = data.FillMean()
-		require.NoError(b, err)
-	}
-}
-
-func benchFillLinear(rows, cols int, b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		b.StopTimer()
-		data, err := NewGenBow(
-			OptionGenRows(rows),
-			OptionGenCols(cols),
-			OptionGenType(GenTypeRandom),
-			OptionGenMissingData(true),
-			OptionGenRefCol(0))
-		require.NoError(b, err)
-
-		b.StartTimer()
-		_, err = data.FillLinear("0", "1")
-		require.NoError(b, err)
+		b.Run(fmt.Sprintf("Linear_%d_rows", rows), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				_, err = data.FillLinear("Int64_ref", "Float64_bow1")
+				require.NoError(b, err)
+			}
+		})
 	}
 }

@@ -16,10 +16,10 @@ count:
 	@bash -c $(PWD)/scripts/count-code-lines.sh
 
 test:
-	@RUN=$(RUN) PKG=$(PKG) bash -c $(PWD)/scripts/test.sh
+	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/test.sh
 
 bench:
-	@RUN=$(RUN) PKG=$(PKG) bash -c $(PWD)/scripts/benchmark.sh
+	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/benchmark.sh
 
 CPUPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').cpu.prof
 MEMPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').mem.prof

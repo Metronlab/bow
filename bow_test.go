@@ -8,6 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	benchmarkBowsDirPath = "benchmarks/"
+)
+
 func TestNewBowEmpty(t *testing.T) {
 	assert.Equal(t, 0, NewBowEmpty().NumRows())
 	assert.Equal(t, 0, NewBowEmpty().NumCols())
