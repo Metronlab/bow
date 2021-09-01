@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenerator(t *testing.T) {
@@ -76,87 +75,4 @@ func TestGenerator(t *testing.T) {
 		assert.Equal(t, String, b.ColumnType(2))
 		assert.Equal(t, Boolean, b.ColumnType(3))
 	})
-}
-
-const (
-	benchmarkBowsDirPath = "benchmarks/"
-)
-
-func TestGeneratorForBenchmarks(t *testing.T) {
-
-	// comment this line to generate new bows for benchmarks
-	t.SkipNow()
-
-	for rows := 10; rows <= 100000; rows *= 10 {
-		b1, err := NewGenBow(
-			OptionGenCols(6),
-			OptionGenRows(rows),
-			OptionGenColNames([]string{
-				"Int64_ref",
-				"Int64_bow1",
-				"Int64_no_nils_bow1",
-				"Float64_bow1",
-				"Boolean_bow1",
-				"String_bow1",
-			}),
-			OptionGenColTypes([]Type{
-				Int64,
-				Int64,
-				Int64,
-				Float64,
-				Boolean,
-				String,
-			}),
-			OptionGenStrategies([]GenStrategy{
-				GenStrategyRandomIncremental,
-				GenStrategyRandom,
-				GenStrategyRandom,
-				GenStrategyRandom,
-				GenStrategyRandom,
-				GenStrategyRandom,
-			}),
-			OptionGenMissingData([]int{
-				2, 3, 4, 5,
-			}),
-		)
-		require.NoError(t, err)
-
-		b2, err := NewGenBow(
-			OptionGenCols(5),
-			OptionGenRows(rows),
-			OptionGenColNames([]string{
-				"Int64_ref",
-				"Int64_bow2",
-				"Float64_bow2",
-				"Boolean_bow2",
-				"String_bow2",
-			}),
-			OptionGenColTypes([]Type{
-				Int64,
-				Int64,
-				Float64,
-				Boolean,
-				String,
-			}),
-			OptionGenStrategies([]GenStrategy{
-				GenStrategyRandomIncremental,
-				GenStrategyRandom,
-				GenStrategyRandom,
-				GenStrategyRandom,
-				GenStrategyRandom,
-			}),
-			OptionGenMissingData([]int{
-				1, 2, 3, 4,
-			}),
-		)
-		require.NoError(t, err)
-
-		assert.NoError(t, b1.WriteParquet(fmt.Sprintf("%sbow1-%d-rows", benchmarkBowsDirPath, rows), false))
-		_, err = NewBowFromParquet(fmt.Sprintf("%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
-		assert.NoError(t, err)
-
-		assert.NoError(t, b2.WriteParquet(fmt.Sprintf("%sbow2-%d-rows", benchmarkBowsDirPath, rows), false))
-		_, err = NewBowFromParquet(fmt.Sprintf("%sbow2-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
-		assert.NoError(t, err)
-	}
 }
