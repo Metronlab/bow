@@ -8,64 +8,66 @@ import (
 	"github.com/google/uuid"
 )
 
-type OptionGenSeries struct {
-	Rows        int
-	ColName     string
-	ColType     Type
+const (
+	genDefaultNumRows = 3
+)
+
+type GenSeriesOptions struct {
+	NumRows     int
+	Name        string
+	Type        Type
 	GenStrategy GenStrategy
 	MissingData bool
 }
 
-const (
-	genDefaultRows = 3
-)
+// NewGenBow generates a new random bow
+func NewGenBow(numRows int, options ...GenSeriesOptions) (Bow, error) {
+	seriesSlice := make([]Series, len(options))
+	nameMap := make(map[string]struct{})
+	for i, o := range options {
+		o.NumRows = numRows
+		o.validate()
+		if _, ok := nameMap[o.Name]; ok {
+			o.Name = fmt.Sprintf("%s_%d", o.Name, i)
+		}
+		nameMap[o.Name] = struct{}{}
+		seriesSlice[i] = o.genSeries()
+	}
 
-func (o *OptionGenSeries) validate() {
-	if o.Rows <= 0 {
-		o.Rows = genDefaultRows
+	return NewBow(seriesSlice...)
+}
+
+func NewGenSeries(o GenSeriesOptions) Series {
+	o.validate()
+	return o.genSeries()
+}
+
+func (o *GenSeriesOptions) validate() {
+	if o.NumRows <= 0 {
+		o.NumRows = genDefaultNumRows
 	}
-	if o.ColName == "" {
-		o.ColName = "default"
+	if o.Name == "" {
+		o.Name = "default"
 	}
-	if o.ColType == Unknown {
-		o.ColType = Int64
+	if o.Type == Unknown {
+		o.Type = Int64
 	}
 	if o.GenStrategy == nil {
 		o.GenStrategy = GenStrategyIncremental
 	}
 }
 
-func (o *OptionGenSeries) genSeries() Series {
-	buf := NewBuffer(o.Rows, o.ColType)
-	for rowIndex := 0; rowIndex < o.Rows; rowIndex++ {
-		if !o.MissingData || (newRandomNumber(Int64).(int64) > 2) {
-			buf.SetOrDrop(rowIndex, o.GenStrategy(o.ColType, rowIndex))
+func (o *GenSeriesOptions) genSeries() Series {
+	buf := NewBuffer(o.NumRows, o.Type)
+	for rowIndex := 0; rowIndex < o.NumRows; rowIndex++ {
+		if !o.MissingData ||
+			// 20% of nils values
+			(newRandomNumber(Int64).(int64) > 2) {
+			buf.SetOrDrop(rowIndex, o.GenStrategy(o.Type, rowIndex))
 		}
 	}
 
-	return NewSeriesFromBuffer(o.ColName, buf)
-}
-
-func NewGenSeries(o OptionGenSeries) Series {
-	o.validate()
-	return o.genSeries()
-}
-
-// NewGenBow generates a new random bow filled with the following for each column
-func NewGenBow(rowLen int, options ...OptionGenSeries) (Bow, error) {
-	seriesSlice := make([]Series, len(options))
-	nameMap := make(map[string]struct{})
-	for i, o := range options {
-		o.Rows = rowLen
-		o.validate()
-		if _, ok := nameMap[o.ColName]; ok {
-			o.ColName = fmt.Sprintf("%s_%d", o.ColName, i)
-		}
-		nameMap[o.ColName] = struct{}{}
-		seriesSlice[i] = o.genSeries()
-	}
-
-	return NewBow(seriesSlice...)
+	return NewSeriesFromBuffer(o.Name, buf)
 }
 
 type GenStrategy func(typ Type, seed int) interface{}

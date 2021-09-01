@@ -240,7 +240,7 @@ func BenchmarkBow_SortByCol(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_, err = data.SortByCol("Int64_bow1")
+				_, err = data.SortByCol("Int64_no_nils_bow1")
 				require.NoError(b, err)
 			}
 		})

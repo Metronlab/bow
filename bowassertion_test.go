@@ -91,13 +91,16 @@ func TestBow_IsColEmpty(t *testing.T) {
 
 func BenchmarkBow_IsColSorted(b *testing.B) {
 	for rows := 10; rows <= 100000; rows *= 10 {
-		data, err := NewBowFromParquet(fmt.Sprintf("%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+		data, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
 		require.NoError(b, err)
+
 		b.Run(fmt.Sprintf("sorted_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				data.IsColSorted(0)
 			}
 		})
+
 		b.Run(fmt.Sprintf("not_sorted_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				data.IsColSorted(1)

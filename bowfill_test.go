@@ -572,7 +572,8 @@ func TestFill(t *testing.T) {
 
 func BenchmarkBow_Fill(b *testing.B) {
 	for rows := 10; rows <= 100000; rows *= 10 {
-		data, err := NewBowFromParquet(fmt.Sprintf("%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+		data, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
 		require.NoError(b, err)
 
 		b.Run(fmt.Sprintf("Previous_%d_rows", rows), func(b *testing.B) {

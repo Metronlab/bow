@@ -670,9 +670,12 @@ func TestBow_InnerJoin(t *testing.T) {
 
 func BenchmarkBow_Join(b *testing.B) {
 	for rows := 10; rows <= 10000; rows *= 10 {
-		leftBow, err := NewBowFromParquet(fmt.Sprintf("%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+		leftBow, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow1-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
 		require.NoError(b, err)
-		rightBow, err := NewBowFromParquet(fmt.Sprintf("%sbow2-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
+
+		rightBow, err := NewBowFromParquet(fmt.Sprintf(
+			"%sbow2-%d-rows.parquet", benchmarkBowsDirPath, rows), false)
 		require.NoError(b, err)
 
 		b.Run(fmt.Sprintf("Inner_%d_rows", rows), func(b *testing.B) {
