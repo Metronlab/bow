@@ -1,3 +1,11 @@
+v0.16.0 [2021-08-25]
+-------------------
+- general code refactoring
+- improved performance, mostly with better memory usage and buffers rework
+- introduced code generation with Metronlab/genius framework
+- changed Find method and add Contains and FindNext
+- improved bow generator by simplification and made it extensible by user for value creation strategy
+
 v0.15.0 [2021-08-04]
 -------------------
 - Benchmarks and Profiling:

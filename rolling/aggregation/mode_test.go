@@ -35,8 +35,8 @@ func TestMode(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
-					bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
+					bow.NewSeries(timeCol, []int64{}, nil),
+					bow.NewSeries(valueCol, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -66,7 +66,7 @@ func TestMode(t *testing.T) {
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
 					[]string{timeCol, valueCol},
-					[]bow.Type{bow.Int64, bow.Bool},
+					[]bow.Type{bow.Int64, bow.Boolean},
 					[][]interface{}{
 						{10, true},
 						{20, nil},

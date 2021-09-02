@@ -58,7 +58,7 @@ func (o *GenSeriesOptions) validate() {
 }
 
 func (o *GenSeriesOptions) genSeries() Series {
-	buf := NewBuffer(o.NumRows, o.Type, true)
+	buf := NewBuffer(o.NumRows, o.Type)
 	for rowIndex := 0; rowIndex < o.NumRows; rowIndex++ {
 		if !o.MissingData ||
 			// 20% of nils values
@@ -67,7 +67,7 @@ func (o *GenSeriesOptions) genSeries() Series {
 		}
 	}
 
-	return NewSeries(o.Name, o.Type, buf.Value, buf.Valid)
+	return NewSeriesFromBuffer(o.Name, buf)
 }
 
 type GenStrategy func(typ Type, seed int) interface{}
@@ -115,7 +115,7 @@ func newRandomNumber(typ Type) interface{} {
 		return n.Int64()
 	case Float64:
 		return float64(n.Int64()) + 0.5
-	case Bool:
+	case Boolean:
 		return n.Int64() > 5
 	case String:
 		return uuid.New().String()[:8]

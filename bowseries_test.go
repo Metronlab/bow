@@ -3,8 +3,6 @@ package bow
 import (
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkNewSeries(b *testing.B) {
@@ -18,7 +16,7 @@ func BenchmarkNewSeries(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				NewSeries("test", Int64, dataArray, validArray)
+				NewSeries("test", dataArray, validArray)
 			}
 		})
 	}
@@ -33,8 +31,7 @@ func BenchmarkNewSeriesFromInterfaces(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_, err := NewSeriesFromInterfaces("test", Int64, cells)
-				assert.NoError(b, err)
+				NewSeriesFromInterfaces("test", Int64, cells)
 			}
 		})
 	}

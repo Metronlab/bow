@@ -2,9 +2,10 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
+	"github.com/apache/arrow/go/arrow/bitutil"
 )
 
 // A Series is simply a named Apache Arrow array.Interface, which is immutable
@@ -13,50 +14,29 @@ type Series struct {
 	Array array.Interface
 }
 
-func NewSeries(name string, typ Type, dataArray interface{}, validArray []bool) Series {
-	var newArray array.Interface
-	pool := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	switch typ {
-	case Float64:
-		b := array.NewFloat64Builder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]float64), validArray)
-		newArray = b.NewArray()
-	case Int64:
-		b := array.NewInt64Builder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]int64), validArray)
-		newArray = b.NewArray()
-	case Bool:
-		b := array.NewBooleanBuilder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]bool), validArray)
-		newArray = b.NewArray()
-	case String:
-		b := array.NewStringBuilder(pool)
-		defer b.Release()
-		b.AppendValues(dataArray.([]string), validArray)
-		newArray = b.NewArray()
-	}
-	return Series{
-		Name:  name,
-		Array: newArray,
-	}
-}
-
-func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) (series Series, err error) {
-	if typ == Unknown {
-		if typ, err = seekType(cells); err != nil {
-			return
+func buildNullBitmapBool(dataLength int, validityArray interface{}) []bool {
+	switch valid := validityArray.(type) {
+	case nil:
+		return nil
+	case []bool:
+		if len(valid) != dataLength {
+			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
+		return valid
+	case []byte:
+		if len(valid) != bitutil.CeilByte(dataLength)/8 {
+			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
+		}
+		res := make([]bool, dataLength)
+		for i := 0; i < dataLength; i++ {
+			if bitutil.BitIsSet(valid, i) {
+				res[i] = true
+			}
+		}
+		return res
+	default:
+		panic(fmt.Errorf("unsupported type %T", valid))
 	}
-
-	buf, err := NewBufferFromInterfaces(typ, cells)
-	if err != nil {
-		return Series{}, err
-	}
-
-	return NewSeries(name, typ, buf.Value, buf.Valid), nil
 }
 
 func seekType(cells []interface{}) (Type, error) {
@@ -70,7 +50,7 @@ func seekType(cells []interface{}) (Type, error) {
 			case string:
 				return String, nil
 			case bool:
-				return Bool, nil
+				return Boolean, nil
 			}
 		}
 	}

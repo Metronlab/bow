@@ -8,9 +8,9 @@ import (
 
 func ExampleNewBow() {
 	b, err := NewBow(
-		NewSeries("col1", Int64, []int64{1, 2, 3, 4}, nil),
-		NewSeries("col2", Float64, []float64{1.1, 2.2, 3.3, 4}, []bool{true, false, true, true}),
-		NewSeries("col3", Bool, []bool{true, false, true, false}, []bool{true, false, true, true}),
+		NewSeries("col1", []int64{1, 2, 3, 4}, nil),
+		NewSeries("col2", []float64{1.1, 2.2, 3.3, 4}, []bool{true, false, true, true}),
+		NewSeries("col3", []bool{true, false, true, false}, []bool{true, false, true, true}),
 	)
 	if err != nil {
 		panic(err)

@@ -32,7 +32,7 @@ func TestParquet(t *testing.T) {
 	t.Run("bow supported types with rows and nils", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
 			[]string{"int", "float", "bool", "string"},
-			[]Type{Int64, Float64, Bool, String},
+			[]Type{Int64, Float64, Boolean, String},
 			[][]interface{}{
 				{1, 1., true, "hi"},
 				{2, 2., false, "ho"},
@@ -55,7 +55,7 @@ func TestParquet(t *testing.T) {
 	t.Run("bow supported types without rows", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
 			[]string{"int", "float", "bool", "string"},
-			[]Type{Int64, Float64, Bool, String},
+			[]Type{Int64, Float64, Boolean, String},
 			[][]interface{}{})
 		require.NoError(t, err)
 
@@ -80,8 +80,8 @@ func TestParquet(t *testing.T) {
 	t.Run("bow with context and col_types metadata", func(t *testing.T) {
 		var series = make([]Series, 2)
 
-		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
-		series[1] = NewSeries("value", Float64, []float64{0.}, []bool{true})
+		series[0] = NewSeries("time", []int64{0}, []bool{true})
+		series[1] = NewSeries("value", []float64{0.}, []bool{true})
 
 		var keys, values []string
 		type Unit struct {
@@ -122,8 +122,8 @@ func TestParquet(t *testing.T) {
 	t.Run("bow with wrong col_types metadata", func(t *testing.T) {
 		var series = make([]Series, 2)
 
-		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
-		series[1] = NewSeries("value", Float64, []float64{0.}, []bool{true})
+		series[0] = NewSeries("time", []int64{0}, []bool{true})
+		series[1] = NewSeries("value", []float64{0.}, []bool{true})
 
 		var keys, values []string
 
