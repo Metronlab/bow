@@ -41,7 +41,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 					return nil, fmt.Errorf(
 						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
-				data := b.Column(colIndex).Data()
+				data := b.(*bow).Column(colIndex).Data()
 				arr := array.New{{ .Type }}Data(data)
 				v := {{ .Type }}Values(arr)
 				valid := getValiditySlice(arr)

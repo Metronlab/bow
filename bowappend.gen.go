@@ -42,7 +42,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 					return nil, fmt.Errorf(
 						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
-				data := b.Column(colIndex).Data()
+				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewInt64Data(data)
 				v := Int64Values(arr)
 				valid := getValiditySlice(arr)
@@ -57,7 +57,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 					return nil, fmt.Errorf(
 						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
-				data := b.Column(colIndex).Data()
+				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewFloat64Data(data)
 				v := Float64Values(arr)
 				valid := getValiditySlice(arr)
@@ -72,7 +72,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 					return nil, fmt.Errorf(
 						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
-				data := b.Column(colIndex).Data()
+				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewBooleanData(data)
 				v := BooleanValues(arr)
 				valid := getValiditySlice(arr)
@@ -87,7 +87,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 					return nil, fmt.Errorf(
 						"bow.AppendBows: incompatible types %v and %v", refType, colType)
 				}
-				data := b.Column(colIndex).Data()
+				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewStringData(data)
 				v := StringValues(arr)
 				valid := getValiditySlice(arr)

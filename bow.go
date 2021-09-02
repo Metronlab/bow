@@ -16,7 +16,6 @@ import (
 type Bow interface {
 	String() string
 	Schema() *arrow.Schema
-	Column(colIndex int) array.Interface
 	ColumnName(colIndex int) string
 	NumRows() int
 	NumCols() int
