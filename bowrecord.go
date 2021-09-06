@@ -8,7 +8,7 @@ import (
 	"github.com/apache/arrow/go/arrow/array"
 )
 
-func NewFromRecord(record array.Record) (Bow, error) {
+func NewBowFromRecord(record array.Record) (Bow, error) {
 	for _, f := range record.Schema().Fields() {
 		if getBowTypeFromArrowType(f.Type) == Unknown {
 			return nil, fmt.Errorf("unsupported type: %s", f.Type.Name())
