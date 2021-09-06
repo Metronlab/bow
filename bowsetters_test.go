@@ -106,4 +106,11 @@ func TestBow_Filter(t *testing.T) {
 		)
 		ExpectEqual(t, b, res)
 	})
+
+	t.Run("not convertible", func(t *testing.T) {
+		res := b.Filter(
+			b.MakeFilterValues(1, "not a number"),
+		)
+		ExpectEqual(t, b.NewEmptySlice(), res)
+	})
 }

@@ -95,6 +95,9 @@ func matchRowComps(b Bow, i int, fns ...RowCmp) bool {
 	return true
 }
 
+// MakeFilterValues prepare a valid comparator for filter, it's lazy on given type
+// Be careful about number to string tough, for instance 0.1 give "O.100000", it could not be what you expect
+// If value is of the wrong type and not convertible to column type, comparison will be done on null values!
 func (b *bow) MakeFilterValues(colIndex int, values ...interface{}) RowCmp {
 	t := b.ColumnType(colIndex)
 	for i := range values {
