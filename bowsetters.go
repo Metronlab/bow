@@ -45,3 +45,9 @@ func (b *bow) Apply(colIndex int, returnType Type, fn func(interface{}) interfac
 
 	return NewBowWithMetadata(b.Metadata(), seriesSlice...)
 }
+
+// Convert transform a column type into another,
+// if default behavior is not the one expected, you can use Apply with any implementation needed
+func (b *bow) Convert(colIndex int, t Type) (Bow, error) {
+	return b.Apply(colIndex, t, t.Convert)
+}

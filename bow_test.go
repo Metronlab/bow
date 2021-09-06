@@ -12,6 +12,10 @@ const (
 	benchmarkBowsDirPath = "benchmarks/"
 )
 
+func ExpectEqual(t *testing.T, expect, have Bow) {
+	assert.True(t, expect.Equal(have), "expect:\n%shave:\n%s", expect, have)
+}
+
 func TestNewBowEmpty(t *testing.T) {
 	assert.Equal(t, 0, NewBowEmpty().NumRows())
 	assert.Equal(t, 0, NewBowEmpty().NumCols())

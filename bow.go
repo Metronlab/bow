@@ -49,9 +49,12 @@ type Bow interface {
 	GetPrevFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 	GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 
+	Distinct(colIndex int) Bow
+
 	AddCols(newCols ...Series) (Bow, error)
 	RenameCol(colIndex int, newName string) (Bow, error)
 	Apply(colIndex int, returnType Type, fn func(interface{}) interface{}) (Bow, error)
+	Convert(colIndex int, t Type) (Bow, error)
 
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
@@ -62,7 +65,7 @@ type Bow interface {
 	Select(colNames ...string) (Bow, error)
 	NewEmptySlice() Bow
 	DropNils(colNames ...string) (Bow, error)
-	SortByCol(colName string) (Bow, error)
+	SortByCol(colIndex int) (Bow, error)
 
 	FillPrevious(colNames ...string) (Bow, error)
 	FillNext(colNames ...string) (Bow, error)

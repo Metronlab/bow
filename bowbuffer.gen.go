@@ -36,7 +36,7 @@ func NewBuffer(size int, typ Type) Buffer {
 	}
 }
 
-func (b *Buffer) Len() int {
+func (b Buffer) Len() int {
 	switch data := b.Data.(type) {
 	case []int64:
 		return len(data)
@@ -51,7 +51,7 @@ func (b *Buffer) Len() int {
 	}
 }
 
-func (b *Buffer) SetOrDrop(i int, value interface{}) {
+func (b Buffer) SetOrDrop(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
 	case []int64:
@@ -73,7 +73,7 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
-func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
+func (b Buffer) SetOrDropStrict(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
 	case []int64:
@@ -95,7 +95,7 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	}
 }
 
-func (b *Buffer) GetValue(i int) interface{} {
+func (b Buffer) GetValue(i int) interface{} {
 	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
 		return nil
 	}
@@ -108,6 +108,21 @@ func (b *Buffer) GetValue(i int) interface{} {
 		return v[i]
 	case []string:
 		return v[i]
+	default:
+		panic(fmt.Errorf("unsupported type %T", v))
+	}
+}
+
+func (b Buffer) Less(i, j int) bool {
+	switch v := b.Data.(type) {
+	case []int64:
+		return v[i] < v[j]
+	case []float64:
+		return v[i] < v[j]
+	case []string:
+		return v[i] < v[j]
+	case []bool:
+		return !v[i] && v[j]
 	default:
 		panic(fmt.Errorf("unsupported type %T", v))
 	}

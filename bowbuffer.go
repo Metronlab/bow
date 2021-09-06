@@ -2,6 +2,7 @@ package bow
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/apache/arrow/go/arrow/bitutil"
 )
@@ -51,10 +52,18 @@ func NewBufferFromInterfaces(typ Type, cells []interface{}) (Buffer, error) {
 	return buf, nil
 }
 
-func (b *Buffer) IsValid(rowIndex int) bool {
+func (b Buffer) IsValid(rowIndex int) bool {
 	return bitutil.BitIsSet(b.nullBitmapBytes, rowIndex)
 }
 
-func (b *Buffer) IsNull(rowIndex int) bool {
+func (b Buffer) IsNull(rowIndex int) bool {
 	return bitutil.BitIsNotSet(b.nullBitmapBytes, rowIndex)
+}
+
+func (b Buffer) IsSorted() bool { return sort.IsSorted(b) }
+
+func (b Buffer) Swap(i, j int) {
+	v1, v2 := b.GetValue(i), b.GetValue(j)
+	b.SetOrDropStrict(i, v2)
+	b.SetOrDropStrict(j, v1)
 }
