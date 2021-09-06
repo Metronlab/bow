@@ -113,4 +113,23 @@ func TestBow_Filter(t *testing.T) {
 		)
 		ExpectEqual(t, b.NewEmptySlice(), res)
 	})
+
+	t.Run("match non concomitant", func(t *testing.T) {
+		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("string", []string{"0.1", "0.2", "0.3"}, nil),
+			NewSeries("float", []float64{0.1, 0.2, 0.3}, nil),
+		)
+		require.NoError(t, err)
+		expect, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
+			NewSeries("string", []string{"0.1", "0.3"}, nil),
+			NewSeries("float", []float64{0.1, 0.3}, nil),
+		)
+		require.NoError(t, err)
+
+		res := b.Filter(
+			b.MakeFilterValues(0, "0.1", "0.3"),
+		)
+		ExpectEqual(t, expect, res)
+	})
+
 }

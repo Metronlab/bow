@@ -36,6 +36,22 @@ func NewBuffer(size int, typ Type) Buffer {
 	}
 }
 
+func NewBufferFromData(data interface{}) Buffer {
+	var l int
+	switch data.(type) {
+	case []int64:
+	case []float64:
+	case []bool:
+	case []string:
+	default:
+		panic(fmt.Errorf("unhandled type %T", data))
+	}
+	return Buffer{
+		Data:            data,
+		nullBitmapBytes: buildNullBitmapBytes(l, nil),
+	}
+}
+
 func (b Buffer) Len() int {
 	switch data := b.Data.(type) {
 	case []int64:

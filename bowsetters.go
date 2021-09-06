@@ -1,6 +1,8 @@
 package bow
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func (b *bow) RenameCol(colIndex int, newName string) (Bow, error) {
 	if colIndex >= b.NumCols() {
@@ -59,6 +61,7 @@ type RowCmp func(b Bow, i int) bool
 
 // Filter only preserve row where all given comparators return true
 // Filter with no argument return the original bow without copy, but it's not recommended,
+// If all filters result in concomitant rows, Filter is as optimal as Slicing in terms of copying
 func (b *bow) Filter(fns ...RowCmp) Bow {
 	var indices []int
 	for i := 0; i < b.NumRows(); i++ {
@@ -67,8 +70,13 @@ func (b *bow) Filter(fns ...RowCmp) Bow {
 		}
 	}
 
-	if len(indices) == b.NumRows() {
-		return b
+	if len(indices) == 0 {
+		return b.NewEmptySlice()
+	}
+	// if all indices are concomitant, slicing is more performent than copying
+	lastInclusive := indices[len(indices)-1] + 1
+	if len(indices) == lastInclusive-indices[0] {
+		return b.NewSlice(indices[0], lastInclusive)
 	}
 
 	filteredSeries := make([]Series, b.NumCols())
