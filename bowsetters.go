@@ -51,3 +51,65 @@ func (b *bow) Apply(colIndex int, returnType Type, fn func(interface{}) interfac
 func (b *bow) Convert(colIndex int, t Type) (Bow, error) {
 	return b.Apply(colIndex, t, t.Convert)
 }
+
+// RowCmp implementation is required for Filter
+// passing full dataset multidimensional comparators implementations, cross column for instance
+// index argument is the current row to compare
+type RowCmp func(b Bow, i int) bool
+
+// Filter only preserve row where all given comparators return true
+// Filter with no argument return the original bow without copy, but it's not recommended,
+func (b *bow) Filter(fns ...RowCmp) Bow {
+	var indices []int
+	for i := 0; i < b.NumRows(); i++ {
+		if matchRowComps(b, i, fns...) {
+			indices = append(indices, i)
+		}
+	}
+
+	if len(indices) == b.NumRows() {
+		return b
+	}
+
+	filteredSeries := make([]Series, b.NumCols())
+	for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
+		buf := NewBuffer(len(indices), b.ColumnType(colIndex))
+		for i, j := range indices {
+			buf.SetOrDropStrict(i, b.GetValue(colIndex, j))
+		}
+		filteredSeries[colIndex] = NewSeriesFromBuffer(b.ColumnName(colIndex), buf)
+	}
+	res, err := NewBowWithMetadata(b.Metadata(), filteredSeries...)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+func matchRowComps(b Bow, i int, fns ...RowCmp) bool {
+	for _, fn := range fns {
+		if !fn(b, i) {
+			return false
+		}
+	}
+	return true
+}
+
+func (b *bow) MakeFilterValues(colIndex int, values ...interface{}) RowCmp {
+	t := b.ColumnType(colIndex)
+	for i := range values {
+		values[i] = t.Convert(values[i])
+	}
+	return func(b Bow, i int) bool {
+		return contains(values, b.GetValue(colIndex, i))
+	}
+}
+
+func contains(values []interface{}, value interface{}) bool {
+	for _, val := range values {
+		if val == value {
+			return true
+		}
+	}
+	return false
+}

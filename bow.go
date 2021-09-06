@@ -51,6 +51,13 @@ type Bow interface {
 
 	Distinct(colIndex int) Bow
 
+	Find(columnIndex int, value interface{}) int
+	FindNext(columnIndex, rowIndex int, value interface{}) int
+	Contains(columnIndex int, value interface{}) bool
+
+	Filter(fns ...RowCmp) Bow
+	MakeFilterValues(colIndex int, values ...interface{}) RowCmp
+
 	AddCols(newCols ...Series) (Bow, error)
 	RenameCol(colIndex int, newName string) (Bow, error)
 	Apply(colIndex int, returnType Type, fn func(interface{}) interface{}) (Bow, error)
@@ -71,10 +78,6 @@ type Bow interface {
 	FillNext(colNames ...string) (Bow, error)
 	FillMean(colNames ...string) (Bow, error)
 	FillLinear(refColName, toFillColName string) (Bow, error)
-
-	Find(columnIndex int, value interface{}) int
-	FindNext(columnIndex, rowIndex int, value interface{}) int
-	Contains(columnIndex int, value interface{}) bool
 
 	Equal(other Bow) bool
 	IsColEmpty(colIndex int) bool
