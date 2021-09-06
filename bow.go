@@ -51,6 +51,7 @@ type Bow interface {
 
 	AddCols(newCols ...Series) (Bow, error)
 	RenameCol(colIndex int, newName string) (Bow, error)
+	Apply(colIndex int, returnType Type, fn func(interface{}) interface{}) (Bow, error)
 
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
