@@ -67,7 +67,7 @@ func (b Buffer) Len() int {
 	}
 }
 
-func (b Buffer) SetOrDrop(i int, value interface{}) {
+func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
 	case []int64:
@@ -89,7 +89,7 @@ func (b Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
-func (b Buffer) SetOrDropStrict(i int, value interface{}) {
+func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
 	case []int64:
@@ -111,7 +111,7 @@ func (b Buffer) SetOrDropStrict(i int, value interface{}) {
 	}
 }
 
-func (b Buffer) GetValue(i int) interface{} {
+func (b *Buffer) GetValue(i int) interface{} {
 	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
 		return nil
 	}
