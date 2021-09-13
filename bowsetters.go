@@ -29,7 +29,7 @@ func (b *bow) RenameCol(colIndex int, newName string) (Bow, error) {
 }
 
 // Apply uses the given function to transform a column into something else,
-// it's expect return type to be correct otherwise given results will be stored as null
+// its expected return type has to be supported otherwise given results will be stored as null
 func (b *bow) Apply(colIndex int, returnType Type, fn func(interface{}) interface{}) (Bow, error) {
 	buf := NewBuffer(b.NumRows(), returnType)
 	for i := 0; i < b.NumRows(); i++ {
