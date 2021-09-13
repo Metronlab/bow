@@ -32,7 +32,6 @@ type Bow interface {
 	GetRow(rowIndex int) map[string]interface{}
 	GetRowsChan() <-chan map[string]interface{}
 
-	GetValueByName(colName string, rowIndex int) interface{}
 	GetValue(colIndex, rowIndex int) interface{}
 	GetPrevValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
 	GetNextValue(colIndex, rowIndex int) (value interface{}, resRowIndex int)
@@ -57,18 +56,18 @@ type Bow interface {
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
 
-	Diff(colNames ...string) (Bow, error)
+	Diff(colIndices ...int) (Bow, error)
 
 	NewSlice(i, j int) Bow
-	Select(colNames ...string) (Bow, error)
+	Select(colIndices ...int) (Bow, error)
 	NewEmptySlice() Bow
-	DropNils(colNames ...string) (Bow, error)
-	SortByCol(colName string) (Bow, error)
+	DropNils(colIndices ...int) (Bow, error)
+	SortByCol(colIndex int) (Bow, error)
 
-	FillPrevious(colNames ...string) (Bow, error)
-	FillNext(colNames ...string) (Bow, error)
-	FillMean(colNames ...string) (Bow, error)
-	FillLinear(refColName, toFillColName string) (Bow, error)
+	FillPrevious(colIndices ...int) (Bow, error)
+	FillNext(colIndices ...int) (Bow, error)
+	FillMean(colIndices ...int) (Bow, error)
+	FillLinear(refColIndex, toFillColIndex int) (Bow, error)
 
 	Find(columnIndex int, value interface{}) int
 	FindNext(columnIndex, rowIndex int, value interface{}) int
@@ -168,31 +167,22 @@ func (b *bow) NewEmptySlice() Bow {
 	return b.NewSlice(0, 0)
 }
 
-// DropNils drops any row that contains a nil for any of `colNames`.
-// `colNames` defaults to all columns.
-func (b *bow) DropNils(colNames ...string) (Bow, error) {
-	// default = all columns
-	if len(colNames) == 0 {
-		for _, field := range b.Schema().Fields() {
-			colNames = append(colNames, field.Name)
-		}
-	} else {
-		colNames = dedupStrings(colNames)
-	}
-
-	nilColIndices := make([]int, len(colNames))
-	for colIndex := range colNames {
-		var err error
-		nilColIndices[colIndex], err = b.ColumnIndex(colNames[colIndex])
-		if err != nil {
-			return nil, fmt.Errorf("bow.DropNils: %w", err)
-		}
+// DropNils drops any row that contains a nil for any of `colIndices`.
+// `colIndices` defaults to all columns.
+func (b *bow) DropNils(colIndices ...int) (Bow, error) {
+	selectedCols, err := selectCols(b, colIndices)
+	if err != nil {
+		return nil, fmt.Errorf("bow.DropNils: %w", err)
 	}
 
 	var droppedRowIndices []int
 	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-		for _, nilColIndex := range nilColIndices {
-			if b.GetValue(nilColIndex, rowIndex) == nil {
+		for colIndex, selected := range selectedCols {
+			if !selected {
+				continue
+			}
+
+			if b.GetValue(colIndex, rowIndex) == nil {
 				droppedRowIndices = append(droppedRowIndices, rowIndex)
 				break
 			}
@@ -209,23 +199,10 @@ func (b *bow) DropNils(colNames ...string) (Bow, error) {
 		bowSlice[i] = b.NewSlice(curr, droppedRowIndex)
 		curr = droppedRowIndex + 1
 	}
+
 	bowSlice[len(droppedRowIndices)] = b.NewSlice(curr, b.NumRows())
 
 	return AppendBows(bowSlice...)
-}
-
-func dedupStrings(s []string) []string {
-	seen := make(map[string]struct{}, len(s))
-	writeIndex := 0
-	for _, v := range s {
-		if _, ok := seen[v]; ok {
-			continue
-		}
-		seen[v] = struct{}{}
-		s[writeIndex] = v
-		writeIndex++
-	}
-	return s[:writeIndex]
 }
 
 func (b *bow) GetRowsChan() <-chan map[string]interface{} {
@@ -303,12 +280,12 @@ func (b *bow) NewSlice(i, j int) Bow {
 	}
 }
 
-func (b *bow) Select(colNames ...string) (Bow, error) {
-	if len(colNames) == 0 {
+func (b *bow) Select(colIndices ...int) (Bow, error) {
+	if len(colIndices) == 0 {
 		return NewBowWithMetadata(b.Metadata())
 	}
 
-	selectedCols, err := selectCols(b, colNames)
+	selectedCols, err := selectCols(b, colIndices)
 	if err != nil {
 		return nil, err
 	}

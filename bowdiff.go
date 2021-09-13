@@ -9,8 +9,8 @@ import (
 // If any of the current or the previous row is nil, the result will be nil.
 // For boolean columns, XOR operation is used.
 // TODO: directly mutate bow && only read currVal at each iteration for performance improvement
-func (b *bow) Diff(colNames ...string) (Bow, error) {
-	selectedCols, err := selectCols(b, colNames)
+func (b *bow) Diff(colIndices ...int) (Bow, error) {
+	selectedCols, err := selectCols(b, colIndices)
 	if err != nil {
 		return nil, fmt.Errorf("bow.Diff: %w", err)
 	}

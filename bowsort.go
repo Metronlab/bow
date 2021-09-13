@@ -14,33 +14,32 @@ import (
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
 // The only type currently supported for the column to sort by is Int64, without nil values.
 // Returns the same Bow if the column is already sorted.
-func (b *bow) SortByCol(colName string) (Bow, error) {
+func (b *bow) SortByCol(colIndex int) (Bow, error) {
 	if b.NumCols() == 0 {
 		return nil, fmt.Errorf("bow.SortByCol: empty bow")
 	}
 
-	colToSortByIndex, err := b.ColumnIndex(colName)
-	if err != nil {
-		return nil, fmt.Errorf("bow.SortByCol: %w", err)
+	if colIndex < 0 || colIndex > b.NumCols()-1 {
+		return nil, fmt.Errorf("bow.SortByCol: out of range colIndex '%d'", colIndex)
 	}
 
-	if b.Column(colToSortByIndex).NullN() != 0 {
+	if b.Column(colIndex).NullN() != 0 {
 		return nil, fmt.Errorf(
-			"bow.SortByCol: column %s to sort by has %d nil values",
-			colName, b.Column(colToSortByIndex).NullN())
+			"bow.SortByCol: column %d to sort by has %d nil values",
+			colIndex, b.Column(colIndex).NullN())
 	}
 
 	if b.NumRows() == 0 {
 		return b, nil
 	}
 
-	if b.ColumnType(colToSortByIndex) != Int64 {
+	if b.ColumnType(colIndex) != Int64 {
 		return nil, fmt.Errorf("bow.SortByCol: unsupported type for the column to sort by (Int64 only)")
 	}
 
 	// Build the Int64Slice interface to store the row indices before sorting
 	var colToSortBy Int64Slice
-	unsortedData := b.Column(colToSortByIndex).Data()
+	unsortedData := b.Column(colIndex).Data()
 	colToSortBy.values = array.NewInt64Data(unsortedData).Int64Values()
 	colToSortBy.indices = func() []int {
 		res := make([]int, b.NumRows())
@@ -65,12 +64,12 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 
 	// Fill the sort by column with sorted values
 	sortedSeries := make([]Series, b.NumCols())
-	sortedSeries[colToSortByIndex] = Series{Name: colName, Array: arr}
+	sortedSeries[colIndex] = Series{Name: b.ColumnName(colIndex), Array: arr}
 
 	// Reflect row order changes to fill the other columns
 	var wg sync.WaitGroup
-	for colIndex := range b.Schema().Fields() {
-		if colIndex == colToSortByIndex {
+	for i := range b.Schema().Fields() {
+		if i == colIndex {
 			continue
 		}
 
@@ -159,7 +158,7 @@ func (b *bow) SortByCol(colName string) (Bow, error) {
 				panic(fmt.Sprintf("bow: SortByCol function: unhandled type %s",
 					b.Schema().Field(colIndex).Type.Name()))
 			}
-		}(colIndex, &wg)
+		}(i, &wg)
 	}
 	wg.Wait()
 

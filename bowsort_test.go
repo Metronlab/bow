@@ -21,7 +21,7 @@ func TestBow_SortByCol(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(0)
 		assert.Nil(t, err)
 		assert.EqualValues(t, b.String(), sorted.String())
 	})
@@ -47,7 +47,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3, 13.4, true, "tal"},
 			})
 		require.NoError(t, err)
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(0)
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
@@ -73,7 +73,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{3.9, 13.4, 13},
 			})
 		require.NoError(t, err)
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(2)
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
@@ -99,7 +99,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, nil, 13.4, "allez", nil},
 			})
 		require.NoError(t, err)
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(0)
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
@@ -125,7 +125,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3.9, 13.4},
 			})
 		require.NoError(t, err)
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(0)
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
@@ -151,7 +151,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{13, 3.9, 13.4},
 			})
 		require.NoError(t, err)
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(0)
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
@@ -163,7 +163,7 @@ func TestBow_SortByCol(t *testing.T) {
 			[][]interface{}{})
 		require.NoError(t, err)
 		expected := b
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(0)
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
@@ -181,7 +181,7 @@ func TestBow_SortByCol(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		sorted, err := b.SortByCol("time")
+		sorted, err := b.SortByCol(0)
 		assert.NoError(t, err)
 
 		assert.Equal(t, expected.String(), sorted.String())
@@ -198,7 +198,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{10, 2.4, 3.1},
 			})
 		require.NoError(t, err)
-		_, err = b.SortByCol("time")
+		_, err = b.SortByCol(0)
 		assert.Error(t, err)
 	})
 
@@ -213,7 +213,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{10, 2.4, 3.1},
 			})
 		require.NoError(t, err)
-		_, err = b.SortByCol("time")
+		_, err = b.SortByCol(3)
 		assert.Error(t, err)
 	})
 
@@ -228,7 +228,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{10., 2.4, 3.1},
 			})
 		require.NoError(t, err)
-		_, err = b.SortByCol("time")
+		_, err = b.SortByCol(0)
 		assert.Error(t, err)
 	})
 }
@@ -241,7 +241,7 @@ func BenchmarkBow_SortByCol(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_, err = data.SortByCol("Int64_no_nils_bow1")
+				_, err = data.SortByCol(1)
 				require.NoError(b, err)
 			}
 		})
