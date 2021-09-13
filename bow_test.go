@@ -106,7 +106,7 @@ func TestBow_Select(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	t.Run("without colNames", func(t *testing.T) {
+	t.Run("without colIndices", func(t *testing.T) {
 		expected := NewBowEmpty()
 
 		newBow, err := b.Select()
@@ -133,7 +133,7 @@ func TestBow_Select(t *testing.T) {
 			fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, expected))
 	})
 
-	t.Run("wrong colNames", func(t *testing.T) {
+	t.Run("wrong colIndices", func(t *testing.T) {
 		newBow, err := b.Select(0, 3)
 		assert.Nil(t, newBow)
 		assert.Error(t, err)
