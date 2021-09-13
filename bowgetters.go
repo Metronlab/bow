@@ -281,7 +281,7 @@ func (b *bow) ColumnIndex(colName string) (int, error) {
 	return colIndices[0], nil
 }
 
-// Distinct return all non nil different elements found in a column in a new dataset
+// Distinct returns all non nil different values found in a column in a new Bow
 func (b *bow) Distinct(colIndex int) Bow {
 	hitMap := make(map[interface{}]struct{})
 	for i := 0; i < b.NumRows(); i++ {
