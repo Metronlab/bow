@@ -59,7 +59,7 @@ func (b *bow) Convert(colIndex int, t Type) (Bow, error) {
 // index argument is the current row to compare
 type RowCmp func(b Bow, i int) bool
 
-// Filter only preserve row where all given comparators return true
+// Filter only preserves the rows where all given comparators return true
 // Filter with no argument return the original bow without copy, but it's not recommended,
 // If all filters result in concomitant rows, Filter is as optimal as Slicing in terms of copying
 func (b *bow) Filter(fns ...RowCmp) Bow {
