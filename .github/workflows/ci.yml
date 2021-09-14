@@ -56,7 +56,7 @@ jobs:
 
       - name: ${{ format('Run benchmarks on {0}', github.base_ref) }}
         run: |
-          go install golang.org/x/perf/cmd/benchstat
+          go install golang.org/x/perf/cmd/benchstat@latest
           bash -c ./scripts/benchmark.sh
 
       - name: ${{ format('Compare benchmarks of current branch with {0}', github.base_ref) }}
