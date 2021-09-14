@@ -2,8 +2,8 @@
 all: lint count test
 
 install:
-	@go install golang.org/x/perf/cmd/benchstat \
-		github.com/jstemmer/go-junit-report
+	@go install golang.org/x/perf/cmd/benchstat@latest
+	@go install github.com/jstemmer/go-junit-report@latest
 
 gen:
 	@go generate $(PKG)
