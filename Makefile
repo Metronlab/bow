@@ -4,6 +4,7 @@ all: lint count test
 install:
 	@go install golang.org/x/perf/cmd/benchstat@latest
 	@go install github.com/jstemmer/go-junit-report@latest
+	@go install github.com/Metronlab/genius@latest
 
 gen:
 	@go generate $(PKG)
