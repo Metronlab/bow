@@ -72,6 +72,25 @@ func TestAppendBows(t *testing.T) {
 		assert.Panics(t, func() { _, _ = AppendBows(b1, b2) })
 	})
 
+	t.Run("type mismatch", func(t *testing.T) {
+		b1, _ := NewBowFromColBasedInterfaces(
+			[]string{"i", "s"},
+			[]Type{Int64, Int64},
+			[][]interface{}{
+				{1},
+				{1},
+			})
+		b2, _ := NewBowFromColBasedInterfaces(
+			[]string{"a"},
+			[]Type{Int64, Float64},
+			[][]interface{}{
+				{1},
+				{1.},
+			})
+
+		assert.Panics(t, func() { _, _ = AppendBows(b1, b2) })
+	})
+
 	t.Run("3 bows of 2 cols", func(t *testing.T) {
 		b1, _ := NewBowFromColBasedInterfaces(
 			[]string{"a", "b"},

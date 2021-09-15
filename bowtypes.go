@@ -62,6 +62,10 @@ var (
 	}()
 )
 
+func (t Type) ArrowType() arrow.DataType {
+	return mapBowToArrowTypes[t]
+}
+
 func (t Type) Convert(i interface{}) interface{} {
 	var val interface{}
 	var ok bool

@@ -48,7 +48,7 @@ func TestBow_SortByCol(t *testing.T) {
 			})
 		require.NoError(t, err)
 		sorted, err := b.SortByCol(0)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
 
@@ -196,36 +196,6 @@ func TestBow_SortByCol(t *testing.T) {
 				{12, 2.9, 7.5},
 				{nil, 2.8, 5.9},
 				{10, 2.4, 3.1},
-			})
-		require.NoError(t, err)
-		_, err = b.SortByCol(0)
-		assert.Error(t, err)
-	})
-
-	t.Run("ERR: missing column", func(t *testing.T) {
-		b, err := NewBowFromRowBasedInterfaces(
-			[]string{"other", "a", "b"},
-			[]Type{Int64, Float64, Float64},
-			[][]interface{}{
-				{13, 3.9, 13.4},
-				{12, 2.9, 7.5},
-				{11, 2.8, 5.9},
-				{10, 2.4, 3.1},
-			})
-		require.NoError(t, err)
-		_, err = b.SortByCol(3)
-		assert.Error(t, err)
-	})
-
-	t.Run("ERR: unsupported type - sort by column", func(t *testing.T) {
-		b, err := NewBowFromRowBasedInterfaces(
-			[]string{"time", "a", "b"},
-			[]Type{Float64, Float64, Float64},
-			[][]interface{}{
-				{13., 3.9, 13.4},
-				{12., 2.9, 7.5},
-				{11., 2.8, 5.9},
-				{10., 2.4, 3.1},
 			})
 		require.NoError(t, err)
 		_, err = b.SortByCol(0)

@@ -50,8 +50,19 @@ type Bow interface {
 	GetPrevFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 	GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (value1, value2 float64, resRowIndex int)
 
+	Distinct(colIndex int) Bow
+
+	Find(columnIndex int, value interface{}) int
+	FindNext(columnIndex, rowIndex int, value interface{}) int
+	Contains(columnIndex int, value interface{}) bool
+
+	Filter(fns ...RowCmp) Bow
+	MakeFilterValues(colIndex int, values ...interface{}) RowCmp
+
 	AddCols(newCols ...Series) (Bow, error)
 	RenameCol(colIndex int, newName string) (Bow, error)
+	Apply(colIndex int, returnType Type, fn func(interface{}) interface{}) (Bow, error)
+	Convert(colIndex int, t Type) (Bow, error)
 
 	InnerJoin(other Bow) Bow
 	OuterJoin(other Bow) Bow
@@ -68,10 +79,6 @@ type Bow interface {
 	FillNext(colIndices ...int) (Bow, error)
 	FillMean(colIndices ...int) (Bow, error)
 	FillLinear(refColIndex, toFillColIndex int) (Bow, error)
-
-	Find(columnIndex int, value interface{}) int
-	FindNext(columnIndex, rowIndex int, value interface{}) int
-	Contains(columnIndex int, value interface{}) bool
 
 	Equal(other Bow) bool
 	IsColEmpty(colIndex int) bool
