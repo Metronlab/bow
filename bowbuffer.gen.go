@@ -36,7 +36,23 @@ func NewBuffer(size int, typ Type) Buffer {
 	}
 }
 
-func (b *Buffer) Len() int {
+func NewBufferFromData(data interface{}) Buffer {
+	var l int
+	switch data.(type) {
+	case []int64:
+	case []float64:
+	case []bool:
+	case []string:
+	default:
+		panic(fmt.Errorf("unhandled type %T", data))
+	}
+	return Buffer{
+		Data:            data,
+		nullBitmapBytes: buildNullBitmapBytes(l, nil),
+	}
+}
+
+func (b Buffer) Len() int {
 	switch data := b.Data.(type) {
 	case []int64:
 		return len(data)
@@ -108,6 +124,21 @@ func (b *Buffer) GetValue(i int) interface{} {
 		return v[i]
 	case []string:
 		return v[i]
+	default:
+		panic(fmt.Errorf("unsupported type %T", v))
+	}
+}
+
+func (b Buffer) Less(i, j int) bool {
+	switch v := b.Data.(type) {
+	case []int64:
+		return v[i] < v[j]
+	case []float64:
+		return v[i] < v[j]
+	case []string:
+		return v[i] < v[j]
+	case []bool:
+		return !v[i] && v[j]
 	default:
 		panic(fmt.Errorf("unsupported type %T", v))
 	}
