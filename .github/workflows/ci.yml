@@ -13,16 +13,16 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
 
       - name: Run tests
         run: |
-          go get github.com/jstemmer/go-junit-report
+          go install github.com/jstemmer/go-junit-report@latest
           bash -c ./scripts/test.sh
 
       - name: Run benchmarks
         run: |
-          go get golang.org/x/perf/cmd/benchstat
+          go install golang.org/x/perf/cmd/benchstat@latest
           bash -c ./scripts/benchmark.sh
 
       - name: Upload artifact of current branch benchmark results
@@ -47,7 +47,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
 
       - uses: actions/download-artifact@v2
         with:
@@ -56,7 +56,7 @@ jobs:
 
       - name: ${{ format('Run benchmarks on {0}', github.base_ref) }}
         run: |
-          go get golang.org/x/perf/cmd/benchstat
+          go install golang.org/x/perf/cmd/benchstat@latest
           bash -c ./scripts/benchmark.sh
 
       - name: ${{ format('Compare benchmarks of current branch with {0}', github.base_ref) }}

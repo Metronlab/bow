@@ -24,7 +24,9 @@ type Bow interface {
 	ColumnIndex(colName string) (int, error)
 	NewBufferFromCol(colIndex int) Buffer
 	NewSeriesFromCol(colIndex int) Series
+
 	Metadata() Metadata
+	WithMetadata(metadata Metadata) Bow
 	SetMetadata(key, value string) Bow
 
 	GetRow(rowIndex int) map[string]interface{}

@@ -2,8 +2,8 @@
 all: lint count test
 
 install:
-	@go get golang.org/x/perf/cmd/benchstat \
-		github.com/jstemmer/go-junit-report
+	@go install golang.org/x/perf/cmd/benchstat@latest
+	@go install github.com/jstemmer/go-junit-report@latest
 
 gen:
 	@go generate $(PKG)
@@ -37,3 +37,4 @@ bench-profile:
 	-lsof -ti tcp:9191 | xargs kill -9 2> /dev/null
 	go tool pprof -http=:9090 $(CPUPROFILE) &
 	go tool pprof -http=:9191 $(MEMPROFILE) &
+

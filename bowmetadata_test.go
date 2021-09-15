@@ -6,6 +6,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBow_WithMetadata(t *testing.T) {
+	t.Run("adding meta should not modify bow, but correctly change schema", func(t *testing.T) {
+		metadata := NewMetadata([]string{"testKey"}, []string{"testValue"})
+		b, _ := NewBow(NewSeries("test", []int64{1, 2}, nil))
+
+		res := b.WithMetadata(metadata)
+		assert.True(t, res.Metadata().Equal(metadata.Metadata),
+			"expected %q have %q", metadata.String(), b.Metadata().String())
+		assert.Equal(t, 0, b.Metadata().Len())
+		assert.Equal(t, 1, res.Metadata().Len())
+	})
+}
+
 func TestMetadataSetMany(t *testing.T) {
 	t.Run("single set on existing key", func(t *testing.T) {
 		metadata := NewMetadata([]string{"testKey"}, []string{"testValue"})
