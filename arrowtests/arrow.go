@@ -8,14 +8,12 @@ import (
 	"github.com/apache/arrow/go/arrow/memory"
 )
 
-var (
-	EventSchema = arrow.NewSchema(
-		[]arrow.Field{
-			{Name: "time", Type: arrow.FixedWidthTypes.Time32ms},
-			{Name: "value", Type: arrow.PrimitiveTypes.Float64},
-			{Name: "quality", Type: arrow.PrimitiveTypes.Int64},
-		}, nil,
-	)
+var EventSchema = arrow.NewSchema(
+	[]arrow.Field{
+		{Name: "time", Type: arrow.FixedWidthTypes.Time32ms},
+		{Name: "value", Type: arrow.PrimitiveTypes.Float64},
+		{Name: "quality", Type: arrow.PrimitiveTypes.Int64},
+	}, nil,
 )
 
 type Event struct {
@@ -24,7 +22,7 @@ type Event struct {
 	quality int64
 }
 
-//NewTSRecord Create a new sample base on eventSchema
+// NewTSRecord Create a new sample base on eventSchema
 func NewTSRecord() (*arrow.Schema, array.Record) {
 	pool := memory.NewGoAllocator()
 	b := array.NewRecordBuilder(pool, EventSchema)
@@ -37,14 +35,14 @@ func NewTSRecord() (*arrow.Schema, array.Record) {
 	return EventSchema, b.NewRecord()
 }
 
-//PrintRecordColumns Print a columns based output
+// PrintRecordColumns Print a columns based output
 func PrintRecordColumns(rec array.Record) {
 	for i, col := range rec.Columns() {
 		fmt.Printf("column[%d] %q: %v\n", i, rec.ColumnName(i), col)
 	}
 }
 
-//PrintRecordRows Print a row based output
+// PrintRecordRows Print a row based output
 func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
 	// Make a table read only based on many records
 	table := array.NewTableFromRecords(schema, recs)

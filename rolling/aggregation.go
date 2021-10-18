@@ -45,8 +45,10 @@ func NewColAggregation(colName string, inclusiveWindow bool, returnedType bow.Ty
 	}
 }
 
-type ColAggregationConstruct func(colName string) ColAggregation
-type ColAggregationFunc func(colIndex int, w Window) (interface{}, error)
+type (
+	ColAggregationConstruct func(colName string) ColAggregation
+	ColAggregationFunc      func(colIndex int, w Window) (interface{}, error)
+)
 
 func (a *colAggregation) GetReturnType(input, iterator bow.Type) (typ bow.Type) {
 	switch a.Type() {

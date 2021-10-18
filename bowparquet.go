@@ -54,19 +54,19 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	pr.ColumnBuffers = make(map[string]*reader.ColumnBufferType)
 	pr.SchemaHandler = schema.NewSchemaHandlerFromSchemaList(pr.Footer.GetSchema())
 
-	var originalColNames = make([]string, len(pr.Footer.GetSchema()))
+	originalColNames := make([]string, len(pr.Footer.GetSchema()))
 	for i, se := range pr.Footer.GetSchema() {
 		originalColNames[i] = se.Name
 	}
 
-	var originalRowGroups = make([]*parquet.RowGroup, len(pr.Footer.RowGroups))
+	originalRowGroups := make([]*parquet.RowGroup, len(pr.Footer.RowGroups))
 	for r, rg := range pr.Footer.RowGroups {
-		var originalCols = make([]*parquet.ColumnChunk, len(rg.Columns))
+		originalCols := make([]*parquet.ColumnChunk, len(rg.Columns))
 		for c, col := range rg.Columns {
-			var originalMetaData = parquet.ColumnMetaData{
+			originalMetaData := parquet.ColumnMetaData{
 				PathInSchema: col.MetaData.PathInSchema,
 			}
-			var originalCol = parquet.ColumnChunk{
+			originalCol := parquet.ColumnChunk{
 				MetaData: &originalMetaData,
 			}
 			originalCols[c] = &originalCol
@@ -77,7 +77,7 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	pr.RenameSchema()
 
 	var valueColIndex int64
-	var series = make([]Series, pr.SchemaHandler.GetColumnNum())
+	series := make([]Series, pr.SchemaHandler.GetColumnNum())
 	var typeMeta []parquetColTypesMeta
 	for colIndex, col := range pr.Footer.GetSchema() {
 		if col.NumChildren != nil {
@@ -183,10 +183,10 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		}
 	}
 
-	var numChildren = int32(b.NumCols())
-	var requiredRepType = parquet.FieldRepetitionType_REQUIRED
+	numChildren := int32(b.NumCols())
+	requiredRepType := parquet.FieldRepetitionType_REQUIRED
 	var schemas []*parquet.SchemaElement
-	var logicalTypes = []*parquet.LogicalType{nil}
+	logicalTypes := []*parquet.LogicalType{nil}
 	se := parquet.NewSchemaElement()
 	se.RepetitionType = &requiredRepType
 	se.Name = "Schema"
@@ -199,6 +199,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		se = parquet.NewSchemaElement()
 		se.Type = &typ
 		se.RepetitionType = &optionalRepType
+		fmt.Printf("NAME:%s\n", f.Name)
 		se.Name = f.Name
 		for j, t := range colTypesMeta {
 			if t.Name == f.Name {
@@ -216,7 +217,9 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	}
 	defer fw.Close()
 
+	fmt.Printf("SCHEMAS\n%+v\n", schemas)
 	schemaTree := schematool.CreateSchemaTree(schemas)
+	fmt.Printf("SCHEMATREE\n%+v\n", schemaTree.OutputJsonSchema())
 	pw, err := writer.NewJSONWriter(schemaTree.OutputJsonSchema(), fw, 4)
 	if err != nil {
 		return fmt.Errorf("bow.WriteParquet: writer.NewJSONWriter: %w", err)
@@ -266,7 +269,7 @@ func validateColTypesMeta(b Bow, values string) (colTypesMeta []parquetColTypesM
 		return nil, fmt.Errorf("invalid column types metadata: %+v", colTypesMeta)
 	}
 
-	var countByCols = make([]int, b.NumCols())
+	countByCols := make([]int, b.NumCols())
 	for _, t := range colTypesMeta {
 		colFound := false
 		for i, f := range b.Schema().Fields() {
@@ -290,7 +293,7 @@ func validateColTypesMeta(b Bow, values string) (colTypesMeta []parquetColTypesM
 }
 
 func NewMetaWithParquetTimestampMicrosCols(keys, values []string, colNames ...string) Metadata {
-	var colTypes = make([]parquetColTypesMeta, len(colNames))
+	colTypes := make([]parquetColTypesMeta, len(colNames))
 
 	for i, n := range colNames {
 		convertedType := parquet.ConvertedType_TIMESTAMP_MICROS
@@ -300,7 +303,8 @@ func NewMetaWithParquetTimestampMicrosCols(keys, values []string, colNames ...st
 				Unit: &parquet.TimeUnit{
 					MICROS: &parquet.MicroSeconds{},
 				},
-			}}
+			},
+		}
 		colTypes[i] = parquetColTypesMeta{
 			Name:          n,
 			ConvertedType: &convertedType,

@@ -60,7 +60,6 @@ func (b *bow) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-
 }
 
 // NewValuesFromJSON replaces b values by a filled JSONBow struct

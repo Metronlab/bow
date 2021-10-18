@@ -118,12 +118,14 @@ func TestWindow_UnsetInclusive(t *testing.T) {
 	inclusiveBow, err := bow.NewBowFromColBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
 		[][]interface{}{
 			{1, 2},
-			{1, 2}})
+			{1, 2},
+		})
 	assert.NoError(t, err)
 	exclusiveBow, err := bow.NewBowFromColBasedInterfaces([]string{"time", "value"}, []bow.Type{bow.Int64, bow.Int64},
 		[][]interface{}{
 			{1},
-			{1}})
+			{1},
+		})
 	assert.NoError(t, err)
 
 	inclusiveWindow := Window{

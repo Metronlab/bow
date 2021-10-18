@@ -8,7 +8,7 @@ import (
 )
 
 func TestMode(t *testing.T) {
-	var modeFloatBow, _ = bow.NewBowFromRowBasedInterfaces(
+	modeFloatBow, _ := bow.NewBowFromRowBasedInterfaces(
 		[]string{timeCol, valueCol},
 		[]bow.Type{bow.Int64, bow.Float64},
 		[][]interface{}{

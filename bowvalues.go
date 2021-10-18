@@ -11,7 +11,7 @@ func Float64Values(arr *array.Float64) []float64 {
 }
 
 func BooleanValues(arr *array.Boolean) []bool {
-	var res = make([]bool, arr.Len())
+	res := make([]bool, arr.Len())
 	for i := range res {
 		res[i] = arr.Value(i)
 	}
@@ -19,7 +19,7 @@ func BooleanValues(arr *array.Boolean) []bool {
 }
 
 func StringValues(arr *array.String) []string {
-	var res = make([]string, arr.Len())
+	res := make([]string, arr.Len())
 	for i := range res {
 		res[i] = arr.Value(i)
 	}

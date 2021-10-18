@@ -17,7 +17,7 @@ func (b *bow) IsColSorted(colIndex int) bool {
 		return false
 	}
 	var rowIndex int
-	var order = orderUndefined
+	order := orderUndefined
 
 	switch b.ColumnType(colIndex) {
 	case Int64:
