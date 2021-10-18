@@ -146,8 +146,7 @@ func getCommonCols(left, right Bow) map[string][]Buffer {
 
 		commonCols[lField.Name] = []Buffer{
 			left.NewBufferFromCol(left.Schema().FieldIndices(lField.Name)[0]),
-			right.NewBufferFromCol(right.Schema().FieldIndices(lField.Name)[0]),
-		}
+			right.NewBufferFromCol(right.Schema().FieldIndices(lField.Name)[0])}
 	}
 
 	return commonCols

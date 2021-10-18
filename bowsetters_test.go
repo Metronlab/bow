@@ -131,4 +131,5 @@ func TestBow_Filter(t *testing.T) {
 		)
 		ExpectEqual(t, expect, res)
 	})
+
 }

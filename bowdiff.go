@@ -64,6 +64,7 @@ func (b *bow) Diff(colNames ...string) (Bow, error) {
 			}
 
 			calcSeries[colIndex] = NewSeriesFromBuffer(colName, calcBuf)
+
 		}(colIndex, col.Name)
 	}
 	wg.Wait()

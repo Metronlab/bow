@@ -155,6 +155,7 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 			}
 
 			filledSeries[colIndex] = NewSeriesFromBuffer(colName, buf)
+
 		}(colIndex, col.Name)
 	}
 	wg.Wait()
@@ -244,6 +245,7 @@ func fill(method string, b *bow, colNames ...string) (Bow, error) {
 			}
 
 			filledSeries[colIndex] = NewSeriesFromBuffer(colName, buf)
+
 		}(colIndex, col.Name)
 	}
 	wg.Wait()

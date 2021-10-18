@@ -78,7 +78,7 @@ func TestParquet(t *testing.T) {
 	})
 
 	t.Run("bow with context and col_types metadata", func(t *testing.T) {
-		series := make([]Series, 2)
+		var series = make([]Series, 2)
 
 		series[0] = NewSeries("time", []int64{0}, []bool{true})
 		series[1] = NewSeries("value", []float64{0.}, []bool{true})
@@ -92,7 +92,7 @@ func TestParquet(t *testing.T) {
 		}
 		type Context map[string]Meta
 
-		context := Context{
+		var context = Context{
 			"time":  Meta{Unit{Symbol: "microseconds"}},
 			"value": Meta{Unit{Symbol: "kWh"}},
 		}
@@ -119,50 +119,8 @@ func TestParquet(t *testing.T) {
 		require.NoError(t, os.Remove(testOutputFileName+"_meta.parquet"))
 	})
 
-	t.Run("ttt", func(t *testing.T) {
-		series := make([]Series, 2)
-
-		series[0] = NewSeries("time", []int64{0}, []bool{true})
-		series[1] = NewSeries("va\"lue", []float64{0.}, []bool{true})
-
-		var keys, values []string
-		type Unit struct {
-			Symbol string `json:"symbol"`
-		}
-		type Meta struct {
-			Unit Unit `json:"unit"`
-		}
-		type Context map[string]Meta
-
-		context := Context{
-			"time":    Meta{Unit{Symbol: "microseconds"}},
-			"va\"lue": Meta{Unit{Symbol: "kWh"}},
-		}
-
-		contextJSON, err := json.Marshal(context)
-		assert.NoError(t, err)
-
-		keys = append(keys, "context")
-		values = append(values, string(contextJSON))
-
-		bBefore, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
-			series...)
-		assert.NoError(t, err)
-
-		err = bBefore.WriteParquet(testOutputFileName+"_ttt", false)
-		assert.NoError(t, err)
-
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_ttt.parquet", false)
-		assert.NoError(t, err)
-
-		assert.Equal(t, bBefore.String(), bAfter.String())
-
-		require.NoError(t, os.Remove(testOutputFileName+"_ttt.parquet"))
-	})
-
 	t.Run("bow with wrong col_types metadata", func(t *testing.T) {
-		series := make([]Series, 2)
+		var series = make([]Series, 2)
 
 		series[0] = NewSeries("time", []int64{0}, []bool{true})
 		series[1] = NewSeries("value", []float64{0.}, []bool{true})
@@ -170,7 +128,7 @@ func TestParquet(t *testing.T) {
 		var keys, values []string
 
 		bBefore, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampMicrosCols(keys, values, "wrong"),
+			NewMetaWithParquetTimestampMicrosCols(keys, values, "unknown"),
 			series...)
 		assert.NoError(t, err)
 
