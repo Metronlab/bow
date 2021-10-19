@@ -1,4 +1,3 @@
-#user overridable variables
 all: lint count test
 
 install:
@@ -10,8 +9,7 @@ gen:
 	@go generate $(PKG)
 
 lint:
-	go fmt $(PKG)
-	golangci-lint run -v $(PKG)
+	golangci-lint run -E gofmt --fix -v $(PKG)
 
 count:
 	@bash -c $(PWD)/scripts/count-code-lines.sh
