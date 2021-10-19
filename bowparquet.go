@@ -3,7 +3,6 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
-	"html"
 	"strings"
 
 	"github.com/apache/arrow/go/arrow"
@@ -49,7 +48,7 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	pr := new(reader.ParquetReader)
 	pr.NP = 4
 	pr.PFile = fr
-	if err = pr.ReadFooter(); err != nil {
+	if err := pr.ReadFooter(); err != nil {
 		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
 	pr.ColumnBuffers = make(map[string]*reader.ColumnBufferType)
@@ -78,15 +77,15 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	pr.RenameSchema()
 
 	var valueColIndex int64
-	var seriesSlice = make([]Series, pr.SchemaHandler.GetColumnNum())
-	var parquetColTypesMetas []parquetColTypesMeta
+	var series = make([]Series, pr.SchemaHandler.GetColumnNum())
+	var typeMeta []parquetColTypesMeta
 	for colIndex, col := range pr.Footer.GetSchema() {
 		if col.NumChildren != nil {
 			continue
 		}
 
 		if col.ConvertedType != nil || col.LogicalType != nil {
-			parquetColTypesMetas = append(parquetColTypesMetas, parquetColTypesMeta{
+			typeMeta = append(typeMeta, parquetColTypesMeta{
 				Name:          originalColNames[colIndex],
 				ConvertedType: col.ConvertedType,
 				LogicalType:   col.LogicalType,
@@ -98,12 +97,12 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 			return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 		}
 
-		bowType := mapParquetToBowTypes[col.GetType()]
-		buf := NewBuffer(len(values), bowType)
+		typ := mapParquetToBowTypes[col.GetType()]
+		buf := NewBuffer(len(values), typ)
 		for i, v := range values {
 			buf.SetOrDrop(i, v)
 		}
-		seriesSlice[valueColIndex] = NewSeriesFromBuffer(originalColNames[colIndex], buf)
+		series[valueColIndex] = NewSeriesFromBuffer(originalColNames[colIndex], buf)
 
 		pr.Footer.Schema[colIndex].Name = originalColNames[colIndex]
 		valueColIndex++
@@ -124,14 +123,15 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 		}
 	}
 
-	tmBytes, err := json.Marshal(parquetColTypesMetas)
+	tmBytes, err := json.Marshal(typeMeta)
 	if err != nil {
-		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
+		panic(fmt.Errorf("bow.NewBowFromParquet: %w", err))
 	}
 
 	keys = append(keys, keyParquetMetaColTypes)
 	values = append(values, string(tmBytes))
-	b, err := NewBowWithMetadata(NewMetadata(keys, values), seriesSlice...)
+
+	b, err := NewBowWithMetadata(NewMetadata(keys, values), series...)
 	if err != nil {
 		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
@@ -161,21 +161,22 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		path += ".parquet"
 	}
 
-	var parquetColTypesMetas []parquetColTypesMeta
-	var parquetMetadata []*parquet.KeyValue
-	bowMetadata := b.Metadata()
-	bowMetadataValues := bowMetadata.Values()
-	for i, key := range bowMetadata.Keys() {
+	var metadata []*parquet.KeyValue
+	m := b.Metadata()
+	values := m.Values()
+
+	var colTypesMeta []parquetColTypesMeta
+	for k, key := range m.Keys() {
 		if key != "ARROW:schema" {
-			parquetMetadata = append(parquetMetadata, &parquet.KeyValue{
+			metadata = append(metadata, &parquet.KeyValue{
 				Key:   key,
-				Value: &bowMetadataValues[i],
+				Value: &values[k],
 			})
 		}
 
 		if key == keyParquetMetaColTypes {
 			var err error
-			parquetColTypesMetas, err = validateColTypesMeta(b, bowMetadataValues[i])
+			colTypesMeta, err = validateColTypesMeta(b, values[k])
 			if err != nil {
 				return fmt.Errorf("bow.WriteParquet: %w", err)
 			}
@@ -193,16 +194,16 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	schemas = append(schemas, se)
 
 	optionalRepType := parquet.FieldRepetitionType_OPTIONAL
-	for fieldIndex, field := range b.Schema().Fields() {
-		parquetType := mapBowToParquetTypes[b.ColumnType(fieldIndex)]
+	for i, f := range b.Schema().Fields() {
+		typ := mapBowToParquetTypes[b.ColumnType(i)]
 		se = parquet.NewSchemaElement()
-		se.Type = &parquetType
+		se.Type = &typ
 		se.RepetitionType = &optionalRepType
-		se.Name = field.Name
-		for j, t := range parquetColTypesMetas {
-			if t.Name == field.Name {
-				se.ConvertedType = parquetColTypesMetas[j].ConvertedType
-				se.LogicalType = parquetColTypesMetas[j].LogicalType
+		se.Name = f.Name
+		for j, t := range colTypesMeta {
+			if t.Name == f.Name {
+				se.ConvertedType = colTypesMeta[j].ConvertedType
+				se.LogicalType = colTypesMeta[j].LogicalType
 			}
 		}
 		schemas = append(schemas, se)
@@ -216,12 +217,11 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	defer fw.Close()
 
 	schemaTree := schematool.CreateSchemaTree(schemas)
-	fmt.Printf("SCHEMATREE\n%+v\n", schemaTree.OutputJsonSchema())
 	pw, err := writer.NewJSONWriter(schemaTree.OutputJsonSchema(), fw, 4)
 	if err != nil {
 		return fmt.Errorf("bow.WriteParquet: writer.NewJSONWriter: %w", err)
 	}
-	pw.Footer.KeyValueMetadata = parquetMetadata
+	pw.Footer.KeyValueMetadata = metadata
 
 	for i, lt := range logicalTypes {
 		pw.SchemaHandler.SchemaElements[i].LogicalType = lt
@@ -237,7 +237,8 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		}
 	}
 
-	if err = pw.WriteStop(); err != nil {
+	err = pw.WriteStop()
+	if err != nil {
 		return fmt.Errorf("bow.WriteParquet: JSONWriter.WriteStop: %w", err)
 	}
 
@@ -255,41 +256,37 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	return nil
 }
 
-func validateColTypesMeta(b Bow, values string) (parquetColTypesMetas []parquetColTypesMeta, err error) {
-	err = json.Unmarshal([]byte(values), &parquetColTypesMetas)
+func validateColTypesMeta(b Bow, values string) (colTypesMeta []parquetColTypesMeta, err error) {
+	err = json.Unmarshal([]byte(values), &colTypesMeta)
 	if err != nil {
-		return nil,
-			fmt.Errorf("invalid parquet column types metadatas: %+v", values)
+		return nil, fmt.Errorf("invalid column types metadata: %+v", values)
 	}
 
-	if len(parquetColTypesMetas) > b.NumCols() {
-		return nil,
-			fmt.Errorf("invalid parquet column types metadatas: %+v", parquetColTypesMetas)
+	if len(colTypesMeta) > b.NumCols() {
+		return nil, fmt.Errorf("invalid column types metadata: %+v", colTypesMeta)
 	}
 
 	var countByCols = make([]int, b.NumCols())
-	for _, t := range parquetColTypesMetas {
+	for _, t := range colTypesMeta {
 		colFound := false
-		for fieldIndex, field := range b.Schema().Fields() {
-			if t.Name == field.Name {
-				countByCols[fieldIndex]++
+		for i, f := range b.Schema().Fields() {
+			if t.Name == f.Name {
+				countByCols[i]++
 				colFound = true
 			}
 		}
 		if !colFound {
-			return nil,
-				fmt.Errorf("invalid column types metadata: %+v", parquetColTypesMetas)
+			return nil, fmt.Errorf("invalid column types metadata: %+v", colTypesMeta)
 		}
 	}
 
 	for _, count := range countByCols {
 		if count > 1 {
-			return nil,
-				fmt.Errorf("invalid column types metadata: %+v", parquetColTypesMetas)
+			return nil, fmt.Errorf("invalid column types metadata: %+v", colTypesMeta)
 		}
 	}
 
-	return parquetColTypesMetas, nil
+	return colTypesMeta, nil
 }
 
 func NewMetaWithParquetTimestampMicrosCols(keys, values []string, colNames ...string) Metadata {
@@ -305,7 +302,7 @@ func NewMetaWithParquetTimestampMicrosCols(keys, values []string, colNames ...st
 				},
 			}}
 		colTypes[i] = parquetColTypesMeta{
-			Name:          html.EscapeString(n),
+			Name:          n,
 			ConvertedType: &convertedType,
 			LogicalType:   &logicalType,
 		}
