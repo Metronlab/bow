@@ -2,6 +2,7 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 
@@ -113,6 +114,52 @@ func TestParquet(t *testing.T) {
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", false)
 		assert.NoError(t, err)
+
+		assert.Equal(t, bBefore.String(), bAfter.String())
+
+		require.NoError(t, os.Remove(testOutputFileName+"_meta.parquet"))
+	})
+
+	t.Run("ttt", func(t *testing.T) {
+		var series = make([]Series, 2)
+
+		series[0] = NewSeries("time", []int64{0}, []bool{true})
+		series[1] = NewSeries("  l\"l  ", []float64{0.}, []bool{true})
+
+		var keys, values []string
+		type Unit struct {
+			Symbol string `json:"symbol"`
+		}
+		type Meta struct {
+			Unit Unit `json:"unit"`
+		}
+		type Context map[string]Meta
+
+		var context = Context{
+			"time":     Meta{Unit{Symbol: "microseconds"}},
+			"  l\"l  ": Meta{Unit{Symbol: "kWh"}},
+		}
+
+		contextJSON, err := json.Marshal(context)
+		assert.NoError(t, err)
+
+		keys = append(keys, "context")
+		values = append(values, string(contextJSON))
+
+		bBefore, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
+			series...)
+		assert.NoError(t, err)
+
+		fmt.Printf("BEFORE\n%s\n", bBefore)
+
+		err = bBefore.WriteParquet(testOutputFileName+"_meta", false)
+		assert.NoError(t, err)
+
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", false)
+		assert.NoError(t, err)
+
+		fmt.Printf("AFTER\n%s\n", bAfter)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
 
