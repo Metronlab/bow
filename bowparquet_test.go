@@ -81,7 +81,7 @@ func TestParquet(t *testing.T) {
 		var series = make([]Series, 2)
 
 		series[0] = NewSeries("time", []int64{0}, []bool{true})
-		series[1] = NewSeries("  va\"lue  ", []float64{0.}, []bool{true})
+		series[1] = NewSeries("value", []float64{0.}, []bool{true})
 
 		var keys, values []string
 		type Unit struct {
@@ -93,8 +93,8 @@ func TestParquet(t *testing.T) {
 		type Context map[string]Meta
 
 		var ctx = Context{
-			"time":        Meta{Unit{Symbol: "microseconds"}},
-			"  va\"lue  ": Meta{Unit{Symbol: "kWh"}},
+			"time":  Meta{Unit{Symbol: "microseconds"}},
+			"value": Meta{Unit{Symbol: "kWh"}},
 		}
 
 		contextJSON, err := json.Marshal(ctx)
