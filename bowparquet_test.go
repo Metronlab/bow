@@ -2,7 +2,6 @@ package bow
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
@@ -18,12 +17,12 @@ const (
 func TestParquet(t *testing.T) {
 	t.Run("read/write input file", func(t *testing.T) {
 		bBefore, err := NewBowFromParquet(testInputFileName, false)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName, false))
+		require.NoError(t, bBefore.WriteParquet(testOutputFileName, false))
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+".parquet", false)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
 
@@ -42,10 +41,10 @@ func TestParquet(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
+		require.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", false)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
 		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
@@ -60,10 +59,10 @@ func TestParquet(t *testing.T) {
 			[][]interface{}{})
 		require.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", false))
+		require.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", false))
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows.parquet", false)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
 		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
@@ -82,7 +81,7 @@ func TestParquet(t *testing.T) {
 		var series = make([]Series, 2)
 
 		series[0] = NewSeries("time", []int64{0}, []bool{true})
-		series[1] = NewSeries("value", []float64{0.}, []bool{true})
+		series[1] = NewSeries("  va\"lue  ", []float64{0.}, []bool{true})
 
 		var keys, values []string
 		type Unit struct {
@@ -94,12 +93,12 @@ func TestParquet(t *testing.T) {
 		type Context map[string]Meta
 
 		var context = Context{
-			"time":  Meta{Unit{Symbol: "microseconds"}},
-			"value": Meta{Unit{Symbol: "kWh"}},
+			"time":        Meta{Unit{Symbol: "microseconds"}},
+			"  va\"lue  ": Meta{Unit{Symbol: "kWh"}},
 		}
 
 		contextJSON, err := json.Marshal(context)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		keys = append(keys, "context")
 		values = append(values, string(contextJSON))
@@ -107,59 +106,13 @@ func TestParquet(t *testing.T) {
 		bBefore, err := NewBowWithMetadata(
 			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
 			series...)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = bBefore.WriteParquet(testOutputFileName+"_meta", false)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", false)
-		assert.NoError(t, err)
-
-		assert.Equal(t, bBefore.String(), bAfter.String())
-
-		require.NoError(t, os.Remove(testOutputFileName+"_meta.parquet"))
-	})
-
-	t.Run("ttt", func(t *testing.T) {
-		var series = make([]Series, 2)
-
-		series[0] = NewSeries("time", []int64{0}, []bool{true})
-		series[1] = NewSeries("  l\"l  ", []float64{0.}, []bool{true})
-
-		var keys, values []string
-		type Unit struct {
-			Symbol string `json:"symbol"`
-		}
-		type Meta struct {
-			Unit Unit `json:"unit"`
-		}
-		type Context map[string]Meta
-
-		var context = Context{
-			"time":     Meta{Unit{Symbol: "microseconds"}},
-			"  l\"l  ": Meta{Unit{Symbol: "kWh"}},
-		}
-
-		contextJSON, err := json.Marshal(context)
-		assert.NoError(t, err)
-
-		keys = append(keys, "context")
-		values = append(values, string(contextJSON))
-
-		bBefore, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
-			series...)
-		assert.NoError(t, err)
-
-		fmt.Printf("BEFORE\n%s\n", bBefore)
-
-		err = bBefore.WriteParquet(testOutputFileName+"_meta", false)
-		assert.NoError(t, err)
-
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", false)
-		assert.NoError(t, err)
-
-		fmt.Printf("AFTER\n%s\n", bAfter)
+		require.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
 

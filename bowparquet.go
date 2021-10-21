@@ -1,22 +1,22 @@
 package bow
 
 import (
-	"context"
-	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"reflect"
+	"github.com/xitongsys/parquet-go/common"
+	"github.com/xitongsys/parquet-go/layout"
+	"github.com/xitongsys/parquet-go/marshal"
+	"github.com/xitongsys/parquet-go/source"
+	"github.com/xitongsys/parquet-go/tool/parquet-tools/schematool"
+	"github.com/xitongsys/parquet-go/writer"
 	"strings"
 
 	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/xitongsys/parquet-go-source/local"
-	"github.com/xitongsys/parquet-go/common"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/schema"
-	"github.com/xitongsys/parquet-go/tool/parquet-tools/schematool"
-	"github.com/xitongsys/parquet-go/writer"
 )
 
 var mapParquetToBowTypes = map[parquet.Type]Type{
@@ -53,7 +53,7 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	pr := new(reader.ParquetReader)
 	pr.NP = 4
 	pr.PFile = fr
-	if err := pr.ReadFooter(); err != nil {
+	if err = pr.ReadFooter(); err != nil {
 		return nil, fmt.Errorf("bow.NewBowFromParquet: %w", err)
 	}
 	pr.ColumnBuffers = make(map[string]*reader.ColumnBufferType)
@@ -221,12 +221,11 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	}
 	defer fw.Close()
 
-	//schemaTree := schematool.CreateSchemaTree(schemas)
-	//pw, err := writer.NewJSONWriter(outputSchemaTreeJSONSchema(schemaTree), fw, 4)
-	pw, err := writer.NewParquetWriter(fw, schemas, 4)
+	pw, err := newJSONWriter(schemas, fw, 4)
 	if err != nil {
-		return fmt.Errorf("bow.WriteParquet: writer.NewJSONWriter: %w", err)
+		return fmt.Errorf("bow.WriteParquet: newJSONWriter: %w", err)
 	}
+
 	pw.Footer.KeyValueMetadata = metadata
 
 	for i, lt := range logicalTypes {
@@ -238,12 +237,12 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		if err != nil {
 			return fmt.Errorf("bow.WriteParquet: json.Marshal: %w", err)
 		}
-		if err = write(pw, string(rowJSON)); err != nil {
+		if err = pw.Write(string(rowJSON)); err != nil {
 			return fmt.Errorf("bow.WriteParquet: JSONWriter.Write: %w", err)
 		}
 	}
 
-	err = writeStop(pw)
+	err = pw.WriteStop()
 	if err != nil {
 		return fmt.Errorf("bow.WriteParquet: JSONWriter.WriteStop: %w", err)
 	}
@@ -260,171 +259,6 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	}
 
 	return nil
-}
-
-func writeStop(self *writer.ParquetWriter) error {
-	if err := self.Flush(true); err != nil {
-		return fmt.Errorf("err1: %w", err)
-	}
-	ts := thrift.NewTSerializer()
-	ts.Protocol = thrift.NewTCompactProtocolFactory().GetProtocol(ts.Transport)
-	self.RenameSchema()
-	footerBuf, err := ts.Write(context.TODO(), self.Footer)
-	if err != nil {
-		return fmt.Errorf("err2: %w", err)
-	}
-
-	if _, err = self.PFile.Write(footerBuf); err != nil {
-		return fmt.Errorf("err3: %w", err)
-	}
-	footerSizeBuf := make([]byte, 4)
-	binary.LittleEndian.PutUint32(footerSizeBuf, uint32(len(footerBuf)))
-
-	if _, err = self.PFile.Write(footerSizeBuf); err != nil {
-		return fmt.Errorf("err4: %w", err)
-	}
-	if _, err = self.PFile.Write([]byte("PAR1")); err != nil {
-		return fmt.Errorf("err5: %w", err)
-	}
-	return nil
-
-}
-
-func write(self *writer.ParquetWriter, src interface{}) error {
-	var err error
-	ln := int64(len(self.Objs))
-
-	val := reflect.ValueOf(src)
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-		src = val.Interface()
-	}
-
-	if self.CheckSizeCritical <= ln {
-		self.ObjSize = (self.ObjSize+common.SizeOf(val))/2 + 1
-	}
-	self.ObjsSize += self.ObjSize
-	self.Objs = append(self.Objs, src)
-
-	criSize := self.NP * self.PageSize * self.SchemaHandler.GetColumnNum()
-
-	if self.ObjsSize >= criSize {
-		err = self.Flush(false)
-
-	} else {
-		dln := (criSize - self.ObjsSize + self.ObjSize - 1) / self.ObjSize / 2
-		self.CheckSizeCritical = dln + ln
-	}
-	return err
-
-}
-
-type jsonSchemaItemType struct {
-	Tag    schemaElement         `json:"tag"`
-	Fields []*jsonSchemaItemType `json:"fields"`
-}
-
-func newJSONSchemaItem() *jsonSchemaItemType {
-	return new(jsonSchemaItemType)
-}
-
-type schemaElement struct {
-	Name           string `json:"name"`
-	Type           string `json:"type,omitempty"`
-	RepetitionType string `json:"repetitiontype,omitempty"`
-	TypeLength     int32  `json:"length,omitempty"`
-	ConvertedType  string `json:"convertedtype,omitempty"`
-	Scale          int32  `json:"scale,omitempty"`
-	Precision      int32  `json:"precision,omitempty"`
-}
-
-func outputSchemaTreeJSONSchema(st *schematool.SchemaTree) string {
-	jsonStr := outputNodeJSONSchema(st.Root)
-	fmt.Printf("jsonStr\n%s\n", jsonStr)
-
-	sch := newJSONSchemaItem()
-	if err := json.Unmarshal([]byte(jsonStr), sch); err != nil {
-		panic(err)
-	}
-
-	res, err := json.MarshalIndent(&sch, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("res\n%s\n", string(res))
-
-	return string(res)
-}
-
-func outputNodeJSONSchema(node *schematool.Node) string {
-	res := "{\"tag\":"
-	pT, cT := node.SE.Type, node.SE.ConvertedType
-	rTStr := "REQUIRED"
-	if node.SE.GetRepetitionType() == parquet.FieldRepetitionType_OPTIONAL {
-		rTStr = "OPTIONAL"
-	} else if node.SE.GetRepetitionType() == parquet.FieldRepetitionType_REPEATED {
-		rTStr = "REPEATED"
-	}
-
-	pTStr, cTStr := schematool.ParquetTypeToParquetTypeStr(pT, cT)
-	tagStr := "{\"name\":%q, \"type\":%q, \"repetitiontype\":%q}"
-
-	name := node.SE.GetName()
-
-	if len(node.Children) == 0 {
-		if *pT == parquet.Type_FIXED_LEN_BYTE_ARRAY && cT == nil {
-			length := node.SE.GetTypeLength()
-			tagStr = "{\"name\":%q, \"type\":%q, \"length\":%d, \"repetitiontype\":%q}"
-			res += fmt.Sprintf(tagStr, name, pTStr, length, rTStr) + "}"
-		} else if cT != nil && *cT == parquet.ConvertedType_DECIMAL {
-			scale, precision := node.SE.GetScale(), node.SE.GetPrecision()
-			if *pT == parquet.Type_FIXED_LEN_BYTE_ARRAY {
-				length := node.SE.GetTypeLength()
-				tagStr = "{\"name\":%q, \"type\":%q, \"convertedtype\":%q, \"scale\":%d, \"precision\":%d, \"length\":%d, \"repetitiontype\":%q}"
-				res += fmt.Sprintf(tagStr, name, pTStr, cTStr, scale, precision, length, rTStr) + "}"
-			} else {
-				tagStr = "{\"name\":%q, \"type\":%q, \"convertedtype\":%q, \"scale\":%d, \"precision\":%d, \"repetitiontype\":%q}"
-				res += fmt.Sprintf(tagStr, name, pTStr, cTStr, scale, precision, rTStr) + "}"
-			}
-		} else {
-			if cT != nil {
-				tagStr = "{\"name\":%q, \"type\":%q, \"convertedtype\":%q, \"repetitiontype\":%q}"
-				res += fmt.Sprintf(tagStr, name, pTStr, cTStr, rTStr) + "}"
-			} else {
-				res += fmt.Sprintf(tagStr, name, pTStr, rTStr) + "}"
-			}
-		}
-	} else {
-		if cT != nil {
-			tagStr = "{\"name\":%q, \"type\":%q, \"repetitiontype\":%q}"
-			res += fmt.Sprintf(tagStr, name, cTStr, rTStr)
-		} else {
-			tagStr = "{\"name\":%q, \"repetitiontype\":%q}"
-			res += fmt.Sprintf(tagStr, name, rTStr)
-		}
-		res += ",\n"
-		res += "\"fields\":[\n"
-
-		nodes := node.Children
-		if cT != nil {
-			nodes = node.Children[0].Children
-		}
-
-		for i := 0; i < len(nodes); i++ {
-			cNode := nodes[i]
-			if i == len(nodes)-1 {
-				res += outputNodeJSONSchema(cNode) + "\n"
-			} else {
-				res += outputNodeJSONSchema(cNode) + ",\n"
-			}
-		}
-
-		res += "]\n"
-		res += "}"
-	}
-
-	return res
 }
 
 func validateColTypesMeta(b Bow, values string) (colTypesMeta []parquetColTypesMeta, err error) {
@@ -488,4 +322,181 @@ func NewMetaWithParquetTimestampMicrosCols(keys, values []string, colNames ...st
 	values = append(values, string(colTypesJSON))
 
 	return Metadata{arrow.NewMetadata(keys, values)}
+}
+
+type Elements struct {
+	SchemaElement  parquet.SchemaElement `json:"field"`
+	SchemaElements []*Elements           `json:"fields,omitempty"`
+}
+
+func NewElements() *Elements {
+	return new(Elements)
+}
+
+func newJSONWriter(se []*parquet.SchemaElement, pfile source.ParquetFile, np int64) (*writer.JSONWriter, error) {
+	var err error
+	res := new(writer.JSONWriter)
+	jsonSchema := schemaTreeToJSONSchema(schematool.CreateSchemaTree(se))
+	res.SchemaHandler, err = newSchemaHandlerFromJSONElements(jsonSchema)
+	if err != nil {
+		return res, fmt.Errorf("newSchemaHandlerFromJSONElements: %w", err)
+	}
+
+	res.PFile = pfile
+	res.PageSize = 8 * 1024              //8K
+	res.RowGroupSize = 128 * 1024 * 1024 //128M
+	res.CompressionType = parquet.CompressionCodec_SNAPPY
+	res.PagesMapBuf = make(map[string][]*layout.Page)
+	res.DictRecs = make(map[string]*layout.DictRecType)
+	res.NP = np
+	res.Footer = parquet.NewFileMetaData()
+	res.Footer.Version = 1
+	res.Footer.Schema = append(res.Footer.Schema, res.SchemaHandler.SchemaElements...)
+	res.Offset = 4
+	_, err = res.PFile.Write([]byte("PAR1"))
+	res.MarshalFunc = marshal.MarshalJSON
+	return res, err
+}
+
+func newSchemaHandlerFromJSONElements(str string) (sh *schema.SchemaHandler, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch x := r.(type) {
+			case string:
+				err = errors.New("string: " + x)
+			case error:
+				err = x
+			default:
+				err = errors.New("unknown error")
+			}
+		}
+	}()
+
+	elements := NewElements()
+	if err = json.Unmarshal([]byte(str), elements); err != nil {
+		return nil, fmt.Errorf("error in unmarshalling json elements string: %w", err)
+	}
+
+	stack := make([]*Elements, 0)
+	stack = append(stack, elements)
+	schemaElements := make([]*parquet.SchemaElement, 0)
+	newInfos := make([]*common.Tag, 0)
+
+	for len(stack) > 0 {
+		ln := len(stack)
+		elem := stack[ln-1]
+		stack = stack[:ln-1]
+
+		info := &common.Tag{
+			InName: common.StringToVariableName(elem.SchemaElement.Name),
+			ExName: elem.SchemaElement.Name,
+		}
+		if elem.SchemaElement.Type != nil {
+			info.Type = elem.SchemaElement.Type.String()
+		}
+		if elem.SchemaElement.ConvertedType != nil {
+			info.ConvertedType = elem.SchemaElement.ConvertedType.String()
+		}
+		if elem.SchemaElement.RepetitionType != nil {
+			info.RepetitionType = *elem.SchemaElement.RepetitionType
+		}
+
+		var newInfo *common.Tag
+		if info.Type == "" { //struct
+			schemaElement := parquet.NewSchemaElement()
+			schemaElement.Name = info.InName
+			rt := info.RepetitionType
+			schemaElement.RepetitionType = &rt
+			numField := int32(len(elem.SchemaElements))
+			schemaElement.NumChildren = &numField
+			schemaElements = append(schemaElements, schemaElement)
+			for i := int(numField - 1); i >= 0; i-- {
+				newItem := elem.SchemaElements[i]
+				stack = append(stack, newItem)
+			}
+		} else { //normal variable
+			schemaElement := common.NewSchemaElementFromTagMap(info)
+			schemaElements = append(schemaElements, schemaElement)
+		}
+
+		newInfo = common.NewTag()
+		common.DeepCopy(info, newInfo)
+		newInfos = append(newInfos, newInfo)
+	}
+
+	res := schema.NewSchemaHandlerFromSchemaList(schemaElements)
+	res.Infos = newInfos
+	res.CreateInExMap()
+
+	return res, nil
+}
+
+func schemaTreeToJSONSchema(st *schematool.SchemaTree) string {
+	jsonStr := nodeToJSONSchema(st.Root)
+
+	var elements Elements
+	if err := json.Unmarshal([]byte(jsonStr), &elements); err != nil {
+		panic(fmt.Errorf("json.Unmarshal: %w", err))
+	}
+
+	res, err := json.MarshalIndent(&elements, "", "\t")
+	if err != nil {
+		panic(fmt.Errorf("json.Marshal: %w", err))
+	}
+
+	return string(res)
+}
+
+func nodeToJSONSchema(n *schematool.Node) string {
+	res := "{\"field\":"
+	pT, cT := n.SE.Type, n.SE.ConvertedType
+	rTStr := "REQUIRED"
+	if n.SE.GetRepetitionType() == parquet.FieldRepetitionType_OPTIONAL {
+		rTStr = "OPTIONAL"
+	} else if n.SE.GetRepetitionType() == parquet.FieldRepetitionType_REPEATED {
+		rTStr = "REPEATED"
+	}
+
+	pTStr, cTStr := schematool.ParquetTypeToParquetTypeStr(pT, cT)
+	tagStr := "{\"name\":%q, \"type\":%q, \"repetition_type\":%q}"
+
+	name := n.SE.GetName()
+
+	if len(n.Children) == 0 {
+		if cT != nil {
+			tagStr = "{\"name\":%q, \"type\":%q, \"converted_type\":%q, \"repetition_type\":%q}"
+			res += fmt.Sprintf(tagStr, name, pTStr, cTStr, rTStr) + "}"
+		} else {
+			res += fmt.Sprintf(tagStr, name, pTStr, rTStr) + "}"
+		}
+	} else {
+		if cT != nil {
+			tagStr = "{\"name\":%q, \"type\":%q, \"repetition_type\":%q}"
+			res += fmt.Sprintf(tagStr, name, cTStr, rTStr)
+		} else {
+			tagStr = "{\"name\":%q, \"repetition_type\":%q}"
+			res += fmt.Sprintf(tagStr, name, rTStr)
+		}
+		res += ",\n"
+		res += "\"fields\":[\n"
+
+		nodes := n.Children
+		if cT != nil {
+			nodes = n.Children[0].Children
+		}
+
+		for i := 0; i < len(nodes); i++ {
+			cNode := nodes[i]
+			if i == len(nodes)-1 {
+				res += nodeToJSONSchema(cNode) + "\n"
+			} else {
+				res += nodeToJSONSchema(cNode) + ",\n"
+			}
+		}
+
+		res += "]\n"
+		res += "}"
+	}
+
+	return res
 }
