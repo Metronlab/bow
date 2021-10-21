@@ -17,12 +17,12 @@ const (
 func TestParquet(t *testing.T) {
 	t.Run("read/write input file", func(t *testing.T) {
 		bBefore, err := NewBowFromParquet(testInputFileName, false)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
-		require.NoError(t, bBefore.WriteParquet(testOutputFileName, false))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName, false))
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+".parquet", false)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
 
@@ -41,13 +41,12 @@ func TestParquet(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		require.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", false)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
-		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
-		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
+		assert.Equal(t, bBefore.String(), bAfter.String())
 
 		require.NoError(t, os.Remove(testOutputFileName+"_withrows.parquet"))
 	})
@@ -59,13 +58,12 @@ func TestParquet(t *testing.T) {
 			[][]interface{}{})
 		require.NoError(t, err)
 
-		require.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", false))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", false))
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows.parquet", false)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
-		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
-		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
+		assert.Equal(t, bBefore.String(), bAfter.String())
 
 		require.NoError(t, os.Remove(testOutputFileName+"_norows.parquet"))
 	})
@@ -73,8 +71,10 @@ func TestParquet(t *testing.T) {
 	t.Run("write empty bow", func(t *testing.T) {
 		bBefore := NewBowEmpty()
 
-		err := bBefore.WriteParquet(testOutputFileName+"_empty", false)
-		assert.Errorf(t, err, "bow.WriteParquet: no columns")
+		assert.Errorf(t,
+			bBefore.WriteParquet(testOutputFileName+"_empty", false),
+			"bow.WriteParquet: no columns",
+		)
 	})
 
 	t.Run("bow with context and col_types metadata", func(t *testing.T) {
@@ -92,12 +92,12 @@ func TestParquet(t *testing.T) {
 		}
 		type Context map[string]Meta
 
-		var context = Context{
+		var ctx = Context{
 			"time":        Meta{Unit{Symbol: "microseconds"}},
 			"  va\"lue  ": Meta{Unit{Symbol: "kWh"}},
 		}
 
-		contextJSON, err := json.Marshal(context)
+		contextJSON, err := json.Marshal(ctx)
 		require.NoError(t, err)
 
 		keys = append(keys, "context")
@@ -109,10 +109,10 @@ func TestParquet(t *testing.T) {
 		require.NoError(t, err)
 
 		err = bBefore.WriteParquet(testOutputFileName+"_meta", false)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", false)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
 
@@ -132,7 +132,6 @@ func TestParquet(t *testing.T) {
 			series...)
 		assert.NoError(t, err)
 
-		err = bBefore.WriteParquet(testOutputFileName+"_wrong", false)
-		assert.Error(t, err)
+		assert.Error(t, bBefore.WriteParquet(testOutputFileName+"_wrong", false))
 	})
 }
