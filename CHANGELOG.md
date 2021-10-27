@@ -1,33 +1,49 @@
+v0.17.0 [2021-10-27]
+-------------------
+
+- new Manipulation features
+- bump Go to version 1.17
+- bow interface: switch from colNames to colIndices arguments
+- support special characters in Parquet read/write
+
+
 v0.16.0 [2021-08-25]
 -------------------
+
 - general code refactoring
 - improved performance, mostly with better memory usage and buffers rework
 - introduced code generation with Metronlab/genius framework
 - changed Find method and add Contains and FindNext
 - improved bow generator by simplification and made it extensible by user for value creation strategy
 
+
 v0.15.0 [2021-08-04]
 -------------------
+
 - Benchmarks and Profiling:
   - Moved benchmarks closer to functions
   - Simplified and faster benchmarks
   - Added AppendBows and NewBufferFromInterfaces benchmarks
   - Added Makefile rules for tests and benchmarks profiling
 
+
 v0.14.0 [2021-07-20]
 -------------------
 
 - Adding `SetMetadata` method to `Bow`'s interface
+
 
 v0.13.0 [2021-06-17]
 -------------------
 
 - Adding `AddCols` method to `Bow`'s interface
 
+
 v0.12.1 [2021-06-16]
 -------------------
 
 - Apache Parquet: new tests and UX improvements
+
 
 v0.12.0 [2021-06-10]
 -------------------
@@ -36,11 +52,13 @@ v0.12.0 [2021-06-10]
 - Add Schema Metadata support
 - Add golangci-lint usage
 
+
 v0.11.0 [2021-05-17]
 -------------------
 
 - Add new bow.Diff function
 - Depreciate Difference aggregation
+
 
 v0.10.0 [2021-05-11]
 -------------------
@@ -48,6 +66,7 @@ v0.10.0 [2021-05-11]
 - Rolling:
     - improved code readability
     - aggregation/fill: it is now possible to pass a previous row option to the rolling to enable the correct interpolation of the first row of its first window, in the case of missing window start row
+
 
 v0.9.0 [2021-03-24]
 -------------------
@@ -74,6 +93,7 @@ v0.9.0 [2021-03-24]
 - Bug fix:
   - Rolling inclusive window with duplicated indexes now correctly iterate keeping windowing integrity
 
+
 v0.8.0 [2021-02-12]
 -------------------
 
@@ -86,6 +106,7 @@ v0.8.0 [2021-02-12]
 - Refactoring Bow's logic to return a valid schema instead of nil when no data is found
 - Fixing tests
 
+
 v0.7.3 [2021-01-12]
 -------------------
 
@@ -97,11 +118,13 @@ v0.7.3 [2021-01-12]
 - New aggregation tests
 - Minor code refactoring
 
+
 v0.7.2 [2020-09-14]
 -------------------
 
 ### Bugfixes
 - OuterJoin: support of bow without rows returning correct schema
+
 
 v0.7.1 [2020-08-03]
 -------------------
@@ -109,11 +132,13 @@ v0.7.1 [2020-08-03]
 ### Features
 - Add SortByCol method to sort a bow by a column name
 
+
 v0.6.2 [2020-06-02]
 -------------------
 
 #### Bugfixes
 - InnerJoin
+
 
 v0.6.1 [2020-04-22]
 -------------------
@@ -124,6 +149,7 @@ v0.6.1 [2020-04-22]
 #### Known issues
 arrow now allow several column with same name introducing new panics in bow if the case happen.
 [corresponding issue](https://github.com/Metronlab/bow/issues/12)
+
 
 v0.6.0 [2020-04-22]
 -------------------
@@ -137,6 +163,7 @@ v0.6.0 [2020-04-22]
 
 #### How to migrate to v0.6.0
 It is necessary to replace the library import path from github.com/Metronlab/bow/bow to github.com/Metronlab/bow
+
 
 0.2.0 [2019-02-19]
 -------------------
@@ -160,6 +187,7 @@ It is necessary to replace the library import path from github.com/Metronlab/bow
 - Row based json encoding and decoding
 - New Bow fron row and column based [][]interfaces{}
 - Method to print
+
 
 0.0.0 [2019-01-11]
 -------------------
