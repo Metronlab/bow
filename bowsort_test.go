@@ -73,7 +73,7 @@ func TestBow_SortByCol(t *testing.T) {
 				{3.9, 13.4, 13},
 			})
 		require.NoError(t, err)
-		sorted, err := b.SortByCol(0)
+		sorted, err := b.SortByCol(2)
 		assert.Nil(t, err)
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})

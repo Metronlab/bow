@@ -20,7 +20,6 @@ func TestBow_GetValue(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 3.3, b.GetValue(1, 2))
-	assert.Equal(t, 3.3, b.GetValueByName("value", 2))
 	assert.Equal(t, map[string]interface{}{
 		"time":  int64(2),
 		"value": 2.2,

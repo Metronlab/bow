@@ -8,57 +8,56 @@ import (
 	"github.com/apache/arrow/go/arrow/array"
 )
 
-// FillLinear fills the column toFillColName using the Linear interpolation method according
-// to the reference column refColName, which has to be sorted.
+// FillLinear fills the column toFillColIndex using the Linear interpolation method according
+// to the reference column refColIndex, which has to be sorted.
 // Fills only int64 and float64 types.
-func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
-	refIndex, err := b.ColumnIndex(refColName)
-	if err != nil {
-		return nil, fmt.Errorf("bow.FillLinear: refColName: %w", err)
+func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
+	if refColIndex < 0 || refColIndex > b.NumCols()-1 {
+		return nil, fmt.Errorf("bow.FillLinear: refColIndex is out of range")
 	}
 
-	toFillIndex, err := b.ColumnIndex(toFillColName)
-	if err != nil {
-		return nil, fmt.Errorf("bow.FillLinear: toFillColName: %w", err)
+	if toFillColIndex < 0 || toFillColIndex > b.NumCols()-1 {
+		return nil, fmt.Errorf("bow.FillLinear: toFillColIndex is out of range")
 	}
 
-	if refIndex == toFillIndex {
-		return nil, fmt.Errorf("bow.FillLinear: refColName and toFillColName are equal")
+	if refColIndex == toFillColIndex {
+		return nil, fmt.Errorf("bow.FillLinear: refColIndex and toFillColIndex are equal")
 	}
 
-	switch b.ColumnType(refIndex) {
+	switch b.ColumnType(refColIndex) {
 	case Int64:
 	case Float64:
 	default:
-		return nil, fmt.Errorf("bow.FillLinear: refColName '%s' is of type '%s'",
-			refColName, b.ColumnType(refIndex))
+		return nil, fmt.Errorf("bow.FillLinear: refColIndex '%d' is of type '%s'",
+			refColIndex, b.ColumnType(refColIndex))
 	}
 
-	if b.IsColEmpty(refIndex) {
+	if b.IsColEmpty(refColIndex) {
 		return b, nil
 	}
 
-	if !b.IsColSorted(refIndex) {
-		return nil, fmt.Errorf("bow.FillLinear: column '%s' is empty or not sorted", refColName)
+	if !b.IsColSorted(refColIndex) {
+		return nil, fmt.Errorf("bow.FillLinear: refColIndex '%d' is empty or not sorted",
+			refColIndex)
 	}
 
-	switch b.ColumnType(toFillIndex) {
+	switch b.ColumnType(toFillColIndex) {
 	case Int64:
 	case Float64:
 	default:
 		return nil, fmt.Errorf(
-			"bow.FillLinear: toFillColName '%s' is of unsupported type '%s'",
-			toFillColName, b.ColumnType(toFillIndex))
+			"bow.FillLinear: toFillColIndex '%d' is of unsupported type '%s'",
+			toFillColIndex, b.ColumnType(toFillColIndex))
 	}
 
-	if b.Column(toFillIndex).NullN() == 0 {
+	if b.Column(toFillColIndex).NullN() == 0 {
 		return b, nil
 	}
-	buf := b.NewBufferFromCol(toFillIndex)
+	buf := b.NewBufferFromCol(toFillColIndex)
 
 	filledSeries := make([]Series, b.NumCols())
 	for colIndex, col := range b.Schema().Fields() {
-		if colIndex != toFillIndex {
+		if colIndex != toFillColIndex {
 			filledSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 			continue
 		}
@@ -67,17 +66,17 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			if buf.IsValid(rowIndex) {
 				continue
 			}
-			prevToFill, rowPrev := b.GetPrevFloat64(toFillIndex, rowIndex-1)
-			nextToFill, rowNext := b.GetNextFloat64(toFillIndex, rowIndex+1)
-			rowRef, valid1 := b.GetFloat64(refIndex, rowIndex)
-			prevRef, valid2 := b.GetFloat64(refIndex, rowPrev)
-			nextRef, valid3 := b.GetFloat64(refIndex, rowNext)
+			prevToFill, rowPrev := b.GetPrevFloat64(toFillColIndex, rowIndex-1)
+			nextToFill, rowNext := b.GetNextFloat64(toFillColIndex, rowIndex+1)
+			rowRef, valid1 := b.GetFloat64(refColIndex, rowIndex)
+			prevRef, valid2 := b.GetFloat64(refColIndex, rowPrev)
+			nextRef, valid3 := b.GetFloat64(refColIndex, rowNext)
 			if !valid1 || !valid2 || !valid3 {
 				continue
 			}
 
 			if nextRef-prevRef == 0 {
-				switch b.ColumnType(toFillIndex) {
+				switch b.ColumnType(toFillColIndex) {
 				case Int64:
 					buf.SetOrDropStrict(rowIndex, int64(prevToFill))
 				case Float64:
@@ -89,7 +88,7 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			tmp /= nextRef - prevRef
 			tmp *= nextToFill - prevToFill
 			tmp += prevToFill
-			switch b.ColumnType(toFillIndex) {
+			switch b.ColumnType(toFillColIndex) {
 			case Int64:
 				buf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
 			case Float64:
@@ -97,17 +96,17 @@ func (b *bow) FillLinear(refColName, toFillColName string) (Bow, error) {
 			}
 		}
 
-		filledSeries[toFillIndex] = NewSeriesFromBuffer(col.Name, buf)
+		filledSeries[toFillColIndex] = NewSeriesFromBuffer(col.Name, buf)
 	}
 
 	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
-// FillMean fills nil values of `colNames` columns (`colNames` defaults to all columns)
+// FillMean fills nil values of `colIndices` columns (`colIndices` defaults to all columns)
 // with the mean between the previous and the next values of the same column.
 // Fills only int64 and float64 types.
-func (b *bow) FillMean(colNames ...string) (Bow, error) {
-	toFillCols, err := selectCols(b, colNames)
+func (b *bow) FillMean(colIndices ...int) (Bow, error) {
+	toFillCols, err := selectCols(b, colIndices)
 	if err != nil {
 		return nil, fmt.Errorf("bow.FillMean: %w", err)
 	}
@@ -163,20 +162,20 @@ func (b *bow) FillMean(colNames ...string) (Bow, error) {
 	return NewBowWithMetadata(b.Metadata(), filledSeries...)
 }
 
-// FillNext fills nil values of `colNames` columns (`colNames` defaults to all columns)
+// FillNext fills nil values of `colIndices` columns (`colIndices` defaults to all columns)
 // using NOCB (Next Obs. Carried Backward) method.
-func (b *bow) FillNext(colNames ...string) (Bow, error) {
-	return fill("Next", b, colNames...)
+func (b *bow) FillNext(colIndices ...int) (Bow, error) {
+	return fill("Next", b, colIndices...)
 }
 
-// FillPrevious fills nil values of `colNames` columns (`colNames` defaults to all columns)
+// FillPrevious fills nil values of `colIndices` columns (`colIndices` defaults to all columns)
 // using LOCF (Last Obs. Carried Forward) method.
-func (b *bow) FillPrevious(colNames ...string) (Bow, error) {
-	return fill("Previous", b, colNames...)
+func (b *bow) FillPrevious(colIndices ...int) (Bow, error) {
+	return fill("Previous", b, colIndices...)
 }
 
-func fill(method string, b *bow, colNames ...string) (Bow, error) {
-	toFillCols, err := selectCols(b, colNames)
+func fill(method string, b *bow, colIndices ...int) (Bow, error) {
+	toFillCols, err := selectCols(b, colIndices)
 	if err != nil {
 		return nil, fmt.Errorf("bow.Fill%s: %w", method, err)
 	}
@@ -265,23 +264,25 @@ func getFillRowIndex(b Bow, method string, colIndex, rowIndex int) int {
 }
 
 // selectCols returns a bool slice of size b.NumCols
-// with 'true' values at indexes of the corresponding colNames
-func selectCols(b *bow, colNames []string) ([]bool, error) {
-	toFill := make([]bool, b.NumCols())
-	nilColsNb := len(colNames)
-	// default: all columns to fill
-	if nilColsNb == 0 {
+// with 'true' values at indexes of the corresponding colIndices
+func selectCols(b *bow, colIndices []int) ([]bool, error) {
+	selectedCols := make([]bool, b.NumCols())
+
+	// default: all columns selected
+	if len(colIndices) == 0 {
 		for colIndex := range b.Schema().Fields() {
-			toFill[colIndex] = true
+			selectedCols[colIndex] = true
 		}
-	} else {
-		for _, colName := range colNames {
-			foundColIndex, err := b.ColumnIndex(colName)
-			if err != nil {
-				return nil, err
-			}
-			toFill[foundColIndex] = true
-		}
+
+		return selectedCols, nil
 	}
-	return toFill, nil
+
+	for _, colIndex := range colIndices {
+		if colIndex < 0 || colIndex > b.NumCols()-1 {
+			return nil, fmt.Errorf("selectCols: out of range colIndex '%d'", colIndex)
+		}
+		selectedCols[colIndex] = true
+	}
+
+	return selectedCols, nil
 }

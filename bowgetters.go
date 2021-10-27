@@ -21,16 +21,6 @@ func (b *bow) GetRow(rowIndex int) map[string]interface{} {
 	return row
 }
 
-func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
-	for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
-		if colName == b.Schema().Field(colIndex).Name {
-			return b.GetValue(colIndex, rowIndex)
-		}
-	}
-
-	return nil
-}
-
 func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 	if b.Column(colIndex).IsNull(rowIndex) {
 		return nil

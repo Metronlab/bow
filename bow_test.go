@@ -110,7 +110,7 @@ func TestBow_Select(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	t.Run("without colNames", func(t *testing.T) {
+	t.Run("without colIndices", func(t *testing.T) {
 		expected := NewBowEmpty()
 
 		newBow, err := b.Select()
@@ -131,14 +131,14 @@ func TestBow_Select(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		newBow, err := b.Select("time", "a")
+		newBow, err := b.Select(0, 1)
 		assert.NoError(t, err)
 		assert.True(t, expected.Equal(newBow),
 			fmt.Sprintf("Have:\n%v,\nExpect:\n%v", newBow, expected))
 	})
 
-	t.Run("wrong colNames", func(t *testing.T) {
-		newBow, err := b.Select("time", "unknown")
+	t.Run("wrong colIndices", func(t *testing.T) {
+		newBow, err := b.Select(0, 3)
 		assert.Nil(t, newBow)
 		assert.Error(t, err)
 	})
@@ -155,7 +155,7 @@ func TestBow_Select(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		res, err := b.Select("time")
+		res, err := b.Select(0)
 		require.NoError(t, err)
 
 		assert.Equal(t, expected.String(), res.String())
@@ -209,7 +209,7 @@ func TestBow_DropNils(t *testing.T) {
 	t.Run("drop default", func(t *testing.T) {
 		compactedDefault, err := holedBow.DropNils()
 		assert.Nil(t, err)
-		compactedAll, err := holedBow.DropNils("b", "c", "a")
+		compactedAll, err := holedBow.DropNils(1, 2, 0)
 		assert.Nil(t, err)
 		assert.True(t, compactedDefault.Equal(compactedAll),
 			fmt.Sprintf("default %v\nall %v", compactedDefault, compactedAll))
@@ -231,7 +231,7 @@ func TestBow_DropNils(t *testing.T) {
 	})
 
 	t.Run("drop on one column", func(t *testing.T) {
-		compacted, err := holedBow.DropNils("b")
+		compacted, err := holedBow.DropNils(1)
 		expected, _ := NewBowFromColBasedInterfaces(
 			[]string{"a", "b", "c"},
 			[]Type{Int64, Int64, Int64},
