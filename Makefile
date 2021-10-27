@@ -2,15 +2,15 @@
 all: lint count test
 
 install:
-	@go get golang.org/x/perf/cmd/benchstat \
-		github.com/jstemmer/go-junit-report
+	@go install golang.org/x/perf/cmd/benchstat@latest
+	@go install github.com/jstemmer/go-junit-report@latest
+	@go install github.com/Metronlab/genius@latest
 
 gen:
 	@go generate $(PKG)
 
 lint:
-	go fmt $(PKG)
-	golangci-lint run -v $(PKG)
+	golangci-lint run -E gofmt --fix -v $(PKG)
 
 count:
 	@bash -c $(PWD)/scripts/count-code-lines.sh
@@ -37,3 +37,4 @@ bench-profile:
 	-lsof -ti tcp:9191 | xargs kill -9 2> /dev/null
 	go tool pprof -http=:9090 $(CPUPROFILE) &
 	go tool pprof -http=:9191 $(MEMPROFILE) &
+

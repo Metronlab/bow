@@ -2,6 +2,7 @@ package bow
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
@@ -18,16 +19,6 @@ func (b *bow) GetRow(rowIndex int) map[string]interface{} {
 	}
 
 	return row
-}
-
-func (b *bow) GetValueByName(colName string, rowIndex int) interface{} {
-	for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
-		if colName == b.Schema().Field(colIndex).Name {
-			return b.GetValue(colIndex, rowIndex)
-		}
-	}
-
-	return nil
 }
 
 func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
@@ -278,4 +269,29 @@ func (b *bow) ColumnIndex(colName string) (int, error) {
 	}
 
 	return colIndices[0], nil
+}
+
+// Distinct returns all non nil different values found in a column in a new Bow
+func (b *bow) Distinct(colIndex int) Bow {
+	hitMap := make(map[interface{}]struct{})
+	for i := 0; i < b.NumRows(); i++ {
+		val := b.GetValue(colIndex, i)
+		if val != nil {
+			hitMap[val] = struct{}{}
+		}
+	}
+	buf := NewBuffer(len(hitMap), b.ColumnType(colIndex))
+	i := 0
+	for k := range hitMap {
+		buf.SetOrDropStrict(i, k)
+		i++
+	}
+
+	sort.Sort(buf)
+
+	res, err := NewBow(NewSeriesFromBuffer(b.ColumnName(colIndex), buf))
+	if err != nil {
+		panic(err)
+	}
+	return res
 }

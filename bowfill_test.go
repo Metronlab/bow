@@ -45,7 +45,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			b, err = b.FillMean("b")
+			b, err = b.FillMean(1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
@@ -89,7 +89,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			b, err = b.FillNext("b")
+			b, err = b.FillNext(1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
@@ -133,7 +133,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			b, err = b.FillPrevious("b")
+			b, err = b.FillPrevious(1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
@@ -176,7 +176,7 @@ func TestFill(t *testing.T) {
 					{-2, 1, nil, nil, -8},
 				})
 			require.NoError(t, err)
-			res, err := b.FillLinear("a", "b")
+			res, err := b.FillLinear(0, 1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), res.String())
 		})
@@ -198,7 +198,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			res, err := b.FillLinear("a", "e")
+			res, err := b.FillLinear(0, 4)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), res.String())
 		})
@@ -206,7 +206,7 @@ func TestFill(t *testing.T) {
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
 			b := newFreshBow(t, Int64)
 
-			_, err := b.FillLinear("d", "b")
+			_, err := b.FillLinear(3, 1)
 			require.Error(t, err)
 		})
 	})
@@ -229,7 +229,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			b, err = b.FillMean("b")
+			b, err = b.FillMean(1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
@@ -273,7 +273,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			b, err = b.FillNext("b")
+			b, err = b.FillNext(1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
@@ -317,7 +317,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			b, err = b.FillPrevious("b")
+			b, err = b.FillPrevious(1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), b.String())
 		})
@@ -361,7 +361,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			res, err := b.FillLinear("a", "b")
+			res, err := b.FillLinear(0, 1)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), res.String())
 		})
@@ -383,7 +383,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			res, err := b.FillLinear("a", "e")
+			res, err := b.FillLinear(0, 4)
 			require.NoError(t, err)
 			assert.EqualValues(t, expected.String(), res.String())
 		})
@@ -391,7 +391,7 @@ func TestFill(t *testing.T) {
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
 			b := newFreshBow(t, Float64)
 
-			_, err := b.FillLinear("d", "b")
+			_, err := b.FillLinear(3, 1)
 			require.Error(t, err)
 		})
 	})
@@ -498,7 +498,7 @@ func TestFill(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			_, err = b.FillLinear("a", "b")
+			_, err = b.FillLinear(0, 1)
 			assert.Error(t, err)
 		})
 	})
@@ -564,7 +564,7 @@ func TestFill(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		res, err := b4.FillLinear("int", "float")
+		res, err := b4.FillLinear(0, 1)
 		require.NoError(t, err)
 		assert.EqualValues(t, expected.String(), res.String())
 	})
@@ -578,28 +578,28 @@ func BenchmarkBow_Fill(b *testing.B) {
 
 		b.Run(fmt.Sprintf("Previous_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_, err = data.FillPrevious("Float64_bow1")
+				_, err = data.FillPrevious(3)
 				require.NoError(b, err)
 			}
 		})
 
 		b.Run(fmt.Sprintf("Next_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_, err = data.FillNext("Float64_bow1")
+				_, err = data.FillNext(3)
 				require.NoError(b, err)
 			}
 		})
 
 		b.Run(fmt.Sprintf("Mean_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_, err = data.FillMean("Float64_bow1")
+				_, err = data.FillMean(3)
 				require.NoError(b, err)
 			}
 		})
 
 		b.Run(fmt.Sprintf("Linear_%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				_, err = data.FillLinear("Int64_ref", "Float64_bow1")
+				_, err = data.FillLinear(0, 3)
 				require.NoError(b, err)
 			}
 		})

@@ -60,7 +60,7 @@ func TestDiff(t *testing.T) {
 				{3, 1., true},
 			})
 		require.NoError(t, err)
-		calc, err := b.Diff("b")
+		calc, err := b.Diff(1)
 		assert.NoError(t, err)
 		assert.EqualValues(t, expected.String(), calc.String())
 	})
@@ -87,7 +87,7 @@ func TestDiff(t *testing.T) {
 		b, err := NewBowFromRowBasedInterfaces([]string{"a"}, []Type{Int64}, [][]interface{}{})
 		require.NoError(t, err)
 
-		calc, err := b.Diff("unknown")
+		calc, err := b.Diff(1)
 		assert.Error(t, err)
 		assert.Nil(t, calc)
 	})
