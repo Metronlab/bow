@@ -46,8 +46,7 @@ func TestParquet(t *testing.T) {
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", false)
 		assert.NoError(t, err)
 
-		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
-		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
+		assert.Equal(t, bBefore.String(), bAfter.String())
 
 		require.NoError(t, os.Remove(testOutputFileName+"_withrows.parquet"))
 	})
@@ -64,8 +63,7 @@ func TestParquet(t *testing.T) {
 		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows.parquet", false)
 		assert.NoError(t, err)
 
-		assert.Equal(t, true, bBefore.Schema().Equal(bAfter.Schema()))
-		assert.Equal(t, bBefore.NumRows(), bAfter.NumRows())
+		assert.Equal(t, bBefore.String(), bAfter.String())
 
 		require.NoError(t, os.Remove(testOutputFileName+"_norows.parquet"))
 	})
@@ -73,8 +71,10 @@ func TestParquet(t *testing.T) {
 	t.Run("write empty bow", func(t *testing.T) {
 		bBefore := NewBowEmpty()
 
-		err := bBefore.WriteParquet(testOutputFileName+"_empty", false)
-		assert.Errorf(t, err, "bow.WriteParquet: no columns")
+		assert.Errorf(t,
+			bBefore.WriteParquet(testOutputFileName+"_empty", false),
+			"bow.WriteParquet: no columns",
+		)
 	})
 
 	t.Run("bow with context and col_types metadata", func(t *testing.T) {
@@ -92,13 +92,13 @@ func TestParquet(t *testing.T) {
 		}
 		type Context map[string]Meta
 
-		var context = Context{
+		var ctx = Context{
 			"time":  Meta{Unit{Symbol: "microseconds"}},
 			"value": Meta{Unit{Symbol: "kWh"}},
 		}
 
-		contextJSON, err := json.Marshal(context)
-		assert.NoError(t, err)
+		contextJSON, err := json.Marshal(ctx)
+		require.NoError(t, err)
 
 		keys = append(keys, "context")
 		values = append(values, string(contextJSON))
@@ -106,7 +106,7 @@ func TestParquet(t *testing.T) {
 		bBefore, err := NewBowWithMetadata(
 			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
 			series...)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = bBefore.WriteParquet(testOutputFileName+"_meta", false)
 		assert.NoError(t, err)
@@ -132,7 +132,6 @@ func TestParquet(t *testing.T) {
 			series...)
 		assert.NoError(t, err)
 
-		err = bBefore.WriteParquet(testOutputFileName+"_wrong", false)
-		assert.Error(t, err)
+		assert.Error(t, bBefore.WriteParquet(testOutputFileName+"_wrong", false))
 	})
 }
