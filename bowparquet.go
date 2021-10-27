@@ -3,7 +3,9 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xitongsys/parquet-go/tool/parquet-tools/schematool"
+	"github.com/xitongsys/parquet-go/layout"
+	"github.com/xitongsys/parquet-go/marshal"
+	"github.com/xitongsys/parquet-go/source"
 	"github.com/xitongsys/parquet-go/writer"
 	"strings"
 
@@ -217,8 +219,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	}
 	defer parquetFile.Close()
 
-	sTree := schematool.CreateSchemaTree(sElems)
-	parquetWriter, err := writer.NewJSONWriter(sTree.OutputJsonSchema(), parquetFile, 4)
+	parquetWriter, err := newJSONWriter(sElems, parquetFile, 4)
 	if err != nil {
 		return fmt.Errorf("bow.WriteParquet: newJSONWriter: %w", err)
 	}
@@ -319,4 +320,30 @@ func NewMetaWithParquetTimestampMicrosCols(keys, values []string, colNames ...st
 	values = append(values, string(colTypesJSON))
 
 	return Metadata{arrow.NewMetadata(keys, values)}
+}
+
+func newJSONWriter(se []*parquet.SchemaElement, pfile source.ParquetFile, np int64) (*writer.JSONWriter, error) {
+	res := new(writer.JSONWriter)
+	res.SchemaHandler = schema.NewSchemaHandlerFromSchemaList(se)
+	res.SchemaHandler.CreateInExMap()
+
+	res.PFile = pfile
+	res.PageSize = 8 * 1024              //8K
+	res.RowGroupSize = 128 * 1024 * 1024 //128M
+	res.CompressionType = parquet.CompressionCodec_SNAPPY
+	res.PagesMapBuf = make(map[string][]*layout.Page)
+	res.DictRecs = make(map[string]*layout.DictRecType)
+	res.NP = np
+	res.Footer = parquet.NewFileMetaData()
+	res.Footer.Version = 1
+	res.Footer.Schema = append(res.Footer.Schema, res.SchemaHandler.SchemaElements...)
+	res.Offset = 4
+	res.MarshalFunc = marshal.MarshalJSON
+
+	_, err := res.PFile.Write([]byte("PAR1"))
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
