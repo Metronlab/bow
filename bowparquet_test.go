@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,7 +80,6 @@ func TestParquet(t *testing.T) {
 
 	t.Run("bow with context and col_types metadata", func(t *testing.T) {
 		var series = make([]Series, 2)
-
 		series[0] = NewSeries("time", []int64{0}, []bool{true})
 		series[1] = NewSeries("  va\"lue  ", []float64{0.}, []bool{true})
 
@@ -104,7 +104,7 @@ func TestParquet(t *testing.T) {
 		values = append(values, string(contextJSON))
 
 		bBefore, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
+			NewMetaWithParquetTimestampCol(keys, values, "time", time.Microsecond),
 			series...)
 		require.NoError(t, err)
 
@@ -128,10 +128,61 @@ func TestParquet(t *testing.T) {
 		var keys, values []string
 
 		bBefore, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampMicrosCols(keys, values, "unknown"),
+			NewMetaWithParquetTimestampCol(keys, values, "unknown", time.Microsecond),
 			series...)
 		assert.NoError(t, err)
 
 		assert.Error(t, bBefore.WriteParquet(testOutputFileName+"_wrong", false))
+	})
+}
+
+func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
+	timeCol := "time"
+	var series = make([]Series, 2)
+	series[0] = NewSeries(timeCol, []int64{0}, nil)
+	series[1] = NewSeries("value", []float64{0.}, nil)
+
+	t.Run("time.Millisecond", func(t *testing.T) {
+		b, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Millisecond),
+			series...)
+		require.NoError(t, err)
+
+		got, err := b.GetParquetMetaColTimeUnit(timeCol)
+		require.NoError(t, err)
+		assert.Equal(t, time.Millisecond, got)
+	})
+
+	t.Run("time.Microsecond", func(t *testing.T) {
+		b, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Microsecond),
+			series...)
+		require.NoError(t, err)
+
+		got, err := b.GetParquetMetaColTimeUnit(timeCol)
+		require.NoError(t, err)
+		assert.Equal(t, time.Microsecond, got)
+	})
+
+	t.Run("time.Nanosecond", func(t *testing.T) {
+		b, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
+			series...)
+		require.NoError(t, err)
+
+		got, err := b.GetParquetMetaColTimeUnit(timeCol)
+		require.NoError(t, err)
+		assert.Equal(t, time.Nanosecond, got)
+	})
+
+	t.Run("unknown col", func(t *testing.T) {
+		b, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
+			series...)
+		require.NoError(t, err)
+
+		got, err := b.GetParquetMetaColTimeUnit("unknown")
+		require.Error(t, err)
+		require.Equal(t, time.Duration(0), got)
 	})
 }
