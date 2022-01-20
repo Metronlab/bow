@@ -257,10 +257,8 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	return nil
 }
 
-func (b *bow) GetParquetMetaColTimeUnit(colName string) (time.Duration, error) {
-	if !b.Schema().HasField(colName) {
-		return time.Duration(0), fmt.Errorf("bow.GetParquetMetaColTimeUnit: doesn't have column '%s'", colName)
-	}
+func (b *bow) GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error) {
+	colName := b.ColumnName(colIndex)
 
 	var parquetColTypesMetas []parquetColTypesMeta
 	for keyIndex, key := range b.Metadata().Keys() {

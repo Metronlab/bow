@@ -148,7 +148,7 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 			series...)
 		require.NoError(t, err)
 
-		got, err := b.GetParquetMetaColTimeUnit(timeCol)
+		got, err := b.GetParquetMetaColTimeUnit(0)
 		require.NoError(t, err)
 		assert.Equal(t, time.Millisecond, got)
 	})
@@ -159,7 +159,7 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 			series...)
 		require.NoError(t, err)
 
-		got, err := b.GetParquetMetaColTimeUnit(timeCol)
+		got, err := b.GetParquetMetaColTimeUnit(0)
 		require.NoError(t, err)
 		assert.Equal(t, time.Microsecond, got)
 	})
@@ -170,19 +170,30 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 			series...)
 		require.NoError(t, err)
 
-		got, err := b.GetParquetMetaColTimeUnit(timeCol)
+		got, err := b.GetParquetMetaColTimeUnit(0)
 		require.NoError(t, err)
 		assert.Equal(t, time.Nanosecond, got)
 	})
 
-	t.Run("unknown col", func(t *testing.T) {
+	t.Run("column without timestamp metadata", func(t *testing.T) {
 		b, err := NewBowWithMetadata(
 			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
 			series...)
 		require.NoError(t, err)
 
-		got, err := b.GetParquetMetaColTimeUnit("unknown")
-		require.Error(t, err)
+		got, err := b.GetParquetMetaColTimeUnit(1)
+		require.NoError(t, err)
 		require.Equal(t, time.Duration(0), got)
+	})
+
+	t.Run("column out of range", func(t *testing.T) {
+		b, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
+			series...)
+		require.NoError(t, err)
+
+		assert.Panics(t, func() {
+			_, _ = b.GetParquetMetaColTimeUnit(42)
+		})
 	})
 }
