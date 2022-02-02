@@ -3,17 +3,16 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/layout"
 	"github.com/xitongsys/parquet-go/marshal"
-	"github.com/xitongsys/parquet-go/source"
-	"github.com/xitongsys/parquet-go/writer"
-	"strings"
-
-	"github.com/apache/arrow/go/arrow"
-	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/schema"
+	"github.com/xitongsys/parquet-go/source"
+	"github.com/xitongsys/parquet-go/writer"
+	"strings"
 )
 
 var mapParquetToBowTypes = map[parquet.Type]Type{

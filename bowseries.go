@@ -3,15 +3,14 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/bitutil"
+	"github.com/apache/arrow/go/v7/arrow"
 )
 
 // A Series is simply a named Apache Arrow array.Interface, which is immutable
 type Series struct {
 	Name  string
-	Array array.Interface
+	Array arrow.Array
 }
 
 func buildNullBitmapBool(dataLength int, validityArray interface{}) []bool {

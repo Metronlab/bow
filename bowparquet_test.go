@@ -2,6 +2,7 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 
@@ -133,5 +134,67 @@ func TestParquet(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Error(t, bBefore.WriteParquet(testOutputFileName+"_wrong", false))
+	})
+
+	t.Run("NEWREAD", func(t *testing.T) {
+		bBefore, err := NewBowFromParquet2("example.parquet", true)
+		require.NoError(t, err)
+
+		fmt.Printf("bBefore\n%+v\n", bBefore.String())
+
+		/*
+			assert.NoError(t, bBefore.WriteParquet2(testOutputFileName, true))
+
+			bAfter, err := NewBowFromParquet2(testOutputFileName+".parquet", true)
+			assert.NoError(t, err)
+
+			//fmt.Printf("bBefore\n%+v\n", bBefore.String())
+			fmt.Printf("bAfter\n%+v\n", bAfter.NumRows())
+			fmt.Printf("bAfter\n%+v\n", bAfter.Metadata())
+			//assert.Equal(t, bBefore.String(), bAfter.String())
+
+			require.NoError(t, os.Remove(testOutputFileName+".parquet"))
+		*/
+	})
+
+	t.Run("NEW READ/WRITE", func(t *testing.T) {
+		var series = make([]Series, 2)
+		series[0] = NewSeries("time", []int64{0}, []bool{true})
+		series[1] = NewSeries("  va\"lue  ", []float64{0.}, []bool{true})
+
+		var keys, values []string
+		type Unit struct {
+			Symbol string `json:"symbol"`
+		}
+		type Meta struct {
+			Unit Unit `json:"unit"`
+		}
+		type Context map[string]Meta
+
+		var ctx = Context{
+			"time":        Meta{Unit{Symbol: "microseconds"}},
+			"  va\"lue  ": Meta{Unit{Symbol: "kWh"}},
+		}
+
+		contextJSON, err := json.Marshal(ctx)
+		require.NoError(t, err)
+
+		keys = append(keys, "context")
+		values = append(values, string(contextJSON))
+
+		bBefore, err := NewBowWithMetadata(
+			NewMetaWithParquetTimestampMicrosCols(keys, values, "time"),
+			series...)
+		require.NoError(t, err)
+
+		err = bBefore.WriteParquet2(testOutputFileName+"_meta", true)
+		assert.NoError(t, err)
+
+		bAfter, err := NewBowFromParquet2(testOutputFileName+"_meta.parquet", true)
+		assert.NoError(t, err)
+
+		assert.Equal(t, bBefore.String(), bAfter.String())
+
+		require.NoError(t, os.Remove(testOutputFileName+"_meta.parquet"))
 	})
 }

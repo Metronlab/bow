@@ -3,12 +3,11 @@ package bow
 import (
 	"errors"
 	"fmt"
-
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v7/arrow/array"
 )
 
-func NewBowFromRecord(record array.Record) (Bow, error) {
+func NewBowFromRecord(record arrow.Record) (Bow, error) {
 	for _, f := range record.Schema().Fields() {
 		if getBowTypeFromArrowType(f.Type) == Unknown {
 			return nil, fmt.Errorf("unsupported type: %s", f.Type.Name())
@@ -17,9 +16,9 @@ func NewBowFromRecord(record array.Record) (Bow, error) {
 	return &bow{Record: record}, nil
 }
 
-func newRecord(metadata Metadata, series ...Series) (array.Record, error) {
+func newRecord(metadata Metadata, series ...Series) (arrow.Record, error) {
 	var fields []arrow.Field
-	var arrays []array.Interface
+	var arrays []arrow.Array
 	var nRows int64
 
 	if len(series) != 0 && series[0].Array != nil {

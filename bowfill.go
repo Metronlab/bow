@@ -5,7 +5,7 @@ import (
 	"math"
 	"sync"
 
-	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/array"
 )
 
 // FillLinear fills the column toFillColIndex using the Linear interpolation method according
