@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/v7/arrow"
 	"github.com/apache/arrow/go/v7/arrow/array"
-	"github.com/apache/arrow/go/v7/parquet/metadata"
 	"reflect"
 )
 
@@ -88,12 +87,10 @@ type Bow interface {
 	UnmarshalJSON(data []byte) error
 	NewValuesFromJSON(jsonB JSONBow) error
 	WriteParquet(path string, verbose bool) error
-	WriteParquet2(path string, verbose bool) error
 }
 
 type bow struct {
 	arrow.Record
-	parquetMeta *metadata.FileMetaData
 }
 
 func NewBowEmpty() Bow {
