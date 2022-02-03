@@ -3,6 +3,9 @@
 # The -o pipefail option is important for the trap to be executed if the "go test" command fails
 set -o pipefail
 
+BENCH_RESULTS_DIR_PATH=$1
+BENCH_RESULTS_FILE_PATH=$2
+
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 
 : ${PKG:=./...}
@@ -11,7 +14,7 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 : ${BENCH_RESULTS_FILE_PATH:=/tmp/benchmarks/${TIMESTAMP}.txt}
 : ${RUN:=".*"}
 
-mkdir -p ${BENCH_RESULTS_DIR_PATH}
+mkdir -p "${BENCH_RESULTS_DIR_PATH}"
 
 printf "Running benchmarks to %s\n" "${BENCH_RESULTS_FILE_PATH}"
 go test ${PKG} -run XXX -bench="${RUN}" -benchmem -timeout ${TIMEOUT} | tee "${BENCH_RESULTS_FILE_PATH}"

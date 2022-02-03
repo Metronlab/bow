@@ -19,7 +19,7 @@ test:
 	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/test.sh
 
 bench:
-	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/benchmark.sh
+	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/benchmark.sh "/tmp/benchmarks"
 
 CPUPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').cpu.prof
 MEMPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').mem.prof
