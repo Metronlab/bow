@@ -4,14 +4,12 @@
 set -o pipefail
 
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
-FILE_NAME=${1:-$TIMESTAMP}
 
 : "${PKG:="./..."}"
 : "${TIMEOUT:="1h"}"
 : "${RUN:=".*"}"
-
-BENCH_RESULTS_DIR_PATH="benchmarks"
-BENCH_RESULTS_FILE_PATH="$BENCH_RESULTS_DIR_PATH/$FILE_NAME.txt"
+: "${BENCH_RESULTS_DIR_PATH:="/tmp/benchmarks"}"
+: "${BENCH_RESULTS_FILE_PATH:="/tmp/benchmarks/${TIMESTAMP}.txt"}"
 
 mkdir -p "$BENCH_RESULTS_DIR_PATH"
 

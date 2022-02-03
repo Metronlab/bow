@@ -3,7 +3,7 @@
 OLD_BENCH_FILE_PATH=$1
 NEW_BENCH_FILE_PATH=$2
 
-: "${BENCH_RESULTS_DIR_PATH:="benchmarks"}"
+: "${BENCH_RESULTS_DIR_PATH:="/tmp/benchmarks"}"
 : "${BENCH_COMPARISON_FILE_PATH:="$BENCH_RESULTS_DIR_PATH/benchstat.$(date +%Y-%m-%d_%H-%M-%S).txt"}"
 
 echo
