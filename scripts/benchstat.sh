@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-set -o verbose
-
 OLD_BENCH_FILE_PATH=$1
 NEW_BENCH_FILE_PATH=$2
 
