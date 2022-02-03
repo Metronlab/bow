@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  current-branch:
+  ci:
     runs-on: ubuntu-latest
     env:
       BENCH_RESULTS_DIR_PATH: benchmarks
@@ -25,10 +25,10 @@ jobs:
           go install golang.org/x/perf/cmd/benchstat@latest
           bash -c ./scripts/benchmark.sh "benchmarks" "${{ format('benchmarks/{0}.txt', github.sha) }}" 
 
-      - name: ${{ format('Uploading artifact of branch {0} benchmark results', github.sha) }}
+      - name: ${{ format('Uploading artifact of sha {0} benchmark results', github.sha) }}
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ format('{0}-branch-benchmark-results', github.sha) }}
+          name: ${{ format('{0}-sha-benchmark-results', github.sha) }}
           path: ${{ format('benchmarks/{0}.txt', github.sha) }}
 
       - uses: actions/checkout@v2
@@ -41,14 +41,14 @@ jobs:
         run: |
           bash -c ./scripts/benchmark.sh "benchmarks" "${{ format('benchmarks/{0}.txt', github.base_ref) }}" 
 
-      - name: ${{ format('Uploading artifact of branch {0} benchmark results', github.base_ref) }}
+      - name: ${{ format('Uploading artifact of base ref {0} benchmark results', github.base_ref) }}
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ format('{0}-branch-benchmark-results', github.base_ref) }}
+          name: ${{ format('{0}-base-ref-benchmark-results', github.base_ref) }}
           path: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
 
-      - name: ${{ format('Compare benchmarks of old branch {0} with new branch {1}', github.base_ref, github.sha) }}
+      - name: ${{ format('Compare benchmarks of base ref {0} with sha {1}', github.base_ref, github.sha) }}
         if: ${{ github.event_name == 'pull_request' }}
         run: |
           bash ./scripts/benchstat.sh "${{ format('benchmarks/{0}.txt', github.base_ref) }}" "${{ format('benchmarks/{0}.txt', github.sha) }}" 
