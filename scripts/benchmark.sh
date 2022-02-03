@@ -2,13 +2,17 @@
 
 # The -o pipefail option is important for the trap to be executed if the "go test" command fails
 set -o pipefail
+set -o verbose
+
+BENCH_RESULTS_DIR_PATH=$1
+BENCH_RESULTS_FILE_PATH=$2
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 
 : ${PKG:=./...}
 : ${TIMEOUT:="1h"}
 : ${RUN:=".*"}
-
-BENCH_RESULTS_DIR_PATH=$1
-BENCH_RESULTS_FILE_PATH=$2
+: ${BENCH_RESULTS_DIR_PATH:="/tmp/benchmarks"}
+: ${BENCH_RESULTS_FILE_PATH:="${BENCH_RESULTS_DIR_PATH}/${TIMESTAMP}.txt"}
 
 mkdir -p "${BENCH_RESULTS_DIR_PATH}"
 
