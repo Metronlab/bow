@@ -23,7 +23,7 @@ jobs:
       - name: ${{ format('Run benchmarks on {0}', github.sha) }}
         run: |
           go install golang.org/x/perf/cmd/benchstat@latest
-          bash ./scripts/benchmark.sh "benchmarks" "${{ format('benchmarks/{0}.txt', github.sha) }}" 
+          bash ./scripts/benchmark.sh ${{ github.sha }}
 
       - name: ${{ format('Uploading artifact of sha {0} benchmark results', github.sha) }}
         uses: actions/upload-artifact@v2
@@ -39,7 +39,7 @@ jobs:
       - name: ${{ format('Run benchmarks on {0}', github.base_ref) }}
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          bash ./scripts/benchmark.sh "benchmarks" "${{ format('benchmarks/{0}.txt', github.base_ref) }}" 
+          bash ./scripts/benchmark.sh ${{ github.base_ref }}
 
       - name: ${{ format('Uploading artifact of base ref {0} benchmark results', github.base_ref) }}
         if: ${{ github.event_name == 'pull_request' }}
