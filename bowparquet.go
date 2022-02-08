@@ -257,6 +257,9 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	return nil
 }
 
+// GetParquetMetaColTimeUnit attempts to get the time unit of the column as a time.Duration
+// from the bow metadata read from a parquet file
+// If no time unit metadata is found, time.Duration(0) is returned without error.
 func (b *bow) GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error) {
 	colName := b.ColumnName(colIndex)
 
@@ -275,11 +278,12 @@ func (b *bow) GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error) {
 			if m.LogicalType != nil &&
 				m.LogicalType.IsSetTIMESTAMP() {
 				unit := m.LogicalType.TIMESTAMP.GetUnit()
-				if unit.IsSetMILLIS() {
+				switch {
+				case unit.IsSetMILLIS():
 					return time.Millisecond, nil
-				} else if unit.IsSetMICROS() {
+				case unit.IsSetMICROS():
 					return time.Microsecond, nil
-				} else if unit.IsSetNANOS() {
+				case unit.IsSetNANOS():
 					return time.Nanosecond, nil
 				}
 			}
@@ -289,6 +293,8 @@ func (b *bow) GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error) {
 	return time.Duration(0), nil
 }
 
+// NewMetaWithParquetTimestampCol returns a new bow Metadata from key-value pairs, plus a time column name and its unit as time.Duration.
+// supported durations include time.Millisecond, time.Microsecond and time.Nanosecond.
 func NewMetaWithParquetTimestampCol(keys, values []string, colName string, timeUnit time.Duration) Metadata {
 	var colTypes = make([]parquetColTypesMeta, 1)
 
