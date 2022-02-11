@@ -2,6 +2,9 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/apache/arrow/go/arrow"
+	"github.com/xitongsys/parquet-go/parquet"
 	"os"
 	"testing"
 	"time"
@@ -104,7 +107,7 @@ func TestParquet(t *testing.T) {
 		values = append(values, string(contextJSON))
 
 		bBefore, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampCol(keys, values, "time", time.Microsecond),
+			newMetaWithParquetTimestampCol(keys, values, "time", time.Microsecond),
 			series...)
 		require.NoError(t, err)
 
@@ -128,7 +131,7 @@ func TestParquet(t *testing.T) {
 		var keys, values []string
 
 		bBefore, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampCol(keys, values, "unknown", time.Microsecond),
+			newMetaWithParquetTimestampCol(keys, values, "unknown", time.Microsecond),
 			series...)
 		assert.NoError(t, err)
 
@@ -144,7 +147,7 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 
 	t.Run("time.Millisecond", func(t *testing.T) {
 		b, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Millisecond),
+			newMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Millisecond),
 			series...)
 		require.NoError(t, err)
 
@@ -155,7 +158,7 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 
 	t.Run("time.Microsecond", func(t *testing.T) {
 		b, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Microsecond),
+			newMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Microsecond),
 			series...)
 		require.NoError(t, err)
 
@@ -166,7 +169,7 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 
 	t.Run("time.Nanosecond", func(t *testing.T) {
 		b, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
+			newMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
 			series...)
 		require.NoError(t, err)
 
@@ -177,18 +180,18 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 
 	t.Run("column without timestamp metadata", func(t *testing.T) {
 		b, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
+			newMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
 			series...)
 		require.NoError(t, err)
 
 		got, err := b.GetParquetMetaColTimeUnit(1)
-		require.NoError(t, err)
+		require.ErrorIs(t, err, ErrColTimeUnitNotFound)
 		require.Equal(t, time.Duration(0), got)
 	})
 
 	t.Run("column out of range", func(t *testing.T) {
 		b, err := NewBowWithMetadata(
-			NewMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
+			newMetaWithParquetTimestampCol([]string{}, []string{}, timeCol, time.Nanosecond),
 			series...)
 		require.NoError(t, err)
 
@@ -196,4 +199,40 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 			_, _ = b.GetParquetMetaColTimeUnit(42)
 		})
 	})
+}
+
+func newMetaWithParquetTimestampCol(keys, values []string, colName string, timeUnit time.Duration) Metadata {
+	var colTypes = make([]parquetColTypesMeta, 1)
+
+	unit := parquet.TimeUnit{}
+	switch timeUnit {
+	case time.Millisecond:
+		unit.MILLIS = &parquet.MilliSeconds{}
+	case time.Microsecond:
+		unit.MICROS = &parquet.MicroSeconds{}
+	case time.Nanosecond:
+		unit.NANOS = &parquet.NanoSeconds{}
+	default:
+		panic(fmt.Errorf("unsupported time unit '%s'", timeUnit))
+	}
+
+	logicalType := parquet.LogicalType{
+		TIMESTAMP: &parquet.TimestampType{
+			IsAdjustedToUTC: true,
+			Unit:            &unit,
+		}}
+	colTypes[0] = parquetColTypesMeta{
+		Name:        colName,
+		LogicalType: &logicalType,
+	}
+
+	colTypesJSON, err := json.Marshal(colTypes)
+	if err != nil {
+		panic(err)
+	}
+
+	keys = append(keys, keyParquetColTypesMeta)
+	values = append(values, string(colTypesJSON))
+
+	return Metadata{arrow.NewMetadata(keys, values)}
 }

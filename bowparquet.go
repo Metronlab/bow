@@ -2,11 +2,11 @@ package bow
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/apache/arrow/go/arrow"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/layout"
 	"github.com/xitongsys/parquet-go/marshal"
@@ -125,12 +125,12 @@ func NewBowFromParquet(path string, verbose bool) (Bow, error) {
 	}
 
 	if len(parquetColTypesMetas) > 0 {
-		bytes, err := json.Marshal(parquetColTypesMetas)
+		colTypesJSON, err := json.Marshal(parquetColTypesMetas)
 		if err != nil {
 			return nil, fmt.Errorf("json.Marshal: %w", err)
 		}
 		keys = append(keys, keyParquetColTypesMeta)
-		values = append(values, string(bytes))
+		values = append(values, string(colTypesJSON))
 	}
 
 	b, err := NewBowWithMetadata(NewMetadata(keys, values), series...)
@@ -163,25 +163,13 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		path += ".parquet"
 	}
 
-	bowMeta := b.Metadata()
-	bowMetaValues := bowMeta.Values()
-
-	var parquetMeta []*parquet.KeyValue
 	var parquetColTypesMetas []parquetColTypesMeta
-	for k, key := range bowMeta.Keys() {
-		if key != "ARROW:schema" {
-			parquetMeta = append(parquetMeta, &parquet.KeyValue{
-				Key:   key,
-				Value: &bowMetaValues[k],
-			})
-		}
-
-		if key == keyParquetColTypesMeta {
-			var err error
-			parquetColTypesMetas, err = readColTypesMeta(b, bowMetaValues[k])
-			if err != nil {
-				return fmt.Errorf("readColTypesMeta: %w", err)
-			}
+	keyIndex := b.Metadata().FindKey(keyParquetColTypesMeta)
+	if keyIndex != -1 {
+		var err error
+		parquetColTypesMetas, err = readColTypesMeta(b, b.Metadata().Values()[keyIndex])
+		if err != nil {
+			return fmt.Errorf("readColTypesMeta: %w", err)
 		}
 	}
 
@@ -222,7 +210,15 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		return fmt.Errorf("newJSONWriter: %w", err)
 	}
 
-	parquetWriter.Footer.KeyValueMetadata = parquetMeta
+	for k, key := range b.Metadata().Keys() {
+		if key != "ARROW:schema" {
+			parquetWriter.Footer.KeyValueMetadata = append(parquetWriter.Footer.KeyValueMetadata,
+				&parquet.KeyValue{
+					Key:   key,
+					Value: &b.Metadata().Values()[k],
+				})
+		}
+	}
 
 	for i, lt := range lTypes {
 		parquetWriter.SchemaHandler.SchemaElements[i].LogicalType = lt
@@ -238,8 +234,7 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 		}
 	}
 
-	err = parquetWriter.WriteStop()
-	if err != nil {
+	if err = parquetWriter.WriteStop(); err != nil {
 		return fmt.Errorf("JSONWriter.WriteStop: %w", err)
 	}
 
@@ -257,15 +252,17 @@ func (b *bow) WriteParquet(path string, verbose bool) error {
 	return nil
 }
 
+var ErrColTimeUnitNotFound = errors.New("column time unit not found in parquet metadata")
+
 // GetParquetMetaColTimeUnit attempts to get the time unit of the column as a time.Duration
-// from the bow metadata read from a parquet file
-// If no time unit metadata is found, time.Duration(0) is returned without error.
+// from the bow metadata read from a parquet file.
+// If no time unit metadata is found, time.Duration(0) is returned along with ErrColTimeUnitNotFound.
 func (b *bow) GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error) {
 	colName := b.ColumnName(colIndex)
 
 	keyIndex := b.Metadata().FindKey(keyParquetColTypesMeta)
 	if keyIndex == -1 {
-		return time.Duration(0), nil
+		return time.Duration(0), ErrColTimeUnitNotFound
 	}
 
 	colTypesMeta, err := readColTypesMeta(b, b.Metadata().Values()[keyIndex])
@@ -290,45 +287,7 @@ func (b *bow) GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error) {
 		}
 	}
 
-	return time.Duration(0), nil
-}
-
-// NewMetaWithParquetTimestampCol returns a new bow Metadata from key-value pairs, plus a time column name and its unit as time.Duration.
-// supported durations include time.Millisecond, time.Microsecond and time.Nanosecond.
-func NewMetaWithParquetTimestampCol(keys, values []string, colName string, timeUnit time.Duration) Metadata {
-	var colTypes = make([]parquetColTypesMeta, 1)
-
-	unit := parquet.TimeUnit{}
-	switch timeUnit {
-	case time.Millisecond:
-		unit.MILLIS = &parquet.MilliSeconds{}
-	case time.Microsecond:
-		unit.MICROS = &parquet.MicroSeconds{}
-	case time.Nanosecond:
-		unit.NANOS = &parquet.NanoSeconds{}
-	default:
-		panic(fmt.Errorf("unsupported time unit '%s'", timeUnit))
-	}
-
-	logicalType := parquet.LogicalType{
-		TIMESTAMP: &parquet.TimestampType{
-			IsAdjustedToUTC: true,
-			Unit:            &unit,
-		}}
-	colTypes[0] = parquetColTypesMeta{
-		Name:        colName,
-		LogicalType: &logicalType,
-	}
-
-	colTypesJSON, err := json.Marshal(colTypes)
-	if err != nil {
-		panic(err)
-	}
-
-	keys = append(keys, keyParquetColTypesMeta)
-	values = append(values, string(colTypesJSON))
-
-	return Metadata{arrow.NewMetadata(keys, values)}
+	return time.Duration(0), ErrColTimeUnitNotFound
 }
 
 func readColTypesMeta(b Bow, jsonEncodedData string) ([]parquetColTypesMeta, error) {
