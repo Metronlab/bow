@@ -5,8 +5,8 @@ package bow
 import (
 	"fmt"
 
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/bitutil"
+	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/bitutil"
 )
 
 func NewBuffer(size int, typ Type) Buffer {
