@@ -3,14 +3,14 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/apache/arrow/go/arrow"
-	"github.com/xitongsys/parquet-go/parquet"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/apache/arrow/go/v7/arrow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xitongsys/parquet-go/parquet"
 )
 
 const (
