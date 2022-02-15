@@ -3,9 +3,11 @@ package bow
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"time"
+
 	"github.com/apache/arrow/go/v7/arrow"
 	"github.com/apache/arrow/go/v7/arrow/array"
-	"reflect"
 )
 
 // Bow is a wrapper of Apache Arrow array.Record interface.
@@ -87,6 +89,7 @@ type Bow interface {
 	UnmarshalJSON(data []byte) error
 	NewValuesFromJSON(jsonB JSONBow) error
 	WriteParquet(path string, verbose bool) error
+	GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error)
 }
 
 type bow struct {

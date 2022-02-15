@@ -3,6 +3,7 @@ package bow
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/apache/arrow/go/arrow/bitutil"
 	"github.com/apache/arrow/go/v7/arrow"
 )
