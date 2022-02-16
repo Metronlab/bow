@@ -1,3 +1,14 @@
+v0.18.0 [2022-02-16]
+-------------------
+
+- General
+  - bump to arrow/go/v7
+  - improve CI to run benchmarks comparison for PR with the same runner
+- Parquet
+  - add new GetParquetMetaColTimeUnit method to extract column time unit from the metadata of a bow read from a parquet file 
+  - remove deprecated ConvertedType from the metadata
+
+
 v0.17.0 [2021-10-27]
 -------------------
 
