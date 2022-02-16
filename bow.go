@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v7/arrow/array"
 )
 
 // Bow is a wrapper of Apache Arrow array.Record interface.
@@ -88,15 +89,16 @@ type Bow interface {
 	UnmarshalJSON(data []byte) error
 	NewValuesFromJSON(jsonB JSONBow) error
 	WriteParquet(path string, verbose bool) error
+	GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error)
 }
 
 type bow struct {
-	array.Record
+	arrow.Record
 }
 
 func NewBowEmpty() Bow {
 	var fields []arrow.Field
-	var arrays []array.Interface
+	var arrays []arrow.Array
 	schema := arrow.NewSchema(fields, nil)
 	return &bow{Record: array.NewRecord(schema, arrays, 0)}
 }
@@ -355,7 +357,7 @@ func (b *bow) NewSeriesFromCol(colIndex int) Series {
 	}
 }
 
-func getValiditySlice(arr array.Interface) []bool {
+func getValiditySlice(arr arrow.Array) []bool {
 	valid := make([]bool, arr.Len())
 
 	for i := 0; i < arr.Len(); i++ {

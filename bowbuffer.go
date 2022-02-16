@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apache/arrow/go/arrow/bitutil"
+	"github.com/apache/arrow/go/v7/arrow/bitutil"
 )
 
 type Buffer struct {

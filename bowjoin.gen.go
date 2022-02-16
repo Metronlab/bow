@@ -5,7 +5,7 @@ package bow
 import (
 	"fmt"
 
-	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/array"
 )
 
 func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,

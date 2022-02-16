@@ -4,9 +4,9 @@ package bow
 
 import (
 	"fmt"
-
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
+	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/memory"
 )
 
 // AppendBows attempts to append bows with equal schemas.
@@ -31,7 +31,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
-		var newArray array.Interface
+		var newArray arrow.Array
 		refType := refBow.ColumnType(colIndex)
 		switch refType {
 		case Int64:
