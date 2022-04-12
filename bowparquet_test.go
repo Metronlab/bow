@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/xitongsys/parquet-go/parquet"
 )
 
 const (
@@ -20,12 +19,12 @@ const (
 
 func TestParquet(t *testing.T) {
 	t.Run("read/write input file", func(t *testing.T) {
-		bBefore, err := NewBowFromParquet(testInputFileName, false)
+		bBefore, err := NewBowFromParquet(testInputFileName, true)
 		assert.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName, false))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName, true))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName+".parquet", false)
+		bAfter, err := NewBowFromParquet(testOutputFileName+".parquet", true)
 		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
@@ -45,11 +44,13 @@ func TestParquet(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", true))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", false)
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", true)
 		assert.NoError(t, err)
 
+		fmt.Printf("bBefore\n%s\n", bBefore)
+		fmt.Printf("bAfter\n%s\n", bAfter)
 		assert.Equal(t, bBefore.String(), bAfter.String())
 
 		require.NoError(t, os.Remove(testOutputFileName+"_withrows.parquet"))
@@ -62,9 +63,9 @@ func TestParquet(t *testing.T) {
 			[][]interface{}{})
 		require.NoError(t, err)
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", false))
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_norows", true))
 
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows.parquet", false)
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_norows.parquet", true)
 		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
@@ -111,10 +112,10 @@ func TestParquet(t *testing.T) {
 			series...)
 		require.NoError(t, err)
 
-		err = bBefore.WriteParquet(testOutputFileName+"_meta", false)
+		err = bBefore.WriteParquet(testOutputFileName+"_meta", true)
 		assert.NoError(t, err)
 
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", false)
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_meta.parquet", true)
 		assert.NoError(t, err)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
@@ -202,29 +203,7 @@ func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 }
 
 func newMetaWithParquetTimestampCol(keys, values []string, colName string, timeUnit time.Duration) Metadata {
-	var colTypes = make([]parquetColTypesMeta, 1)
-
-	unit := parquet.TimeUnit{}
-	switch timeUnit {
-	case time.Millisecond:
-		unit.MILLIS = &parquet.MilliSeconds{}
-	case time.Microsecond:
-		unit.MICROS = &parquet.MicroSeconds{}
-	case time.Nanosecond:
-		unit.NANOS = &parquet.NanoSeconds{}
-	default:
-		panic(fmt.Errorf("unsupported time unit '%s'", timeUnit))
-	}
-
-	logicalType := parquet.LogicalType{
-		TIMESTAMP: &parquet.TimestampType{
-			IsAdjustedToUTC: true,
-			Unit:            &unit,
-		}}
-	colTypes[0] = parquetColTypesMeta{
-		Name:        colName,
-		LogicalType: &logicalType,
-	}
+	colTypes := ""
 
 	colTypesJSON, err := json.Marshal(colTypes)
 	if err != nil {

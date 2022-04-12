@@ -1,7 +1,7 @@
 package bow
 
 import (
-	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v8/arrow"
 )
 
 type Type int
@@ -22,6 +22,10 @@ const (
 	Int64
 	Boolean
 	String
+	TimestampSec
+	TimestampMilli
+	TimestampMicro
+	TimestampNano
 
 	// InputDependent is used in transformation like aggregation
 	// when output type is infer with input type
@@ -34,10 +38,24 @@ const (
 
 var (
 	mapArrowToBowTypes = map[arrow.DataType]Type{
-		arrow.PrimitiveTypes.Float64:  Float64,
-		arrow.PrimitiveTypes.Int64:    Int64,
-		arrow.FixedWidthTypes.Boolean: Boolean,
-		arrow.BinaryTypes.String:      String,
+		arrow.PrimitiveTypes.Float64:       Float64,
+		arrow.PrimitiveTypes.Int64:         Int64,
+		arrow.FixedWidthTypes.Boolean:      Boolean,
+		arrow.BinaryTypes.String:           String,
+		arrow.FixedWidthTypes.Timestamp_s:  TimestampSec,
+		arrow.FixedWidthTypes.Timestamp_ms: TimestampMilli,
+		arrow.FixedWidthTypes.Timestamp_us: TimestampMicro,
+		arrow.FixedWidthTypes.Timestamp_ns: TimestampNano,
+	}
+	mapArrowFingerprintToBowTypes = map[string]Type{
+		arrow.PrimitiveTypes.Float64.Fingerprint():       Float64,
+		arrow.PrimitiveTypes.Int64.Fingerprint():         Int64,
+		arrow.FixedWidthTypes.Boolean.Fingerprint():      Boolean,
+		arrow.BinaryTypes.String.Fingerprint():           String,
+		arrow.FixedWidthTypes.Timestamp_s.Fingerprint():  TimestampSec,
+		arrow.FixedWidthTypes.Timestamp_ms.Fingerprint(): TimestampMilli,
+		arrow.FixedWidthTypes.Timestamp_us.Fingerprint(): TimestampMicro,
+		arrow.FixedWidthTypes.Timestamp_ns.Fingerprint(): TimestampNano,
 	}
 	mapBowToArrowTypes = func() map[Type]arrow.DataType {
 		res := make(map[Type]arrow.DataType)
@@ -110,6 +128,14 @@ func getBowTypeFromArrowName(arrowName string) Type {
 
 func getBowTypeFromArrowType(arrowType arrow.DataType) Type {
 	typ, ok := mapArrowToBowTypes[arrowType]
+	if !ok {
+		return Unknown
+	}
+	return typ
+}
+
+func getBowTypeFromArrowTypeFingerprint(arrowType arrow.DataType) Type {
+	typ, ok := mapArrowFingerprintToBowTypes[arrowType.Fingerprint()]
 	if !ok {
 		return Unknown
 	}

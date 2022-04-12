@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/apache/arrow/go/v7/arrow"
-	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow"
+	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
 func NewBowFromRecord(record arrow.Record) (Bow, error) {
 	for _, f := range record.Schema().Fields() {
-		if getBowTypeFromArrowType(f.Type) == Unknown {
+		if getBowTypeFromArrowTypeFingerprint(f.Type) == Unknown {
 			return nil, fmt.Errorf("unsupported type: %s", f.Type.Name())
 		}
 	}
@@ -42,7 +42,11 @@ func newRecord(metadata Metadata, series ...Series) (arrow.Record, error) {
 					"bow.Series '%s' has a length of %d, which is different from the previous ones",
 					s.Name, s.Array.Len())
 		}
-		fields = append(fields, arrow.Field{Name: s.Name, Type: s.Array.DataType()})
+		fields = append(fields, arrow.Field{
+			Name:     s.Name,
+			Type:     s.Array.DataType(),
+			Nullable: true,
+		})
 		arrays = append(arrays, s.Array)
 	}
 

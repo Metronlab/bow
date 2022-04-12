@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow"
-	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow"
+	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
 // Bow is a wrapper of Apache Arrow array.Record interface.
@@ -145,7 +145,7 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colTypes) {
 		return nil, errors.New(
-			"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and colTypes len")
+			"mismatch between colNames and colTypes len")
 	}
 
 	bufSlice := make([]Buffer, len(colNames))
@@ -156,7 +156,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 	for rowIndex, row := range rowBasedData {
 		if len(row) != len(colNames) {
 			return nil, errors.New(
-				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
+				"mismatch between colNames and row lengths")
 		}
 
 		for colIndex := range colNames {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apache/arrow/go/v7/arrow"
-	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow"
+	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
 func (b *bow) GetRow(rowIndex int) map[string]interface{} {
@@ -35,6 +35,14 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 		return array.NewBooleanData(b.Column(colIndex).Data()).Value(rowIndex)
 	case String:
 		return array.NewStringData(b.Column(colIndex).Data()).Value(rowIndex)
+	case TimestampSec:
+		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
+	case TimestampMilli:
+		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
+	case TimestampMicro:
+		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
+	case TimestampNano:
+		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
 	}
@@ -255,7 +263,7 @@ func (b *bow) GetPrevFloat64(colIndex, rowIndex int) (float64, int) {
 }
 
 func (b *bow) ColumnType(colIndex int) Type {
-	return getBowTypeFromArrowType(b.Schema().Field(colIndex).Type)
+	return getBowTypeFromArrowTypeFingerprint(b.Schema().Field(colIndex).Type)
 }
 
 func (b *bow) ColumnIndex(colName string) (int, error) {

@@ -10,7 +10,7 @@ gen:
 	@go generate $(PKG)
 
 lint:
-	golangci-lint run -E gofmt --fix -v $(PKG)
+	golangci-lint run -E gofmt,gci --fix -v $(PKG)
 
 count:
 	@bash -c $(PWD)/scripts/count-code-lines.sh
