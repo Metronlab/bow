@@ -96,6 +96,7 @@ type bow struct {
 	arrow.Record
 }
 
+// NewBowEmpty returns a new empty Bow
 func NewBowEmpty() Bow {
 	var fields []arrow.Field
 	var arrays []arrow.Array
@@ -103,6 +104,7 @@ func NewBowEmpty() Bow {
 	return &bow{Record: array.NewRecord(schema, arrays, 0)}
 }
 
+// NewBow returns a new Bow from one or more Series
 func NewBow(series ...Series) (Bow, error) {
 	rec, err := newRecord(Metadata{}, series...)
 	if err != nil {
@@ -141,7 +143,7 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData []
 	return NewBow(seriesSlice...)
 }
 
-// NewBowFromRowBasedInterfaces returns a new bow from row based data
+// NewBowFromRowBasedInterfaces returns a new Bow from row based data
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colTypes) {
 		return nil, errors.New(
@@ -172,6 +174,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 	return NewBow(seriesSlice...)
 }
 
+// NewEmptySlice returns an empty slice of the Bow
 func (b *bow) NewEmptySlice() Bow {
 	return b.NewSlice(0, 0)
 }
@@ -214,6 +217,7 @@ func (b *bow) DropNils(colIndices ...int) (Bow, error) {
 	return AppendBows(bowSlice...)
 }
 
+// GetRowsChan returns a chan of rows as map[string]interface{}
 func (b *bow) GetRowsChan() <-chan map[string]interface{} {
 	rows := make(chan map[string]interface{})
 	go b.getRowsChan(rows)
@@ -233,6 +237,7 @@ func (b *bow) getRowsChan(rows chan map[string]interface{}) {
 	}
 }
 
+// Equal returns true if the two Bow are equal: their record, schema and metadata should be equal.
 func (b *bow) Equal(other Bow) bool {
 	b2, ok := other.(*bow)
 	if !ok {
@@ -283,12 +288,15 @@ func (b *bow) Equal(other Bow) bool {
 	return true
 }
 
+// NewSlice returns a new Bow with a zero-copy slice of the Bow arrow.Record.
+// i and j being the minimum and maximum rows respectively.
 func (b *bow) NewSlice(i, j int) Bow {
 	return &bow{
 		Record: b.Record.NewSlice(int64(i), int64(j)),
 	}
 }
 
+// Select returns a copy of the Bow, including only the columns from `colIndices`.
 func (b *bow) Select(colIndices ...int) (Bow, error) {
 	if len(colIndices) == 0 {
 		return NewBowWithMetadata(b.Metadata())
@@ -309,6 +317,7 @@ func (b *bow) Select(colIndices ...int) (Bow, error) {
 	return NewBowWithMetadata(b.Metadata(), seriesSlice...)
 }
 
+// NumRows returns the number of rows in the Bow
 func (b *bow) NumRows() int {
 	if b.Record == nil {
 		return 0
@@ -317,6 +326,7 @@ func (b *bow) NumRows() int {
 	return int(b.Record.NumRows())
 }
 
+// NumCols returns the number of columns in the Bow
 func (b *bow) NumCols() int {
 	if b.Record == nil {
 		return 0
@@ -325,6 +335,7 @@ func (b *bow) NumCols() int {
 	return int(b.Record.NumCols())
 }
 
+// AddCols returns a copy of the Bow with extra columns from the `seriesSlice`.
 func (b *bow) AddCols(seriesSlice ...Series) (Bow, error) {
 	if len(seriesSlice) == 0 {
 		return b, nil

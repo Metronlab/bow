@@ -5,6 +5,7 @@ install:
 	@go install golang.org/x/perf/cmd/benchstat@latest
 	@go install github.com/jstemmer/go-junit-report@latest
 	@go install github.com/Metronlab/genius@latest
+	@go install golang.org/x/tools/cmd/godoc@latest
 
 gen:
 	@go generate $(PKG)
@@ -20,6 +21,10 @@ test:
 
 bench:
 	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/benchmark.sh
+
+doc:
+	godoc -http=:6060 -goroot=$(HOME)/go &
+	echo http://localhost:6060/pkg/bow
 
 CPUPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').cpu.prof
 MEMPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').mem.prof
