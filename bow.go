@@ -10,10 +10,9 @@ import (
 	"github.com/apache/arrow/go/v7/arrow/array"
 )
 
-// Bow is a wrapper of Apache Arrow array.Record interface.
-// It was not implemented as a facade shadowing Arrow
-// in order to expose low level Arrow decisions to Bow users
-// while Arrow is in beta.
+// Bow is wrapping the Apache Arrow arrow.Record interface,
+// which is a collection of equal-length arrow.Array matching a particular arrow.Schema.
+// Its purpose is to add convenience methods to easily manipulate dataframes.
 type Bow interface {
 	String() string
 	Schema() *arrow.Schema
@@ -108,70 +107,70 @@ func NewBowEmpty() Bow {
 func NewBow(series ...Series) (Bow, error) {
 	rec, err := newRecord(Metadata{}, series...)
 	if err != nil {
-		return nil, fmt.Errorf("bow.NewBow: %w", err)
+		return nil, fmt.Errorf("newRecord: %w", err)
 	}
 
 	return &bow{Record: rec}, nil
 }
 
 // NewBowFromColBasedInterfaces returns a new Bow:
-// - colNames contains the bow.Record fields names
-// - colTypes contains the bow.Record fields data types, optional
+// - colNames contains the Series names
+// - colTypes contains the Series data types, optional
 //   (if nil, the types will be automatically seeked)
-// - colData contains the data to be stored in bow.Record
-//   (colNames and colData need to be of the same size)
-func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colData [][]interface{}) (Bow, error) {
-	if len(colNames) != len(colData) {
-		return nil, errors.New("bow.NewBowFromColBasedInterfaces: colNames and colData array lengths don't match")
+// - colBasedData contains the data itself as a two-dimensional slice,
+//   with the first dimension being the columns
+//   (colNames and colBasedData need to be of the same size)
+func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colBasedData [][]interface{}) (Bow, error) {
+	if len(colNames) != len(colBasedData) {
+		return nil, errors.New("colNames and colBasedData slices lengths don't match")
 	}
 
 	if colTypes == nil {
 		colTypes = make([]Type, len(colNames))
 	} else if len(colNames) != len(colTypes) {
-		return nil, errors.New("bow.NewBowFromColBasedInterfaces: colNames and colTypes array lengths don't match")
+		return nil, errors.New("colNames and colTypes slices lengths don't match")
 	}
 
-	var err error
-	seriesSlice := make([]Series, len(colNames))
+	series := make([]Series, len(colNames))
 	for i, colName := range colNames {
-		seriesSlice[i] = NewSeriesFromInterfaces(colName, colTypes[i], colData[i])
-		if err != nil {
-			return nil, err
-		}
+		series[i] = NewSeriesFromInterfaces(colName, colTypes[i], colBasedData[i])
 	}
 
-	return NewBow(seriesSlice...)
+	return NewBow(series...)
 }
 
-// NewBowFromRowBasedInterfaces returns a new Bow from row based data
+// NewBowFromRowBasedInterfaces returns a new Bow:
+// - colNames contains the Series names
+// - colTypes contains the Series data types, required
+// - rowBasedData contains the data itself as a two-dimensional slice,
+//   with the first dimension being the rows
+//   (colNames and rowBasedData need to be of the same size)
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colTypes) {
-		return nil, errors.New(
-			"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and colTypes len")
+		return nil, errors.New("colNames and colTypes slices lengths don't match")
 	}
 
-	bufSlice := make([]Buffer, len(colNames))
-	for i := range bufSlice {
-		bufSlice[i] = NewBuffer(len(rowBasedData), colTypes[i])
+	buffers := make([]Buffer, len(colNames))
+	for i := range buffers {
+		buffers[i] = NewBuffer(len(rowBasedData), colTypes[i])
 	}
 
 	for rowIndex, row := range rowBasedData {
 		if len(row) != len(colNames) {
-			return nil, errors.New(
-				"bow.NewBowFromRowBasedInterfaces: mismatch between colNames and row lengths")
+			return nil, errors.New("colNames and row slices lengths don't match")
 		}
 
 		for colIndex := range colNames {
-			bufSlice[colIndex].SetOrDrop(rowIndex, row[colIndex])
+			buffers[colIndex].SetOrDrop(rowIndex, row[colIndex])
 		}
 	}
 
-	seriesSlice := make([]Series, len(colNames))
+	series := make([]Series, len(colNames))
 	for i := range colNames {
-		seriesSlice[i] = NewSeriesFromBuffer(colNames[i], bufSlice[i])
+		series[i] = NewSeriesFromBuffer(colNames[i], buffers[i])
 	}
 
-	return NewBow(seriesSlice...)
+	return NewBow(series...)
 }
 
 // NewEmptySlice returns an empty slice of the Bow
@@ -184,7 +183,7 @@ func (b *bow) NewEmptySlice() Bow {
 func (b *bow) DropNils(colIndices ...int) (Bow, error) {
 	selectedCols, err := selectCols(b, colIndices)
 	if err != nil {
-		return nil, fmt.Errorf("bow.DropNils: %w", err)
+		return nil, err
 	}
 
 	var droppedRowIndices []int
@@ -205,43 +204,23 @@ func (b *bow) DropNils(colIndices ...int) (Bow, error) {
 		return b, nil
 	}
 
-	bowSlice := make([]Bow, len(droppedRowIndices)+1)
+	bows := make([]Bow, len(droppedRowIndices)+1)
 	var curr int
 	for i, droppedRowIndex := range droppedRowIndices {
-		bowSlice[i] = b.NewSlice(curr, droppedRowIndex)
+		bows[i] = b.NewSlice(curr, droppedRowIndex)
 		curr = droppedRowIndex + 1
 	}
 
-	bowSlice[len(droppedRowIndices)] = b.NewSlice(curr, b.NumRows())
+	bows[len(droppedRowIndices)] = b.NewSlice(curr, b.NumRows())
 
-	return AppendBows(bowSlice...)
+	return AppendBows(bows...)
 }
 
-// GetRowsChan returns a chan of rows as map[string]interface{}
-func (b *bow) GetRowsChan() <-chan map[string]interface{} {
-	rows := make(chan map[string]interface{})
-	go b.getRowsChan(rows)
-
-	return rows
-}
-
-func (b *bow) getRowsChan(rows chan map[string]interface{}) {
-	defer close(rows)
-
-	if b.Record == nil || b.NumRows() == 0 {
-		return
-	}
-
-	for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
-		rows <- b.GetRow(rowIndex)
-	}
-}
-
-// Equal returns true if the two Bow are equal: their record, schema and metadata should be equal.
+// Equal returns true if the two Bow are equal: their Record, Schema and Metadata should be equal.
 func (b *bow) Equal(other Bow) bool {
 	b2, ok := other.(*bow)
 	if !ok {
-		panic("bow.Equal: 'other' isn't a bow object")
+		panic("'other' isn't a bow object")
 	}
 
 	if b.Record == nil && b2.Record == nil {
@@ -288,7 +267,7 @@ func (b *bow) Equal(other Bow) bool {
 	return true
 }
 
-// NewSlice returns a new Bow with a zero-copy slice of the Bow arrow.Record.
+// NewSlice returns a new Bow with a zero-copy slice of the arrow.Record.
 // i and j being the minimum and maximum rows respectively.
 func (b *bow) NewSlice(i, j int) Bow {
 	return &bow{
@@ -307,17 +286,17 @@ func (b *bow) Select(colIndices ...int) (Bow, error) {
 		return nil, err
 	}
 
-	var seriesSlice []Series
+	var series []Series
 	for colIndex := range b.Schema().Fields() {
 		if selectedCols[colIndex] {
-			seriesSlice = append(seriesSlice, b.NewSeriesFromCol(colIndex))
+			series = append(series, b.NewSeriesFromCol(colIndex))
 		}
 	}
 
-	return NewBowWithMetadata(b.Metadata(), seriesSlice...)
+	return NewBowWithMetadata(b.Metadata(), series...)
 }
 
-// NumRows returns the number of rows in the Bow
+// NumRows returns the number of rows in the Bow.
 func (b *bow) NumRows() int {
 	if b.Record == nil {
 		return 0
@@ -326,7 +305,7 @@ func (b *bow) NumRows() int {
 	return int(b.Record.NumRows())
 }
 
-// NumCols returns the number of columns in the Bow
+// NumCols returns the number of columns in the Bow.
 func (b *bow) NumCols() int {
 	if b.Record == nil {
 		return 0
@@ -335,32 +314,29 @@ func (b *bow) NumCols() int {
 	return int(b.Record.NumCols())
 }
 
-// AddCols returns a copy of the Bow with extra columns from the `seriesSlice`.
-func (b *bow) AddCols(seriesSlice ...Series) (Bow, error) {
-	if len(seriesSlice) == 0 {
-		return b, nil
-	}
-
-	addedColNames := make(map[string]*interface{}, b.NumCols()+len(seriesSlice))
-	newSeriesSlice := make([]Series, b.NumCols()+len(seriesSlice))
+// AddCols returns a copy of the Bow with extra columns from the `series`.
+func (b *bow) AddCols(series ...Series) (Bow, error) {
+	addedColNames := make(map[string]*interface{}, b.NumCols()+len(series))
+	newSeries := make([]Series, b.NumCols()+len(series))
 
 	for colIndex, col := range b.Schema().Fields() {
-		newSeriesSlice[colIndex] = b.NewSeriesFromCol(colIndex)
+		newSeries[colIndex] = b.NewSeriesFromCol(colIndex)
 		addedColNames[col.Name] = nil
 	}
 
-	for i, s := range seriesSlice {
+	for i, s := range series {
 		_, ok := addedColNames[s.Name]
 		if ok {
-			return nil, fmt.Errorf("bow.AddCols: column %q already exists", s.Name)
+			return nil, fmt.Errorf("column %q already exists", s.Name)
 		}
-		newSeriesSlice[b.NumCols()+i] = s
+		newSeries[b.NumCols()+i] = s
 		addedColNames[s.Name] = nil
 	}
 
-	return NewBowWithMetadata(b.Metadata(), newSeriesSlice...)
+	return NewBowWithMetadata(b.Metadata(), newSeries...)
 }
 
+// NewSeriesFromCol returns a Series from the column `colIndex`.
 func (b *bow) NewSeriesFromCol(colIndex int) Series {
 	return Series{
 		Name:  b.ColumnName(colIndex),

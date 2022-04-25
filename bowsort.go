@@ -6,12 +6,11 @@ import (
 )
 
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
-// The only type currently supported for the column to sort by is Int64, without nil values.
 // Returns the same Bow if the column is already sorted.
 func (b *bow) SortByCol(colIndex int) (Bow, error) {
 	if b.Column(colIndex).NullN() != 0 {
 		return nil, fmt.Errorf(
-			"bow.SortByCol: column to sort by has %d nil values",
+			"column to sort by has %d nil values",
 			b.Column(colIndex).NullN())
 	}
 
@@ -32,8 +31,8 @@ func (b *bow) SortByCol(colIndex int) (Bow, error) {
 			continue
 		}
 		buf := NewBuffer(b.NumRows(), b.ColumnType(i))
-		for j, indice := range sortableBuf.indices {
-			buf.SetOrDropStrict(j, b.GetValue(i, indice))
+		for j, index := range sortableBuf.indices {
+			buf.SetOrDropStrict(j, b.GetValue(i, index))
 		}
 		sortedSeries[i] = NewSeriesFromBuffer(b.ColumnName(i), buf)
 	}
@@ -41,8 +40,7 @@ func (b *bow) SortByCol(colIndex int) (Bow, error) {
 	return NewBowWithMetadata(b.Metadata(), sortedSeries...)
 }
 
-// Int64Slice implements the methods of sort.Interface, sorting in increasing order
-// (not-a-number values are treated as less than other values).
+// bufferWithIndices implements the methods of sort.Interface, sorting in ascending order.
 type bufferWithIndices struct {
 	Buffer
 	indices []int

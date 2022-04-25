@@ -2,7 +2,6 @@ package bow
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type jsonField struct {
@@ -14,23 +13,27 @@ type JSONSchema struct {
 	Fields []jsonField `json:"fields"`
 }
 
+// JSONBow is a structure representing a Bow for JSON marshaling purpose.
 type JSONBow struct {
 	Schema       JSONSchema               `json:"schema"`
 	RowBasedData []map[string]interface{} `json:"data"`
 }
 
+// MarshalJSON returns the marshal encoding of the bow.
 func (b bow) MarshalJSON() ([]byte, error) {
 	return json.Marshal(NewJSONBow(&b))
 }
 
-func NewJSONBow(b Bow) (res JSONBow) {
+// NewJSONBow returns a new JSONBow structure from a Bow.
+func NewJSONBow(b Bow) JSONBow {
 	if b == nil {
-		return
+		return JSONBow{}
 	}
 
-	res = JSONBow{
+	res := JSONBow{
 		RowBasedData: make([]map[string]interface{}, 0, b.NumRows()),
 	}
+
 	for _, col := range b.Schema().Fields() {
 		res.Schema.Fields = append(
 			res.Schema.Fields,
@@ -46,24 +49,26 @@ func NewJSONBow(b Bow) (res JSONBow) {
 		}
 		res.RowBasedData = append(res.RowBasedData, row)
 	}
-	return
+
+	return res
 }
 
+// UnmarshalJSON parses the JSON-encoded data and stores the result in the bow.
 func (b *bow) UnmarshalJSON(data []byte) error {
 	jsonB := JSONBow{}
 	if err := json.Unmarshal(data, &jsonB); err != nil {
-		return fmt.Errorf("bow.UnmarshalJSON: %w", err)
+		return err
 	}
 
 	if err := b.NewValuesFromJSON(jsonB); err != nil {
-		return fmt.Errorf("bow.UnmarshalJSON: %w", err)
+		return err
 	}
 
 	return nil
 
 }
 
-// NewValuesFromJSON replaces b values by a filled JSONBow struct
+// NewValuesFromJSON replaces the bow arrow.Record by a new one represented by the JSONBow structure.
 func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	if len(jsonB.Schema.Fields) == 0 {
 		b.Record = NewBowEmpty().(*bow).Record
@@ -102,18 +107,18 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 		}
 	}
 
-	seriesSlice := make([]Series, len(jsonB.Schema.Fields))
+	series := make([]Series, len(jsonB.Schema.Fields))
 
 	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
 			typ := getBowTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, typ)
-			seriesSlice[i] = NewSeriesFromBuffer(field.Name, buf)
+			series[i] = NewSeriesFromBuffer(field.Name, buf)
 		}
 
-		tmpBow, err := NewBow(seriesSlice...)
+		tmpBow, err := NewBow(series...)
 		if err != nil {
-			return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
+			return err
 		}
 
 		b.Record = tmpBow.(*bow).Record
@@ -127,12 +132,12 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 			buf.SetOrDrop(rowIndex, row[field.Name])
 		}
 
-		seriesSlice[fieldIndex] = NewSeriesFromBuffer(field.Name, buf)
+		series[fieldIndex] = NewSeriesFromBuffer(field.Name, buf)
 	}
 
-	tmpBow, err := NewBow(seriesSlice...)
+	tmpBow, err := NewBow(series...)
 	if err != nil {
-		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
+		return err
 	}
 
 	b.Record = tmpBow.(*bow).Record

@@ -12,7 +12,7 @@ import (
 func (b *bow) Diff(colIndices ...int) (Bow, error) {
 	selectedCols, err := selectCols(b, colIndices)
 	if err != nil {
-		return nil, fmt.Errorf("bow.Diff: %w", err)
+		return nil, err
 	}
 
 	for colIndex, col := range b.Schema().Fields() {
@@ -22,7 +22,7 @@ func (b *bow) Diff(colIndices ...int) (Bow, error) {
 		case Boolean:
 		default:
 			return nil, fmt.Errorf(
-				"bow.Diff: column '%s' is of unsupported type '%v'",
+				"column '%s' is of unsupported type '%v'",
 				col.Name, b.ColumnType(colIndex))
 		}
 	}

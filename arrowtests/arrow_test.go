@@ -1,6 +1,6 @@
 package arrowtests
 
-import "github.com/apache/arrow/go/arrow/array"
+import "github.com/apache/arrow/go/v7/arrow"
 
 func ExamplePrintRecordColumns() {
 	_, rec := NewTSRecord()
@@ -18,7 +18,7 @@ func ExamplePrintRecordRows() {
 	s, rec := NewTSRecord()
 	defer rec.Release()
 
-	PrintRecordRows(s, []array.Record{rec})
+	PrintRecordRows(s, []arrow.Record{rec})
 
 	// Output:
 	//time: 1 , value: 7 , quality: 42

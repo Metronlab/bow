@@ -11,7 +11,7 @@ import (
 func TestIntervalRollingIter_Interpolate(t *testing.T) {
 	timeInterp := NewColInterpolation(timeCol, []bow.Type{bow.Int64},
 		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
-			return w.Start, nil
+			return w.FirstValue, nil
 		})
 	valueInterp := NewColInterpolation(valueCol, []bow.Type{bow.Int64, bow.Float64},
 		func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
@@ -31,7 +31,7 @@ func TestIntervalRollingIter_Interpolate(t *testing.T) {
 		_, err := r.
 			Interpolate(timeInterp, interp).
 			Bow()
-		assert.EqualError(t, err, "interpolate: accepts types [int64 bool], got type float64")
+		assert.EqualError(t, err, "intervalRolling.validateInterpolation: accepts types [int64 bool], got type float64")
 	})
 
 	t.Run("missing interval column", func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestIntervalRollingIter_Interpolate(t *testing.T) {
 		_, err := r.
 			Interpolate(valueInterp).
 			Bow()
-		assert.EqualError(t, err, fmt.Sprintf("interpolate: must keep interval column '%s'", timeCol))
+		assert.EqualError(t, err, fmt.Sprintf("must keep interval column '%s'", timeCol))
 	})
 
 	t.Run("empty bow", func(t *testing.T) {

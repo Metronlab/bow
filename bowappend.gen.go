@@ -4,6 +4,7 @@ package bow
 
 import (
 	"fmt"
+
 	"github.com/apache/arrow/go/v7/arrow"
 	"github.com/apache/arrow/go/v7/arrow/array"
 	"github.com/apache/arrow/go/v7/arrow/memory"
@@ -27,7 +28,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	}
 
 	refBow := bows[0]
-	seriesSlice := make([]Series, refBow.NumCols())
+	series := make([]Series, refBow.NumCols())
 
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
@@ -98,11 +99,11 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			return nil, fmt.Errorf("unsupported type %v", refType)
 		}
 
-		seriesSlice[colIndex] = Series{
+		series[colIndex] = Series{
 			Name:  refBow.ColumnName(colIndex),
 			Array: newArray,
 		}
 	}
 
-	return NewBowWithMetadata(refBow.Metadata(), seriesSlice...)
+	return NewBowWithMetadata(refBow.Metadata(), series...)
 }

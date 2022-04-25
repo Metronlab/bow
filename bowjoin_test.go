@@ -352,9 +352,9 @@ func TestBow_OuterJoin(t *testing.T) {
 		require.NoError(t, err)
 		defer func() {
 			if r := recover(); r == nil ||
-				r.(error).Error() != "bow.Join: left and right bow on join columns are of incompatible types: index1" {
+				r.(error).Error() != "left and right bow on join columns are of incompatible types: index1" {
 				t.Errorf("indexes of b1 and b2 are incompatible and should panic. Have %v, expect %v",
-					r, "bow Join: left and right bow on join columns are of incompatible types: index1")
+					r, "left and right bow on join columns are of incompatible types: index1")
 			}
 		}()
 		b1.OuterJoin(b2)
@@ -570,9 +570,9 @@ func TestBow_InnerJoin(t *testing.T) {
 
 		defer func() {
 			if r := recover(); r == nil ||
-				r.(error).Error() != "bow.Join: left and right bow on join columns are of incompatible types: index1" {
+				r.(error).Error() != "left and right bow on join columns are of incompatible types: index1" {
 				t.Errorf("indexes of b1 and b2 are incompatible and should panic. Have %v, expect %v",
-					r, "bow Join: left and right bow on join columns are of incompatible types: index1")
+					r, "left and right bow on join columns are of incompatible types: index1")
 			}
 		}()
 		b1.InnerJoin(b2)

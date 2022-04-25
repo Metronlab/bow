@@ -6,10 +6,12 @@ import (
 	"text/tabwriter"
 )
 
+// String returns a formatted representation of the Bow.
 func (b *bow) String() string {
 	if b.NumCols() == 0 {
 		return ""
 	}
+
 	w := new(tabwriter.Writer)
 	writer := new(strings.Builder)
 	// tabs will be replaced by two spaces by formatter
@@ -46,7 +48,7 @@ func (b *bow) String() string {
 	}
 
 	// Flush buffer and format lines along the way
-	if err := w.Flush(); err != nil {
+	if err = w.Flush(); err != nil {
 		panic(err)
 	}
 

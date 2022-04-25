@@ -9,6 +9,7 @@ import (
 	"github.com/apache/arrow/go/v7/arrow/bitutil"
 )
 
+// NewBuffer returns a new Buffer of size `size` and Type `typ`.
 func NewBuffer(size int, typ Type) Buffer {
 	switch typ {
 	case Int64:
@@ -36,6 +37,7 @@ func NewBuffer(size int, typ Type) Buffer {
 	}
 }
 
+// NewBufferFromData returns from `data`, which has to be a slice of a supported type.
 func NewBufferFromData(data interface{}) Buffer {
 	var l int
 	switch data.(type) {
@@ -52,6 +54,7 @@ func NewBufferFromData(data interface{}) Buffer {
 	}
 }
 
+// Len returns the length of the Buffer
 func (b Buffer) Len() int {
 	switch data := b.Data.(type) {
 	case []int64:
@@ -67,6 +70,8 @@ func (b Buffer) Len() int {
 	}
 }
 
+// SetOrDrop sets the value `value` at index `i` by attempting a type conversion to the Buffer Type.
+// Set the bit in the Buffer nullBitmapBytes if the conversion succeeded, or clear it otherwise.
 func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
@@ -89,6 +94,8 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
+// SetOrDrop sets the value `value` at index `i` by attempting a type assertion to the Buffer Type.
+// Set the bit in the Buffer nullBitmapBytes if the type assertion succeeded, or clear it otherwise.
 func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
@@ -111,6 +118,7 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	}
 }
 
+// GetValue gets the value at index `i` from the Buffer
 func (b *Buffer) GetValue(i int) interface{} {
 	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
 		return nil
@@ -129,6 +137,7 @@ func (b *Buffer) GetValue(i int) interface{} {
 	}
 }
 
+// Less returns whether the value at index `i` is less that the value at index `j`.
 func (b Buffer) Less(i, j int) bool {
 	switch v := b.Data.(type) {
 	case []int64:
@@ -144,6 +153,7 @@ func (b Buffer) Less(i, j int) bool {
 	}
 }
 
+// NewBufferFromCol returns a new Buffer created from the column at index `colIndex`.
 func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 	data := b.Column(colIndex).Data()
 	switch b.ColumnType(colIndex) {

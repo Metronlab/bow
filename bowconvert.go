@@ -6,125 +6,130 @@ import (
 	"strconv"
 )
 
-func ToInt64(i interface{}) (int64, bool) {
-	switch v := i.(type) {
+// ToInt64 attempts to convert `input` to int64.
+// Return also a false boolean if the conversion failed.
+func ToInt64(input interface{}) (output int64, ok bool) {
+	switch value := input.(type) {
 	case json.Number:
-		val, err := v.Int64()
-		return val, err == nil
+		output, err := value.Int64()
+		return output, err == nil
 	case int:
-		return int64(v), true
+		return int64(value), true
 	case int8:
-		return int64(v), true
+		return int64(value), true
 	case int16:
-		return int64(v), true
+		return int64(value), true
 	case int32:
-		return int64(v), true
+		return int64(value), true
 	case int64:
-		return v, true
+		return value, true
 	case float32:
-		return int64(v), true
+		return int64(value), true
 	case float64:
-		return int64(v), true
+		return int64(value), true
 	case bool:
-		if v {
+		if value {
 			return 1, true
 		}
 		return 0, true
 	case string:
-		val, err := strconv.ParseInt(v, 10, 64)
-		return val, err == nil
-	default:
-		return 0, false
+		output, err := strconv.ParseInt(value, 10, 64)
+		return output, err == nil
 	}
+	return
 }
 
-func ToFloat64(i interface{}) (float64, bool) {
-	switch v := i.(type) {
+// ToFloat64 attempts to convert `input` to float64.
+// Return also a false boolean if the conversion failed.
+func ToFloat64(input interface{}) (output float64, ok bool) {
+	switch input := input.(type) {
 	case float64:
-		return v, true
+		return input, true
 	case json.Number:
-		val, err := v.Float64()
-		return val, err == nil
+		output, err := input.Float64()
+		return output, err == nil
 	case int:
-		return float64(v), true
+		return float64(input), true
 	case int8:
-		return float64(v), true
+		return float64(input), true
 	case int16:
-		return float64(v), true
+		return float64(input), true
 	case int32:
-		return float64(v), true
+		return float64(input), true
 	case int64:
-		return float64(v), true
+		return float64(input), true
 	case float32:
-		return float64(v), true
+		return float64(input), true
 	case bool:
-		if v {
+		if input {
 			return 1., true
 		}
 		return 0., true
 	case string:
-		val, err := strconv.ParseFloat(v, 64)
-		return val, err == nil
-	default:
-		return 0, false
+		output, err := strconv.ParseFloat(input, 64)
+		return output, err == nil
 	}
+	return
 }
 
-func ToBoolean(i interface{}) (bool, bool) {
-	switch v := i.(type) {
+// ToBoolean attempts to convert `input` to bool.
+// Return also a false boolean if the conversion failed.
+// In case of numeric type, returns true if the value is non-zero.
+func ToBoolean(input interface{}) (output bool, ok bool) {
+	switch input := input.(type) {
 	case bool:
-		return v, true
+		return input, true
 	case string:
-		val, err := strconv.ParseBool(v)
-		return val, err == nil
+		output, err := strconv.ParseBool(input)
+		return output, err == nil
 	case json.Number:
-		val, err := v.Float64()
-		return val != 0., err != nil
+		output, err := input.Float64()
+		return output != 0., err != nil
 	case int:
-		return v != 0, true
+		return input != 0, true
 	case int8:
-		return v != 0, true
+		return input != 0, true
 	case int16:
-		return v != 0, true
+		return input != 0, true
 	case int32:
-		return v != 0, true
+		return input != 0, true
 	case int64:
-		return v != 0, true
+		return input != 0, true
 	case float32:
-		return v != 0, true
+		return input != 0., true
 	case float64:
-		return v != 0, true
-	default:
-		return false, false
+		return input != 0., true
 	}
+	return
 }
 
-func ToString(i interface{}) (string, bool) {
-	switch v := i.(type) {
+// ToString attempts to convert `input` to string.
+// Return also a false boolean if the conversion failed.
+func ToString(input interface{}) (output string, ok bool) {
+	switch input := input.(type) {
 	case bool:
-		if v {
+		if input {
 			return "true", true
 		}
 		return "false", true
 	case string:
-		return v, true
+		return input, true
 	case json.Number:
-		return v.String(), true
+		return input.String(), true
 	case int:
-		return strconv.Itoa(v), true
+		return strconv.Itoa(input), true
 	case int8:
-		return strconv.Itoa(int(v)), true
+		return strconv.Itoa(int(input)), true
 	case int16:
-		return strconv.Itoa(int(v)), true
+		return strconv.Itoa(int(input)), true
 	case int32:
-		return strconv.Itoa(int(v)), true
+		return strconv.Itoa(int(input)), true
 	case int64:
-		return strconv.Itoa(int(v)), true
+		return strconv.Itoa(int(input)), true
 	case float32:
-		return fmt.Sprintf("%f", v), true
+		return fmt.Sprintf("%f", input), true
 	case float64:
-		return fmt.Sprintf("%f", v), true
-	default:
-		return "", false
+		return fmt.Sprintf("%f", input), true
 	}
+	return
 }

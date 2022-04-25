@@ -8,7 +8,8 @@ import (
 	"github.com/apache/arrow/go/v7/arrow"
 )
 
-// A Series is simply a named Apache Arrow array.Interface, which is immutable
+// Series is wrapping the Apache Arrow arrow.Array interface, with the addition of a name.
+// It represents an immutable sequence of values using the Arrow in-memory format.
 type Series struct {
 	Name  string
 	Array arrow.Array
@@ -39,8 +40,8 @@ func buildNullBitmapBool(dataLength int, validityArray interface{}) []bool {
 	}
 }
 
-func seekType(cells []interface{}) (Type, error) {
-	for _, val := range cells {
+func getBowTypeFromInterfaces(colBasedData []interface{}) (Type, error) {
+	for _, val := range colBasedData {
 		if val != nil {
 			switch val.(type) {
 			case float64, json.Number:

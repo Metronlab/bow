@@ -11,7 +11,7 @@ gen:
 	@go generate $(PKG)
 
 lint:
-	golangci-lint run -E gofmt --fix -v $(PKG)
+	golangci-lint run -E gofmt,gci --fix -v $(PKG)
 
 count:
 	@bash -c $(PWD)/scripts/count-code-lines.sh
@@ -21,10 +21,6 @@ test:
 
 bench:
 	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/benchmark.sh
-
-doc:
-	godoc -http=:6060 -goroot=$(HOME)/go &
-	echo http://localhost:6060/pkg/bow
 
 CPUPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').cpu.prof
 MEMPROFILE=/tmp/$(shell basename $(PWD))$(shell echo $(PKG) | sed 's/[^[:alnum:]\t]//g').mem.prof
