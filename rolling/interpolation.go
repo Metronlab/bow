@@ -49,7 +49,7 @@ func (r *intervalRolling) Interpolate(interps ...ColInterpolation) Rolling {
 	}
 
 	if newIntervalCol == -1 {
-		return rCopy.setError(fmt.Errorf("must keep interval column '%s'", r.bow.ColumnName(r.colIndex)))
+		return rCopy.setError(fmt.Errorf("must keep interval column '%s'", r.bow.ColumnName(r.intervalColIndex)))
 	}
 
 	b, err := rCopy.interpolateWindows(interps)
@@ -92,7 +92,7 @@ func (r *intervalRolling) validateInterpolation(interp *ColInterpolation, newInd
 			interp.inputTypes, colType)
 	}
 
-	return interp.colIndex == r.colIndex, nil
+	return interp.colIndex == r.intervalColIndex, nil
 }
 
 func (r *intervalRolling) interpolateWindows(interps []ColInterpolation) (bow.Bow, error) {
@@ -118,7 +118,7 @@ func (r *intervalRolling) interpolateWindows(interps []ColInterpolation) (bow.Bo
 func (r *intervalRolling) interpolateWindow(interps []ColInterpolation, window *Window) (bow.Bow, error) {
 	var firstColValue int64 = -1
 	if window.Bow.NumRows() > 0 {
-		firstColVal, i := window.Bow.GetNextFloat64(r.colIndex, 0)
+		firstColVal, i := window.Bow.GetNextFloat64(r.intervalColIndex, 0)
 		if i > -1 {
 			firstColValue = int64(firstColVal)
 		}

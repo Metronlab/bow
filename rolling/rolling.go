@@ -30,16 +30,16 @@ type Rolling interface {
 
 type intervalRolling struct {
 	// TODO: sync.Mutex
-	bow        bow.Bow
-	colIndex   int
-	interval   int64
-	options    Options
-	numWindows int
+	bow              bow.Bow
+	intervalColIndex int
+	interval         int64
+	options          Options
+	numWindows       int
 
-	currWindowStart int64
-	currRowIndex    int
-	currWindowIndex int
-	err             error
+	currWindowFirstValue int64
+	currRowIndex         int
+	currWindowIndex      int
+	err                  error
 }
 
 // Options sets options for IntervalRolling:
@@ -66,10 +66,10 @@ func IntervalRolling(b bow.Bow, colName string, interval int64, options Options)
 	return newIntervalRolling(b, colIndex, interval, options)
 }
 
-func newIntervalRolling(b bow.Bow, colIndex int, interval int64, options Options) (Rolling, error) {
-	if b.ColumnType(colIndex) != bow.Int64 {
+func newIntervalRolling(b bow.Bow, intervalColIndex int, interval int64, options Options) (Rolling, error) {
+	if b.ColumnType(intervalColIndex) != bow.Int64 {
 		return nil, fmt.Errorf("impossible to create a new intervalRolling on column of type %v",
-			b.ColumnType(colIndex))
+			b.ColumnType(intervalColIndex))
 	}
 
 	var err error
@@ -83,31 +83,31 @@ func newIntervalRolling(b bow.Bow, colIndex int, interval int64, options Options
 		return nil, fmt.Errorf("enforcePrevRow: %w", err)
 	}
 
-	var firstWindowStart int64
+	var windowFirstValue int64
 	if b.NumRows() > 0 {
-		firstBowValue, valid := b.GetInt64(colIndex, 0)
+		firstBowValue, valid := b.GetInt64(intervalColIndex, 0)
 		if !valid {
 			return nil, fmt.Errorf(
 				"the first value of the column should be convertible to int64, got %v",
-				b.GetValue(colIndex, 0))
+				b.GetValue(intervalColIndex, 0))
 		}
 
-		// align first window start on interval
-		firstWindowStart = (firstBowValue/interval)*interval + options.Offset
-		if firstWindowStart > firstBowValue {
-			firstWindowStart -= interval
+		// align window first value on interval
+		windowFirstValue = (firstBowValue/interval)*interval + options.Offset
+		if windowFirstValue > firstBowValue {
+			windowFirstValue -= interval
 		}
 	}
 
-	numWindows := countWindows(b, colIndex, firstWindowStart, interval)
+	numWindows := countWindows(b, intervalColIndex, windowFirstValue, interval)
 
 	return &intervalRolling{
-		bow:             b,
-		colIndex:        colIndex,
-		interval:        interval,
-		options:         options,
-		numWindows:      numWindows,
-		currWindowStart: firstWindowStart,
+		bow:                  b,
+		intervalColIndex:     intervalColIndex,
+		interval:             interval,
+		options:              options,
+		numWindows:           numWindows,
+		currWindowFirstValue: windowFirstValue,
 	}, nil
 }
 
@@ -164,12 +164,12 @@ func (r *intervalRolling) HasNext() bool {
 		return false
 	}
 
-	lastBowValue, lastBowValueIsValid := r.bow.GetInt64(r.colIndex, r.bow.NumRows()-1)
+	lastBowValue, lastBowValueIsValid := r.bow.GetInt64(r.intervalColIndex, r.bow.NumRows()-1)
 	if !lastBowValueIsValid {
 		return false
 	}
 
-	return r.currWindowStart <= lastBowValue
+	return r.currWindowFirstValue <= lastBowValue
 }
 
 // TODO: concurrent-safe
@@ -179,26 +179,26 @@ func (r *intervalRolling) Next() (windowIndex int, window *Window, err error) {
 		return r.currWindowIndex, nil, nil
 	}
 
-	windowStart := r.currWindowStart
-	windowEnd := r.currWindowStart + r.interval // include last position even if last point is excluded
+	firstValue := r.currWindowFirstValue
+	lastValue := r.currWindowFirstValue + r.interval // include last position even if last point is excluded
 
 	rowIndex := 0
 	isInclusive := false
 	firstRowIndex := r.currRowIndex
 	lastRowIndex := -1
 	for rowIndex = firstRowIndex; rowIndex < r.bow.NumRows(); rowIndex++ {
-		ref, ok := r.bow.GetInt64(r.colIndex, rowIndex)
+		val, ok := r.bow.GetInt64(r.intervalColIndex, rowIndex)
 		if !ok {
 			continue
 		}
-		if ref < windowStart {
+		if val < firstValue {
 			continue
 		}
-		if ref > windowEnd {
+		if val > lastValue {
 			break
 		}
 
-		if ref == windowEnd {
+		if val == lastValue {
 			if isInclusive {
 				break
 			}
@@ -217,7 +217,7 @@ func (r *intervalRolling) Next() (windowIndex int, window *Window, err error) {
 		r.currRowIndex = rowIndex - 1
 	}
 
-	r.currWindowStart = windowEnd
+	r.currWindowFirstValue = lastValue
 	windowIndex = r.currWindowIndex
 	r.currWindowIndex++
 
@@ -231,9 +231,9 @@ func (r *intervalRolling) Next() (windowIndex int, window *Window, err error) {
 	return windowIndex, &Window{
 		Bow:              b,
 		FirstIndex:       firstRowIndex,
-		IntervalColIndex: r.colIndex,
-		FirstValue:       windowStart,
-		LastValue:        windowEnd,
+		IntervalColIndex: r.intervalColIndex,
+		FirstValue:       firstValue,
+		LastValue:        lastValue,
 		IsInclusive:      isInclusive,
 	}, nil
 }

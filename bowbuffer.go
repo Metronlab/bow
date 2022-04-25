@@ -8,8 +8,8 @@ import (
 )
 
 // Buffer is a mutable data structure with the purpose of easily building data Series with:
-// - Data: slice of data
-// - nullBitmapBytes: slice of bytes representing
+// - Data: slice of data.
+// - nullBitmapBytes: slice of bytes representing valid or null values.
 type Buffer struct {
 	Data            interface{}
 	nullBitmapBytes []byte
@@ -47,7 +47,7 @@ func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
 	return res
 }
 
-// NewBufferFromInterfaces returns a new Buffer of type `typ` with the data represented as a slice of interface{}, with eventual nil values.
+// NewBufferFromInterfaces returns a new typed Buffer with the data represented as a slice of interface{}, with eventual nil values.
 func NewBufferFromInterfaces(typ Type, data []interface{}) (Buffer, error) {
 	buf := NewBuffer(len(data), typ)
 	for i, c := range data {

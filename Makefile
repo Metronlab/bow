@@ -5,13 +5,12 @@ install:
 	@go install golang.org/x/perf/cmd/benchstat@latest
 	@go install github.com/jstemmer/go-junit-report@latest
 	@go install github.com/Metronlab/genius@latest
-	@go install golang.org/x/tools/cmd/godoc@latest
 
 gen:
 	@go generate $(PKG)
 
 lint:
-	golangci-lint run -E gofmt,gci --fix -v $(PKG)
+	golangci-lint run -E gofmt --fix -v $(PKG)
 
 count:
 	@bash -c $(PWD)/scripts/count-code-lines.sh

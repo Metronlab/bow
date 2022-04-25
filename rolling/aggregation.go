@@ -162,7 +162,7 @@ func (r *intervalRolling) indexedAggregations(aggrs []ColAggregation) (int, []Co
 
 	if newIntervalCol == -1 {
 		return -1, nil, fmt.Errorf(
-			"must keep interval column '%s'", r.bow.ColumnName(r.colIndex))
+			"must keep interval column '%s'", r.bow.ColumnName(r.intervalColIndex))
 	}
 
 	return newIntervalCol, aggrs, nil
@@ -184,7 +184,7 @@ func (r *intervalRolling) validateAggregation(aggr ColAggregation, newIndex int)
 		r.options.Inclusive = true
 	}
 
-	return readIndex == r.colIndex, nil
+	return readIndex == r.intervalColIndex, nil
 }
 
 func (r *intervalRolling) aggregateWindows(aggrs []ColAggregation) (bow.Bow, error) {
@@ -194,7 +194,7 @@ func (r *intervalRolling) aggregateWindows(aggrs []ColAggregation) (bow.Bow, err
 		rCopy := *r
 		typ := aggr.GetReturnType(
 			rCopy.bow.ColumnType(aggr.InputIndex()),
-			rCopy.bow.ColumnType(rCopy.colIndex))
+			rCopy.bow.ColumnType(rCopy.intervalColIndex))
 		buf := bow.NewBuffer(rCopy.numWindows, typ)
 
 		for rCopy.HasNext() {
