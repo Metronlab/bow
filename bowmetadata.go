@@ -3,8 +3,8 @@ package bow
 import (
 	"fmt"
 
-	"github.com/apache/arrow/go/v7/arrow"
-	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow"
+	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
 // Metadata is an arrow metadata wrapping

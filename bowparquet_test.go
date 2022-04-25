@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xitongsys/parquet-go/parquet"

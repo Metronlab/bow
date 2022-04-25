@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apache/arrow/go/v7/arrow"
-	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow"
+	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
 func (b *bow) GetRow(rowIndex int) map[string]interface{} {

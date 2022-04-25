@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow"
-	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow"
+	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
 // Bow is a wrapper of Apache Arrow array.Record interface.
