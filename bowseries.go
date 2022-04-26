@@ -16,33 +16,39 @@ type Series struct {
 	Array arrow.Array
 }
 
-func NewSeries(name string, dataArray interface{}, validityArray interface{}) Series {
-	switch v := dataArray.(type) {
-	case []int64:
-		return newInt64Series(name, v, buildNullBitmapBytes(len(v), validityArray))
-	case []float64:
-		return newFloat64Series(name, v, buildNullBitmapBytes(len(v), validityArray))
-	case []bool:
-		return newBooleanSeries(name, v, buildNullBitmapBytes(len(v), validityArray))
-	case []string:
-		return newStringSeries(name, v, buildNullBitmapBytes(len(v), validityArray))
+func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
+	switch typ {
+	case Int64:
+		return newInt64Series(name, dataArray.([]int64), buildNullBitmapBytes(len(dataArray.([]int64)), validityArray))
+	case Float64:
+		return newFloat64Series(name, dataArray.([]float64), buildNullBitmapBytes(len(dataArray.([]float64)), validityArray))
+	case Bool:
+		return newBooleanSeries(name, dataArray.([]bool), buildNullBitmapBytes(len(dataArray.([]bool)), validityArray))
+	case String:
+		return newStringSeries(name, dataArray.([]string), buildNullBitmapBytes(len(dataArray.([]string)), validityArray))
+	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+		return newTimestampSeries(name, typ,
+			dataArray.([]arrow.Timestamp),
+			buildNullBitmapBytes(len(dataArray.([]arrow.Timestamp)), validityArray))
 	default:
-		panic(fmt.Errorf("unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type '%s'", typ))
 	}
 }
 
 func NewSeriesFromBuffer(name string, buf Buffer) Series {
-	switch data := buf.Data.(type) {
-	case []int64:
-		return newInt64Series(name, data, buf.nullBitmapBytes)
-	case []float64:
-		return newFloat64Series(name, data, buf.nullBitmapBytes)
-	case []bool:
-		return newBooleanSeries(name, data, buf.nullBitmapBytes)
-	case []string:
-		return newStringSeries(name, data, buf.nullBitmapBytes)
+	switch buf.DataType {
+	case Int64:
+		return newInt64Series(name, buf.Data.([]int64), buf.nullBitmapBytes)
+	case Float64:
+		return newFloat64Series(name, buf.Data.([]float64), buf.nullBitmapBytes)
+	case Bool:
+		return newBooleanSeries(name, buf.Data.([]bool), buf.nullBitmapBytes)
+	case String:
+		return newStringSeries(name, buf.Data.([]string), buf.nullBitmapBytes)
+	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+		return newTimestampSeries(name, buf.DataType, buf.Data.([]arrow.Timestamp), buf.nullBitmapBytes)
 	default:
-		panic(fmt.Errorf("unsupported type '%T'", buf.Data))
+		panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 	}
 }
 
@@ -53,6 +59,7 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 			panic(err)
 		}
 	}
+
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	switch typ {
 	case Int64:
@@ -81,12 +88,12 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 			builder.Append(v)
 		}
 		return Series{Name: name, Array: builder.NewArray()}
-	case Boolean:
+	case Bool:
 		builder := array.NewBooleanBuilder(mem)
 		defer builder.Release()
 		builder.Resize(len(cells))
 		for i := 0; i < len(cells); i++ {
-			v, ok := ToBoolean(cells[i])
+			v, ok := ToBool(cells[i])
 			if !ok {
 				builder.AppendNull()
 				continue
@@ -107,8 +114,21 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 			builder.Append(v)
 		}
 		return Series{Name: name, Array: builder.NewArray()}
+	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+		builder := array.NewTimestampBuilder(mem, mapBowToArrowDataTypes[typ].(*arrow.TimestampType))
+		defer builder.Release()
+		builder.Resize(len(cells))
+		for i := 0; i < len(cells); i++ {
+			v, ok := ToTimestamp(cells[i])
+			if !ok {
+				builder.AppendNull()
+				continue
+			}
+			builder.Append(v)
+		}
+		return Series{Name: name, Array: builder.NewArray()}
 	default:
-		panic(fmt.Errorf("unhandled type %s", typ))
+		panic(fmt.Errorf("unsupported type '%s'", typ))
 	}
 }
 
@@ -117,7 +137,7 @@ func newInt64Series(name string, data []int64, valid []byte) Series {
 	return Series{
 		Name: name,
 		Array: array.NewInt64Data(
-			array.NewData(mapBowToArrowTypes[Int64], length,
+			array.NewData(mapBowToArrowDataTypes[Int64], length,
 				[]*memory.Buffer{
 					memory.NewBufferBytes(valid),
 					memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(data)),
@@ -131,7 +151,7 @@ func newFloat64Series(name string, data []float64, valid []byte) Series {
 	return Series{
 		Name: name,
 		Array: array.NewFloat64Data(
-			array.NewData(mapBowToArrowTypes[Float64], length,
+			array.NewData(mapBowToArrowDataTypes[Float64], length,
 				[]*memory.Buffer{
 					memory.NewBufferBytes(valid),
 					memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(data)),
@@ -151,6 +171,14 @@ func newBooleanSeries(name string, data []bool, valid []byte) Series {
 func newStringSeries(name string, data []string, valid []byte) Series {
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	builder := array.NewStringBuilder(mem)
+	defer builder.Release()
+	builder.AppendValues(data, buildNullBitmapBool(len(data), valid))
+	return Series{Name: name, Array: builder.NewArray()}
+}
+
+func newTimestampSeries(name string, typ Type, data []arrow.Timestamp, valid []byte) Series {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	builder := array.NewTimestampBuilder(mem, mapBowToArrowDataTypes[typ].(*arrow.TimestampType))
 	defer builder.Release()
 	builder.AppendValues(data, buildNullBitmapBool(len(data), valid))
 	return Series{Name: name, Array: builder.NewArray()}
@@ -177,7 +205,7 @@ func buildNullBitmapBool(dataLength int, validityArray interface{}) []bool {
 		}
 		return res
 	default:
-		panic(fmt.Errorf("unsupported type %T", valid))
+		panic(fmt.Errorf("unsupported type '%T'", valid))
 	}
 }
 
@@ -192,7 +220,7 @@ func seekType(cells []interface{}) (Type, error) {
 			case string:
 				return String, nil
 			case bool:
-				return Boolean, nil
+				return Bool, nil
 			}
 		}
 	}

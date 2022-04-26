@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+
+	"github.com/apache/arrow/go/v8/arrow"
 )
 
 func ToInt64(i interface{}) (int64, bool) {
@@ -33,6 +35,8 @@ func ToInt64(i interface{}) (int64, bool) {
 	case string:
 		val, err := strconv.ParseInt(v, 10, 64)
 		return val, err == nil
+	case arrow.Timestamp:
+		return int64(v), true
 	default:
 		return 0, false
 	}
@@ -65,12 +69,14 @@ func ToFloat64(i interface{}) (float64, bool) {
 	case string:
 		val, err := strconv.ParseFloat(v, 64)
 		return val, err == nil
+	case arrow.Timestamp:
+		return float64(v), true
 	default:
 		return 0, false
 	}
 }
 
-func ToBoolean(i interface{}) (bool, bool) {
+func ToBool(i interface{}) (bool, bool) {
 	switch v := i.(type) {
 	case bool:
 		return v, true
@@ -93,6 +99,8 @@ func ToBoolean(i interface{}) (bool, bool) {
 	case float32:
 		return v != 0, true
 	case float64:
+		return v != 0, true
+	case arrow.Timestamp:
 		return v != 0, true
 	default:
 		return false, false
@@ -124,7 +132,43 @@ func ToString(i interface{}) (string, bool) {
 		return fmt.Sprintf("%f", v), true
 	case float64:
 		return fmt.Sprintf("%f", v), true
+	case arrow.Timestamp:
+		return strconv.Itoa(int(v)), true
 	default:
 		return "", false
+	}
+}
+
+func ToTimestamp(i interface{}) (arrow.Timestamp, bool) {
+	switch v := i.(type) {
+	case json.Number:
+		val, err := v.Int64()
+		return arrow.Timestamp(val), err == nil
+	case int:
+		return arrow.Timestamp(v), true
+	case int8:
+		return arrow.Timestamp(v), true
+	case int16:
+		return arrow.Timestamp(v), true
+	case int32:
+		return arrow.Timestamp(v), true
+	case int64:
+		return arrow.Timestamp(v), true
+	case float32:
+		return arrow.Timestamp(v), true
+	case float64:
+		return arrow.Timestamp(v), true
+	case bool:
+		if v {
+			return 1, true
+		}
+		return 0, true
+	case string:
+		val, err := strconv.ParseInt(v, 10, 64)
+		return arrow.Timestamp(val), err == nil
+	case arrow.Timestamp:
+		return v, true
+	default:
+		return 0, false
 	}
 }

@@ -37,7 +37,7 @@ func TestGeneratorForBenchmarks(t *testing.T) {
 				Name:        "Boolean_bow1",
 				GenStrategy: bow.GenStrategyRandom,
 				MissingData: true,
-				Type:        bow.Boolean,
+				Type:        bow.Bool,
 			},
 			bow.GenSeriesOptions{
 				Name:        "String_bow1",
@@ -68,7 +68,7 @@ func TestGeneratorForBenchmarks(t *testing.T) {
 				Name:        "Boolean_bow2",
 				GenStrategy: bow.GenStrategyRandom,
 				MissingData: true,
-				Type:        bow.Boolean,
+				Type:        bow.Bool,
 			},
 			bow.GenSeriesOptions{
 				Name:        "String_bow2",

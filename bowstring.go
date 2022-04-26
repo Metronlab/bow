@@ -4,51 +4,63 @@ import (
 	"fmt"
 	"strings"
 	"text/tabwriter"
+	"time"
+
+	"github.com/apache/arrow/go/v8/arrow"
 )
 
 func (b *bow) String() string {
 	if b.NumCols() == 0 {
 		return ""
 	}
+
 	w := new(tabwriter.Writer)
 	writer := new(strings.Builder)
 	// tabs will be replaced by two spaces by formatter
 	w.Init(writer, 0, 4, 2, ' ', 0)
 
-	// format any line (header or row)
-	formatRow := func(getCellStr func(colIndex int) string) {
-		var cells []string
-		for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
-			cells = append(cells, fmt.Sprintf("%v", getCellStr(colIndex)))
-		}
-		_, err := fmt.Fprintln(w, strings.Join(cells, "\t"))
-		if err != nil {
-			panic(err)
-		}
+	var cells []string
+	for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
+		cells = append(cells, fmt.Sprintf(
+			"%v", fmt.Sprintf(
+				"%s:%v", b.Schema().Field(colIndex).Name, b.ColumnType(colIndex))))
 	}
-
-	// Print col names on buffer
-	formatRow(func(colIndex int) string {
-		return fmt.Sprintf("%s:%v %s", b.Schema().Field(colIndex).Name, b.ColumnType(colIndex), b.Schema().Field(colIndex).Fingerprint())
-	})
-
-	// Print each row on buffer
-	rowChan := b.GetRowsChan()
-	for row := range rowChan {
-		formatRow(func(colIndex int) string {
-			return fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name])
-		})
-	}
-
-	_, err := fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
+	_, err := fmt.Fprintln(w, strings.Join(cells, "\t"))
 	if err != nil {
 		panic(err)
 	}
 
-	// Flush buffer and format lines along the way
-	if err := w.Flush(); err != nil {
+	for row := range b.GetRowsChan() {
+		cells = []string{}
+		for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
+			ti, _ := row[b.Schema().Field(colIndex).Name].(arrow.Timestamp)
+			switch b.ColumnType(colIndex) {
+			case TimestampSec:
+				cells = append(cells, ti.ToTime(arrow.Second).Format(time.RFC3339Nano))
+			case TimestampMilli:
+				cells = append(cells, ti.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
+			case TimestampMicro:
+				cells = append(cells, ti.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
+			case TimestampNano:
+				cells = append(cells, ti.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
+			default:
+				cells = append(cells, fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name]))
+			}
+		}
+		if _, err = fmt.Fprintln(w, strings.Join(cells, "\t")); err != nil {
+			panic(err)
+		}
+	}
+
+	_, err = fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
+	if err != nil {
+		panic(err)
+	}
+
+	if err = w.Flush(); err != nil {
 		panic(err)
 	}
 
 	return writer.String()
+
 }

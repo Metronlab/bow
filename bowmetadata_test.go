@@ -9,7 +9,7 @@ import (
 func TestBow_WithMetadata(t *testing.T) {
 	t.Run("adding meta should not modify bow, but correctly change schema", func(t *testing.T) {
 		metadata := NewMetadata([]string{"testKey"}, []string{"testValue"})
-		b, _ := NewBow(NewSeries("test", []int64{1, 2}, nil))
+		b, _ := NewBow(NewSeries("test", Int64, []int64{1, 2}, nil))
 
 		res := b.WithMetadata(metadata)
 		assert.True(t, res.Metadata().Equal(metadata.Metadata),

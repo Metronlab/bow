@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/apache/arrow/go/v8/arrow/array"
@@ -89,7 +88,6 @@ type Bow interface {
 	UnmarshalJSON(data []byte) error
 	NewValuesFromJSON(jsonB JSONBow) error
 	WriteParquet(path string, verbose bool) error
-	GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error)
 }
 
 type bow struct {

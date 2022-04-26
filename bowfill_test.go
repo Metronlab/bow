@@ -400,7 +400,7 @@ func TestFill(t *testing.T) {
 		t.Run("Previous", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Boolean, String},
+				[]Type{Int64, Bool, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -414,7 +414,7 @@ func TestFill(t *testing.T) {
 
 			expected, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Boolean, String},
+				[]Type{Int64, Bool, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -434,7 +434,7 @@ func TestFill(t *testing.T) {
 		t.Run("Next", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Boolean, String},
+				[]Type{Int64, Bool, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -448,7 +448,7 @@ func TestFill(t *testing.T) {
 
 			expected, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Boolean, String},
+				[]Type{Int64, Bool, String},
 				[][]interface{}{
 					{20, false, "dgr"},
 					{13, false, "sfr"},
@@ -468,7 +468,7 @@ func TestFill(t *testing.T) {
 		t.Run("Mean", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Boolean, String},
+				[]Type{Int64, Bool, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -486,7 +486,7 @@ func TestFill(t *testing.T) {
 		t.Run("Linear", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Boolean, String},
+				[]Type{Int64, Bool, String},
 				[][]interface{}{
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
@@ -506,13 +506,13 @@ func TestFill(t *testing.T) {
 	t.Run("with metadata", func(t *testing.T) {
 		// Previous
 		b1, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 1, 3}, []bool{true, true, true}),
-			NewSeries("float", []float64{1., 1., 3.}, []bool{true, true, true}),
+			NewSeries("int", Int64, []int64{1, 1, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 1., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -522,13 +522,13 @@ func TestFill(t *testing.T) {
 
 		// Next
 		b2, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 3, 3}, []bool{true, true, true}),
-			NewSeries("float", []float64{1., 3., 3.}, []bool{true, true, true}),
+			NewSeries("int", Int64, []int64{1, 3, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 3., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -538,13 +538,13 @@ func TestFill(t *testing.T) {
 
 		// Mean
 		b3, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 2, 3}, []bool{true, true, true}),
-			NewSeries("float", []float64{1., 2., 3.}, []bool{true, true, true}),
+			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -554,13 +554,13 @@ func TestFill(t *testing.T) {
 
 		// Linear
 		b4, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 2, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 2., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 

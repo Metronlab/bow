@@ -52,11 +52,11 @@ func NewJSONBow(b Bow) (res JSONBow) {
 func (b *bow) UnmarshalJSON(data []byte) error {
 	jsonB := JSONBow{}
 	if err := json.Unmarshal(data, &jsonB); err != nil {
-		return fmt.Errorf("bow.UnmarshalJSON: %w", err)
+		return fmt.Errorf("json.Unmarshal: %w", err)
 	}
 
 	if err := b.NewValuesFromJSON(jsonB); err != nil {
-		return fmt.Errorf("bow.UnmarshalJSON: %w", err)
+		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 	}
 
 	return nil
@@ -106,14 +106,14 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
-			typ := getBowTypeFromArrowName(field.Type)
+			typ := getBowTypeFromArrowFingerprint(field.Type)
 			buf := NewBuffer(0, typ)
 			seriesSlice[i] = NewSeriesFromBuffer(field.Name, buf)
 		}
 
 		tmpBow, err := NewBow(seriesSlice...)
 		if err != nil {
-			return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
+			return err
 		}
 
 		b.Record = tmpBow.(*bow).Record
@@ -132,7 +132,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	tmpBow, err := NewBow(seriesSlice...)
 	if err != nil {
-		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
+		return err
 	}
 
 	b.Record = tmpBow.(*bow).Record

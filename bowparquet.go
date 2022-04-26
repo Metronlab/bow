@@ -2,11 +2,9 @@ package bow
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/apache/arrow/go/v8/arrow/array"
@@ -16,8 +14,6 @@ import (
 	"github.com/apache/arrow/go/v8/parquet/file"
 	"github.com/apache/arrow/go/v8/parquet/pqarrow"
 )
-
-const keyParquetColTypesMeta = "col_types"
 
 // NewBowFromParquet loads a parquet object from the file path, returning a new Bow
 // Only value columns are used to create the new Bow.
@@ -56,7 +52,7 @@ func NewBowFromParquet(filename string, verbose bool) (Bow, error) {
 	rec := array.NewRecord(tbl.Schema(), cols, tbl.NumRows())
 	b, err := NewBowFromRecord(rec)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("NewBowFromRecord: %w", err)
 	}
 
 	if verbose {
@@ -104,18 +100,4 @@ func (b *bow) WriteParquet(filename string, verbose bool) error {
 	fmt.Printf("%s\n", b.Schema())
 
 	return nil
-}
-
-var ErrColTimeUnitNotFound = errors.New("column time unit not found in parquet metadata")
-
-// GetParquetMetaColTimeUnit attempts to get the time unit of the column as a time.Duration
-// from the bow metadata read from a parquet file.
-// If no time unit metadata is found, time.Duration(0) is returned along with ErrColTimeUnitNotFound.
-func (b *bow) GetParquetMetaColTimeUnit(colIndex int) (time.Duration, error) {
-	keyIndex := b.Metadata().FindKey(keyParquetColTypesMeta)
-	if keyIndex == -1 {
-		return time.Duration(0), ErrColTimeUnitNotFound
-	}
-
-	return time.Duration(0), ErrColTimeUnitNotFound
 }

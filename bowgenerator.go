@@ -115,7 +115,7 @@ func newRandomNumber(typ Type) interface{} {
 		return n.Int64()
 	case Float64:
 		return float64(n.Int64()) + 0.5
-	case Boolean:
+	case Bool:
 		return n.Int64() > 5
 	case String:
 		return uuid.New().String()[:8]

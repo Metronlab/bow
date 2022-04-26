@@ -24,7 +24,7 @@ func TestIntervalRollingIter_Interpolate(t *testing.T) {
 			{1.0, 1.3},
 		})
 		r, _ := IntervalRolling(b, timeCol, 2, Options{})
-		interp := NewColInterpolation(valueCol, []bow.Type{bow.Int64, bow.Boolean},
+		interp := NewColInterpolation(valueCol, []bow.Type{bow.Int64, bow.Bool},
 			func(colIndex int, w Window, full, prevRow bow.Bow) (interface{}, error) {
 				return true, nil
 			})

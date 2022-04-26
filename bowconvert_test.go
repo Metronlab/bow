@@ -3,6 +3,7 @@ package bow
 import (
 	"testing"
 
+	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,41 +12,41 @@ func TestToBool(t *testing.T) {
 	var v bool
 	var ok bool
 
-	v, ok = ToBoolean(true)
+	v, ok = ToBool(true)
 	require.True(t, ok)
 	assert.Equal(t, true, v)
 
-	v, ok = ToBoolean(false)
+	v, ok = ToBool(false)
 	require.True(t, ok)
 	assert.Equal(t, false, v)
 
-	v, ok = ToBoolean("true")
+	v, ok = ToBool("true")
 	require.True(t, ok)
 	assert.Equal(t, true, v)
 
-	v, ok = ToBoolean("True")
+	v, ok = ToBool("True")
 	require.True(t, ok)
 	assert.Equal(t, true, v)
 
-	v, ok = ToBoolean("false")
+	v, ok = ToBool("false")
 	require.True(t, ok)
 	assert.Equal(t, false, v)
 
-	v, ok = ToBoolean("False")
+	v, ok = ToBool("False")
 	require.True(t, ok)
 	assert.Equal(t, false, v)
 
-	v, ok = ToBoolean(1)
+	v, ok = ToBool(1)
 	require.True(t, v)
 	require.True(t, ok)
-	v, ok = ToBoolean(0)
+	v, ok = ToBool(0)
 	require.False(t, v)
 	require.True(t, ok)
 
-	v, ok = ToBoolean(1.)
+	v, ok = ToBool(1.)
 	require.True(t, v)
 	require.True(t, ok)
-	v, ok = ToBoolean(0.)
+	v, ok = ToBool(0.)
 	require.False(t, v)
 	require.True(t, ok)
 }
@@ -123,4 +124,29 @@ func TestToString(t *testing.T) {
 	v, ok = ToString("0")
 	require.True(t, ok)
 	assert.Equal(t, "0", v)
+}
+
+func TestToTimestamp(t *testing.T) {
+	var v arrow.Timestamp
+	var ok bool
+
+	v, ok = ToTimestamp(true)
+	require.True(t, ok)
+	assert.Equal(t, arrow.Timestamp(1), v)
+
+	v, ok = ToTimestamp(false)
+	require.True(t, ok)
+	assert.Equal(t, arrow.Timestamp(0), v)
+
+	v, ok = ToTimestamp(0.)
+	require.True(t, ok)
+	assert.Equal(t, arrow.Timestamp(0), v)
+
+	v, ok = ToTimestamp(0)
+	require.True(t, ok)
+	assert.Equal(t, arrow.Timestamp(0), v)
+
+	v, ok = ToTimestamp("0")
+	require.True(t, ok)
+	assert.Equal(t, arrow.Timestamp(0), v)
 }

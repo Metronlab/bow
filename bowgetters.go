@@ -31,17 +31,11 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 		return array.NewFloat64Data(b.Column(colIndex).Data()).Value(rowIndex)
 	case Int64:
 		return array.NewInt64Data(b.Column(colIndex).Data()).Value(rowIndex)
-	case Boolean:
+	case Bool:
 		return array.NewBooleanData(b.Column(colIndex).Data()).Value(rowIndex)
 	case String:
 		return array.NewStringData(b.Column(colIndex).Data()).Value(rowIndex)
-	case TimestampSec:
-		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
-	case TimestampMilli:
-		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
-	case TimestampMicro:
-		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
-	case TimestampNano:
+	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
 		return array.NewTimestampData(b.Column(colIndex).Data()).Value(rowIndex)
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
@@ -263,7 +257,7 @@ func (b *bow) GetPrevFloat64(colIndex, rowIndex int) (float64, int) {
 }
 
 func (b *bow) ColumnType(colIndex int) Type {
-	return getBowTypeFromArrowTypeFingerprint(b.Schema().Field(colIndex).Type)
+	return getBowTypeFromArrowFingerprint(b.Schema().Field(colIndex).Type.Fingerprint())
 }
 
 func (b *bow) ColumnIndex(colName string) (int, error) {

@@ -63,7 +63,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 				builder.AppendValues(v, valid)
 			}
 			newArray = builder.NewArray()
-		case Boolean:
+		case Bool:
 			builder := array.NewBooleanBuilder(mem)
 			builder.Resize(numRows)
 			for _, b := range bows {

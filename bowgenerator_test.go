@@ -59,7 +59,7 @@ func TestGenerator(t *testing.T) {
 			GenSeriesOptions{Name: "A", Type: Int64},
 			GenSeriesOptions{Name: "B", Type: Float64},
 			GenSeriesOptions{Name: "C", Type: String},
-			GenSeriesOptions{Name: "D", Type: Boolean},
+			GenSeriesOptions{Name: "D", Type: Bool},
 		)
 		assert.NoError(t, err)
 
@@ -71,6 +71,6 @@ func TestGenerator(t *testing.T) {
 		assert.Equal(t, Int64, b.ColumnType(0))
 		assert.Equal(t, Float64, b.ColumnType(1))
 		assert.Equal(t, String, b.ColumnType(2))
-		assert.Equal(t, Boolean, b.ColumnType(3))
+		assert.Equal(t, Bool, b.ColumnType(3))
 	})
 }

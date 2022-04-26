@@ -31,7 +31,7 @@ func TestJSON(t *testing.T) {
 		t.Run("simple", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Float64, Boolean},
+				[]Type{Int64, Float64, Bool},
 				[][]interface{}{
 					{100, 200., false},
 					{110, 220., true},
@@ -82,7 +82,7 @@ func TestJSON(t *testing.T) {
 		t.Run("simple", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Float64, Boolean},
+				[]Type{Int64, Float64, Bool},
 				[][]interface{}{
 					{100, 200., false},
 					{110, 220., true},
@@ -104,7 +104,7 @@ func TestJSON(t *testing.T) {
 		t.Run("simple no data", func(t *testing.T) {
 			b, err := NewBowFromRowBasedInterfaces(
 				[]string{"a", "b", "c"},
-				[]Type{Int64, Float64, Boolean},
+				[]Type{Int64, Float64, Bool},
 				[][]interface{}{})
 			require.NoError(t, err)
 

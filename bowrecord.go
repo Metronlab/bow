@@ -10,8 +10,9 @@ import (
 
 func NewBowFromRecord(record arrow.Record) (Bow, error) {
 	for _, f := range record.Schema().Fields() {
-		if getBowTypeFromArrowTypeFingerprint(f.Type) == Unknown {
-			return nil, fmt.Errorf("unsupported type: %s", f.Type.Name())
+		if getBowTypeFromArrowFingerprint(f.Type.Fingerprint()) == Unknown {
+			return nil, fmt.Errorf("unsupported type: ID: %s Name: %s Fingerprint: %s String: %s",
+				f.Type.ID(), f.Type.Name(), f.Type.Fingerprint(), f.Type)
 		}
 	}
 	return &bow{Record: record}, nil
@@ -33,8 +34,8 @@ func newRecord(metadata Metadata, series ...Series) (arrow.Record, error) {
 		if s.Name == "" {
 			return nil, errors.New("empty Series name")
 		}
-		if getBowTypeFromArrowType(s.Array.DataType()) == Unknown {
-			return nil, fmt.Errorf("unsupported type: %s", s.Array.DataType().Name())
+		if getBowTypeFromArrowFingerprint(s.Array.DataType().Fingerprint()) == Unknown {
+			return nil, fmt.Errorf("unsupported type '%s'", s.Array.DataType())
 		}
 		if int64(s.Array.Len()) != nRows {
 			return nil,

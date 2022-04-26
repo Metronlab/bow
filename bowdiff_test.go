@@ -10,26 +10,26 @@ import (
 func TestDiff(t *testing.T) {
 	t.Run("all columns all supported types with nils and metadata", func(t *testing.T) {
 		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("a",
+			NewSeries("a", Int64,
 				[]int64{1, 2, 3, 4, 0, 5},
 				[]bool{true, true, true, true, false, true}),
-			NewSeries("b",
+			NewSeries("b", Float64,
 				[]float64{1., 2., 3., 4., 0., 5.},
 				[]bool{true, true, true, true, false, true}),
-			NewSeries("c",
+			NewSeries("c", Bool,
 				[]bool{false, false, true, true, false, false},
 				[]bool{true, true, true, true, false, true}),
 		)
 		require.NoError(t, err)
 
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("a",
+			NewSeries("a", Int64,
 				[]int64{0, 1, 1, 1, 0, 0},
 				[]bool{false, true, true, true, false, false}),
-			NewSeries("b",
+			NewSeries("b", Float64,
 				[]float64{0., 1., 1., 1., 0., 0.},
 				[]bool{false, true, true, true, false, false}),
-			NewSeries("c",
+			NewSeries("c", Bool,
 				[]bool{false, false, true, false, false, false},
 				[]bool{false, true, true, true, false, false}),
 		)
@@ -43,7 +43,7 @@ func TestDiff(t *testing.T) {
 	t.Run("one column all supported types", func(t *testing.T) {
 		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"a", "b", "c"},
-			[]Type{Int64, Float64, Boolean},
+			[]Type{Int64, Float64, Bool},
 			[][]interface{}{
 				{1, 1., false},
 				{2, 2., false},
@@ -53,7 +53,7 @@ func TestDiff(t *testing.T) {
 
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"a", "b", "c"},
-			[]Type{Int64, Float64, Boolean},
+			[]Type{Int64, Float64, Bool},
 			[][]interface{}{
 				{1, nil, false},
 				{2, 1., false},

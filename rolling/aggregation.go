@@ -50,7 +50,7 @@ type ColAggregationFunc func(colIndex int, w Window) (interface{}, error)
 
 func (a *colAggregation) GetReturnType(input, iterator bow.Type) (typ bow.Type) {
 	switch a.Type() {
-	case bow.Int64, bow.Float64, bow.Boolean, bow.String:
+	case bow.Int64, bow.Float64, bow.Bool, bow.String:
 		typ = a.Type()
 	case bow.InputDependent:
 		typ = input
@@ -203,7 +203,7 @@ func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggr
 	var buf bow.Buffer
 
 	switch aggr.Type() {
-	case bow.Int64, bow.Float64, bow.Boolean:
+	case bow.Int64, bow.Float64, bow.Bool:
 		buf = bow.NewBuffer(it.numWindows, aggr.Type())
 	case bow.InputDependent:
 		cType := it.bow.ColumnType(aggr.InputIndex())

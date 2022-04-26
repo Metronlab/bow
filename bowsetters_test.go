@@ -9,12 +9,12 @@ import (
 
 func TestBow_SetColName(t *testing.T) {
 	b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-		NewSeries("oldName", []float64{0.1, 0.2}, nil),
+		NewSeries("oldName", Float64, []float64{0.1, 0.2}, nil),
 	)
 	require.NoError(t, err)
 
 	expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-		NewSeries("newName", []float64{0.1, 0.2}, nil),
+		NewSeries("newName", Float64, []float64{0.1, 0.2}, nil),
 	)
 	require.NoError(t, err)
 
@@ -37,14 +37,14 @@ func TestBow_SetColName(t *testing.T) {
 
 func TestBow_Apply(t *testing.T) {
 	b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-		NewSeries("unchanged", []float64{0.1, 0.2}, nil),
-		NewSeries("apply", []float64{0.1, 0.2}, nil),
+		NewSeries("unchanged", Float64, []float64{0.1, 0.2}, nil),
+		NewSeries("apply", Float64, []float64{0.1, 0.2}, nil),
 	)
 	require.NoError(t, err)
 
 	expect, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-		NewSeries("unchanged", []float64{0.1, 0.2}, nil),
-		NewSeries("apply", []string{"0.100000", "0.200000"}, nil),
+		NewSeries("unchanged", Float64, []float64{0.1, 0.2}, nil),
+		NewSeries("apply", String, []string{"0.100000", "0.200000"}, nil),
 	)
 	require.NoError(t, err)
 
@@ -55,8 +55,8 @@ func TestBow_Apply(t *testing.T) {
 
 func TestBow_Filter(t *testing.T) {
 	b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-		NewSeries("string", []string{"0.1", "0.2"}, nil),
-		NewSeries("float", []float64{0.1, 0.2}, nil),
+		NewSeries("string", String, []string{"0.1", "0.2"}, nil),
+		NewSeries("float", Float64, []float64{0.1, 0.2}, nil),
 	)
 	require.NoError(t, err)
 
@@ -116,13 +116,13 @@ func TestBow_Filter(t *testing.T) {
 
 	t.Run("match non concomitant", func(t *testing.T) {
 		b, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("string", []string{"0.1", "0.2", "0.3"}, nil),
-			NewSeries("float", []float64{0.1, 0.2, 0.3}, nil),
+			NewSeries("string", String, []string{"0.1", "0.2", "0.3"}, nil),
+			NewSeries("float", Float64, []float64{0.1, 0.2, 0.3}, nil),
 		)
 		require.NoError(t, err)
 		expect, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("string", []string{"0.1", "0.3"}, nil),
-			NewSeries("float", []float64{0.1, 0.3}, nil),
+			NewSeries("string", String, []string{"0.1", "0.3"}, nil),
+			NewSeries("float", Float64, []float64{0.1, 0.3}, nil),
 		)
 		require.NoError(t, err)
 

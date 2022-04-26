@@ -19,7 +19,7 @@ func (b *bow) Diff(colIndices ...int) (Bow, error) {
 		switch b.ColumnType(colIndex) {
 		case Int64:
 		case Float64:
-		case Boolean:
+		case Bool:
 		default:
 			return nil, fmt.Errorf(
 				"bow.Diff: column '%s' is of unsupported type '%v'",
@@ -56,7 +56,7 @@ func (b *bow) Diff(colIndices ...int) (Bow, error) {
 					currVal := colBuf.GetValue(rowIndex).(float64)
 					prevVal := colBuf.GetValue(rowIndex - 1).(float64)
 					calcBuf.SetOrDrop(rowIndex, currVal-prevVal)
-				case Boolean:
+				case Bool:
 					currVal := colBuf.GetValue(rowIndex).(bool)
 					prevVal := colBuf.GetValue(rowIndex - 1).(bool)
 					calcBuf.SetOrDrop(rowIndex, currVal != prevVal)

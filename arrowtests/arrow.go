@@ -3,9 +3,9 @@ package arrowtests
 import (
 	"fmt"
 
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
+	"github.com/apache/arrow/go/v8/arrow"
+	"github.com/apache/arrow/go/v8/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow/memory"
 )
 
 var (
@@ -25,7 +25,7 @@ type Event struct {
 }
 
 //NewTSRecord Create a new sample base on eventSchema
-func NewTSRecord() (*arrow.Schema, array.Record) {
+func NewTSRecord() (*arrow.Schema, arrow.Record) {
 	pool := memory.NewGoAllocator()
 	b := array.NewRecordBuilder(pool, EventSchema)
 	defer b.Release()
@@ -38,14 +38,14 @@ func NewTSRecord() (*arrow.Schema, array.Record) {
 }
 
 //PrintRecordColumns Print a columns based output
-func PrintRecordColumns(rec array.Record) {
+func PrintRecordColumns(rec arrow.Record) {
 	for i, col := range rec.Columns() {
 		fmt.Printf("column[%d] %q: %v\n", i, rec.ColumnName(i), col)
 	}
 }
 
 //PrintRecordRows Print a row based output
-func PrintRecordRows(schema *arrow.Schema, recs []array.Record) {
+func PrintRecordRows(schema *arrow.Schema, recs []arrow.Record) {
 	// Make a table read only based on many records
 	table := array.NewTableFromRecords(schema, recs)
 	defer table.Release()

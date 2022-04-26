@@ -34,7 +34,7 @@ func TestStepPrevious(t *testing.T) {
 	})
 
 	t.Run("bool", func(t *testing.T) {
-		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Boolean}, [][]interface{}{
+		b, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
 			{10, 13},
 			{true, false},
 		})
@@ -42,7 +42,7 @@ func TestStepPrevious(t *testing.T) {
 		filled, err := r.
 			Interpolate(WindowStart(timeCol), StepPrevious(valueCol)).
 			Bow()
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Boolean}, [][]interface{}{
+		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
 			{10, 12, 13},
 			{true, true, false},
 		})
