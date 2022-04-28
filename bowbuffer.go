@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apache/arrow/go/v7/arrow/bitutil"
+	"github.com/apache/arrow/go/v8/arrow/bitutil"
 )
 
 // Buffer is a mutable data structure with the purpose of easily building data Series with:

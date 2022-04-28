@@ -5,8 +5,8 @@ package bow
 import (
 	"fmt"
 
-	"github.com/apache/arrow/go/v7/arrow/array"
-	"github.com/apache/arrow/go/v7/arrow/bitutil"
+	"github.com/apache/arrow/go/v8/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow/bitutil"
 )
 
 // NewBuffer returns a new Buffer of size `size` and Type `typ`.

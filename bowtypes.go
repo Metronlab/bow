@@ -1,7 +1,7 @@
 package bow
 
 import (
-	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v8/arrow"
 )
 
 type Type int

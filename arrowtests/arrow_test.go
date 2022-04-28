@@ -1,6 +1,8 @@
 package arrowtests
 
-import "github.com/apache/arrow/go/v7/arrow"
+import (
+	"github.com/apache/arrow/go/v8/arrow"
+)
 
 func ExamplePrintRecordColumns() {
 	_, rec := NewTSRecord()
