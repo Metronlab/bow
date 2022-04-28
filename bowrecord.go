@@ -25,7 +25,7 @@ func newRecord(metadata Metadata, series ...Series) (arrow.Record, error) {
 			return nil, errors.New("empty Series name")
 		}
 		if getBowTypeFromArrowType(s.Array.DataType()) == Unknown {
-			return nil, fmt.Errorf("unsupported type: %s", s.Array.DataType().Name())
+			return nil, fmt.Errorf("unsupported type '%s'", s.Array.DataType())
 		}
 		if int64(s.Array.Len()) != nRows {
 			return nil,

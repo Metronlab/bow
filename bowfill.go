@@ -10,7 +10,7 @@ import (
 
 // FillLinear fills the column toFillColIndex using the Linear interpolation method according
 // to the reference column refColIndex, which has to be sorted.
-// Fills only int64 and float64 types.
+// Fills only Int64 and Float64 types.
 func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 	if refColIndex < 0 || refColIndex > b.NumCols()-1 {
 		return nil, fmt.Errorf("refColIndex is out of range")

@@ -36,7 +36,7 @@ func buildNullBitmapBool(dataLength int, validityArray interface{}) []bool {
 		}
 		return res
 	default:
-		panic(fmt.Errorf("unsupported type %T", valid))
+		panic(fmt.Errorf("unsupported type '%T'", valid))
 	}
 }
 

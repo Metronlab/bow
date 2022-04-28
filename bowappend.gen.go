@@ -40,8 +40,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewInt64Data(data)
@@ -55,8 +54,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewFloat64Data(data)
@@ -70,8 +68,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewBooleanData(data)
@@ -85,8 +82,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewStringData(data)
@@ -96,7 +92,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			}
 			newArray = builder.NewArray()
 		default:
-			return nil, fmt.Errorf("unsupported type %v", refType)
+			return nil, fmt.Errorf("unsupported type '%s'", refType)
 		}
 
 		series[colIndex] = Series{

@@ -27,7 +27,7 @@ func NewSeries(name string, dataArray interface{}, validityArray interface{}) Se
 	case []string:
 		return newStringSeries(name, v, buildNullBitmapBytes(len(v), validityArray))
 	default:
-		panic(fmt.Errorf("unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type '%T'", v))
 	}
 }
 
@@ -157,6 +157,6 @@ func NewSeriesFromInterfaces(name string, typ Type, data []interface{}) Series {
 		}
 		return Series{Name: name, Array: builder.NewArray()}
 	default:
-		panic(fmt.Errorf("unhandled type %s", typ))
+		panic(fmt.Errorf("unsupported type '%s'", typ))
 	}
 }
