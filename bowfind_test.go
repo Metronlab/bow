@@ -7,16 +7,16 @@ import (
 )
 
 var sortedTestBow, _ = NewBow(
-	NewSeries(Int64.String(),
+	NewSeries(Int64.String(), Int64,
 		[]int64{0, 1, 0, 0},
 		[]bool{true, true, false, true}),
-	NewSeries(Float64.String(),
+	NewSeries(Float64.String(), Float64,
 		[]float64{0., 1., 0., 0.},
 		[]bool{true, true, false, true}),
-	NewSeries(String.String(),
+	NewSeries(String.String(), String,
 		[]string{"0", "1", "0", "0"},
 		[]bool{true, true, false, true}),
-	NewSeries(Boolean.String(),
+	NewSeries(Boolean.String(), Boolean,
 		[]bool{false, true, false, false},
 		[]bool{true, true, false, true}),
 )

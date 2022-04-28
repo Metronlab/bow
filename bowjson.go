@@ -2,6 +2,7 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type jsonField struct {
@@ -57,11 +58,11 @@ func NewJSONBow(b Bow) JSONBow {
 func (b *bow) UnmarshalJSON(data []byte) error {
 	jsonB := JSONBow{}
 	if err := json.Unmarshal(data, &jsonB); err != nil {
-		return err
+		return fmt.Errorf("json.Unmarshal: %w", err)
 	}
 
 	if err := b.NewValuesFromJSON(jsonB); err != nil {
-		return err
+		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 	}
 
 	return nil
@@ -94,7 +95,13 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	*/
 
 	for fieldIndex, field := range jsonB.Schema.Fields {
-		if _, ok := mapArrowNameToBowTypes[field.Type]; ok {
+		ok := false
+		for _, arrowType := range mapBowToArrowDataTypes {
+			if arrowType.Name() == field.Type {
+				ok = true
+			}
+		}
+		if ok {
 			continue
 		}
 		switch field.Type {
@@ -111,7 +118,7 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 
 	if jsonB.RowBasedData == nil {
 		for i, field := range jsonB.Schema.Fields {
-			typ := getBowTypeFromArrowName(field.Type)
+			typ := getBowTypeFromArrowFingerprint(field.Type)
 			buf := NewBuffer(0, typ)
 			series[i] = NewSeriesFromBuffer(field.Name, buf)
 		}

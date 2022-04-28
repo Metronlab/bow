@@ -31,7 +31,7 @@ func BenchmarkNewSeries(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%d_rows", rows), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				NewSeries("test", dataArray, validArray)
+				NewSeries("test", Int64, dataArray, validArray)
 			}
 		})
 	}

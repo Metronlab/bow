@@ -1,13 +1,15 @@
 package bow
 
 import (
+	"fmt"
+
 	"github.com/apache/arrow/go/v8/arrow"
 )
 
 type Type int
 
 // How to add a Type:
-// - Seek corresponding arrow.DataType and add it in `mapArrowToBowTypes`
+// - Seek corresponding arrow.Type and add it in `mapArrowFingerprintToBowTypes`
 // - add a convert function with desired logic and add case in other conversion func
 // - add necessary case in buffer file
 // - complete GetValue bow method
@@ -30,26 +32,12 @@ const (
 )
 
 var (
-	mapArrowToBowTypes = map[arrow.DataType]Type{
-		arrow.PrimitiveTypes.Float64:  Float64,
-		arrow.PrimitiveTypes.Int64:    Int64,
-		arrow.FixedWidthTypes.Boolean: Boolean,
-		arrow.BinaryTypes.String:      String,
+	mapBowToArrowDataTypes = map[Type]arrow.DataType{
+		Float64: arrow.PrimitiveTypes.Float64,
+		Int64:   arrow.PrimitiveTypes.Int64,
+		Boolean: arrow.FixedWidthTypes.Boolean,
+		String:  arrow.BinaryTypes.String,
 	}
-	mapBowToArrowTypes = func() map[Type]arrow.DataType {
-		res := make(map[Type]arrow.DataType)
-		for arrowDataType, bowType := range mapArrowToBowTypes {
-			res[bowType] = arrowDataType
-		}
-		return res
-	}()
-	mapArrowNameToBowTypes = func() map[string]Type {
-		res := make(map[string]Type)
-		for arrowDataType, bowType := range mapArrowToBowTypes {
-			res[arrowDataType.Name()] = bowType
-		}
-		return res
-	}()
 	allType = func() []Type {
 		res := make([]Type, InputDependent-1)
 		for typ := Type(1); typ < InputDependent; typ++ {
@@ -59,13 +47,6 @@ var (
 	}()
 )
 
-// ArrowType returns the arrow.DataType from the Bow Type.
-func (t Type) ArrowType() arrow.DataType {
-	return mapBowToArrowTypes[t]
-}
-
-// Convert attempts to convert the `input` value to the Type t.
-// Returns nil if it fails.
 func (t Type) Convert(input interface{}) interface{} {
 	var output interface{}
 	var ok bool
@@ -87,33 +68,35 @@ func (t Type) Convert(input interface{}) interface{} {
 
 // IsSupported ensures that the Type t is currently supported by Bow and matches a convertible concrete type.
 func (t Type) IsSupported() bool {
-	_, ok := mapBowToArrowTypes[t]
+	_, ok := mapBowToArrowDataTypes[t]
 	return ok
 }
 
 // String returns the string representation of the Type t.
 func (t Type) String() string {
-	at, ok := mapBowToArrowTypes[t]
+	at, ok := mapBowToArrowDataTypes[t]
 	if !ok {
 		return "undefined"
 	}
-	return at.Name()
+	return fmt.Sprintf("%s", at)
 }
 
-func getBowTypeFromArrowName(arrowName string) Type {
-	typ, ok := mapArrowNameToBowTypes[arrowName]
-	if !ok {
-		return Unknown
+func getBowTypeFromArrowFingerprint(fingerprint string) Type {
+	for bowType, arrowType := range mapBowToArrowDataTypes {
+		if arrowType.Fingerprint() == fingerprint {
+			return bowType
+		}
 	}
-	return typ
+	return Unknown
 }
 
-func getBowTypeFromArrowType(arrowType arrow.DataType) Type {
-	typ, ok := mapArrowToBowTypes[arrowType]
-	if !ok {
-		return Unknown
+func getBowTypeFromArrowName(name string) Type {
+	for bowType, arrowType := range mapBowToArrowDataTypes {
+		if arrowType.Name() == name {
+			return bowType
+		}
 	}
-	return typ
+	return Unknown
 }
 
 // GetAllTypes returns all Bow types.
