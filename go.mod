@@ -3,7 +3,7 @@ module github.com/metronlab/bow
 go 1.18
 
 require (
-	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40
+	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
 	github.com/apache/arrow/go/v8 v8.0.0-20220425143814-555b4d27192e
 	github.com/apache/thrift v0.16.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
