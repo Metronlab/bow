@@ -42,7 +42,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewInt64Data(data)
-				v := Int64Values(arr)
+				v := int64Values(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}
@@ -56,7 +56,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewFloat64Data(data)
-				v := Float64Values(arr)
+				v := float64Values(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}
@@ -70,7 +70,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewBooleanData(data)
-				v := BooleanValues(arr)
+				v := booleanValues(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}
@@ -84,7 +84,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewStringData(data)
-				v := StringValues(arr)
+				v := stringValues(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}

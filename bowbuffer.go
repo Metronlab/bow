@@ -18,30 +18,20 @@ type Buffer struct {
 
 // NewBuffer returns a new Buffer of size `size` and Type `typ`.
 func NewBuffer(size int, typ Type) Buffer {
+	buf := Buffer{nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8)}
 	switch typ {
 	case Int64:
-		return Buffer{
-			Data:            make([]int64, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]int64, size)
 	case Float64:
-		return Buffer{
-			Data:            make([]float64, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]float64, size)
 	case Boolean:
-		return Buffer{
-			Data:            make([]bool, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]bool, size)
 	case String:
-		return Buffer{
-			Data:            make([]string, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]string, size)
 	default:
-		panic(fmt.Errorf("unsupported type %s", typ))
+		panic(fmt.Errorf("unsupported type '%s'", typ))
 	}
+	return buf
 }
 
 // Len returns the length of the Buffer
@@ -153,7 +143,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
-			Data:            Int64Values(arr),
+			Data:            int64Values(arr),
 			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	case Float64:
@@ -162,7 +152,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
-			Data:            Float64Values(arr),
+			Data:            float64Values(arr),
 			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	case Boolean:
@@ -171,7 +161,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
-			Data:            BooleanValues(arr),
+			Data:            booleanValues(arr),
 			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	case String:
@@ -180,7 +170,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		return Buffer{
-			Data:            StringValues(arr),
+			Data:            stringValues(arr),
 			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	default:
