@@ -4,74 +4,89 @@ import (
 	"fmt"
 
 	"github.com/metronlab/bow"
-	"github.com/metronlab/bow/transform"
+	"github.com/metronlab/bow/rolling/transformation"
 )
 
+// ColAggregation is a set of methods to aggregate and transform a Window.
 type ColAggregation interface {
+	// InputName returns the name of the input column.
 	InputName() string
+	// InputIndex returns the index of the input column.
 	InputIndex() int
-	MutateInputIndex(int)
+	// SetInputIndex sets the index of the input column.
+	SetInputIndex(int)
 
+	// OutputName returns the name of the output column.
 	OutputName() string
-	Rename(string) ColAggregation
-	NeedInclusive() bool
+	// RenameOutput returns a copy of the ColAggregation with a new output column name.
+	RenameOutput(string) ColAggregation
+	// NeedInclusiveWindow returns true if the ColAggregation needs to have inclusive windows.
+	NeedInclusiveWindow() bool
 
+	// Type returns the return type of the ColAggregation.
 	Type() bow.Type
+	// GetReturnType returns the return type of the ColAggregation depending on an input and an iterator type.
+	GetReturnType(inputType, iteratorType bow.Type) bow.Type
+
+	// Func returns the ColAggregationFunc of the ColAggregation.
 	Func() ColAggregationFunc
-	Transform(...transform.Transform) ColAggregation
-	Transforms() []transform.Transform
-	GetReturnType(inputType bow.Type, iterator bow.Type) bow.Type
+
+	// Transformations returns the transformation functions of the ColAggregation.
+	Transformations() []transformation.Func
+	// SetTransformations returns a copy of the ColAggregation with new transformations functions.
+	SetTransformations(...transformation.Func) ColAggregation
 }
 
 type colAggregation struct {
-	inputName       string
-	inputIndex      int
-	inclusiveWindow bool
+	inputName           string
+	inputIndex          int
+	needInclusiveWindow bool
 
-	fn         ColAggregationFunc
-	transforms []transform.Transform
+	aggregationFn     ColAggregationFunc
+	transformationFns []transformation.Func
 
 	outputName string
 	typ        bow.Type
 }
 
-func NewColAggregation(colName string, inclusiveWindow bool, returnedType bow.Type, fn ColAggregationFunc) ColAggregation {
+// NewColAggregation returns a new ColAggregation.
+func NewColAggregation(inputName string, needInclusiveWindow bool, typ bow.Type, fn ColAggregationFunc) ColAggregation {
 	return &colAggregation{
-		inputName:       colName,
-		inputIndex:      -1,
-		inclusiveWindow: inclusiveWindow,
-		fn:              fn,
-		typ:             returnedType,
+		inputName:           inputName,
+		inputIndex:          -1,
+		needInclusiveWindow: needInclusiveWindow,
+		aggregationFn:       fn,
+		typ:                 typ,
 	}
 }
 
 type ColAggregationConstruct func(colName string) ColAggregation
 type ColAggregationFunc func(colIndex int, w Window) (interface{}, error)
 
-func (a *colAggregation) GetReturnType(input, iterator bow.Type) (typ bow.Type) {
-	switch a.Type() {
-	case bow.Int64, bow.Float64, bow.Bool, bow.String:
-		typ = a.Type()
-	case bow.InputDependent:
-		typ = input
-	case bow.IteratorDependent:
-		typ = iterator
-	default:
-		panic(fmt.Errorf("invalid return type %v", a.Type()))
-	}
-	return
+func (a *colAggregation) InputName() string {
+	return a.inputName
 }
 
 func (a *colAggregation) InputIndex() int {
 	return a.inputIndex
 }
 
-func (a *colAggregation) InputName() string {
-	return a.inputName
+func (a *colAggregation) SetInputIndex(i int) {
+	a.inputIndex = i
 }
 
-func (a *colAggregation) MutateInputIndex(i int) {
-	a.inputIndex = i
+func (a *colAggregation) OutputName() string {
+	return a.outputName
+}
+
+func (a *colAggregation) RenameOutput(name string) ColAggregation {
+	aCopy := *a
+	aCopy.outputName = name
+	return &aCopy
+}
+
+func (a *colAggregation) NeedInclusiveWindow() bool {
+	return a.needInclusiveWindow
 }
 
 func (a *colAggregation) Type() bow.Type {
@@ -79,71 +94,64 @@ func (a *colAggregation) Type() bow.Type {
 }
 
 func (a *colAggregation) Func() ColAggregationFunc {
-	return a.fn
+	return a.aggregationFn
 }
 
-func (a *colAggregation) Transform(transforms ...transform.Transform) ColAggregation {
-	a2 := *a
-	a2.transforms = transforms
-	return &a2
+func (a *colAggregation) Transformations() []transformation.Func {
+	return a.transformationFns
 }
 
-func (a *colAggregation) Transforms() []transform.Transform {
-	return a.transforms
+func (a *colAggregation) SetTransformations(transformations ...transformation.Func) ColAggregation {
+	aCopy := *a
+	aCopy.transformationFns = transformations
+	return &aCopy
 }
 
-func (a *colAggregation) OutputName() string {
-	return a.outputName
+func (a *colAggregation) GetReturnType(inputType, iteratorType bow.Type) bow.Type {
+	switch a.Type() {
+	case bow.Int64, bow.Float64, bow.Bool, bow.String:
+		return a.Type()
+	case bow.InputDependent:
+		return inputType
+	case bow.IteratorDependent:
+		return iteratorType
+	default:
+		panic(fmt.Errorf("invalid return type %v", a.Type()))
+	}
 }
 
-func (a *colAggregation) Rename(name string) ColAggregation {
-	a2 := *a
-	a2.outputName = name
-	return &a2
-}
-
-func (a *colAggregation) NeedInclusive() bool {
-	return a.inclusiveWindow
-}
-
-// Aggregate each column using a ColAggregation
-func (it *intervalRollingIter) Aggregate(aggrs ...ColAggregation) Rolling {
-	if it.err != nil {
-		return it
+func (r *intervalRolling) Aggregate(aggrs ...ColAggregation) Rolling {
+	if r.err != nil {
+		return r
 	}
 
-	itCopy := *it
-	newIntervalCol, aggrs, err := itCopy.indexedAggregations(aggrs)
+	rCopy := *r
+	newIntervalCol, aggrs, err := rCopy.indexedAggregations(aggrs)
 	if err != nil {
-		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
+		return rCopy.setError(fmt.Errorf("intervalRolling.indexedAggregations: %w", err))
 	}
 
-	seriesSlice, err := itCopy.aggregateWindows(aggrs)
+	b, err := rCopy.aggregateWindows(aggrs)
 	if err != nil {
-		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
+		return rCopy.setError(fmt.Errorf("intervalRolling.aggregateWindows: %w", err))
 	}
 
-	b, err := bow.NewBow(seriesSlice...)
+	newR, err := newIntervalRolling(b, newIntervalCol, rCopy.interval, rCopy.options)
 	if err != nil {
-		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
+		return rCopy.setError(fmt.Errorf("newIntervalRolling: %w", err))
 	}
 
-	itNew, err := IntervalRollingForIndex(b, newIntervalCol, itCopy.interval, itCopy.options)
-	if err != nil {
-		return itCopy.setError(fmt.Errorf("rolling.Aggregate error: %w", err))
-	}
-
-	return itNew
+	return newR
 }
 
-func (it *intervalRollingIter) indexedAggregations(aggrs []ColAggregation) (int, []ColAggregation, error) {
+func (r *intervalRolling) indexedAggregations(aggrs []ColAggregation) (int, []ColAggregation, error) {
 	if len(aggrs) == 0 {
 		return -1, nil, fmt.Errorf("at least one column aggregation is required")
 	}
 
 	newIntervalCol := -1
 	for i := range aggrs {
-		isInterval, err := it.validateAggregation(aggrs[i], i)
+		isInterval, err := r.validateAggregation(aggrs[i], i)
 		if err != nil {
 			return -1, nil, err
 		}
@@ -153,96 +161,78 @@ func (it *intervalRollingIter) indexedAggregations(aggrs []ColAggregation) (int,
 	}
 
 	if newIntervalCol == -1 {
-		return -1, nil, fmt.Errorf("must keep interval column '%s'", it.bow.ColumnName(it.colIndex))
+		return -1, nil, fmt.Errorf(
+			"must keep interval column '%s'", r.bow.ColumnName(r.intervalColIndex))
 	}
 
 	return newIntervalCol, aggrs, nil
 }
 
-func (it *intervalRollingIter) validateAggregation(aggr ColAggregation, newIndex int) (isInterval bool, err error) {
+func (r *intervalRolling) validateAggregation(aggr ColAggregation, newIndex int) (isInterval bool, err error) {
 	if aggr.InputName() == "" {
 		return false, fmt.Errorf("aggregation %d has no column name", newIndex)
 	}
-	readIndex, err := it.bow.ColumnIndex(aggr.InputName())
+
+	readIndex, err := r.bow.ColumnIndex(aggr.InputName())
 	if err != nil {
 		return false, err
 	}
-	aggr.MutateInputIndex(readIndex)
 
-	if aggr.NeedInclusive() {
-		it.options.Inclusive = true
+	aggr.SetInputIndex(readIndex)
+
+	if aggr.NeedInclusiveWindow() {
+		r.options.Inclusive = true
 	}
 
-	return readIndex == it.colIndex, nil
+	return readIndex == r.intervalColIndex, nil
 }
 
-// For each colIndex aggregation, gives a series with each point resulting from a window aggregation.
-func (it *intervalRollingIter) aggregateWindows(aggrs []ColAggregation) ([]bow.Series, error) {
-	seriesSlice := make([]bow.Series, len(aggrs))
+func (r *intervalRolling) aggregateWindows(aggrs []ColAggregation) (bow.Bow, error) {
+	series := make([]bow.Series, len(aggrs))
 
-	for colIndex, aggregation := range aggrs {
-		itCopy := *it
+	for colIndex, aggr := range aggrs {
+		rCopy := *r
+		typ := aggr.GetReturnType(
+			rCopy.bow.ColumnType(aggr.InputIndex()),
+			rCopy.bow.ColumnType(rCopy.intervalColIndex))
+		buf := bow.NewBuffer(rCopy.numWindows, typ)
 
-		buf, err := itCopy.windowsAggregateBuffer(colIndex, aggregation)
-		if err != nil {
-			return nil, err
-		}
-
-		colName := aggregation.OutputName()
-		if colName == "" {
-			colName = itCopy.bow.ColumnName(aggregation.InputIndex())
-		}
-
-		seriesSlice[colIndex] = bow.NewSeriesFromBuffer(colName, buf)
-	}
-
-	return seriesSlice, nil
-}
-
-func (it *intervalRollingIter) windowsAggregateBuffer(colIndex int, aggr ColAggregation) (bow.Buffer, error) {
-	var buf bow.Buffer
-
-	switch aggr.Type() {
-	case bow.Int64, bow.Float64, bow.Bool:
-		buf = bow.NewBuffer(it.numWindows, aggr.Type())
-	case bow.InputDependent:
-		cType := it.bow.ColumnType(aggr.InputIndex())
-		buf = bow.NewBuffer(it.numWindows, cType)
-	case bow.IteratorDependent:
-		iType := it.bow.ColumnType(it.colIndex)
-		buf = bow.NewBuffer(it.numWindows, iType)
-	default:
-		return buf, fmt.Errorf(
-			"aggregation %d has invalid return type %s", colIndex, aggr.Type())
-	}
-
-	for it.HasNext() {
-		winIndex, w, err := it.Next()
-		if err != nil {
-			return buf, err
-		}
-
-		var val interface{}
-		if !aggr.NeedInclusive() && w.IsInclusive {
-			val, err = aggr.Func()(aggr.InputIndex(), (*w).UnsetInclusive())
-		} else {
-			val, err = aggr.Func()(aggr.InputIndex(), *w)
-		}
-		if err != nil {
-			return buf, err
-		}
-		for _, trans := range aggr.Transforms() {
-			val, err = trans(val)
+		for rCopy.HasNext() {
+			winIndex, w, err := rCopy.Next()
 			if err != nil {
-				return buf, err
+				return nil, err
 			}
-		}
-		if val == nil {
-			continue
+
+			var val interface{}
+			if !aggr.NeedInclusiveWindow() && w.IsInclusive {
+				val, err = aggr.Func()(aggr.InputIndex(), (*w).UnsetInclusive())
+			} else {
+				val, err = aggr.Func()(aggr.InputIndex(), *w)
+			}
+			if err != nil {
+				return nil, err
+			}
+
+			for _, trans := range aggr.Transformations() {
+				val, err = trans(val)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if val == nil {
+				continue
+			}
+
+			buf.SetOrDrop(winIndex, val)
 		}
 
-		buf.SetOrDrop(winIndex, val)
+		if aggr.OutputName() == "" {
+			series[colIndex] = bow.NewSeriesFromBuffer(rCopy.bow.ColumnName(aggr.InputIndex()), buf)
+		} else {
+			series[colIndex] = bow.NewSeriesFromBuffer(aggr.OutputName(), buf)
+		}
 	}
 
-	return buf, nil
+	return bow.NewBow(series...)
 }

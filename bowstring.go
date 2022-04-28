@@ -9,6 +9,7 @@ import (
 	"github.com/apache/arrow/go/v8/arrow"
 )
 
+// String returns a formatted representation of the Bow.
 func (b *bow) String() string {
 	if b.NumCols() == 0 {
 		return ""

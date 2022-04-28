@@ -8,10 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	genDefaultNumRows = 3
-)
+const genDefaultNumRows = 3
 
+// GenSeriesOptions are options to generate random Series:
+// - NumRows: number of rows of the resulting Series
+// - Name: name of the Series
+// - Type: data type of the Series
+// - GenStrategy: strategy of data generation
+// - MissingData: sets whether the Series includes random nil values
 type GenSeriesOptions struct {
 	NumRows     int
 	Name        string
@@ -20,9 +24,9 @@ type GenSeriesOptions struct {
 	MissingData bool
 }
 
-// NewGenBow generates a new random bow
+// NewGenBow generates a new random Bow with `numRows` rows and eventual GenSeriesOptions.
 func NewGenBow(numRows int, options ...GenSeriesOptions) (Bow, error) {
-	seriesSlice := make([]Series, len(options))
+	series := make([]Series, len(options))
 	nameMap := make(map[string]struct{})
 	for i, o := range options {
 		o.NumRows = numRows
@@ -31,12 +35,13 @@ func NewGenBow(numRows int, options ...GenSeriesOptions) (Bow, error) {
 			o.Name = fmt.Sprintf("%s_%d", o.Name, i)
 		}
 		nameMap[o.Name] = struct{}{}
-		seriesSlice[i] = o.genSeries()
+		series[i] = o.genSeries()
 	}
 
-	return NewBow(seriesSlice...)
+	return NewBow(series...)
 }
 
+// NewGenSeries returns a new randomly generated Series.
 func NewGenSeries(o GenSeriesOptions) Series {
 	o.validate()
 	return o.genSeries()
@@ -70,20 +75,25 @@ func (o *GenSeriesOptions) genSeries() Series {
 	return NewSeriesFromBuffer(o.Name, buf)
 }
 
+// GenStrategy defines how random values are generated.
 type GenStrategy func(typ Type, seed int) interface{}
 
+// GenStrategyRandom generates a random number of type `typ`.
 func GenStrategyRandom(typ Type, seed int) interface{} {
 	return newRandomNumber(typ)
 }
 
+// GenStrategyIncremental generates a number of type `typ` equal to the converted `seed` value.
 func GenStrategyIncremental(typ Type, seed int) interface{} {
 	return typ.Convert(seed)
 }
 
+// GenStrategyDecremental generates a number of type `typ` equal to the opposite of the converted `seed` value.
 func GenStrategyDecremental(typ Type, seed int) interface{} {
 	return typ.Convert(-seed)
 }
 
+// GenStrategyRandomIncremental generates a random number of type `typ` by using the `seed` value.
 func GenStrategyRandomIncremental(typ Type, seed int) interface{} {
 	i := int64(seed) * 10
 	switch typ {
@@ -96,6 +106,7 @@ func GenStrategyRandomIncremental(typ Type, seed int) interface{} {
 	}
 }
 
+// GenStrategyRandomDecremental generates a random number of type `typ` by using the `seed` value.
 func GenStrategyRandomDecremental(typ Type, seed int) interface{} {
 	i := -int64(seed) * 10
 	switch typ {

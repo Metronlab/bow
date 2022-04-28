@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/metronlab/bow"
-	"github.com/metronlab/bow/transform"
+	"github.com/metronlab/bow/rolling/transformation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -84,7 +84,7 @@ func TestIntegralStep(t *testing.T) {
 
 func TestIntegralStep_scaled(t *testing.T) {
 	factor := 0.1
-	transforms := []transform.Transform{
+	transforms := []transformation.Func{
 		func(x interface{}) (interface{}, error) {
 			if x == nil {
 				return nil, nil

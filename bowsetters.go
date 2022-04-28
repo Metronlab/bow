@@ -4,48 +4,49 @@ import (
 	"fmt"
 )
 
+// RenameCol returns a new Bow with the column `colIndex` renamed.
 func (b *bow) RenameCol(colIndex int, newName string) (Bow, error) {
 	if colIndex >= b.NumCols() {
-		return nil, fmt.Errorf("bow.RenameCol: column index out of bound")
+		return nil, fmt.Errorf("column index out of bound")
 	}
 
 	if newName == "" {
-		return nil, fmt.Errorf("bow.RenameCol: newName cannot be empty")
+		return nil, fmt.Errorf("newName cannot be empty")
 	}
 
-	seriesSlice := make([]Series, b.NumCols())
+	series := make([]Series, b.NumCols())
 	for i, col := range b.Columns() {
 		if i == colIndex {
-			seriesSlice[i] = Series{
+			series[i] = Series{
 				Name:  newName,
 				Array: col,
 			}
 		} else {
-			seriesSlice[i] = b.NewSeriesFromCol(i)
+			series[i] = b.NewSeriesFromCol(i)
 		}
 	}
 
-	return NewBowWithMetadata(b.Metadata(), seriesSlice...)
+	return NewBowWithMetadata(b.Metadata(), series...)
 }
 
-// Apply uses the given function to transform a column into something else,
-// its expected return type has to be supported otherwise given results will be stored as null
+// Apply uses the given function to transform the values of column `colIndex`.
+// Its expected return type has to be supported otherwise given results will be stored as nil values.
 func (b *bow) Apply(colIndex int, returnType Type, fn func(interface{}) interface{}) (Bow, error) {
 	buf := NewBuffer(b.NumRows(), returnType)
 	for i := 0; i < b.NumRows(); i++ {
 		buf.SetOrDropStrict(i, fn(b.GetValue(colIndex, i)))
 	}
 
-	seriesSlice := make([]Series, b.NumCols())
+	series := make([]Series, b.NumCols())
 	for i := range b.Columns() {
 		if i == colIndex {
-			seriesSlice[i] = NewSeriesFromBuffer(b.ColumnName(colIndex), buf)
+			series[i] = NewSeriesFromBuffer(b.ColumnName(colIndex), buf)
 		} else {
-			seriesSlice[i] = b.NewSeriesFromCol(i)
+			series[i] = b.NewSeriesFromCol(i)
 		}
 	}
 
-	return NewBowWithMetadata(b.Metadata(), seriesSlice...)
+	return NewBowWithMetadata(b.Metadata(), series...)
 }
 
 // Convert transforms a column type into another,
@@ -65,7 +66,7 @@ type RowCmp func(b Bow, i int) bool
 func (b *bow) Filter(fns ...RowCmp) Bow {
 	var indices []int
 	for i := 0; i < b.NumRows(); i++ {
-		if matchRowComps(b, i, fns...) {
+		if matchRowCmps(b, i, fns...) {
 			indices = append(indices, i)
 		}
 	}
@@ -73,7 +74,8 @@ func (b *bow) Filter(fns ...RowCmp) Bow {
 	if len(indices) == 0 {
 		return b.NewEmptySlice()
 	}
-	// if all indices are concomitant, slicing is more performent than copying
+
+	// If all indices are concomitant, slicing is more performent than copying
 	lastInclusive := indices[len(indices)-1] + 1
 	if len(indices) == lastInclusive-indices[0] {
 		return b.NewSlice(indices[0], lastInclusive)
@@ -87,30 +89,33 @@ func (b *bow) Filter(fns ...RowCmp) Bow {
 		}
 		filteredSeries[colIndex] = NewSeriesFromBuffer(b.ColumnName(colIndex), buf)
 	}
+
 	res, err := NewBowWithMetadata(b.Metadata(), filteredSeries...)
 	if err != nil {
 		panic(err)
 	}
+
 	return res
 }
 
-func matchRowComps(b Bow, i int, fns ...RowCmp) bool {
+func matchRowCmps(b Bow, i int, fns ...RowCmp) bool {
 	for _, fn := range fns {
 		if !fn(b, i) {
 			return false
 		}
 	}
+
 	return true
 }
 
-// MakeFilterValues prepares a valid comparator for Filter, it is lazy on given type
+// MakeFilterValues prepares a valid comparator for Filter, it is lazy on given type.
 // Be careful about number to string though, for instance 0.1 give "0.100000", which could be unexpected
 // If value is of the wrong type and not convertible to column type, comparison will be done on null values!
 func (b *bow) MakeFilterValues(colIndex int, values ...interface{}) RowCmp {
-	t := b.ColumnType(colIndex)
 	for i := range values {
-		values[i] = t.Convert(values[i])
+		values[i] = b.ColumnType(colIndex).Convert(values[i])
 	}
+
 	return func(b Bow, i int) bool {
 		return contains(values, b.GetValue(colIndex, i))
 	}
@@ -122,5 +127,6 @@ func contains(values []interface{}, value interface{}) bool {
 			return true
 		}
 	}
+
 	return false
 }

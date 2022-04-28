@@ -8,6 +8,6 @@ import (
 func WindowStart(col string) rolling.ColAggregation {
 	return rolling.NewColAggregation(col, false, bow.IteratorDependent,
 		func(col int, w rolling.Window) (interface{}, error) {
-			return w.Start, nil
+			return w.FirstValue, nil
 		})
 }

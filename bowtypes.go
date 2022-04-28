@@ -15,11 +15,10 @@ type Type int
 // - complete GetValue bow method
 
 const (
-	// Unknown is placed first to be by default
-	// when allocating Type or []Type
+	// Unknown is placed first to be the default when allocating Type or []Type.
 	Unknown = Type(iota)
 
-	// Float64 and following types are native arrow type supported by bow
+	// Float64 and following types are native arrow type supported by bow.
 	Float64
 	Int64
 	Bool
@@ -29,12 +28,10 @@ const (
 	TimestampMicro
 	TimestampNano
 
-	// InputDependent is used in transformation like aggregation
-	// when output type is infer with input type
+	// InputDependent is used in aggregations when the output type is dependent on the input type.
 	InputDependent
 
-	// IteratorDependent is used in transformation like aggregation
-	// when output type is infer with iteratorType
+	// IteratorDependent is used in aggregations when the output type is dependent on the iterator type.
 	IteratorDependent
 )
 
@@ -64,40 +61,40 @@ var (
 	}()
 )
 
-func (t Type) Convert(i interface{}) interface{} {
-	var val interface{}
+func (t Type) Convert(input interface{}) interface{} {
+	var output interface{}
 	var ok bool
 	switch t {
 	case Float64:
-		val, ok = ToFloat64(i)
+		output, ok = ToFloat64(input)
 	case Int64:
-		val, ok = ToInt64(i)
+		output, ok = ToInt64(input)
 	case Bool:
-		val, ok = ToBool(i)
+		output, ok = ToBool(input)
 	case String:
-		val, ok = ToString(i)
+		output, ok = ToString(input)
 	case TimestampSec:
-		val, ok = ToTimestampSec(i)
+		output, ok = ToTimestampSec(input)
 	case TimestampMilli:
-		val, ok = ToTimestampMilli(i)
+		output, ok = ToTimestampMilli(input)
 	case TimestampMicro:
-		val, ok = ToTimestampMicro(i)
+		output, ok = ToTimestampMicro(input)
 	case TimestampNano:
-		val, ok = ToTimestampNano(i)
+		output, ok = ToTimestampNano(input)
 	}
 	if ok {
-		return val
+		return output
 	}
 	return nil
 }
 
-// IsSupported ensures that the type is currently supported by Bow
-// and match a convertible concrete type.
+// IsSupported ensures that the Type t is currently supported by Bow and matches a convertible concrete type.
 func (t Type) IsSupported() bool {
 	_, ok := mapBowToArrowDataTypes[t]
 	return ok
 }
 
+// String returns the string representation of the Type t.
 func (t Type) String() string {
 	at, ok := mapBowToArrowDataTypes[t]
 	if !ok {
@@ -124,6 +121,7 @@ func getBowTypeFromArrowName(name string) Type {
 	return Unknown
 }
 
+// GetAllTypes returns all Bow types.
 func GetAllTypes() []Type {
 	res := make([]Type, len(allType))
 	copy(res, allType)
