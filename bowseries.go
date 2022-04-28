@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/apache/arrow/go/arrow/bitutil"
 	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/apache/arrow/go/v8/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow/bitutil"
 	"github.com/apache/arrow/go/v8/arrow/memory"
 )
 
@@ -17,6 +17,13 @@ type Series struct {
 	Array arrow.Array
 }
 
+// NewSeries returns a new Series from:
+// - name: string
+// - typ: data type
+// - dataArray: slice of the data in any of the Bow supported types
+// - validityArray:
+//  - If nil, the data will be non-nil
+//  - Can be of type []bool or []byte to represent nil values
 func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
 	switch typ {
 	case Int64:
@@ -39,6 +46,7 @@ func NewSeries(name string, typ Type, dataArray interface{}, validityArray inter
 	}
 }
 
+// NewSeriesFromBuffer returns a new Series from a name and a Buffer.
 func NewSeriesFromBuffer(name string, buf Buffer) Series {
 	switch buf.DataType {
 	case Int64:
@@ -56,10 +64,14 @@ func NewSeriesFromBuffer(name string, buf Buffer) Series {
 	}
 }
 
-func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series {
+// NewSeriesFromInterfaces returns a new Series from:
+// - name: string
+// - typ: Bow Type
+// - data: represented by a slice of interface{}, with eventually nil values
+func NewSeriesFromInterfaces(name string, typ Type, data []interface{}) Series {
 	if typ == Unknown {
 		var err error
-		if typ, err = getBowTypeFromInterfaces(cells); err != nil {
+		if typ, err = getBowTypeFromInterfaces(data); err != nil {
 			panic(err)
 		}
 	}
@@ -69,9 +81,9 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 	case Int64:
 		builder := array.NewInt64Builder(mem)
 		defer builder.Release()
-		builder.Resize(len(cells))
-		for i := 0; i < len(cells); i++ {
-			v, ok := ToInt64(cells[i])
+		builder.Resize(len(data))
+		for i := 0; i < len(data); i++ {
+			v, ok := ToInt64(data[i])
 			if !ok {
 				builder.AppendNull()
 				continue
@@ -82,9 +94,9 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 	case Float64:
 		builder := array.NewFloat64Builder(mem)
 		defer builder.Release()
-		builder.Resize(len(cells))
-		for i := 0; i < len(cells); i++ {
-			v, ok := ToFloat64(cells[i])
+		builder.Resize(len(data))
+		for i := 0; i < len(data); i++ {
+			v, ok := ToFloat64(data[i])
 			if !ok {
 				builder.AppendNull()
 				continue
@@ -95,9 +107,9 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 	case Boolean:
 		builder := array.NewBooleanBuilder(mem)
 		defer builder.Release()
-		builder.Resize(len(cells))
-		for i := 0; i < len(cells); i++ {
-			v, ok := ToBoolean(cells[i])
+		builder.Resize(len(data))
+		for i := 0; i < len(data); i++ {
+			v, ok := ToBoolean(data[i])
 			if !ok {
 				builder.AppendNull()
 				continue
@@ -108,9 +120,9 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 	case String:
 		builder := array.NewStringBuilder(mem)
 		defer builder.Release()
-		builder.Resize(len(cells))
-		for i := 0; i < len(cells); i++ {
-			v, ok := ToString(cells[i])
+		builder.Resize(len(data))
+		for i := 0; i < len(data); i++ {
+			v, ok := ToString(data[i])
 			if !ok {
 				builder.AppendNull()
 				continue
@@ -121,9 +133,9 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
 		builder := array.NewTimestampBuilder(mem, mapBowToArrowDataTypes[typ].(*arrow.TimestampType))
 		defer builder.Release()
-		builder.Resize(len(cells))
-		for i := 0; i < len(cells); i++ {
-			v, ok := mapBowTypeToConvertFunc[typ](cells[i])
+		builder.Resize(len(data))
+		for i := 0; i < len(data); i++ {
+			v, ok := mapBowTypeToConvertFunc[typ](data[i])
 			if !ok {
 				builder.AppendNull()
 				continue

@@ -3,7 +3,6 @@ module github.com/metronlab/bow
 go 1.18
 
 require (
-	github.com/apache/arrow/go/arrow v0.0.0-20200730104253-651201b0f516
 	github.com/apache/arrow/go/v8 v8.0.0-20220407025312-96de9d584208
 	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.7.0

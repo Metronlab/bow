@@ -11,6 +11,7 @@ import (
 
 // Buffer is a mutable data structure with the purpose of easily building data Series with:
 // - Data: slice of data.
+// - DataType: type of the data.
 // - nullBitmapBytes: slice of bytes representing valid or null values.
 type Buffer struct {
 	Data            interface{}
@@ -18,27 +19,27 @@ type Buffer struct {
 	nullBitmapBytes []byte
 }
 
+// NewBuffer returns a new Buffer of size `size` and Type `typ`.
 func NewBuffer(size int, typ Type) Buffer {
-	res := Buffer{
+	buf := Buffer{
 		DataType:        typ,
 		nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
 	}
-
 	switch typ {
 	case Int64:
-		res.Data = make([]int64, size)
+		buf.Data = make([]int64, size)
 	case Float64:
-		res.Data = make([]float64, size)
+		buf.Data = make([]float64, size)
 	case Boolean:
-		res.Data = make([]bool, size)
+		buf.Data = make([]bool, size)
 	case String:
-		res.Data = make([]string, size)
+		buf.Data = make([]string, size)
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-		res.Data = make([]arrow.Timestamp, size)
+		buf.Data = make([]arrow.Timestamp, size)
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", typ))
 	}
-	return res
+	return buf
 }
 
 func (b Buffer) Len() int {
@@ -194,29 +195,29 @@ func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
 	var res []byte
 	nullBitmapLength := bitutil.CeilByte(dataLength) / 8
 
-	switch valid := validityArray.(type) {
+	switch validityArray := validityArray.(type) {
 	case nil:
 		res = make([]byte, nullBitmapLength)
 		for i := 0; i < dataLength; i++ {
 			bitutil.SetBit(res, i)
 		}
 	case []bool:
-		if len(valid) != dataLength {
+		if len(validityArray) != dataLength {
 			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
 		res = make([]byte, nullBitmapLength)
 		for i := 0; i < dataLength; i++ {
-			if valid[i] {
+			if validityArray[i] {
 				bitutil.SetBit(res, i)
 			}
 		}
 	case []byte:
-		if len(valid) != nullBitmapLength {
+		if len(validityArray) != nullBitmapLength {
 			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
-		return valid
+		return validityArray
 	default:
-		panic(fmt.Errorf("unsupported type %T", valid))
+		panic(fmt.Errorf("unsupported type '%T'", validityArray))
 	}
 
 	return res

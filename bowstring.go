@@ -58,8 +58,7 @@ func (b *bow) String() string {
 	}
 
 	if b.Metadata().Len() > 0 {
-		_, err = fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
-		if err != nil {
+		if _, err = fmt.Fprintf(w, "metadata: %+v\n", b.Metadata()); err != nil {
 			panic(err)
 		}
 	}
