@@ -205,7 +205,7 @@ func innerFillLeftBowCols(newSeries *[]Series, left *bow, newNumRows int,
 					buf.SetOrDropStrict(rowIndex, data.Value(commonRows.l[rowIndex]))
 				}
 			}
-		case Bool:
+		case Boolean:
 			data := array.NewBooleanData(left.Column(colIndex).Data())
 			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
 				if data.IsValid(commonRows.l[rowIndex]) {
@@ -260,7 +260,7 @@ func innerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumRows, ne
 					buf.SetOrDropStrict(rowIndex, data.Value(commonRows.r[rowIndex]))
 				}
 			}
-		case Bool:
+		case Boolean:
 			data := array.NewBooleanData(right.Column(rightCol).Data())
 			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
 				if data.IsValid(commonRows.r[rowIndex]) {
@@ -345,7 +345,7 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 					break
 				}
 			}
-		case Bool:
+		case Boolean:
 			data := array.NewBooleanData(left.Column(colIndex).Data())
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
 				if data.IsValid(leftRow) {
@@ -527,7 +527,7 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 					newRow++
 				}
 			}
-		case Bool:
+		case Boolean:
 			data := array.NewBooleanData(right.Column(rightCol).Data())
 
 			// Fill common rows from right bow

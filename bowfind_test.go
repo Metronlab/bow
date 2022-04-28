@@ -16,7 +16,7 @@ var sortedTestBow, _ = NewBow(
 	NewSeries(String.String(), String,
 		[]string{"0", "1", "0", "0"},
 		[]bool{true, true, false, true}),
-	NewSeries(Bool.String(), Bool,
+	NewSeries(Boolean.String(), Boolean,
 		[]bool{false, true, false, false},
 		[]bool{true, true, false, true}),
 )

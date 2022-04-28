@@ -25,7 +25,7 @@ func NewSeries(name string, typ Type, dataArray interface{}, validityArray inter
 	case Float64:
 		return newFloat64Series(name, dataArray.([]float64),
 			buildNullBitmapBytes(len(dataArray.([]float64)), validityArray))
-	case Bool:
+	case Boolean:
 		return newBooleanSeries(name, dataArray.([]bool),
 			buildNullBitmapBytes(len(dataArray.([]bool)), validityArray))
 	case String:
@@ -45,7 +45,7 @@ func NewSeriesFromBuffer(name string, buf Buffer) Series {
 		return newInt64Series(name, buf.Data.([]int64), buf.nullBitmapBytes)
 	case Float64:
 		return newFloat64Series(name, buf.Data.([]float64), buf.nullBitmapBytes)
-	case Bool:
+	case Boolean:
 		return newBooleanSeries(name, buf.Data.([]bool), buf.nullBitmapBytes)
 	case String:
 		return newStringSeries(name, buf.Data.([]string), buf.nullBitmapBytes)
@@ -92,12 +92,12 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 			builder.Append(v)
 		}
 		return Series{Name: name, Array: builder.NewArray()}
-	case Bool:
+	case Boolean:
 		builder := array.NewBooleanBuilder(mem)
 		defer builder.Release()
 		builder.Resize(len(cells))
 		for i := 0; i < len(cells); i++ {
-			v, ok := ToBool(cells[i])
+			v, ok := ToBoolean(cells[i])
 			if !ok {
 				builder.AppendNull()
 				continue
@@ -224,7 +224,7 @@ func getBowTypeFromInterfaces(colBasedData []interface{}) (Type, error) {
 			case string:
 				return String, nil
 			case bool:
-				return Bool, nil
+				return Boolean, nil
 			}
 		}
 	}

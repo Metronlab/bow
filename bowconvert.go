@@ -78,10 +78,10 @@ func ToFloat64(input interface{}) (output float64, ok bool) {
 	return
 }
 
-// ToBool attempts to convert `input` to bool.
+// ToBoolean attempts to convert `input` to bool.
 // Return also a false boolean if the conversion failed.
 // In case of numeric type, returns true if the value is non-zero.
-func ToBool(input interface{}) (output bool, ok bool) {
+func ToBoolean(input interface{}) (output bool, ok bool) {
 	switch input := input.(type) {
 	case bool:
 		return input, true

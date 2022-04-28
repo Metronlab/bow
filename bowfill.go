@@ -219,7 +219,7 @@ func fill(method string, b *bow, colIndices ...int) (Bow, error) {
 						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
 					}
 				}
-			case Bool:
+			case Boolean:
 				arr := array.NewBooleanData(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if buf.IsValid(rowIndex) {

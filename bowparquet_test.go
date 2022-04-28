@@ -35,7 +35,7 @@ func TestParquet(t *testing.T) {
 				"timestamp_ms_int", "timestamp_ms_str",
 				"timestamp_us_int", "timestamp_us_str",
 				"timestamp_ns_int", "timestamp_ns_str"},
-			[]Type{Int64, Float64, Bool, String,
+			[]Type{Int64, Float64, Boolean, String,
 				TimestampMilli, TimestampMilli,
 				TimestampMicro, TimestampMicro,
 				TimestampNano, TimestampNano},
@@ -73,7 +73,7 @@ func TestParquet(t *testing.T) {
 	t.Run("bow supported types without rows", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
 			[]string{"int", "float", "bool", "string"},
-			[]Type{Int64, Float64, Bool, String},
+			[]Type{Int64, Float64, Boolean, String},
 			[][]interface{}{})
 		require.NoError(t, err)
 

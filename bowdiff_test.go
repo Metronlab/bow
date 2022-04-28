@@ -16,7 +16,7 @@ func TestDiff(t *testing.T) {
 			NewSeries("b", Float64,
 				[]float64{1., 2., 3., 4., 0., 5.},
 				[]bool{true, true, true, true, false, true}),
-			NewSeries("c", Bool,
+			NewSeries("c", Boolean,
 				[]bool{false, false, true, true, false, false},
 				[]bool{true, true, true, true, false, true}),
 		)
@@ -29,7 +29,7 @@ func TestDiff(t *testing.T) {
 			NewSeries("b", Float64,
 				[]float64{0., 1., 1., 1., 0., 0.},
 				[]bool{false, true, true, true, false, false}),
-			NewSeries("c", Bool,
+			NewSeries("c", Boolean,
 				[]bool{false, false, true, false, false, false},
 				[]bool{false, true, true, true, false, false}),
 		)
@@ -43,7 +43,7 @@ func TestDiff(t *testing.T) {
 	t.Run("one column all supported types", func(t *testing.T) {
 		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"a", "b", "c"},
-			[]Type{Int64, Float64, Bool},
+			[]Type{Int64, Float64, Boolean},
 			[][]interface{}{
 				{1, 1., false},
 				{2, 2., false},
@@ -53,7 +53,7 @@ func TestDiff(t *testing.T) {
 
 		expected, err := NewBowFromRowBasedInterfaces(
 			[]string{"a", "b", "c"},
-			[]Type{Int64, Float64, Bool},
+			[]Type{Int64, Float64, Boolean},
 			[][]interface{}{
 				{1, nil, false},
 				{2, 1., false},

@@ -53,7 +53,7 @@ func (b *bow) GetValue(colIndex, rowIndex int) interface{} {
 		return array.NewFloat64Data(b.Column(colIndex).Data()).Value(rowIndex)
 	case Int64:
 		return array.NewInt64Data(b.Column(colIndex).Data()).Value(rowIndex)
-	case Bool:
+	case Boolean:
 		return array.NewBooleanData(b.Column(colIndex).Data()).Value(rowIndex)
 	case String:
 		return array.NewStringData(b.Column(colIndex).Data()).Value(rowIndex)

@@ -13,41 +13,41 @@ func TestToBool(t *testing.T) {
 	var v bool
 	var ok bool
 
-	v, ok = ToBool(true)
+	v, ok = ToBoolean(true)
 	require.True(t, ok)
 	assert.Equal(t, true, v)
 
-	v, ok = ToBool(false)
+	v, ok = ToBoolean(false)
 	require.True(t, ok)
 	assert.Equal(t, false, v)
 
-	v, ok = ToBool("true")
+	v, ok = ToBoolean("true")
 	require.True(t, ok)
 	assert.Equal(t, true, v)
 
-	v, ok = ToBool("True")
+	v, ok = ToBoolean("True")
 	require.True(t, ok)
 	assert.Equal(t, true, v)
 
-	v, ok = ToBool("false")
+	v, ok = ToBoolean("false")
 	require.True(t, ok)
 	assert.Equal(t, false, v)
 
-	v, ok = ToBool("False")
+	v, ok = ToBoolean("False")
 	require.True(t, ok)
 	assert.Equal(t, false, v)
 
-	v, ok = ToBool(1)
+	v, ok = ToBoolean(1)
 	require.True(t, v)
 	require.True(t, ok)
-	v, ok = ToBool(0)
+	v, ok = ToBoolean(0)
 	require.False(t, v)
 	require.True(t, ok)
 
-	v, ok = ToBool(1.)
+	v, ok = ToBoolean(1.)
 	require.True(t, v)
 	require.True(t, ok)
-	v, ok = ToBool(0.)
+	v, ok = ToBoolean(0.)
 	require.False(t, v)
 	require.True(t, ok)
 }

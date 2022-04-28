@@ -21,7 +21,7 @@ const (
 	// Float64 and following types are native arrow type supported by bow.
 	Float64
 	Int64
-	Bool
+	Boolean
 	String
 	TimestampSec
 	TimestampMilli
@@ -39,7 +39,7 @@ var (
 	mapBowToArrowDataTypes = map[Type]arrow.DataType{
 		Float64:        arrow.PrimitiveTypes.Float64,
 		Int64:          arrow.PrimitiveTypes.Int64,
-		Bool:           arrow.FixedWidthTypes.Boolean,
+		Boolean:        arrow.FixedWidthTypes.Boolean,
 		String:         arrow.BinaryTypes.String,
 		TimestampSec:   arrow.FixedWidthTypes.Timestamp_s,
 		TimestampMilli: arrow.FixedWidthTypes.Timestamp_ms,
@@ -69,8 +69,8 @@ func (t Type) Convert(input interface{}) interface{} {
 		output, ok = ToFloat64(input)
 	case Int64:
 		output, ok = ToInt64(input)
-	case Bool:
-		output, ok = ToBool(input)
+	case Boolean:
+		output, ok = ToBoolean(input)
 	case String:
 		output, ok = ToString(input)
 	case TimestampSec:

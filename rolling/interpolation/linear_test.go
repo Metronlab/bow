@@ -101,7 +101,7 @@ func TestLinear(t *testing.T) {
 	})
 
 	t.Run("bool error", func(t *testing.T) {
-		b, err := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Bool}, [][]interface{}{
+		b, err := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Boolean}, [][]interface{}{
 			{10, 15},
 			{true, false},
 		})

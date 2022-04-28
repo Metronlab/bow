@@ -53,7 +53,7 @@ var (
 		})
 	sparseBoolBow, _ = bow.NewBowFromRowBasedInterfaces(
 		[]string{timeCol, valueCol},
-		[]bow.Type{bow.Int64, bow.Bool},
+		[]bow.Type{bow.Int64, bow.Boolean},
 		[][]interface{}{
 			{10, true}, // partially valid window
 			{11, nil},

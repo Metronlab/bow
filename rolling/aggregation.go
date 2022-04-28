@@ -109,7 +109,7 @@ func (a *colAggregation) SetTransformations(transformations ...transformation.Fu
 
 func (a *colAggregation) GetReturnType(inputType, iteratorType bow.Type) bow.Type {
 	switch a.Type() {
-	case bow.Int64, bow.Float64, bow.Bool, bow.String:
+	case bow.Int64, bow.Float64, bow.Boolean, bow.String:
 		return a.Type()
 	case bow.InputDependent:
 		return inputType

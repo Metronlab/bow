@@ -29,7 +29,7 @@ func NewBuffer(size int, typ Type) Buffer {
 		res.Data = make([]int64, size)
 	case Float64:
 		res.Data = make([]float64, size)
-	case Bool:
+	case Boolean:
 		res.Data = make([]bool, size)
 	case String:
 		res.Data = make([]string, size)
@@ -47,7 +47,7 @@ func (b Buffer) Len() int {
 		return len(b.Data.([]int64))
 	case Float64:
 		return len(b.Data.([]float64))
-	case Bool:
+	case Boolean:
 		return len(b.Data.([]bool))
 	case String:
 		return len(b.Data.([]string))
@@ -65,8 +65,8 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 		b.Data.([]int64)[i], valid = Int64.Convert(value).(int64)
 	case Float64:
 		b.Data.([]float64)[i], valid = Float64.Convert(value).(float64)
-	case Bool:
-		b.Data.([]bool)[i], valid = Bool.Convert(value).(bool)
+	case Boolean:
+		b.Data.([]bool)[i], valid = Boolean.Convert(value).(bool)
 	case String:
 		b.Data.([]string)[i], valid = String.Convert(value).(string)
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
@@ -89,7 +89,7 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 		b.Data.([]int64)[i], valid = value.(int64)
 	case Float64:
 		b.Data.([]float64)[i], valid = value.(float64)
-	case Bool:
+	case Boolean:
 		b.Data.([]bool)[i], valid = value.(bool)
 	case String:
 		b.Data.([]string)[i], valid = value.(string)
@@ -116,7 +116,7 @@ func (b *Buffer) GetValue(i int) interface{} {
 		return b.Data.([]int64)[i]
 	case Float64:
 		return b.Data.([]float64)[i]
-	case Bool:
+	case Boolean:
 		return b.Data.([]bool)[i]
 	case String:
 		return b.Data.([]string)[i]
@@ -135,7 +135,7 @@ func (b Buffer) Less(i, j int) bool {
 		return b.Data.([]float64)[i] < b.Data.([]float64)[j]
 	case String:
 		return b.Data.([]string)[i] < b.Data.([]string)[j]
-	case Bool:
+	case Boolean:
 		return !b.Data.([]bool)[i] && b.Data.([]bool)[j]
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
 		return b.Data.([]arrow.Timestamp)[i] < b.Data.([]arrow.Timestamp)[j]
@@ -162,7 +162,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		res.Data = float64Values(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
-	case Bool:
+	case Boolean:
 		arr := array.NewBooleanData(arrayData)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
