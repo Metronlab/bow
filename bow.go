@@ -95,7 +95,7 @@ type bow struct {
 	arrow.Record
 }
 
-// NewBowEmpty returns a new empty Bow
+// NewBowEmpty returns a new empty Bow.
 func NewBowEmpty() Bow {
 	var fields []arrow.Field
 	var arrays []arrow.Array
@@ -103,7 +103,7 @@ func NewBowEmpty() Bow {
 	return &bow{Record: array.NewRecord(schema, arrays, 0)}
 }
 
-// NewBow returns a new Bow from one or more Series
+// NewBow returns a new Bow from one or more Series.
 func NewBow(series ...Series) (Bow, error) {
 	rec, err := newRecord(Metadata{}, series...)
 	if err != nil {
@@ -173,7 +173,7 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 	return NewBow(series...)
 }
 
-// NewEmptySlice returns an empty slice of the Bow
+// NewEmptySlice returns an empty slice of the Bow.
 func (b *bow) NewEmptySlice() Bow {
 	return b.NewSlice(0, 0)
 }

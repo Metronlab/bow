@@ -22,7 +22,7 @@ func (b *bow) Diff(colIndices ...int) (Bow, error) {
 		case Boolean:
 		default:
 			return nil, fmt.Errorf(
-				"column '%s' is of unsupported type '%v'",
+				"column '%s' is of unsupported type '%s'",
 				col.Name, b.ColumnType(colIndex))
 		}
 	}

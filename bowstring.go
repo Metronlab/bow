@@ -42,13 +42,14 @@ func (b *bow) String() string {
 		})
 	}
 
-	_, err := fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
-	if err != nil {
-		panic(err)
+	if b.Metadata().Len() > 0 {
+		_, err := fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	// Flush buffer and format lines along the way
-	if err = w.Flush(); err != nil {
+	if err := w.Flush(); err != nil {
 		panic(err)
 	}
 

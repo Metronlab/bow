@@ -23,7 +23,6 @@ func ExampleNewBow() {
 	// 2           <nil>         <nil>
 	// 3           3.3           true
 	// 4           4             false
-	// metadata: []
 }
 
 func ExampleNewBowFromColBasedInterfaces() {
@@ -47,7 +46,6 @@ func ExampleNewBowFromColBasedInterfaces() {
 	// 1           1            1.1
 	// 1           <nil>        2
 	// 3           3            1.3
-	// metadata: []
 }
 
 func ExampleNewBowFromRowBasedInterfaces() {
@@ -70,7 +68,6 @@ func ExampleNewBowFromRowBasedInterfaces() {
 	// 1           1            1.1
 	// 1           <nil>        2
 	// 3           3            1.3
-	// metadata: []
 }
 
 func ExampleBow_MarshalJSON() {
