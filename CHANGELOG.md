@@ -6,6 +6,10 @@ UNRELEASED [XXXX-XX-XX]
   - bump to arrow/go/v8
   - remove useless count script
   - add gci linter
+  - add support for Arrow Timestamps types
+  - prepare for the use of new go 1.18 generics by removing genius file generation
+- Parquet
+  - use the new arrow/go/v8/parquet package
 
 v0.18.0 [2022-02-16]
 -------------------

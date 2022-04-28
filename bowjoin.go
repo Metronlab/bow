@@ -39,7 +39,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	newSeries := make([]Series, newNumCols)
 	newNumRows := len(commonRows.l)
 
-	innerFillLeftBowCols(&newSeries, left, right,
+	innerFillLeftBowCols(&newSeries, left,
 		newNumRows, commonRows)
 	innerFillRightBowCols(&newSeries, left, right,
 		newNumRows, newNumCols, commonCols, commonRows)
@@ -185,12 +185,12 @@ func getCommonRows(left, right Bow, commonColBufs map[string][]Buffer) CommonRow
 	return commonRows
 }
 
-func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,
+func innerFillLeftBowCols(newSeries *[]Series, left *bow, newNumRows int,
 	commonRows struct{ l, r []int }) {
 
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
-		switch left.ColumnType(colIndex) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(left.Column(colIndex).Data())
 			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
@@ -219,8 +219,15 @@ func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,
 					buf.SetOrDropStrict(rowIndex, data.Value(commonRows.l[rowIndex]))
 				}
 			}
+		case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+			data := array.NewTimestampData(left.Column(colIndex).Data())
+			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
+				if data.IsValid(commonRows.l[rowIndex]) {
+					buf.SetOrDropStrict(rowIndex, data.Value(commonRows.l[rowIndex]))
+				}
+			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", left.ColumnType(colIndex)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
 
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
@@ -238,7 +245,7 @@ func innerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumRows, ne
 		}
 
 		// Fill common rows from right bow
-		switch right.ColumnType(rightCol) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(right.Column(rightCol).Data())
 			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
@@ -267,8 +274,15 @@ func innerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumRows, ne
 					buf.SetOrDropStrict(rowIndex, data.Value(commonRows.r[rowIndex]))
 				}
 			}
+		case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+			data := array.NewTimestampData(right.Column(rightCol).Data())
+			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
+				if data.IsValid(commonRows.r[rowIndex]) {
+					buf.SetOrDropStrict(rowIndex, data.Value(commonRows.r[rowIndex]))
+				}
+			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", right.ColumnType(rightCol)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
 
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
@@ -286,7 +300,7 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
 
 		// Fill rows from left bow
-		switch left.ColumnType(colIndex) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(left.Column(colIndex).Data())
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
@@ -375,8 +389,30 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 					break
 				}
 			}
+		case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+			data := array.NewTimestampData(left.Column(colIndex).Data())
+			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
+				if data.IsValid(leftRow) {
+					buf.SetOrDropStrict(newRow, data.Value(leftRow))
+				}
+				for commonRow < len(commonRows.l) &&
+					leftRow == commonRows.l[commonRow] &&
+					newRow < newNumRows {
+					if data.IsValid(leftRow) {
+						buf.SetOrDropStrict(newRow, data.Value(leftRow))
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				if leftRow++; leftRow >= left.NumRows() {
+					break
+				}
+			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", left.ColumnType(colIndex)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
 
 		// Fill remaining rows from right bow if column is common
@@ -416,7 +452,7 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 		}
 		buf := NewBuffer(newNumRows, right.ColumnType(rightCol))
 
-		switch right.ColumnType(rightCol) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(right.Column(rightCol).Data())
 
@@ -441,8 +477,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -478,8 +514,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -515,8 +551,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -552,8 +588,45 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
+						isRowCommon = true
+						break
+					}
+				}
+				if !isRowCommon {
+					if data.IsValid(rightRow) {
+						buf.SetOrDropStrict(newRow, data.Value(rightRow))
+					}
+					newRow++
+				}
+			}
+		case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+			data := array.NewTimestampData(right.Column(rightCol).Data())
+
+			// Fill common rows from right bow
+			for newRow := 0; newRow < newNumRows; newRow++ {
+				for commonRow < len(commonRows.l) &&
+					leftRow == commonRows.l[commonRow] &&
+					newRow < newNumRows {
+					if data.IsValid(commonRows.r[commonRow]) {
+						buf.SetOrDropStrict(newRow, data.Value(commonRows.r[commonRow]))
+					}
+					if commonRow+1 < len(commonRows.l) &&
+						commonRows.l[commonRow+1] == leftRow {
+						newRow++
+					}
+					commonRow++
+				}
+				leftRow++
+			}
+
+			// Fill remaining rows from right bow
+			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
+			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
+				var isRowCommon bool
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -566,8 +639,9 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", right.ColumnType(rightCol)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
+
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		rightCol++
 	}

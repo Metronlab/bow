@@ -19,16 +19,19 @@ type Series struct {
 func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
 	switch typ {
 	case Int64:
-		return newInt64Series(name, dataArray.([]int64), buildNullBitmapBytes(len(dataArray.([]int64)), validityArray))
+		return newInt64Series(name, dataArray.([]int64),
+			buildNullBitmapBytes(len(dataArray.([]int64)), validityArray))
 	case Float64:
-		return newFloat64Series(name, dataArray.([]float64), buildNullBitmapBytes(len(dataArray.([]float64)), validityArray))
+		return newFloat64Series(name, dataArray.([]float64),
+			buildNullBitmapBytes(len(dataArray.([]float64)), validityArray))
 	case Bool:
-		return newBooleanSeries(name, dataArray.([]bool), buildNullBitmapBytes(len(dataArray.([]bool)), validityArray))
+		return newBooleanSeries(name, dataArray.([]bool),
+			buildNullBitmapBytes(len(dataArray.([]bool)), validityArray))
 	case String:
-		return newStringSeries(name, dataArray.([]string), buildNullBitmapBytes(len(dataArray.([]string)), validityArray))
+		return newStringSeries(name, dataArray.([]string),
+			buildNullBitmapBytes(len(dataArray.([]string)), validityArray))
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-		return newTimestampSeries(name, typ,
-			dataArray.([]arrow.Timestamp),
+		return newTimestampSeries(name, typ, dataArray.([]arrow.Timestamp),
 			buildNullBitmapBytes(len(dataArray.([]arrow.Timestamp)), validityArray))
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", typ))
@@ -119,7 +122,7 @@ func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series 
 		defer builder.Release()
 		builder.Resize(len(cells))
 		for i := 0; i < len(cells); i++ {
-			v, ok := ToTimestamp(cells[i])
+			v, ok := mapBowTypeToConvertFunc[typ](cells[i])
 			if !ok {
 				builder.AppendNull()
 				continue

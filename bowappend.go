@@ -39,11 +39,11 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+						"incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewInt64Data(data)
-				v := Int64Values(arr)
+				v := int64Values(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}
@@ -54,11 +54,11 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+						"incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewFloat64Data(data)
-				v := Float64Values(arr)
+				v := float64Values(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}
@@ -69,11 +69,11 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+						"incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewBooleanData(data)
-				v := BooleanValues(arr)
+				v := booleanValues(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}
@@ -84,17 +84,32 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
 					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+						"incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewStringData(data)
-				v := StringValues(arr)
+				v := stringValues(arr)
+				valid := getValiditySlice(arr)
+				builder.AppendValues(v, valid)
+			}
+			newArray = builder.NewArray()
+		case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+			builder := array.NewTimestampBuilder(mem, mapBowToArrowDataTypes[refType].(*arrow.TimestampType))
+			builder.Resize(numRows)
+			for _, b := range bows {
+				if colType := b.ColumnType(colIndex); colType != refType {
+					return nil, fmt.Errorf(
+						"incompatible types '%s' and '%s'", refType, colType)
+				}
+				data := b.(*bow).Column(colIndex).Data()
+				arr := array.NewTimestampData(data)
+				v := timestampValues(arr)
 				valid := getValiditySlice(arr)
 				builder.AppendValues(v, valid)
 			}
 			newArray = builder.NewArray()
 		default:
-			return nil, fmt.Errorf("unsupported type %v", refType)
+			return nil, fmt.Errorf("unsupported type '%s'", refType)
 		}
 
 		seriesSlice[colIndex] = Series{

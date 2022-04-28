@@ -6,7 +6,6 @@ import (
 )
 
 // SortByCol returns a new Bow with the rows sorted by a column in ascending order.
-// The only type currently supported for the column to sort by is Int64, without nil values.
 // Returns the same Bow if the column is already sorted.
 func (b *bow) SortByCol(colIndex int) (Bow, error) {
 	if b.Column(colIndex).NullN() != 0 {

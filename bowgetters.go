@@ -143,9 +143,12 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 			return ToInt64(vd.Value(rowIndex))
 		}
 		return 0., false
+	case arrow.TIMESTAMP:
+		vd := array.NewTimestampData(b.Column(colIndex).Data())
+		return int64(vd.Value(rowIndex)), vd.IsValid(rowIndex)
 	default:
-		panic(fmt.Errorf("unsupported type '%s'",
-			b.Schema().Field(colIndex).Type.Name()))
+		panic(fmt.Errorf("unsupported arrow.DataType '%s'",
+			b.Schema().Field(colIndex).Type))
 	}
 }
 
@@ -198,9 +201,12 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 			return ToFloat64(vd.Value(rowIndex))
 		}
 		return 0., false
+	case arrow.TIMESTAMP:
+		vd := array.NewTimestampData(b.Column(colIndex).Data())
+		return float64(vd.Value(rowIndex)), vd.IsValid(rowIndex)
 	default:
-		panic(fmt.Sprintf("unsupported type '%s'",
-			b.Schema().Field(colIndex).Type.Name()))
+		panic(fmt.Sprintf("unsupported arrow.DataType '%s'",
+			b.Schema().Field(colIndex).Type))
 	}
 }
 

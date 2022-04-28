@@ -12,6 +12,7 @@ const (
 
 // IsColSorted returns a boolean whether the column colIndex is sorted or not, skipping nil values.
 // An empty column or an unsupported data type returns false.
+// Supports only Int64 and Float64.
 func (b *bow) IsColSorted(colIndex int) bool {
 	if b.IsColEmpty(colIndex) {
 		return false

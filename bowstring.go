@@ -33,17 +33,21 @@ func (b *bow) String() string {
 	for row := range b.GetRowsChan() {
 		cells = []string{}
 		for colIndex := 0; colIndex < b.NumCols(); colIndex++ {
-			ti, _ := row[b.Schema().Field(colIndex).Name].(arrow.Timestamp)
-			switch b.ColumnType(colIndex) {
-			case TimestampSec:
-				cells = append(cells, ti.ToTime(arrow.Second).Format(time.RFC3339Nano))
-			case TimestampMilli:
-				cells = append(cells, ti.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
-			case TimestampMicro:
-				cells = append(cells, ti.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
-			case TimestampNano:
-				cells = append(cells, ti.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
-			default:
+			ti, ok := row[b.Schema().Field(colIndex).Name].(arrow.Timestamp)
+			if ok {
+				switch b.ColumnType(colIndex) {
+				case TimestampSec:
+					cells = append(cells, ti.ToTime(arrow.Second).Format(time.RFC3339Nano))
+				case TimestampMilli:
+					cells = append(cells, ti.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
+				case TimestampMicro:
+					cells = append(cells, ti.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
+				case TimestampNano:
+					cells = append(cells, ti.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
+				default:
+					panic("")
+				}
+			} else {
 				cells = append(cells, fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name]))
 			}
 		}
@@ -52,9 +56,11 @@ func (b *bow) String() string {
 		}
 	}
 
-	_, err = fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
-	if err != nil {
-		panic(err)
+	if b.Metadata().Len() > 0 {
+		_, err = fmt.Fprintf(w, "metadata: %+v\n", b.Metadata())
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if err = w.Flush(); err != nil {

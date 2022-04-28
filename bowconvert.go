@@ -139,7 +139,10 @@ func ToString(i interface{}) (string, bool) {
 	}
 }
 
-func ToTimestamp(i interface{}) (arrow.Timestamp, bool) {
+// ToTimestampSec returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
+// String values are first interpreted with strconv.ParseInt.
+// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Second time unit.
+func ToTimestampSec(i interface{}) (arrow.Timestamp, bool) {
 	switch v := i.(type) {
 	case json.Number:
 		val, err := v.Int64()
@@ -165,7 +168,134 @@ func ToTimestamp(i interface{}) (arrow.Timestamp, bool) {
 		return 0, true
 	case string:
 		val, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			return arrow.Timestamp(val), true
+		}
+		ts, err := arrow.TimestampFromString(v, arrow.Second)
+		return ts, err == nil
+	case arrow.Timestamp:
+		return v, true
+	default:
+		return 0, false
+	}
+}
+
+// ToTimestampMilli returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
+// String values are first interpreted with strconv.ParseInt.
+// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Millisecond time unit.
+func ToTimestampMilli(i interface{}) (arrow.Timestamp, bool) {
+	switch v := i.(type) {
+	case json.Number:
+		val, err := v.Int64()
 		return arrow.Timestamp(val), err == nil
+	case int:
+		return arrow.Timestamp(v), true
+	case int8:
+		return arrow.Timestamp(v), true
+	case int16:
+		return arrow.Timestamp(v), true
+	case int32:
+		return arrow.Timestamp(v), true
+	case int64:
+		return arrow.Timestamp(v), true
+	case float32:
+		return arrow.Timestamp(v), true
+	case float64:
+		return arrow.Timestamp(v), true
+	case bool:
+		if v {
+			return 1, true
+		}
+		return 0, true
+	case string:
+		val, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			return arrow.Timestamp(val), true
+		}
+		ts, err := arrow.TimestampFromString(v, arrow.Millisecond)
+		return ts, err == nil
+	case arrow.Timestamp:
+		return v, true
+	default:
+		return 0, false
+	}
+}
+
+// ToTimestampMicro returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
+// String values are first interpreted with strconv.ParseInt.
+// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Microsecond time unit.
+func ToTimestampMicro(i interface{}) (arrow.Timestamp, bool) {
+	switch v := i.(type) {
+	case json.Number:
+		val, err := v.Int64()
+		return arrow.Timestamp(val), err == nil
+	case int:
+		return arrow.Timestamp(v), true
+	case int8:
+		return arrow.Timestamp(v), true
+	case int16:
+		return arrow.Timestamp(v), true
+	case int32:
+		return arrow.Timestamp(v), true
+	case int64:
+		return arrow.Timestamp(v), true
+	case float32:
+		return arrow.Timestamp(v), true
+	case float64:
+		return arrow.Timestamp(v), true
+	case bool:
+		if v {
+			return 1, true
+		}
+		return 0, true
+	case string:
+		val, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			return arrow.Timestamp(val), true
+		}
+		ts, err := arrow.TimestampFromString(v, arrow.Microsecond)
+		return ts, err == nil
+	case arrow.Timestamp:
+		return v, true
+	default:
+		return 0, false
+	}
+}
+
+// ToTimestampNano returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
+// String values are first interpreted with strconv.ParseInt.
+// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Nanosecond time unit.
+func ToTimestampNano(i interface{}) (arrow.Timestamp, bool) {
+	switch v := i.(type) {
+	case json.Number:
+		val, err := v.Int64()
+		return arrow.Timestamp(val), err == nil
+	case int:
+		return arrow.Timestamp(v), true
+	case int8:
+		return arrow.Timestamp(v), true
+	case int16:
+		return arrow.Timestamp(v), true
+	case int32:
+		return arrow.Timestamp(v), true
+	case int64:
+		return arrow.Timestamp(v), true
+	case float32:
+		return arrow.Timestamp(v), true
+	case float64:
+		return arrow.Timestamp(v), true
+	case bool:
+		if v {
+			return 1, true
+		}
+		return 0, true
+	case string:
+		val, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			return arrow.Timestamp(val), true
+		}
+		ts, err := arrow.TimestampFromString(v, arrow.Nanosecond)
+		return ts, err == nil
 	case arrow.Timestamp:
 		return v, true
 	default:

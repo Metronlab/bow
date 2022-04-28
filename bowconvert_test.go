@@ -2,6 +2,7 @@ package bow
 
 import (
 	"testing"
+	"time"
 
 	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/stretchr/testify/assert"
@@ -127,26 +128,155 @@ func TestToString(t *testing.T) {
 }
 
 func TestToTimestamp(t *testing.T) {
-	var v arrow.Timestamp
-	var ok bool
+	t.Run("Sec", func(t *testing.T) {
+		v, ok := ToTimestampSec(true)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(1), v)
 
-	v, ok = ToTimestamp(true)
-	require.True(t, ok)
-	assert.Equal(t, arrow.Timestamp(1), v)
+		v, ok = ToTimestampSec(false)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
 
-	v, ok = ToTimestamp(false)
-	require.True(t, ok)
-	assert.Equal(t, arrow.Timestamp(0), v)
+		v, ok = ToTimestampSec(0.)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
 
-	v, ok = ToTimestamp(0.)
-	require.True(t, ok)
-	assert.Equal(t, arrow.Timestamp(0), v)
+		v, ok = ToTimestampSec(0)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
 
-	v, ok = ToTimestamp(0)
-	require.True(t, ok)
-	assert.Equal(t, arrow.Timestamp(0), v)
+		v, ok = ToTimestampSec("0")
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+		assert.Equal(t, "1970-01-01T00:00:00Z",
+			v.ToTime(arrow.Second).Format(time.RFC3339Nano))
 
-	v, ok = ToTimestamp("0")
-	require.True(t, ok)
-	assert.Equal(t, arrow.Timestamp(0), v)
+		formattedTimeSec := "2022-04-27T00:00:00Z"
+		ti, err := time.Parse(time.RFC3339, formattedTimeSec)
+		require.NoError(t, err)
+
+		v, ok = ToTimestampSec(ti.Unix())
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00Z",
+			v.ToTime(arrow.Second).Format(time.RFC3339Nano))
+
+		v, ok = ToTimestampSec(formattedTimeSec)
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00Z",
+			v.ToTime(arrow.Second).Format(time.RFC3339Nano))
+	})
+
+	t.Run("Milli", func(t *testing.T) {
+		v, ok := ToTimestampMilli(true)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(1), v)
+
+		v, ok = ToTimestampMilli(false)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampMilli(0.)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampMilli(0)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampMilli("0")
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+		assert.Equal(t, "1970-01-01T00:00:00Z",
+			v.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
+
+		formattedTimeMilli := "2022-04-27T00:00:00.123Z"
+		ti, err := time.Parse(time.RFC3339, formattedTimeMilli)
+		require.NoError(t, err)
+
+		v, ok = ToTimestampMilli(ti.UnixMilli())
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00.123Z",
+			v.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
+
+		v, ok = ToTimestampMilli(formattedTimeMilli)
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00.123Z",
+			v.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
+	})
+
+	t.Run("Micro", func(t *testing.T) {
+		v, ok := ToTimestampMicro(true)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(1), v)
+
+		v, ok = ToTimestampMicro(false)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampMicro(0.)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampMicro(0)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampMicro("0")
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+		assert.Equal(t, "1970-01-01T00:00:00Z",
+			v.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
+
+		formattedTimeMicro := "2022-04-27T00:00:00.123456Z"
+		ti, err := time.Parse(time.RFC3339, formattedTimeMicro)
+		require.NoError(t, err)
+
+		v, ok = ToTimestampMicro(ti.UnixMicro())
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00.123456Z",
+			v.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
+
+		v, ok = ToTimestampMicro(formattedTimeMicro)
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00.123456Z",
+			v.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
+	})
+
+	t.Run("Nano", func(t *testing.T) {
+		v, ok := ToTimestampNano(true)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(1), v)
+
+		v, ok = ToTimestampNano(false)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampNano(0.)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampNano(0)
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+
+		v, ok = ToTimestampNano("0")
+		require.True(t, ok)
+		assert.Equal(t, arrow.Timestamp(0), v)
+		assert.Equal(t, "1970-01-01T00:00:00Z",
+			v.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
+
+		formattedTimeNano := "2022-04-27T00:00:00.123456789Z"
+		ti, err := time.Parse(time.RFC3339, formattedTimeNano)
+		require.NoError(t, err)
+
+		v, ok = ToTimestampNano(ti.UnixNano())
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00.123456789Z",
+			v.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
+
+		v, ok = ToTimestampNano(formattedTimeNano)
+		require.True(t, ok)
+		assert.Equal(t, "2022-04-27T00:00:00.123456789Z",
+			v.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
+	})
 }

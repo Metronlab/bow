@@ -37,15 +37,12 @@ func NewBowFromParquet(filename string, verbose bool) (Bow, error) {
 	}
 	defer tbl.Release()
 
-	//fmt.Printf("SCHEMA:%s\n", tbl.Schema().String())
-	//fmt.Printf("COLS:%d\n", tbl.NumCols())
-
 	cols := make([]arrow.Array, tbl.NumCols())
 	for i := 0; i < int(tbl.NumCols()); i++ {
 		if len(tbl.Column(i).Data().Chunks()) != 1 {
-			return nil, fmt.Errorf("column %d has %d chunks", i, len(tbl.Column(i).Data().Chunks()))
+			return nil, fmt.Errorf(
+				"column %d has %d chunks", i, len(tbl.Column(i).Data().Chunks()))
 		}
-		//fmt.Printf("FIELD %d\n%+v\n", i, tbl.Schema().Field(i))
 		cols[i] = tbl.Column(i).Data().Chunk(0)
 	}
 
@@ -97,7 +94,6 @@ func (b *bow) WriteParquet(filename string, verbose bool) error {
 			"bow.WriteParquet: %s successfully written: %d rows\n",
 			filename, b.NumRows())
 	}
-	fmt.Printf("%s\n", b.Schema())
 
 	return nil
 }

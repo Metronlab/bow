@@ -23,7 +23,6 @@ func ExampleNewBow() {
 	// 2           <nil>         <nil>
 	// 3           3.3           true
 	// 4           4             false
-	// metadata: []
 }
 
 func ExampleNewBowFromColBasedInterfaces() {
@@ -47,7 +46,27 @@ func ExampleNewBowFromColBasedInterfaces() {
 	// 1           1            1.1
 	// 1           <nil>        2
 	// 3           3            1.3
-	// metadata: []
+}
+
+func ExampleNewBowFromRowBasedInterfaces() {
+	b, err := NewBowFromRowBasedInterfaces(
+		[]string{"time", "int", "float"},
+		[]Type{TimestampMilli, Int64, Float64},
+		[][]interface{}{
+			{"2022-04-27T00:00:00Z", 1, 1.1},
+			{"2022-04-27T01:00:00Z", 2, 2.2},
+			{"2022-04-27T02:00:00Z", 3, 3.3},
+		})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(b)
+	// Output:
+	// time:timestamp[ms, tz=UTC]  int:int64  float:float64
+	// 2022-04-27T00:00:00Z        1          1.1
+	// 2022-04-27T01:00:00Z        2          2.2
+	// 2022-04-27T02:00:00Z        3          3.3
 }
 
 func ExampleBow_MarshalJSON() {

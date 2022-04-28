@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO: add test cases for timestamp types
+
 func TestBow_OuterJoin(t *testing.T) {
 	t.Run("two empty bows", func(t *testing.T) {
 		b1 := NewBowEmpty()

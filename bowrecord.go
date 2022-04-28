@@ -11,10 +11,10 @@ import (
 func NewBowFromRecord(record arrow.Record) (Bow, error) {
 	for _, f := range record.Schema().Fields() {
 		if getBowTypeFromArrowFingerprint(f.Type.Fingerprint()) == Unknown {
-			return nil, fmt.Errorf("unsupported type: ID: %s Name: %s Fingerprint: %s String: %s",
-				f.Type.ID(), f.Type.Name(), f.Type.Fingerprint(), f.Type)
+			return nil, fmt.Errorf("unsupported type '%s'", f.Type)
 		}
 	}
+
 	return &bow{Record: record}, nil
 }
 

@@ -49,25 +49,11 @@ var (
 		TimestampMicro: arrow.FixedWidthTypes.Timestamp_us,
 		TimestampNano:  arrow.FixedWidthTypes.Timestamp_ns,
 	}
-	mapArrowFingerprintToBowTypes = map[string]Type{
-		arrow.PrimitiveTypes.Float64.Fingerprint():       Float64,
-		arrow.PrimitiveTypes.Int64.Fingerprint():         Int64,
-		arrow.FixedWidthTypes.Boolean.Fingerprint():      Bool,
-		arrow.BinaryTypes.String.Fingerprint():           String,
-		arrow.FixedWidthTypes.Timestamp_s.Fingerprint():  TimestampSec,
-		arrow.FixedWidthTypes.Timestamp_ms.Fingerprint(): TimestampMilli,
-		arrow.FixedWidthTypes.Timestamp_us.Fingerprint(): TimestampMicro,
-		arrow.FixedWidthTypes.Timestamp_ns.Fingerprint(): TimestampNano,
-	}
-	mapArrowNameToBowTypes = map[string]Type{
-		arrow.PrimitiveTypes.Float64.Name():       Float64,
-		arrow.PrimitiveTypes.Int64.Name():         Int64,
-		arrow.FixedWidthTypes.Boolean.Name():      Bool,
-		arrow.BinaryTypes.String.Name():           String,
-		arrow.FixedWidthTypes.Timestamp_s.Name():  TimestampSec,
-		arrow.FixedWidthTypes.Timestamp_ms.Name(): TimestampMilli,
-		arrow.FixedWidthTypes.Timestamp_us.Name(): TimestampMicro,
-		arrow.FixedWidthTypes.Timestamp_ns.Name(): TimestampNano,
+	mapBowTypeToConvertFunc = map[Type]func(i interface{}) (arrow.Timestamp, bool){
+		TimestampSec:   ToTimestampSec,
+		TimestampMilli: ToTimestampMilli,
+		TimestampMicro: ToTimestampMicro,
+		TimestampNano:  ToTimestampNano,
 	}
 	allType = func() []Type {
 		res := make([]Type, InputDependent-1)
@@ -90,8 +76,14 @@ func (t Type) Convert(i interface{}) interface{} {
 		val, ok = ToBool(i)
 	case String:
 		val, ok = ToString(i)
-	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-		val, ok = ToTimestamp(i)
+	case TimestampSec:
+		val, ok = ToTimestampSec(i)
+	case TimestampMilli:
+		val, ok = ToTimestampMilli(i)
+	case TimestampMicro:
+		val, ok = ToTimestampMicro(i)
+	case TimestampNano:
+		val, ok = ToTimestampNano(i)
 	}
 	if ok {
 		return val
@@ -115,19 +107,21 @@ func (t Type) String() string {
 }
 
 func getBowTypeFromArrowFingerprint(fingerprint string) Type {
-	typ, ok := mapArrowFingerprintToBowTypes[fingerprint]
-	if !ok {
-		return Unknown
+	for bowType, arrowType := range mapBowToArrowDataTypes {
+		if arrowType.Fingerprint() == fingerprint {
+			return bowType
+		}
 	}
-	return typ
+	return Unknown
 }
 
 func getBowTypeFromArrowName(name string) Type {
-	typ, ok := mapArrowNameToBowTypes[name]
-	if !ok {
-		return Unknown
+	for bowType, arrowType := range mapBowToArrowDataTypes {
+		if arrowType.Name() == name {
+			return bowType
+		}
 	}
-	return typ
+	return Unknown
 }
 
 func GetAllTypes() []Type {

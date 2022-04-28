@@ -89,7 +89,13 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	*/
 
 	for fieldIndex, field := range jsonB.Schema.Fields {
-		if _, ok := mapArrowNameToBowTypes[field.Type]; ok {
+		ok := false
+		for _, arrowType := range mapBowToArrowDataTypes {
+			if arrowType.Name() == field.Type {
+				ok = true
+			}
+		}
+		if ok {
 			continue
 		}
 		switch field.Type {

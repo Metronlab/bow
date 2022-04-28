@@ -52,6 +52,30 @@ func TestBow_SortByCol(t *testing.T) {
 		assert.EqualValues(t, expected.String(), sorted.String())
 	})
 
+	t.Run("unsorted with timestamps", func(t *testing.T) {
+		b, err := NewBowFromRowBasedInterfaces(
+			[]string{"timestamp_ms", "a"},
+			[]Type{TimestampMilli, Int64},
+			[][]interface{}{
+				{"2022-01-01T00:00:00Z", 1},
+				{"2022-01-03T00:00:00Z", 3},
+				{"2022-01-02T00:00:00Z", 2},
+			})
+		require.NoError(t, err)
+		expected, err := NewBowFromRowBasedInterfaces(
+			[]string{"timestamp_ms", "a"},
+			[]Type{TimestampMilli, Int64},
+			[][]interface{}{
+				{"2022-01-01T00:00:00Z", 1},
+				{"2022-01-02T00:00:00Z", 2},
+				{"2022-01-03T00:00:00Z", 3},
+			})
+		require.NoError(t, err)
+		sorted, err := b.SortByCol(0)
+		assert.NoError(t, err)
+		assert.EqualValues(t, expected.String(), sorted.String())
+	})
+
 	t.Run("unsorted with different cols", func(t *testing.T) {
 		b, err := NewBowFromRowBasedInterfaces(
 			[]string{"a", "b", "time"},

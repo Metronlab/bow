@@ -66,4 +66,6 @@ func TestBow_Distinct(t *testing.T) {
 
 		ExpectEqual(t, expect, res)
 	})
+
+	// TODO: add tests for timestamp types
 }

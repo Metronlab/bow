@@ -91,7 +91,7 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	case String:
 		b.Data.([]string)[i], valid = value.(string)
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-		b.Data.([]arrow.Timestamp)[i], valid = b.DataType.Convert(value).(arrow.Timestamp)
+		b.Data.([]arrow.Timestamp)[i], valid = value.(arrow.Timestamp)
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.DataType))
 	}
@@ -150,35 +150,35 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
-		res.Data = Int64Values(arr)
+		res.Data = int64Values(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case Float64:
 		arr := array.NewFloat64Data(arrayData)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
-		res.Data = Float64Values(arr)
+		res.Data = float64Values(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case Bool:
 		arr := array.NewBooleanData(arrayData)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
-		res.Data = BooleanValues(arr)
+		res.Data = booleanValues(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case String:
 		arr := array.NewStringData(arrayData)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
-		res.Data = StringValues(arr)
+		res.Data = stringValues(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
 		arr := array.NewTimestampData(arrayData)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
-		res.Data = TimestampValues(arr)
+		res.Data = timestampValues(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
