@@ -6,6 +6,9 @@ UNRELEASED [XXXX-XX-XX]
   - bump to arrow/go/v8
   - remove useless count script
   - add gci linter
+  - improve documentation
+  - improve error handling
+  - improve code readability
 
 v0.18.0 [2022-02-16]
 -------------------
