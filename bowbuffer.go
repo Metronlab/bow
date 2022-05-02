@@ -178,7 +178,7 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		res.Data = stringValues(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-		arr := array.NewTimestampData(arrayData)
+		arr := array.NewTimestampData(data)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)

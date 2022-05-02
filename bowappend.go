@@ -90,7 +90,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			}
 			newArray = builder.NewArray()
 		case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-			builder := array.NewTimestampBuilder(mem, mapBowToArrowDataTypes[refType].(*arrow.TimestampType))
+			builder := array.NewTimestampBuilder(mem, mapBowToArrowTypes[refType].(*arrow.TimestampType))
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {

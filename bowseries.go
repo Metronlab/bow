@@ -131,7 +131,7 @@ func NewSeriesFromInterfaces(name string, typ Type, data []interface{}) Series {
 		}
 		return Series{Name: name, Array: builder.NewArray()}
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-		builder := array.NewTimestampBuilder(mem, mapBowToArrowDataTypes[typ].(*arrow.TimestampType))
+		builder := array.NewTimestampBuilder(mem, mapBowToArrowTypes[typ].(*arrow.TimestampType))
 		defer builder.Release()
 		builder.Resize(len(data))
 		for i := 0; i < len(data); i++ {
@@ -194,7 +194,7 @@ func newStringSeries(name string, data []string, valid []byte) Series {
 
 func newTimestampSeries(name string, typ Type, data []arrow.Timestamp, valid []byte) Series {
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	builder := array.NewTimestampBuilder(mem, mapBowToArrowDataTypes[typ].(*arrow.TimestampType))
+	builder := array.NewTimestampBuilder(mem, mapBowToArrowTypes[typ].(*arrow.TimestampType))
 	defer builder.Release()
 	builder.AppendValues(data, buildNullBitmapBool(len(data), valid))
 	return Series{Name: name, Array: builder.NewArray()}

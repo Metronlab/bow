@@ -6,10 +6,15 @@ UNRELEASED [XXXX-XX-XX]
   - bump to arrow/go/v8
   - remove useless count script
   - add gci linter
-  - add support for Arrow Timestamps types
-  - prepare for the use of new go 1.18 generics by removing genius file generation
+  - improve documentation
+  - improve error handling
+  - improve code readability
+  - remove code gen to prepare for Timestamp support
+- Types
+  - add Bow data type in Buffer to decouple Go native types from Arrow types
+  - add support for Arrow Timestamp type
 - Parquet
-  - use the new arrow/go/v8/parquet package
+  - use the new arrow/go/v8/parquet package instead of xitongsys/parquet-go
 
 v0.18.0 [2022-02-16]
 -------------------
