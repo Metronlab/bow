@@ -9,31 +9,31 @@ import (
 // ToInt64 attempts to convert `input` to int64.
 // Return also a false boolean if the conversion failed.
 func ToInt64(input interface{}) (output int64, ok bool) {
-	switch value := input.(type) {
+	switch input := input.(type) {
 	case json.Number:
-		output, err := value.Int64()
+		output, err := input.Int64()
 		return output, err == nil
 	case int:
-		return int64(value), true
+		return int64(input), true
 	case int8:
-		return int64(value), true
+		return int64(input), true
 	case int16:
-		return int64(value), true
+		return int64(input), true
 	case int32:
-		return int64(value), true
+		return int64(input), true
 	case int64:
-		return value, true
+		return input, true
 	case float32:
-		return int64(value), true
+		return int64(input), true
 	case float64:
-		return int64(value), true
+		return int64(input), true
 	case bool:
-		if value {
+		if input {
 			return 1, true
 		}
 		return 0, true
 	case string:
-		output, err := strconv.ParseInt(value, 10, 64)
+		output, err := strconv.ParseInt(input, 10, 64)
 		return output, err == nil
 	}
 	return
