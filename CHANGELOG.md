@@ -10,6 +10,7 @@ UNRELEASED [XXXX-XX-XX]
   - improve error handling
   - improve code readability
   - remove code gen to prepare for Timestamp support
+  - add Bow data type in Buffer to decouple Go native types from Arrow types
 
 v0.18.0 [2022-02-16]
 -------------------
