@@ -19,11 +19,11 @@ type Series struct {
 
 // NewSeries returns a new Series from:
 // - name: string
-// - typ: data type
-// - dataArray: slice of the data in any of the Bow supported types
+// - typ: Bow data Type
+// - dataArray: slice of the data
 // - validityArray:
-//  - If nil, the data will be non-nil
-//  - Can be of type []bool or []byte to represent nil values
+//  - if nil, the data will be non-nil
+//  - can be of type []bool or []byte to represent nil values
 func NewSeries(name string, typ Type, dataArray interface{}, validityArray interface{}) Series {
 	switch typ {
 	case Int64:
@@ -135,7 +135,7 @@ func newInt64Series(name string, data []int64, valid []byte) Series {
 	return Series{
 		Name: name,
 		Array: array.NewInt64Data(
-			array.NewData(mapBowToArrowDataTypes[Int64], length,
+			array.NewData(mapBowToArrowTypes[Int64], length,
 				[]*memory.Buffer{
 					memory.NewBufferBytes(valid),
 					memory.NewBufferBytes(arrow.Int64Traits.CastToBytes(data)),
@@ -149,7 +149,7 @@ func newFloat64Series(name string, data []float64, valid []byte) Series {
 	return Series{
 		Name: name,
 		Array: array.NewFloat64Data(
-			array.NewData(mapBowToArrowDataTypes[Float64], length,
+			array.NewData(mapBowToArrowTypes[Float64], length,
 				[]*memory.Buffer{
 					memory.NewBufferBytes(valid),
 					memory.NewBufferBytes(arrow.Float64Traits.CastToBytes(data)),

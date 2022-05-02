@@ -133,32 +133,32 @@ func (b Buffer) Less(i, j int) bool {
 }
 
 func (b *bow) NewBufferFromCol(colIndex int) Buffer {
+	data := b.Column(colIndex).Data()
 	res := Buffer{DataType: b.ColumnType(colIndex)}
-	arrayData := b.Column(colIndex).Data()
 	switch b.ColumnType(colIndex) {
 	case Int64:
-		arr := array.NewInt64Data(arrayData)
+		arr := array.NewInt64Data(data)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		res.Data = int64Values(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case Float64:
-		arr := array.NewFloat64Data(arrayData)
+		arr := array.NewFloat64Data(data)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		res.Data = float64Values(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case Boolean:
-		arr := array.NewBooleanData(arrayData)
+		arr := array.NewBooleanData(data)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
 		res.Data = booleanValues(arr)
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	case String:
-		arr := array.NewStringData(arrayData)
+		arr := array.NewStringData(data)
 		nullBitmapBytes := arr.NullBitmapBytes()[:bitutil.CeilByte(arr.Data().Len())/8]
 		nullBitmapBytesCopy := make([]byte, len(nullBitmapBytes))
 		copy(nullBitmapBytesCopy, nullBitmapBytes)
@@ -175,29 +175,29 @@ func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
 	var res []byte
 	nullBitmapLength := bitutil.CeilByte(dataLength) / 8
 
-	switch validityArray := validityArray.(type) {
+	switch valid := validityArray.(type) {
 	case nil:
 		res = make([]byte, nullBitmapLength)
 		for i := 0; i < dataLength; i++ {
 			bitutil.SetBit(res, i)
 		}
 	case []bool:
-		if len(validityArray) != dataLength {
+		if len(valid) != dataLength {
 			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
 		res = make([]byte, nullBitmapLength)
 		for i := 0; i < dataLength; i++ {
-			if validityArray[i] {
+			if valid[i] {
 				bitutil.SetBit(res, i)
 			}
 		}
 	case []byte:
-		if len(validityArray) != nullBitmapLength {
+		if len(valid) != nullBitmapLength {
 			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
 		}
-		return validityArray
+		return valid
 	default:
-		panic(fmt.Errorf("unsupported type '%T'", validityArray))
+		panic(fmt.Errorf("unsupported type '%T'", valid))
 	}
 
 	return res
