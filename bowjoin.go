@@ -39,7 +39,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	newSeries := make([]Series, newNumCols)
 	newNumRows := len(commonRows.l)
 
-	innerFillLeftBowCols(&newSeries, left, right,
+	innerFillLeftBowCols(&newSeries, left,
 		newNumRows, commonRows)
 	innerFillRightBowCols(&newSeries, left, right,
 		newNumRows, newNumCols, commonCols, commonRows)
@@ -185,7 +185,7 @@ func getCommonRows(left, right Bow, commonColBufs map[string][]Buffer) CommonRow
 	return commonRows
 }
 
-func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,
+func innerFillLeftBowCols(newSeries *[]Series, left *bow, newNumRows int,
 	commonRows struct{ l, r []int }) {
 
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
