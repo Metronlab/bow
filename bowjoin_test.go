@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: add test cases for timestamp types
-
 func TestBow_OuterJoin(t *testing.T) {
 	t.Run("two empty bows", func(t *testing.T) {
 		b1 := NewBowEmpty()
@@ -161,6 +159,39 @@ func TestBow_OuterJoin(t *testing.T) {
 				{12, 2, 1},
 				{13, 3, 2},
 				{14, nil, 3},
+			})
+		require.NoError(t, err)
+
+		result := b1.OuterJoin(b2)
+		assert.EqualValues(t, expected.String(), result.String())
+	})
+
+	t.Run("timestamps", func(t *testing.T) {
+		b1, err := NewBowFromRowBasedInterfaces([]string{"milli", "micro1"},
+			[]Type{TimestampMilli, TimestampMicro}, [][]interface{}{
+				{1000, 0},
+				{1100, 1},
+				{1200, 2},
+				{1300, 3},
+			})
+		require.NoError(t, err)
+
+		b2, err := NewBowFromRowBasedInterfaces([]string{"milli", "micro2"},
+			[]Type{TimestampMilli, TimestampMicro}, [][]interface{}{
+				{1100, 0},
+				{1200, 1},
+				{1300, 2},
+				{1400, 3},
+			})
+		require.NoError(t, err)
+
+		expected, err := NewBowFromRowBasedInterfaces([]string{"milli", "micro1", "micro2"},
+			[]Type{TimestampMilli, TimestampMicro, TimestampMicro}, [][]interface{}{
+				{1000, 0, nil},
+				{1100, 1, 0},
+				{1200, 2, 1},
+				{1300, 3, 2},
+				{1400, nil, 3},
 			})
 		require.NoError(t, err)
 

@@ -5,10 +5,9 @@ import (
 	"math"
 	"sync"
 
+	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/apache/arrow/go/v8/arrow/array"
 )
-
-// TODO: add support for timestamp types
 
 // FillLinear fills the column toFillColIndex using the Linear interpolation method according
 // to the reference column refColIndex, which has to be sorted.
@@ -29,6 +28,7 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 	switch b.ColumnType(refColIndex) {
 	case Int64:
 	case Float64:
+	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
 	default:
 		return nil, fmt.Errorf("refColIndex '%d' is of type '%s'",
 			refColIndex, b.ColumnType(refColIndex))
@@ -46,6 +46,7 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 	switch b.ColumnType(toFillColIndex) {
 	case Int64:
 	case Float64:
+	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
 	default:
 		return nil, fmt.Errorf(
 			"toFillColIndex '%d' is of unsupported type '%s'",
@@ -83,6 +84,8 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 					buf.SetOrDropStrict(rowIndex, int64(prevToFill))
 				case Float64:
 					buf.SetOrDropStrict(rowIndex, prevToFill)
+				case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+					buf.SetOrDropStrict(rowIndex, arrow.Timestamp(prevToFill))
 				}
 			}
 
@@ -95,6 +98,8 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 				buf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
 			case Float64:
 				buf.SetOrDropStrict(rowIndex, tmp)
+			case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+				buf.SetOrDropStrict(rowIndex, arrow.Timestamp(math.Round(tmp)))
 			}
 		}
 
@@ -118,6 +123,7 @@ func (b *bow) FillMean(colIndices ...int) (Bow, error) {
 			switch b.ColumnType(colIndex) {
 			case Int64:
 			case Float64:
+			case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
 			default:
 				return nil, fmt.Errorf(
 					"column '%s' is of unsupported type '%s'",
@@ -151,6 +157,8 @@ func (b *bow) FillMean(colIndices ...int) (Bow, error) {
 						buf.SetOrDropStrict(rowIndex, int64(math.Round((prevVal+nextVal)/2)))
 					case Float64:
 						buf.SetOrDropStrict(rowIndex, (prevVal+nextVal)/2)
+					case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+						buf.SetOrDropStrict(rowIndex, arrow.Timestamp(math.Round((prevVal+nextVal)/2)))
 					}
 				}
 			}
@@ -232,6 +240,17 @@ func fill(method string, b *bow, colIndices ...int) (Bow, error) {
 				}
 			case String:
 				arr := array.NewStringData(data)
+				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
+					if buf.IsValid(rowIndex) {
+						continue
+					}
+					fillRowIndex := getFillRowIndex(b, method, colIndex, rowIndex)
+					if fillRowIndex > -1 {
+						buf.SetOrDropStrict(rowIndex, arr.Value(fillRowIndex))
+					}
+				}
+			case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+				arr := array.NewTimestampData(data)
 				for rowIndex := 0; rowIndex < b.NumRows(); rowIndex++ {
 					if buf.IsValid(rowIndex) {
 						continue

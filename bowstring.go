@@ -46,7 +46,7 @@ func (b *bow) String() string {
 				case TimestampNano:
 					cells = append(cells, ti.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
 				default:
-					panic("")
+					panic(fmt.Sprintf("unsupported type '%s'", b.ColumnType(colIndex)))
 				}
 			} else {
 				cells = append(cells, fmt.Sprintf("%v", row[b.Schema().Field(colIndex).Name]))
@@ -68,5 +68,4 @@ func (b *bow) String() string {
 	}
 
 	return writer.String()
-
 }

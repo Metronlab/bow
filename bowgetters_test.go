@@ -3,6 +3,7 @@ package bow
 import (
 	"testing"
 
+	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,12 +33,13 @@ func TestBow_GetValue(t *testing.T) {
 }
 
 func TestBow_Distinct(t *testing.T) {
-	colNames := []string{"time", "value", "meta"}
-	colTypes := []Type{Int64, Float64, String}
+	colNames := []string{"time", "value", "meta", "timestamp"}
+	colTypes := []Type{Int64, Float64, String, TimestampMilli}
 	colData := [][]interface{}{
 		{1, 1, 2, nil, 3},
 		{1.1, 1.1, 2.2, nil, 3.3},
 		{"", "test", "test", nil, "3.3"},
+		{1, 1, 2, nil, 3},
 	}
 
 	b, err := NewBowFromColBasedInterfaces(colNames, colTypes, colData)
@@ -67,5 +69,11 @@ func TestBow_Distinct(t *testing.T) {
 		ExpectEqual(t, expect, res)
 	})
 
-	// TODO: add tests for timestamp types
+	t.Run(TimestampMilli.String(), func(t *testing.T) {
+		res := b.Distinct(3)
+		expect, err := NewBow(NewSeries("timestamp", TimestampMilli, []arrow.Timestamp{1, 2, 3}, nil))
+		require.NoError(t, err)
+
+		ExpectEqual(t, expect, res)
+	})
 }

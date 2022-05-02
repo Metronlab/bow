@@ -1,7 +1,6 @@
 package bow
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -56,14 +55,10 @@ func TestParquet(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		fmt.Printf("bBefore\n%s\n", bBefore)
+		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", false))
 
-		assert.NoError(t, bBefore.WriteParquet(testOutputFileName+"_withrows", true))
-
-		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", true)
+		bAfter, err := NewBowFromParquet(testOutputFileName+"_withrows.parquet", false)
 		assert.NoError(t, err)
-
-		fmt.Printf("bAfter\n%s\n", bAfter)
 
 		assert.Equal(t, bBefore.String(), bAfter.String())
 
