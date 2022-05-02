@@ -9,6 +9,7 @@ UNRELEASED [XXXX-XX-XX]
   - improve documentation
   - improve error handling
   - improve code readability
+  - remove code gen to prepare for Timestamp support
 
 v0.18.0 [2022-02-16]
 -------------------

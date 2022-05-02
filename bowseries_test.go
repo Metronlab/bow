@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewSeriesFromColBasedInterfaces(t *testing.T) {
+func TestNewSeriesFromInterfaces(t *testing.T) {
 	for _, typ := range allType {
 		t.Run(typ.String(), func(t *testing.T) {
 			testcase := []interface{}{typ.Convert(0), nil}
