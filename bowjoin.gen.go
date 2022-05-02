@@ -8,7 +8,7 @@ import (
 	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
-func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,
+func innerFillLeftBowCols(newSeries *[]Series, left *bow, newNumRows int,
 	commonRows struct{ l, r []int }) {
 
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {

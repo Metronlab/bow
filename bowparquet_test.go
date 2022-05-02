@@ -33,7 +33,7 @@ func TestParquet(t *testing.T) {
 		require.NoError(t, os.Remove(testOutputFileName+".parquet"))
 	})
 
-	t.Run("bow supported types with rows and nils", func(t *testing.T) {
+	t.Run("all supported types with rows and nil values", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
 			[]string{"int", "float", "bool", "string"},
 			[]Type{Int64, Float64, Boolean, String},

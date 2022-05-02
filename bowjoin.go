@@ -37,7 +37,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	newSeries := make([]Series, newNumCols)
 	newNumRows := len(commonRows.l)
 
-	innerFillLeftBowCols(&newSeries, left, right,
+	innerFillLeftBowCols(&newSeries, left,
 		newNumRows, commonRows)
 	innerFillRightBowCols(&newSeries, left, right,
 		newNumRows, newNumCols, commonCols, commonRows)
