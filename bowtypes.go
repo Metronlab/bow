@@ -9,7 +9,7 @@ import (
 type Type int
 
 // How to add a Type:
-// - Seek corresponding arrow.Type and add it in `mapArrowFingerprintToBowTypes`
+// - Seek corresponding arrow.DataType and add it in `mapBowToArrowTypes`
 // - add a convert function with desired logic and add case in other conversion func
 // - add necessary case in buffer file
 // - complete GetValue bow method
@@ -36,7 +36,7 @@ const (
 )
 
 var (
-	mapBowToArrowDataTypes = map[Type]arrow.DataType{
+	mapBowToArrowTypes = map[Type]arrow.DataType{
 		Float64:        arrow.PrimitiveTypes.Float64,
 		Int64:          arrow.PrimitiveTypes.Int64,
 		Boolean:        arrow.FixedWidthTypes.Boolean,
@@ -90,13 +90,13 @@ func (t Type) Convert(input interface{}) interface{} {
 
 // IsSupported ensures that the Type t is currently supported by Bow and matches a convertible concrete type.
 func (t Type) IsSupported() bool {
-	_, ok := mapBowToArrowDataTypes[t]
+	_, ok := mapBowToArrowTypes[t]
 	return ok
 }
 
 // String returns the string representation of the Type t.
 func (t Type) String() string {
-	at, ok := mapBowToArrowDataTypes[t]
+	at, ok := mapBowToArrowTypes[t]
 	if !ok {
 		return "undefined"
 	}
@@ -104,7 +104,7 @@ func (t Type) String() string {
 }
 
 func getBowTypeFromArrowFingerprint(fingerprint string) Type {
-	for bowType, arrowType := range mapBowToArrowDataTypes {
+	for bowType, arrowType := range mapBowToArrowTypes {
 		if arrowType.Fingerprint() == fingerprint {
 			return bowType
 		}
@@ -113,7 +113,7 @@ func getBowTypeFromArrowFingerprint(fingerprint string) Type {
 }
 
 func getBowTypeFromArrowName(name string) Type {
-	for bowType, arrowType := range mapBowToArrowDataTypes {
+	for bowType, arrowType := range mapBowToArrowTypes {
 		if arrowType.Name() == name {
 			return bowType
 		}
