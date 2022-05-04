@@ -30,10 +30,7 @@ func ToInt64(input interface{}) (output int64, ok bool) {
 	case float64:
 		return int64(input), true
 	case bool:
-		if input {
-			return 1, true
-		}
-		return 0, true
+		return boolToInt64(input)
 	case string:
 		output, err := strconv.ParseInt(input, 10, 64)
 		return output, err == nil
@@ -41,6 +38,13 @@ func ToInt64(input interface{}) (output int64, ok bool) {
 		return int64(input), true
 	}
 	return
+}
+
+func boolToInt64(input bool) (int64, bool) {
+	if input {
+		return 1, true
+	}
+	return 0, true
 }
 
 // ToFloat64 attempts to convert `input` to float64.
@@ -65,10 +69,7 @@ func ToFloat64(input interface{}) (output float64, ok bool) {
 	case float32:
 		return float64(input), true
 	case bool:
-		if input {
-			return 1., true
-		}
-		return 0., true
+		return boolToFloat64(input)
 	case string:
 		output, err := strconv.ParseFloat(input, 64)
 		return output, err == nil
@@ -76,6 +77,13 @@ func ToFloat64(input interface{}) (output float64, ok bool) {
 		return float64(input), true
 	}
 	return
+}
+
+func boolToFloat64(input bool) (float64, bool) {
+	if input {
+		return 1., true
+	}
+	return 0., true
 }
 
 // ToBoolean attempts to convert `input` to bool.
@@ -116,10 +124,7 @@ func ToBoolean(input interface{}) (output bool, ok bool) {
 func ToString(input interface{}) (output string, ok bool) {
 	switch input := input.(type) {
 	case bool:
-		if input {
-			return "true", true
-		}
-		return "false", true
+		return boolToString(input)
 	case string:
 		return input, true
 	case json.Number:
@@ -142,6 +147,13 @@ func ToString(input interface{}) (output string, ok bool) {
 		return strconv.Itoa(int(input)), true
 	}
 	return
+}
+
+func boolToString(input bool) (string, bool) {
+	if input {
+		return "true", true
+	}
+	return "false", true
 }
 
 // ToTimestamp returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
@@ -167,19 +179,27 @@ func ToTimestamp(input interface{}, timeUnit arrow.TimeUnit) (output arrow.Times
 	case float64:
 		return arrow.Timestamp(input), true
 	case bool:
-		if input {
-			return 1, true
-		}
-		return 0, true
+		return boolToTimestamp(input)
 	case string:
-		output, err := strconv.ParseInt(input, 10, 64)
-		if err == nil {
-			return arrow.Timestamp(output), true
-		}
-		outputTS, err := arrow.TimestampFromString(input, timeUnit)
-		return outputTS, err == nil
+		return stringToTimestamp(input, timeUnit)
 	case arrow.Timestamp:
 		return input, true
 	}
 	return
+}
+
+func boolToTimestamp(input bool) (arrow.Timestamp, bool) {
+	if input {
+		return 1, true
+	}
+	return 0, true
+}
+
+func stringToTimestamp(input string, timeUnit arrow.TimeUnit) (arrow.Timestamp, bool) {
+	output, err := strconv.ParseInt(input, 10, 64)
+	if err == nil {
+		return arrow.Timestamp(output), true
+	}
+	outputTS, err := arrow.TimestampFromString(input, timeUnit)
+	return outputTS, err == nil
 }
