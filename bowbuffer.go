@@ -42,6 +42,7 @@ func NewBuffer(size int, typ Type) Buffer {
 	return buf
 }
 
+// Len returns the size of the underlying slice of data in the Buffer.
 func (b Buffer) Len() int {
 	switch b.DataType {
 	case Int64:
@@ -59,6 +60,8 @@ func (b Buffer) Len() int {
 	}
 }
 
+// SetOrDrop sets the Buffer data at index `i` by attempting to convert `value` to its DataType.
+// Sets the value to nil if the conversion failed or if `value` is nil.
 func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	var valid bool
 	switch b.DataType {
@@ -83,6 +86,8 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
+// SetOrDropStrict sets the Buffer data at index `i` by attempting a type assertion of `value` to its DataType.
+// Sets the value to nil if the assertion failed or if `value` is nil.
 func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	var valid bool
 	switch b.DataType {
@@ -95,7 +100,12 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	case String:
 		b.Data.([]string)[i], valid = value.(string)
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
-		b.Data.([]arrow.Timestamp)[i], valid = value.(arrow.Timestamp)
+		switch value := value.(type) {
+		case arrow.Timestamp:
+			b.Data.([]arrow.Timestamp)[i] = value
+		case int64:
+			b.Data.([]int64)[i] = value
+		}
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.DataType))
 	}

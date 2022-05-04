@@ -6,6 +6,7 @@ import (
 	"github.com/apache/arrow/go/v8/arrow"
 )
 
+// Type is a Bow logical type.
 type Type int
 
 // How to add a Type:
@@ -46,11 +47,11 @@ var (
 		TimestampMicro: arrow.FixedWidthTypes.Timestamp_us,
 		TimestampNano:  arrow.FixedWidthTypes.Timestamp_ns,
 	}
-	mapBowTypeToConvertFunc = map[Type]func(i interface{}) (arrow.Timestamp, bool){
-		TimestampSec:   ToTimestampSec,
-		TimestampMilli: ToTimestampMilli,
-		TimestampMicro: ToTimestampMicro,
-		TimestampNano:  ToTimestampNano,
+	mapBowTypeToTimeUnit = map[Type]arrow.TimeUnit{
+		TimestampSec:   arrow.Second,
+		TimestampMilli: arrow.Millisecond,
+		TimestampMicro: arrow.Microsecond,
+		TimestampNano:  arrow.Nanosecond,
 	}
 	allType = func() []Type {
 		res := make([]Type, InputDependent-1)
@@ -74,13 +75,13 @@ func (t Type) Convert(input interface{}) interface{} {
 	case String:
 		output, ok = ToString(input)
 	case TimestampSec:
-		output, ok = ToTimestampSec(input)
+		output, ok = ToTimestamp(input, arrow.Second)
 	case TimestampMilli:
-		output, ok = ToTimestampMilli(input)
+		output, ok = ToTimestamp(input, arrow.Millisecond)
 	case TimestampMicro:
-		output, ok = ToTimestampMicro(input)
+		output, ok = ToTimestamp(input, arrow.Microsecond)
 	case TimestampNano:
-		output, ok = ToTimestampNano(input)
+		output, ok = ToTimestamp(input, arrow.Nanosecond)
 	}
 	if ok {
 		return output

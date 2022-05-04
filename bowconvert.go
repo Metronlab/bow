@@ -144,35 +144,10 @@ func ToString(input interface{}) (output string, ok bool) {
 	return
 }
 
-// ToTimestampSec returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
+// ToTimestamp returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
 // String values are first interpreted with strconv.ParseInt.
-// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Second time unit.
-func ToTimestampSec(input interface{}) (output arrow.Timestamp, ok bool) {
-	return toTimestamp(input, arrow.Second)
-}
-
-// ToTimestampMilli returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
-// String values are first interpreted with strconv.ParseInt.
-// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Millisecond time unit.
-func ToTimestampMilli(input interface{}) (output arrow.Timestamp, ok bool) {
-	return toTimestamp(input, arrow.Millisecond)
-}
-
-// ToTimestampMicro returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
-// String values are first interpreted with strconv.ParseInt.
-// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Microsecond time unit.
-func ToTimestampMicro(input interface{}) (output arrow.Timestamp, ok bool) {
-	return toTimestamp(input, arrow.Microsecond)
-}
-
-// ToTimestampNano returns an arrow.Timestamp value and a bool whether the conversion was successful or not.
-// String values are first interpreted with strconv.ParseInt.
-// If it fails, the values are parsed with arrow.TimestampFromString with the arrow.Nanosecond time unit.
-func ToTimestampNano(input interface{}) (output arrow.Timestamp, ok bool) {
-	return toTimestamp(input, arrow.Nanosecond)
-}
-
-func toTimestamp(input interface{}, timeUnit arrow.TimeUnit) (output arrow.Timestamp, ok bool) {
+// If it fails, the values are parsed with arrow.TimestampFromString with the `timeUnit` time unit.
+func ToTimestamp(input interface{}, timeUnit arrow.TimeUnit) (output arrow.Timestamp, ok bool) {
 	switch input := input.(type) {
 	case json.Number:
 		output, err := input.Int64()
