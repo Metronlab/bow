@@ -129,23 +129,23 @@ func TestToString(t *testing.T) {
 
 func TestToTimestamp(t *testing.T) {
 	t.Run("Sec", func(t *testing.T) {
-		v, ok := ToTimestampSec(true)
+		v, ok := ToTimestamp(true, arrow.Second)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(1), v)
 
-		v, ok = ToTimestampSec(false)
+		v, ok = ToTimestamp(false, arrow.Second)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampSec(0.)
+		v, ok = ToTimestamp(0., arrow.Second)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampSec(0)
+		v, ok = ToTimestamp(0, arrow.Second)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampSec("0")
+		v, ok = ToTimestamp("0", arrow.Second)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 		assert.Equal(t, "1970-01-01T00:00:00Z",
@@ -155,35 +155,35 @@ func TestToTimestamp(t *testing.T) {
 		ti, err := time.Parse(time.RFC3339, formattedTimeSec)
 		require.NoError(t, err)
 
-		v, ok = ToTimestampSec(ti.Unix())
+		v, ok = ToTimestamp(ti.Unix(), arrow.Second)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00Z",
 			v.ToTime(arrow.Second).Format(time.RFC3339Nano))
 
-		v, ok = ToTimestampSec(formattedTimeSec)
+		v, ok = ToTimestamp(formattedTimeSec, arrow.Second)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00Z",
 			v.ToTime(arrow.Second).Format(time.RFC3339Nano))
 	})
 
 	t.Run("Milli", func(t *testing.T) {
-		v, ok := ToTimestampMilli(true)
+		v, ok := ToTimestamp(true, arrow.Millisecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(1), v)
 
-		v, ok = ToTimestampMilli(false)
+		v, ok = ToTimestamp(false, arrow.Millisecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampMilli(0.)
+		v, ok = ToTimestamp(0., arrow.Millisecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampMilli(0)
+		v, ok = ToTimestamp(0, arrow.Millisecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampMilli("0")
+		v, ok = ToTimestamp("0", arrow.Millisecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 		assert.Equal(t, "1970-01-01T00:00:00Z",
@@ -193,35 +193,35 @@ func TestToTimestamp(t *testing.T) {
 		ti, err := time.Parse(time.RFC3339, formattedTimeMilli)
 		require.NoError(t, err)
 
-		v, ok = ToTimestampMilli(ti.UnixMilli())
+		v, ok = ToTimestamp(ti.UnixMilli(), arrow.Millisecond)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00.123Z",
 			v.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
 
-		v, ok = ToTimestampMilli(formattedTimeMilli)
+		v, ok = ToTimestamp(formattedTimeMilli, arrow.Millisecond)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00.123Z",
 			v.ToTime(arrow.Millisecond).Format(time.RFC3339Nano))
 	})
 
 	t.Run("Micro", func(t *testing.T) {
-		v, ok := ToTimestampMicro(true)
+		v, ok := ToTimestamp(true, arrow.Microsecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(1), v)
 
-		v, ok = ToTimestampMicro(false)
+		v, ok = ToTimestamp(false, arrow.Microsecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampMicro(0.)
+		v, ok = ToTimestamp(0., arrow.Microsecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampMicro(0)
+		v, ok = ToTimestamp(0, arrow.Microsecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampMicro("0")
+		v, ok = ToTimestamp("0", arrow.Microsecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 		assert.Equal(t, "1970-01-01T00:00:00Z",
@@ -231,35 +231,35 @@ func TestToTimestamp(t *testing.T) {
 		ti, err := time.Parse(time.RFC3339, formattedTimeMicro)
 		require.NoError(t, err)
 
-		v, ok = ToTimestampMicro(ti.UnixMicro())
+		v, ok = ToTimestamp(ti.UnixMicro(), arrow.Microsecond)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00.123456Z",
 			v.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
 
-		v, ok = ToTimestampMicro(formattedTimeMicro)
+		v, ok = ToTimestamp(formattedTimeMicro, arrow.Microsecond)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00.123456Z",
 			v.ToTime(arrow.Microsecond).Format(time.RFC3339Nano))
 	})
 
 	t.Run("Nano", func(t *testing.T) {
-		v, ok := ToTimestampNano(true)
+		v, ok := ToTimestamp(true, arrow.Nanosecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(1), v)
 
-		v, ok = ToTimestampNano(false)
+		v, ok = ToTimestamp(false, arrow.Nanosecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampNano(0.)
+		v, ok = ToTimestamp(0., arrow.Nanosecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampNano(0)
+		v, ok = ToTimestamp(0, arrow.Nanosecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 
-		v, ok = ToTimestampNano("0")
+		v, ok = ToTimestamp("0", arrow.Nanosecond)
 		require.True(t, ok)
 		assert.Equal(t, arrow.Timestamp(0), v)
 		assert.Equal(t, "1970-01-01T00:00:00Z",
@@ -269,12 +269,12 @@ func TestToTimestamp(t *testing.T) {
 		ti, err := time.Parse(time.RFC3339, formattedTimeNano)
 		require.NoError(t, err)
 
-		v, ok = ToTimestampNano(ti.UnixNano())
+		v, ok = ToTimestamp(ti.UnixNano(), arrow.Nanosecond)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00.123456789Z",
 			v.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))
 
-		v, ok = ToTimestampNano(formattedTimeNano)
+		v, ok = ToTimestamp(formattedTimeNano, arrow.Nanosecond)
 		require.True(t, ok)
 		assert.Equal(t, "2022-04-27T00:00:00.123456789Z",
 			v.ToTime(arrow.Nanosecond).Format(time.RFC3339Nano))

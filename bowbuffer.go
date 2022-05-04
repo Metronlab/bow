@@ -100,11 +100,14 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	case String:
 		b.Data.([]string)[i], valid = value.(string)
 	case TimestampSec, TimestampMilli, TimestampMicro, TimestampNano:
+		valid = true
 		switch value := value.(type) {
 		case arrow.Timestamp:
 			b.Data.([]arrow.Timestamp)[i] = value
 		case int64:
 			b.Data.([]int64)[i] = value
+		default:
+			valid = false
 		}
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.DataType))
@@ -196,38 +199,6 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
-	}
-
-	return res
-}
-
-func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
-	var res []byte
-	nullBitmapLength := bitutil.CeilByte(dataLength) / 8
-
-	switch valid := validityArray.(type) {
-	case nil:
-		res = make([]byte, nullBitmapLength)
-		for i := 0; i < dataLength; i++ {
-			bitutil.SetBit(res, i)
-		}
-	case []bool:
-		if len(valid) != dataLength {
-			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
-		}
-		res = make([]byte, nullBitmapLength)
-		for i := 0; i < dataLength; i++ {
-			if valid[i] {
-				bitutil.SetBit(res, i)
-			}
-		}
-	case []byte:
-		if len(valid) != nullBitmapLength {
-			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
-		}
-		return valid
-	default:
-		panic(fmt.Errorf("unsupported type '%T'", valid))
 	}
 
 	return res
