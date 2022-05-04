@@ -423,8 +423,8 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 		}
 		for rightRow := 0; isColCommon && rightRow < right.NumRows(); rightRow++ {
 			var isRowCommon bool
-			for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-				if rightRow == commonRows.r[commonRow] {
+			for i := 0; i < len(commonRows.r); i++ {
+				if rightRow == commonRows.r[i] {
 					isRowCommon = true
 					break
 				}
