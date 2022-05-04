@@ -39,6 +39,7 @@ func NewBuffer(size int, typ Type) Buffer {
 	return buf
 }
 
+// Len returns the size of the underlying slice of data in the Buffer.
 func (b Buffer) Len() int {
 	switch b.DataType {
 	case Int64:
@@ -54,6 +55,8 @@ func (b Buffer) Len() int {
 	}
 }
 
+// SetOrDrop sets the Buffer data at index `i` by attempting to convert `value` to its DataType.
+// Sets the value to nil if the conversion failed or if `value` is nil.
 func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	var valid bool
 	switch b.DataType {
@@ -76,6 +79,8 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
+// SetOrDropStrict sets the Buffer data at index `i` by attempting a type assertion of `value` to its DataType.
+// Sets the value to nil if the assertion failed or if `value` is nil.
 func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	var valid bool
 	switch b.DataType {
@@ -166,38 +171,6 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 		res.nullBitmapBytes = nullBitmapBytesCopy
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
-	}
-
-	return res
-}
-
-func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
-	var res []byte
-	nullBitmapLength := bitutil.CeilByte(dataLength) / 8
-
-	switch valid := validityArray.(type) {
-	case nil:
-		res = make([]byte, nullBitmapLength)
-		for i := 0; i < dataLength; i++ {
-			bitutil.SetBit(res, i)
-		}
-	case []bool:
-		if len(valid) != dataLength {
-			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
-		}
-		res = make([]byte, nullBitmapLength)
-		for i := 0; i < dataLength; i++ {
-			if valid[i] {
-				bitutil.SetBit(res, i)
-			}
-		}
-	case []byte:
-		if len(valid) != nullBitmapLength {
-			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
-		}
-		return valid
-	default:
-		panic(fmt.Errorf("unsupported type '%T'", valid))
 	}
 
 	return res

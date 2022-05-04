@@ -190,7 +190,7 @@ func innerFillLeftBowCols(newSeries *[]Series, left *bow, newNumRows int,
 
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
 		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
-		switch left.ColumnType(colIndex) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(left.Column(colIndex).Data())
 			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
@@ -220,7 +220,7 @@ func innerFillLeftBowCols(newSeries *[]Series, left *bow, newNumRows int,
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", left.ColumnType(colIndex)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
 
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
@@ -238,7 +238,7 @@ func innerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumRows, ne
 		}
 
 		// Fill common rows from right bow
-		switch right.ColumnType(rightCol) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(right.Column(rightCol).Data())
 			for rowIndex := 0; rowIndex < newNumRows; rowIndex++ {
@@ -268,7 +268,7 @@ func innerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumRows, ne
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", right.ColumnType(rightCol)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
 
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
@@ -286,7 +286,7 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 		buf := NewBuffer(newNumRows, left.ColumnType(colIndex))
 
 		// Fill rows from left bow
-		switch left.ColumnType(colIndex) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(left.Column(colIndex).Data())
 			for newRow := 0; left.NumRows() > 0 && newRow < newNumRows; newRow++ {
@@ -376,7 +376,7 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", left.ColumnType(colIndex)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
 
 		// Fill remaining rows from right bow if column is common
@@ -387,8 +387,8 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 		}
 		for rightRow := 0; isColCommon && rightRow < right.NumRows(); rightRow++ {
 			var isRowCommon bool
-			for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-				if rightRow == commonRows.r[commonRow] {
+			for i := 0; i < len(commonRows.r); i++ {
+				if rightRow == commonRows.r[i] {
 					isRowCommon = true
 					break
 				}
@@ -416,7 +416,7 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 		}
 		buf := NewBuffer(newNumRows, right.ColumnType(rightCol))
 
-		switch right.ColumnType(rightCol) {
+		switch buf.DataType {
 		case Int64:
 			data := array.NewInt64Data(right.Column(rightCol).Data())
 
@@ -441,8 +441,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -478,8 +478,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -515,8 +515,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -552,8 +552,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -566,7 +566,7 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", right.ColumnType(rightCol)))
+			panic(fmt.Errorf("unsupported type '%s'", buf.DataType))
 		}
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		rightCol++

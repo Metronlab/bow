@@ -178,8 +178,8 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Errorf("unsupported type '%s'",
-			b.Schema().Field(colIndex).Type.Name()))
+		panic(fmt.Errorf("unsupported arrow.DataType '%s'",
+			b.Schema().Field(colIndex).Type))
 	}
 }
 
@@ -241,8 +241,8 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Sprintf("unsupported type '%s'",
-			b.Schema().Field(colIndex).Type.Name()))
+		panic(fmt.Sprintf("unsupported arrow.DataType '%s'",
+			b.Schema().Field(colIndex).Type))
 	}
 }
 
