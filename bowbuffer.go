@@ -103,6 +103,7 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	}
 }
 
+// GetValue gets the value at index `i` from the Buffer
 func (b *Buffer) GetValue(i int) interface{} {
 	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
 		return nil
@@ -172,7 +173,6 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 	default:
 		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
 	}
-
 	return res
 }
 
