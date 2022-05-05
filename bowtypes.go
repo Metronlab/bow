@@ -45,6 +45,13 @@ var (
 		}
 		return res
 	}()
+	mapArrowFingerprintToBowTypes = func() map[string]Type {
+		res := make(map[string]Type)
+		for bowType, arrowDataType := range mapBowToArrowTypes {
+			res[arrowDataType.Fingerprint()] = bowType
+		}
+		return res
+	}()
 	allType = func() []Type {
 		res := make([]Type, InputDependent-1)
 		for typ := Type(1); typ < InputDependent; typ++ {
@@ -89,21 +96,19 @@ func (t Type) String() string {
 }
 
 func getBowTypeFromArrowFingerprint(fingerprint string) Type {
-	for bowType, arrowType := range mapBowToArrowTypes {
-		if arrowType.Fingerprint() == fingerprint {
-			return bowType
-		}
+	typ, ok := mapArrowFingerprintToBowTypes[fingerprint]
+	if !ok {
+		return Unknown
 	}
-	return Unknown
+	return typ
 }
 
 func getBowTypeFromArrowName(name string) Type {
-	for bowType, arrowType := range mapBowToArrowTypes {
-		if arrowType.Name() == name {
-			return bowType
-		}
+	typ, ok := mapArrowNameToBowTypes[name]
+	if !ok {
+		return Unknown
 	}
-	return Unknown
+	return typ
 }
 
 // GetAllTypes returns all Bow types.

@@ -111,10 +111,10 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	series := make([]Series, len(jsonB.Schema.Fields))
 
 	if jsonB.RowBasedData == nil {
-		for i, field := range jsonB.Schema.Fields {
-			typ := getBowTypeFromArrowFingerprint(field.Type)
+		for fieldIndex, field := range jsonB.Schema.Fields {
+			typ := getBowTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, typ)
-			series[i] = NewSeriesFromBuffer(field.Name, buf)
+			series[fieldIndex] = NewSeriesFromBuffer(field.Name, buf)
 		}
 
 		tmpBow, err := NewBow(series...)
@@ -127,8 +127,8 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	}
 
 	for fieldIndex, field := range jsonB.Schema.Fields {
-		fieldType := getBowTypeFromArrowName(field.Type)
-		buf := NewBuffer(len(jsonB.RowBasedData), fieldType)
+		typ := getBowTypeFromArrowName(field.Type)
+		buf := NewBuffer(len(jsonB.RowBasedData), typ)
 		for rowIndex, row := range jsonB.RowBasedData {
 			buf.SetOrDrop(rowIndex, row[field.Name])
 		}
