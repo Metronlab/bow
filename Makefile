@@ -7,9 +7,6 @@ install:
 	@go install github.com/Metronlab/genius@latest
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.45.2
 
-gen:
-	@go generate $(PKG)
-
 lint:
 	golangci-lint run -E gofmt,gci --fix -v $(PKG)
 
