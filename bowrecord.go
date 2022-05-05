@@ -8,16 +8,6 @@ import (
 	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
-func NewBowFromRecord(record arrow.Record) (Bow, error) {
-	for _, f := range record.Schema().Fields() {
-		if getBowTypeFromArrowFingerprint(f.Type.Fingerprint()) == Unknown {
-			return nil, fmt.Errorf("unsupported type '%s'", f.Type)
-		}
-	}
-
-	return &bow{Record: record}, nil
-}
-
 func newRecord(metadata Metadata, series ...Series) (arrow.Record, error) {
 	var fields []arrow.Field
 	var arrays []arrow.Array
