@@ -178,37 +178,6 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 			"unsupported type %+v", b.ColumnType(colIndex)))
 	}
 }
-func buildNullBitmapBytes(dataLength int, validityArray interface{}) []byte {
-	var res []byte
-	nullBitmapLength := bitutil.CeilByte(dataLength) / 8
-
-	switch valid := validityArray.(type) {
-	case nil:
-		res = make([]byte, nullBitmapLength)
-		for i := 0; i < dataLength; i++ {
-			bitutil.SetBit(res, i)
-		}
-	case []bool:
-		if len(valid) != dataLength {
-			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
-		}
-		res = make([]byte, nullBitmapLength)
-		for i := 0; i < dataLength; i++ {
-			if valid[i] {
-				bitutil.SetBit(res, i)
-			}
-		}
-	case []byte:
-		if len(valid) != nullBitmapLength {
-			panic(fmt.Errorf("dataArray and validityArray have different lengths"))
-		}
-		return valid
-	default:
-		panic(fmt.Errorf("unsupported type %T", valid))
-	}
-
-	return res
-}
 
 // NewBufferFromInterfaces returns a new typed Buffer with the data represented as a slice of interface{}, with eventual nil values.
 func NewBufferFromInterfaces(typ Type, data []interface{}) (Buffer, error) {
