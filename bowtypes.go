@@ -38,6 +38,13 @@ var (
 		Boolean: arrow.FixedWidthTypes.Boolean,
 		String:  arrow.BinaryTypes.String,
 	}
+	mapArrowNameToBowTypes = func() map[string]Type {
+		res := make(map[string]Type)
+		for bowType, arrowDataType := range mapBowToArrowTypes {
+			res[arrowDataType.Name()] = bowType
+		}
+		return res
+	}()
 	allType = func() []Type {
 		res := make([]Type, InputDependent-1)
 		for typ := Type(1); typ < InputDependent; typ++ {
