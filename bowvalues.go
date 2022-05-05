@@ -1,6 +1,6 @@
 package bow
 
-import "github.com/apache/arrow/go/v7/arrow/array"
+import "github.com/apache/arrow/go/v8/arrow/array"
 
 func Int64Values(arr *array.Int64) []int64 {
 	return arr.Int64Values()

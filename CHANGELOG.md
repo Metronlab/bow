@@ -1,3 +1,12 @@
+UNRELEASED [XXXX-XX-XX]
+-------------------
+
+- General
+  - bump to go 1.18
+  - bump to arrow/go/v8
+  - remove useless count script
+  - add gci linter
+
 v0.18.0 [2022-02-16]
 -------------------
 
