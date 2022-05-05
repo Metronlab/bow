@@ -11,7 +11,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	left := b
 	right, ok := other.(*bow)
 	if !ok {
-		panic("bow.InnerJoin: non bow object passed as argument")
+		panic("non bow object passed as argument")
 	}
 
 	if left.NumCols() == 0 && right.NumCols() == 0 {
@@ -37,7 +37,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 	newSeries := make([]Series, newNumCols)
 	newNumRows := len(commonRows.l)
 
-	innerFillLeftBowCols(&newSeries, left, right,
+	innerFillLeftBowCols(&newSeries, left,
 		newNumRows, commonRows)
 	innerFillRightBowCols(&newSeries, left, right,
 		newNumRows, newNumCols, commonCols, commonRows)
@@ -53,7 +53,7 @@ func (b *bow) InnerJoin(other Bow) Bow {
 		NewMetadata(keys, values),
 		newSeries...)
 	if err != nil {
-		panic(fmt.Errorf("bow.InnerJoin: %w", err))
+		panic(err)
 	}
 
 	return newBow
@@ -65,7 +65,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 	left := b
 	right, ok := other.(*bow)
 	if !ok {
-		panic("bow.OuterJoin: non bow object passed as argument")
+		panic("non bow object passed as argument")
 	}
 
 	// Get common columns indices
@@ -116,7 +116,7 @@ func (b *bow) OuterJoin(other Bow) Bow {
 		NewMetadata(keys, values),
 		newSeries...)
 	if err != nil {
-		panic(fmt.Errorf("bow.OuterJoin: %w", err))
+		panic(err)
 	}
 
 	return newBow
@@ -133,14 +133,14 @@ func getCommonCols(left, right Bow) map[string][]Buffer {
 
 		if len(rFields) > 1 {
 			panic(fmt.Errorf(
-				"bow.Join: too many columns have the same name: right:%+v left:%+v",
+				"too many columns have the same name: right:%+v left:%+v",
 				right.String(), left.String()))
 		}
 
 		rField := rFields[0]
 		if rField.Type.ID() != lField.Type.ID() {
 			panic(fmt.Errorf(
-				"bow.Join: left and right bow on join columns are of incompatible types: %s",
+				"left and right bow on join columns are of incompatible types: %s",
 				lField.Name))
 		}
 

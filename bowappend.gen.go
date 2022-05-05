@@ -4,6 +4,7 @@ package bow
 
 import (
 	"fmt"
+
 	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/apache/arrow/go/v8/arrow/array"
 	"github.com/apache/arrow/go/v8/arrow/memory"
@@ -27,7 +28,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 	}
 
 	refBow := bows[0]
-	seriesSlice := make([]Series, refBow.NumCols())
+	series := make([]Series, refBow.NumCols())
 
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
 	for colIndex := 0; colIndex < refBow.NumCols(); colIndex++ {
@@ -39,8 +40,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewInt64Data(data)
@@ -54,8 +54,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewFloat64Data(data)
@@ -69,8 +68,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewBooleanData(data)
@@ -84,8 +82,7 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			builder.Resize(numRows)
 			for _, b := range bows {
 				if colType := b.ColumnType(colIndex); colType != refType {
-					return nil, fmt.Errorf(
-						"bow.AppendBows: incompatible types %v and %v", refType, colType)
+					return nil, fmt.Errorf("incompatible types '%s' and '%s'", refType, colType)
 				}
 				data := b.(*bow).Column(colIndex).Data()
 				arr := array.NewStringData(data)
@@ -95,14 +92,14 @@ func AppendBows(bows ...Bow) (Bow, error) {
 			}
 			newArray = builder.NewArray()
 		default:
-			return nil, fmt.Errorf("unsupported type %v", refType)
+			return nil, fmt.Errorf("unsupported type '%s'", refType)
 		}
 
-		seriesSlice[colIndex] = Series{
+		series[colIndex] = Series{
 			Name:  refBow.ColumnName(colIndex),
 			Array: newArray,
 		}
 	}
 
-	return NewBowWithMetadata(refBow.Metadata(), seriesSlice...)
+	return NewBowWithMetadata(refBow.Metadata(), series...)
 }

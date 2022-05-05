@@ -7,54 +7,44 @@ import (
 	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
-// Metadata is an arrow metadata wrapping
-// often used to reference information about indexes, sort, units...
-// Metadata is mutable but copied at creation and at assignation in arrow schema
-// Recommended usage is to settle on a key for your business and marshall / unmarshall with json for instance
-// to enrich the value always for the same key.
-// You can find example of usage by reading parquet or reading arrow file issued by panda in python.
-// Consider "bow" key as reserved for the future.
+// Metadata is wrapping arrow.Metadata.
 type Metadata struct {
 	arrow.Metadata
 }
 
+// NewMetadata returns a new Metadata.
 func NewMetadata(keys, values []string) Metadata {
 	return Metadata{arrow.NewMetadata(keys, values)}
 }
 
-func NewMetadataFromMap(m map[string]string) Metadata {
-	return Metadata{arrow.MetadataFrom(m)}
-}
-
+// NewBowWithMetadata returns a new Bow from Metadata and Series.
 func NewBowWithMetadata(metadata Metadata, series ...Series) (Bow, error) {
 	rec, err := newRecord(metadata, series...)
 	if err != nil {
-		return nil, fmt.Errorf("bow.NewBowWithMetadata: %w", err)
+		return nil, fmt.Errorf("newRecord: %w", err)
 	}
 
 	return &bow{Record: rec}, nil
 }
 
-// Metadata return a copy of schema metadata.
+// Metadata return a copy of the bow Schema Metadata.
 func (b *bow) Metadata() Metadata {
 	return NewMetadata(
 		b.Schema().Metadata().Keys(),
 		b.Schema().Metadata().Values())
 }
 
-// SetMetadata Set a value for a given key and return a Bow with freshly created metadata
+// SetMetadata sets a value for a given key and return a Bow with freshly created Metadata.
 func (b *bow) SetMetadata(key, value string) Bow {
-	metadata := b.Metadata()
-	metadata = metadata.Set(key, value)
+	m := b.Metadata()
+	m = m.Set(key, value)
 	return &bow{Record: array.NewRecord(
-		arrow.NewSchema(b.Schema().Fields(), &metadata.Metadata),
+		arrow.NewSchema(b.Schema().Fields(), &m.Metadata),
 		b.Columns(),
 		b.Record.NumRows())}
 }
 
-// WithMetadata completely replace original Metadata
-// Use with caution to avoid information loss for metadata issued by other sources
-// A copy is assigned, so you can still mutate metadata given as parameter
+// WithMetadata replaces the bow original Metadata.
 func (b *bow) WithMetadata(metadata Metadata) Bow {
 	m := arrow.NewMetadata(metadata.Keys(), metadata.Values())
 	return &bow{Record: array.NewRecord(
@@ -63,41 +53,45 @@ func (b *bow) WithMetadata(metadata Metadata) Bow {
 		b.Record.NumRows())}
 }
 
-// Set mutate the Metadata in case key already exists and return a fresh copy
-// with given key and value assigned
-func (md *Metadata) Set(key, value string) Metadata {
-	srcKeys := md.Keys()
-	srcValues := md.Values()
-	srcKeyIdx := md.FindKey(key)
-	if srcKeyIdx == -1 {
-		srcKeys = append(srcKeys, key)
-		srcValues = append(srcValues, value)
+// Set returns a new Metadata with the key/value pair set.
+// If the key already exists, it replaces its value.
+func (m *Metadata) Set(newKey, newValue string) Metadata {
+	keys := m.Keys()
+	values := m.Values()
+	keyIndex := m.FindKey(newKey)
+
+	if keyIndex == -1 {
+		keys = append(keys, newKey)
+		values = append(values, newValue)
 	} else {
-		srcValues[srcKeyIdx] = value
+		values[keyIndex] = newValue
 	}
-	return Metadata{arrow.NewMetadata(srcKeys, srcValues)}
+
+	return Metadata{arrow.NewMetadata(keys, values)}
 }
 
-// SetMany mutate the Metadata in case key already exists and return a fresh copy
-// with given keys and values assigned
-func (md *Metadata) SetMany(keys, values []string) Metadata {
-	if len(keys) != len(values) {
+// SetMany returns a new Metadata with the key/value pairs set.
+// If a key already exists, it replaces its value.
+func (m *Metadata) SetMany(newKeys, newValues []string) Metadata {
+	if len(newKeys) != len(newValues) {
 		panic("metadata len mismatch")
 	}
-	if len(keys) == 0 {
-		return *md
+	if len(newKeys) == 0 {
+		return *m
 	}
 
-	srcKeys := md.Keys()
-	srcValues := md.Values()
-	for i, key := range keys {
-		srcKeyIdx := md.FindKey(key)
-		if srcKeyIdx == -1 {
-			srcKeys = append(srcKeys, key)
-			srcValues = append(srcValues, values[i])
+	keys := m.Keys()
+	values := m.Values()
+
+	for i, newKey := range newKeys {
+		newKeyIndex := m.FindKey(newKey)
+		if newKeyIndex == -1 {
+			keys = append(keys, newKey)
+			values = append(values, newValues[i])
 		} else {
-			srcValues[srcKeyIdx] = values[i]
+			values[newKeyIndex] = newValues[i]
 		}
 	}
-	return Metadata{arrow.NewMetadata(srcKeys, srcValues)}
+
+	return Metadata{arrow.NewMetadata(keys, values)}
 }

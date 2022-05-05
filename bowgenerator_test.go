@@ -22,7 +22,7 @@ func TestGenerator(t *testing.T) {
 	})
 
 	t.Run("with missing data", func(t *testing.T) {
-		b, err := NewGenBow(1000000, GenSeriesOptions{MissingData: true})
+		b, err := NewGenBow(100, GenSeriesOptions{MissingData: true})
 		assert.NoError(t, err)
 
 		b2, err := b.DropNils()

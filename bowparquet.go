@@ -38,7 +38,7 @@ type parquetColTypesMeta struct {
 	LogicalType *parquet.LogicalType `json:"logical_type"`
 }
 
-// NewBowFromParquet loads a parquet object from the file path, returning a new Bow
+// NewBowFromParquet loads a parquet object from the file path, returning a new Bow.
 // Only value columns are used to create the new Bow.
 // Argument verbose is used to print information about the file loaded.
 func NewBowFromParquet(path string, verbose bool) (Bow, error) {

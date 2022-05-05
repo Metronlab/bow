@@ -1,14 +1,17 @@
 package bow
 
-func (b *bow) Find(columnIndex int, value interface{}) int {
-	return b.FindNext(columnIndex, 0, value)
+// Find returns the index of the row where `value` is found in the `colIndex` column.
+// Returns -1 if the value is not found.
+func (b *bow) Find(colIndex int, value interface{}) int {
+	return b.FindNext(colIndex, 0, value)
 }
 
-func (b *bow) FindNext(columnIndex, rowIndex int, value interface{}) int {
+// FindNext returns the index of the row where `value` is found in the `colIndex` column, starting from the `rowIndex` row.
+// Returns -1 if the value is not found.
+func (b *bow) FindNext(colIndex, rowIndex int, value interface{}) int {
 	if value == nil {
-		col := b.Column(columnIndex)
 		for i := 0; i < b.NumRows(); i++ {
-			if !col.IsValid(i) {
+			if !b.Column(colIndex).IsValid(i) {
 				return i
 			}
 		}
@@ -16,13 +19,14 @@ func (b *bow) FindNext(columnIndex, rowIndex int, value interface{}) int {
 	}
 
 	for i := rowIndex; i < b.NumRows(); i++ {
-		if value == b.GetValue(columnIndex, i) {
+		if value == b.GetValue(colIndex, i) {
 			return i
 		}
 	}
 	return -1
 }
 
-func (b *bow) Contains(columnIndex int, value interface{}) bool {
-	return b.Find(columnIndex, value) != -1
+// Contains returns whether `value` is found in `colIndex` columns.
+func (b *bow) Contains(colIndex int, value interface{}) bool {
+	return b.Find(colIndex, value) != -1
 }

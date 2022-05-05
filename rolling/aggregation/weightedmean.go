@@ -14,7 +14,7 @@ func WeightedAverageStep(col string) rolling.ColAggregation {
 				return v, err
 			}
 
-			windowsWide := float64(w.End - w.Start)
+			windowsWide := float64(w.LastValue - w.FirstValue)
 			return v.(float64) / windowsWide, nil
 		})
 }
@@ -28,7 +28,7 @@ func WeightedAverageLinear(col string) rolling.ColAggregation {
 				return v, err
 			}
 
-			windowsWide := float64(w.End - w.Start)
+			windowsWide := float64(w.LastValue - w.FirstValue)
 			return v.(float64) / windowsWide, nil
 		})
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
-func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,
+func innerFillLeftBowCols(newSeries *[]Series, left *bow, newNumRows int,
 	commonRows struct{ l, r []int }) {
 
 	for colIndex := 0; colIndex < left.NumCols(); colIndex++ {
@@ -43,7 +43,7 @@ func innerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows int,
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", left.ColumnType(colIndex)))
+			panic(fmt.Errorf("unsupported type '%s'", left.ColumnType(colIndex)))
 		}
 
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(left.ColumnName(colIndex), buf)
@@ -91,7 +91,7 @@ func innerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumRows, ne
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", right.ColumnType(rightCol)))
+			panic(fmt.Errorf("unsupported type '%s'", right.ColumnType(rightCol)))
 		}
 
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
@@ -199,7 +199,7 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", left.ColumnType(colIndex)))
+			panic(fmt.Errorf("unsupported type '%s'", left.ColumnType(colIndex)))
 		}
 
 		// Fill remaining rows from right bow if column is common
@@ -210,8 +210,8 @@ func outerFillLeftBowCols(newSeries *[]Series, left, right *bow, newNumRows, uni
 		}
 		for rightRow := 0; isColCommon && rightRow < right.NumRows(); rightRow++ {
 			var isRowCommon bool
-			for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-				if rightRow == commonRows.r[commonRow] {
+			for i := 0; i < len(commonRows.r); i++ {
+				if rightRow == commonRows.r[i] {
 					isRowCommon = true
 					break
 				}
@@ -264,8 +264,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -301,8 +301,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -338,8 +338,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -375,8 +375,8 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 			newRow := left.NumRows() + len(commonRows.r) - uniquesLeft
 			for rightRow := 0; rightRow < right.NumRows(); rightRow++ {
 				var isRowCommon bool
-				for commonRow := 0; commonRow < len(commonRows.r); commonRow++ {
-					if rightRow == commonRows.r[commonRow] {
+				for i := 0; i < len(commonRows.r); i++ {
+					if rightRow == commonRows.r[i] {
 						isRowCommon = true
 						break
 					}
@@ -389,7 +389,7 @@ func outerFillRightBowCols(newSeries *[]Series, left, right *bow, newNumCols,
 				}
 			}
 		default:
-			panic(fmt.Errorf("unsupported type '%v'", right.ColumnType(rightCol)))
+			panic(fmt.Errorf("unsupported type '%s'", right.ColumnType(rightCol)))
 		}
 		(*newSeries)[colIndex] = NewSeriesFromBuffer(right.ColumnName(rightCol), buf)
 		rightCol++

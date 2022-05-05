@@ -9,33 +9,25 @@ import (
 	"github.com/apache/arrow/go/v8/arrow/bitutil"
 )
 
+// NewBuffer returns a new Buffer of size `size` and Type `typ`.
 func NewBuffer(size int, typ Type) Buffer {
+	buf := Buffer{nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8)}
 	switch typ {
 	case Int64:
-		return Buffer{
-			Data:            make([]int64, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]int64, size)
 	case Float64:
-		return Buffer{
-			Data:            make([]float64, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]float64, size)
 	case Boolean:
-		return Buffer{
-			Data:            make([]bool, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]bool, size)
 	case String:
-		return Buffer{
-			Data:            make([]string, size),
-			nullBitmapBytes: make([]byte, bitutil.CeilByte(size)/8),
-		}
+		buf.Data = make([]string, size)
 	default:
-		panic(fmt.Errorf("unsupported type %s", typ))
+		panic(fmt.Errorf("unsupported type '%s'", typ))
 	}
+	return buf
 }
 
+// NewBufferFromData returns from `data`, which has to be a slice of a supported type.
 func NewBufferFromData(data interface{}) Buffer {
 	var l int
 	switch data.(type) {
@@ -44,7 +36,7 @@ func NewBufferFromData(data interface{}) Buffer {
 	case []bool:
 	case []string:
 	default:
-		panic(fmt.Errorf("unhandled type %T", data))
+		panic(fmt.Errorf("unsupported type '%T'", data))
 	}
 	return Buffer{
 		Data:            data,
@@ -52,6 +44,7 @@ func NewBufferFromData(data interface{}) Buffer {
 	}
 }
 
+// Len returns the length of the Buffer
 func (b Buffer) Len() int {
 	switch data := b.Data.(type) {
 	case []int64:
@@ -67,6 +60,8 @@ func (b Buffer) Len() int {
 	}
 }
 
+// SetOrDrop sets the value `value` at index `i` by attempting a type conversion to the Buffer Type.
+// Set the bit in the Buffer nullBitmapBytes if the conversion succeeded, or clear it otherwise.
 func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
@@ -79,7 +74,7 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	case []string:
 		v[i], valid = String.Convert(value).(string)
 	default:
-		panic(fmt.Errorf("unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type '%T'", v))
 	}
 
 	if valid {
@@ -89,6 +84,8 @@ func (b *Buffer) SetOrDrop(i int, value interface{}) {
 	}
 }
 
+// SetOrDrop sets the value `value` at index `i` by attempting a type assertion to the Buffer Type.
+// Set the bit in the Buffer nullBitmapBytes if the type assertion succeeded, or clear it otherwise.
 func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	var valid bool
 	switch v := b.Data.(type) {
@@ -101,7 +98,7 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	case []string:
 		v[i], valid = value.(string)
 	default:
-		panic(fmt.Errorf("unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type '%T'", v))
 	}
 
 	if valid {
@@ -111,6 +108,7 @@ func (b *Buffer) SetOrDropStrict(i int, value interface{}) {
 	}
 }
 
+// GetValue gets the value at index `i` from the Buffer
 func (b *Buffer) GetValue(i int) interface{} {
 	if bitutil.BitIsNotSet(b.nullBitmapBytes, i) {
 		return nil
@@ -125,10 +123,11 @@ func (b *Buffer) GetValue(i int) interface{} {
 	case []string:
 		return v[i]
 	default:
-		panic(fmt.Errorf("unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type '%T'", v))
 	}
 }
 
+// Less returns whether the value at index `i` is less that the value at index `j`.
 func (b Buffer) Less(i, j int) bool {
 	switch v := b.Data.(type) {
 	case []int64:
@@ -140,10 +139,11 @@ func (b Buffer) Less(i, j int) bool {
 	case []bool:
 		return !v[i] && v[j]
 	default:
-		panic(fmt.Errorf("unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type '%T'", v))
 	}
 }
 
+// NewBufferFromCol returns a new Buffer created from the column at index `colIndex`.
 func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 	data := b.Column(colIndex).Data()
 	switch b.ColumnType(colIndex) {
@@ -184,7 +184,6 @@ func (b *bow) NewBufferFromCol(colIndex int) Buffer {
 			nullBitmapBytes: nullBitmapBytesCopy,
 		}
 	default:
-		panic(fmt.Errorf(
-			"unsupported type %+v", b.ColumnType(colIndex)))
+		panic(fmt.Errorf("unsupported type '%s'", b.ColumnType(colIndex)))
 	}
 }

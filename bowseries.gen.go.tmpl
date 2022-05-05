@@ -8,6 +8,12 @@ import (
     "github.com/apache/arrow/go/v8/arrow/memory"
 )
 
+// NewSeries returns a new Series from:
+// - name: string
+// - dataArray: slice of the data in any of the Bow supported types
+// - validityArray:
+//  - If nil, the data will be non-nil
+//  - Can be of type []bool or []byte to represent nil values
 func NewSeries(name string, dataArray interface{}, validityArray interface{}) Series {
 	switch v := dataArray.(type) {
     {{range .Data.types -}}
@@ -15,10 +21,11 @@ func NewSeries(name string, dataArray interface{}, validityArray interface{}) Se
 		return new{{ .Type }}Series(name, v, buildNullBitmapBytes(len(v), validityArray))
     {{end -}}
 	default:
-		panic(fmt.Errorf("unsupported type %T", v))
+		panic(fmt.Errorf("unsupported type '%T'", v))
 	}
 }
 
+// NewSeriesFromBuffer returns a new Series from a name and a Buffer.
 func NewSeriesFromBuffer(name string, buf Buffer) Series {
 	switch data := buf.Data.(type) {
     {{range .Data.types -}}
@@ -27,35 +34,6 @@ func NewSeriesFromBuffer(name string, buf Buffer) Series {
     {{end -}}
 	default:
 		panic(fmt.Errorf("unsupported type '%T'", buf.Data))
-	}
-}
-
-func NewSeriesFromInterfaces(name string, typ Type, cells []interface{}) Series {
-	if typ == Unknown {
-		var err error
-		if typ, err = seekType(cells); err != nil {
-			panic(err)
-		}
-	}
-    mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	switch typ {
-    {{range .Data.types -}}
-	case {{ .Type }}:
-		builder := array.New{{ .Type }}Builder(mem)
-		defer builder.Release()
-		builder.Resize(len(cells))
-		for i := 0; i < len(cells); i++ {
-			v, ok := To{{ .Type }}(cells[i])
-			if !ok {
-				builder.AppendNull()
-				continue
-			}
-            builder.Append(v)
-		}
-		return Series{Name: name, Array: builder.NewArray()}
-    {{end -}}
-	default:
-		panic(fmt.Errorf("unhandled type %s", typ))
 	}
 }
 
@@ -83,3 +61,36 @@ func new{{ .Type }}Series(name string, data []{{ .type }}, valid []byte) Series 
 }
 
 {{end -}}
+
+// NewSeriesFromInterfaces returns a new Series from:
+// - name: string
+// - typ: Bow Type
+// - data: represented by an slice of interface{}, with eventually nil values
+func NewSeriesFromInterfaces(name string, typ Type, data []interface{}) Series {
+	if typ == Unknown {
+		var err error
+		if typ, err = getBowTypeFromInterfaces(data); err != nil {
+			panic(err)
+		}
+	}
+    mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	switch typ {
+    {{range .Data.types -}}
+	case {{ .Type }}:
+		builder := array.New{{ .Type }}Builder(mem)
+		defer builder.Release()
+		builder.Resize(len(data))
+		for i := 0; i < len(data); i++ {
+			v, ok := To{{ .Type }}(data[i])
+			if !ok {
+				builder.AppendNull()
+				continue
+			}
+            builder.Append(v)
+		}
+		return Series{Name: name, Array: builder.NewArray()}
+    {{end -}}
+	default:
+		panic(fmt.Errorf("unsupported type '%s'", typ))
+	}
+}

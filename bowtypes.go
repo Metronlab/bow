@@ -13,22 +13,19 @@ type Type int
 // - complete GetValue bow method
 
 const (
-	// Unknown is placed first to be by default
-	// when allocating Type or []Type
+	// Unknown is placed first to be the default when allocating Type or []Type.
 	Unknown = Type(iota)
 
-	// Float64 and following types are native arrow type supported by bow
+	// Float64 and following types are native arrow type supported by bow.
 	Float64
 	Int64
 	Boolean
 	String
 
-	// InputDependent is used in transformation like aggregation
-	// when output type is infer with input type
+	// InputDependent is used in aggregations when the output type is dependent on the input type.
 	InputDependent
 
-	// IteratorDependent is used in transformation like aggregation
-	// when output type is infer with iteratorType
+	// IteratorDependent is used in aggregations when the output type is dependent on the iterator type.
 	IteratorDependent
 )
 
@@ -62,36 +59,39 @@ var (
 	}()
 )
 
+// ArrowType returns the arrow.DataType from the Bow Type.
 func (t Type) ArrowType() arrow.DataType {
 	return mapBowToArrowTypes[t]
 }
 
-func (t Type) Convert(i interface{}) interface{} {
-	var val interface{}
+// Convert attempts to convert the `input` value to the Type t.
+// Returns nil if it fails.
+func (t Type) Convert(input interface{}) interface{} {
+	var output interface{}
 	var ok bool
 	switch t {
 	case Float64:
-		val, ok = ToFloat64(i)
+		output, ok = ToFloat64(input)
 	case Int64:
-		val, ok = ToInt64(i)
+		output, ok = ToInt64(input)
 	case Boolean:
-		val, ok = ToBoolean(i)
+		output, ok = ToBoolean(input)
 	case String:
-		val, ok = ToString(i)
+		output, ok = ToString(input)
 	}
 	if ok {
-		return val
+		return output
 	}
 	return nil
 }
 
-// IsSupported ensures that the type is currently supported by Bow
-// and match a convertible concrete type.
+// IsSupported ensures that the Type t is currently supported by Bow and matches a convertible concrete type.
 func (t Type) IsSupported() bool {
 	_, ok := mapBowToArrowTypes[t]
 	return ok
 }
 
+// String returns the string representation of the Type t.
 func (t Type) String() string {
 	at, ok := mapBowToArrowTypes[t]
 	if !ok {
@@ -116,6 +116,7 @@ func getBowTypeFromArrowType(arrowType arrow.DataType) Type {
 	return typ
 }
 
+// GetAllTypes returns all Bow types.
 func GetAllTypes() []Type {
 	res := make([]Type, len(allType))
 	copy(res, allType)

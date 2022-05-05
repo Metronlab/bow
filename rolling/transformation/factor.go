@@ -1,10 +1,10 @@
-package transform
+package transformation
 
 import "fmt"
 
-type Transform func(interface{}) (interface{}, error)
+type Func func(interface{}) (interface{}, error)
 
-func Factor(n float64) Transform {
+func Factor(n float64) Func {
 	return func(x interface{}) (interface{}, error) {
 		switch x := x.(type) {
 		case float64:
