@@ -2,6 +2,7 @@ package bow
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type jsonField struct {
@@ -57,11 +58,11 @@ func NewJSONBow(b Bow) JSONBow {
 func (b *bow) UnmarshalJSON(data []byte) error {
 	jsonB := JSONBow{}
 	if err := json.Unmarshal(data, &jsonB); err != nil {
-		return err
+		return fmt.Errorf("json.Unmarshal: %w", err)
 	}
 
 	if err := b.NewValuesFromJSON(jsonB); err != nil {
-		return err
+		return fmt.Errorf("bow.NewValuesFromJSON: %w", err)
 	}
 
 	return nil
@@ -110,10 +111,10 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	series := make([]Series, len(jsonB.Schema.Fields))
 
 	if jsonB.RowBasedData == nil {
-		for i, field := range jsonB.Schema.Fields {
+		for fieldIndex, field := range jsonB.Schema.Fields {
 			typ := getBowTypeFromArrowName(field.Type)
 			buf := NewBuffer(0, typ)
-			series[i] = NewSeriesFromBuffer(field.Name, buf)
+			series[fieldIndex] = NewSeriesFromBuffer(field.Name, buf)
 		}
 
 		tmpBow, err := NewBow(series...)
@@ -126,8 +127,8 @@ func (b *bow) NewValuesFromJSON(jsonB JSONBow) error {
 	}
 
 	for fieldIndex, field := range jsonB.Schema.Fields {
-		fieldType := getBowTypeFromArrowName(field.Type)
-		buf := NewBuffer(len(jsonB.RowBasedData), fieldType)
+		typ := getBowTypeFromArrowName(field.Type)
+		buf := NewBuffer(len(jsonB.RowBasedData), typ)
 		for rowIndex, row := range jsonB.RowBasedData {
 			buf.SetOrDrop(rowIndex, row[field.Name])
 		}

@@ -45,7 +45,7 @@ func TestBow_Distinct(t *testing.T) {
 
 	t.Run(Int64.String(), func(t *testing.T) {
 		res := b.Distinct(0)
-		expect, err := NewBow(NewSeries("time", []int64{1, 2, 3}, nil))
+		expect, err := NewBow(NewSeries("time", Int64, []int64{1, 2, 3}, nil))
 		require.NoError(t, err)
 
 		ExpectEqual(t, expect, res)
@@ -53,7 +53,7 @@ func TestBow_Distinct(t *testing.T) {
 
 	t.Run(Float64.String(), func(t *testing.T) {
 		res := b.Distinct(1)
-		expect, err := NewBow(NewSeries("value", []float64{1.1, 2.2, 3.3}, nil))
+		expect, err := NewBow(NewSeries("value", Float64, []float64{1.1, 2.2, 3.3}, nil))
 		require.NoError(t, err)
 
 		ExpectEqual(t, expect, res)
@@ -61,7 +61,7 @@ func TestBow_Distinct(t *testing.T) {
 
 	t.Run(String.String(), func(t *testing.T) {
 		res := b.Distinct(2)
-		expect, err := NewBow(NewSeries("meta", []string{"", "3.3", "test"}, nil))
+		expect, err := NewBow(NewSeries("meta", String, []string{"", "3.3", "test"}, nil))
 		require.NoError(t, err)
 
 		ExpectEqual(t, expect, res)

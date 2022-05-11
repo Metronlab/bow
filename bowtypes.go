@@ -1,13 +1,15 @@
 package bow
 
 import (
+	"fmt"
+
 	"github.com/apache/arrow/go/v8/arrow"
 )
 
 type Type int
 
 // How to add a Type:
-// - Seek corresponding arrow.DataType and add it in `mapArrowToBowTypes`
+// - Seek corresponding arrow.DataType and add it in `mapBowToArrowTypes`
 // - add a convert function with desired logic and add case in other conversion func
 // - add necessary case in buffer file
 // - complete GetValue bow method
@@ -30,23 +32,23 @@ const (
 )
 
 var (
-	mapArrowToBowTypes = map[arrow.DataType]Type{
-		arrow.PrimitiveTypes.Float64:  Float64,
-		arrow.PrimitiveTypes.Int64:    Int64,
-		arrow.FixedWidthTypes.Boolean: Boolean,
-		arrow.BinaryTypes.String:      String,
+	mapBowToArrowTypes = map[Type]arrow.DataType{
+		Float64: arrow.PrimitiveTypes.Float64,
+		Int64:   arrow.PrimitiveTypes.Int64,
+		Boolean: arrow.FixedWidthTypes.Boolean,
+		String:  arrow.BinaryTypes.String,
 	}
-	mapBowToArrowTypes = func() map[Type]arrow.DataType {
-		res := make(map[Type]arrow.DataType)
-		for arrowDataType, bowType := range mapArrowToBowTypes {
-			res[bowType] = arrowDataType
+	mapArrowNameToBowTypes = func() map[string]Type {
+		res := make(map[string]Type)
+		for bowType, arrowDataType := range mapBowToArrowTypes {
+			res[arrowDataType.Name()] = bowType
 		}
 		return res
 	}()
-	mapArrowNameToBowTypes = func() map[string]Type {
+	mapArrowFingerprintToBowTypes = func() map[string]Type {
 		res := make(map[string]Type)
-		for arrowDataType, bowType := range mapArrowToBowTypes {
-			res[arrowDataType.Name()] = bowType
+		for bowType, arrowDataType := range mapBowToArrowTypes {
+			res[arrowDataType.Fingerprint()] = bowType
 		}
 		return res
 	}()
@@ -59,13 +61,6 @@ var (
 	}()
 )
 
-// ArrowType returns the arrow.DataType from the Bow Type.
-func (t Type) ArrowType() arrow.DataType {
-	return mapBowToArrowTypes[t]
-}
-
-// Convert attempts to convert the `input` value to the Type t.
-// Returns nil if it fails.
 func (t Type) Convert(input interface{}) interface{} {
 	var output interface{}
 	var ok bool
@@ -97,19 +92,19 @@ func (t Type) String() string {
 	if !ok {
 		return "undefined"
 	}
-	return at.Name()
+	return fmt.Sprintf("%s", at)
 }
 
-func getBowTypeFromArrowName(arrowName string) Type {
-	typ, ok := mapArrowNameToBowTypes[arrowName]
+func getBowTypeFromArrowFingerprint(fingerprint string) Type {
+	typ, ok := mapArrowFingerprintToBowTypes[fingerprint]
 	if !ok {
 		return Unknown
 	}
 	return typ
 }
 
-func getBowTypeFromArrowType(arrowType arrow.DataType) Type {
-	typ, ok := mapArrowToBowTypes[arrowType]
+func getBowTypeFromArrowName(name string) Type {
+	typ, ok := mapArrowNameToBowTypes[name]
 	if !ok {
 		return Unknown
 	}

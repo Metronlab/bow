@@ -178,8 +178,8 @@ func (b *bow) GetInt64(colIndex, rowIndex int) (int64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Errorf("unsupported type '%s'",
-			b.Schema().Field(colIndex).Type.Name()))
+		panic(fmt.Errorf("unsupported arrow.DataType '%s'",
+			b.Schema().Field(colIndex).Type))
 	}
 }
 
@@ -241,8 +241,8 @@ func (b *bow) GetFloat64(colIndex, rowIndex int) (float64, bool) {
 		}
 		return 0., false
 	default:
-		panic(fmt.Sprintf("unsupported type '%s'",
-			b.Schema().Field(colIndex).Type.Name()))
+		panic(fmt.Sprintf("unsupported arrow.DataType '%s'",
+			b.Schema().Field(colIndex).Type))
 	}
 }
 
@@ -312,7 +312,7 @@ func (b *bow) GetNextFloat64s(colIndex1, colIndex2, rowIndex int) (float64, floa
 
 // ColumnType returns the Bow type from the column `colIndex`.
 func (b *bow) ColumnType(colIndex int) Type {
-	return getBowTypeFromArrowType(b.Schema().Field(colIndex).Type)
+	return getBowTypeFromArrowFingerprint(b.Schema().Field(colIndex).Type.Fingerprint())
 }
 
 // ColumnIndex returns the index of the column with the name `colName`, and an error.
