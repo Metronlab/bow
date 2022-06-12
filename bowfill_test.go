@@ -200,6 +200,7 @@ func TestFill(t *testing.T) {
 
 			res, err := b.FillLinear(0, 4)
 			require.NoError(t, err)
+			assert.True(t, expected.Equal(res))
 			assert.EqualValues(t, expected.String(), res.String())
 		})
 

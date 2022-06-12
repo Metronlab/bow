@@ -6,7 +6,7 @@ set -o pipefail
 : ${TEST_RESULTS:=/tmp/test-results}
 : ${COVER_RESULTS:=/tmp/cover-results}
 : ${PKG:=./...}
-: ${RUN:=".*"}
+: ${RUN:="TestFill/int64/Linear_refCol_a_toFillCol_e"}
 : ${TIMEOUT:="5m"}
 
 mkdir -p ${COVER_RESULTS}

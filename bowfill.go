@@ -75,9 +75,12 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 				continue
 			}
 
+			fmt.Printf("PREVTOFILL rowIndex: %d colIndex: %d nextRef: %f prevRef: %f\n",
+				rowIndex, colIndex, nextRef, prevRef)
 			if nextRef-prevRef == 0 {
 				switch b.ColumnType(toFillColIndex) {
 				case Int64:
+					fmt.Printf("INT64 before: %f after: %d\n", prevToFill, int64(prevToFill))
 					buf.SetOrDropStrict(rowIndex, int64(prevToFill))
 				case Float64:
 					buf.SetOrDropStrict(rowIndex, prevToFill)
@@ -90,6 +93,8 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 			tmp += prevToFill
 			switch b.ColumnType(toFillColIndex) {
 			case Int64:
+				fmt.Printf("ROUNDING rowIndex: %d colIndex: %d BEFORE: %f AFTER: %f\n",
+					rowIndex, colIndex, tmp, math.Round(tmp))
 				buf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
 			case Float64:
 				buf.SetOrDropStrict(rowIndex, tmp)

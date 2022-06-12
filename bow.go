@@ -276,6 +276,7 @@ func (b *bow) Equal(other Bow) bool {
 			break
 		}
 		if !reflect.DeepEqual(i1, i2) {
+			fmt.Printf("not equal i1:%v (%T) i2:%v (%T)\n", i1, i1, i2, i2)
 			return false
 		}
 	}
