@@ -87,14 +87,32 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 				}
 			}
 
+			fmt.Printf("ROUNDING rowRef: %f (%d) prevRef: %f (%d)\n",
+				rowRef, math.Float64bits(rowRef),
+				prevRef, math.Float64bits(prevRef),
+			)
 			tmp := rowRef - prevRef
+			fmt.Printf("ROUNDING 0 rowIndex: %d colIndex: %d TMP: %f (%d)\n",
+				rowIndex, colIndex,
+				tmp, math.Float64bits(tmp))
 			tmp /= nextRef - prevRef
+			fmt.Printf("ROUNDING 1 rowIndex: %d colIndex: %d TMP: %f (%d)\n",
+				rowIndex, colIndex,
+				tmp, math.Float64bits(tmp))
 			tmp *= nextToFill - prevToFill
+			fmt.Printf("ROUNDING 2 rowIndex: %d colIndex: %d TMP: %f (%d)\n",
+				rowIndex, colIndex,
+				tmp, math.Float64bits(tmp))
 			tmp += prevToFill
+			fmt.Printf("ROUNDING 3 rowIndex: %d colIndex: %d TMP: %f (%d)\n",
+				rowIndex, colIndex,
+				tmp, math.Float64bits(tmp))
 			switch b.ColumnType(toFillColIndex) {
 			case Int64:
-				fmt.Printf("ROUNDING rowIndex: %d colIndex: %d BEFORE: %f AFTER: %f\n",
-					rowIndex, colIndex, tmp, math.Round(tmp))
+				fmt.Printf("ROUNDING 4 rowIndex: %d colIndex: %d BEFORE: %f (%d) AFTER: %f (%d)\n",
+					rowIndex, colIndex,
+					tmp, math.Float64bits(tmp),
+					math.Round(tmp), math.Float64bits(math.Round(tmp)))
 				buf.SetOrDropStrict(rowIndex, int64(math.Round(tmp)))
 			case Float64:
 				buf.SetOrDropStrict(rowIndex, tmp)
