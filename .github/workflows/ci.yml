@@ -3,17 +3,28 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  ci:
+  ci-ubuntu:
     runs-on: ubuntu-latest
-    env:
-      BENCH_RESULTS_DIR_PATH: benchmarks
-      BENCH_COMPARISON_FILE_PATH: ${{ format('benchmarks/comparison-{0}-vs-{1}.txt', github.base_ref, github.sha) }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
-          go-version: 1.17
+          go-version: 1.18
+
+      - name: Run tests
+        run: |
+          go install github.com/jstemmer/go-junit-report@latest
+          bash -c ./scripts/test.sh
+
+  ci-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
 
       - name: Run tests
         run: |
