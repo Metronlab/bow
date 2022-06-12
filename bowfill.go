@@ -100,9 +100,11 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 				rowIndex, colIndex,
 				tmp, math.Float64bits(tmp))
 			tmp *= nextToFill - prevToFill
-			fmt.Printf("ROUNDING 2 rowIndex: %d colIndex: %d TMP: %f (%d)\n",
+			fmt.Printf("ROUNDING 2 rowIndex: %d colIndex: %d TMP: %f (%d) prevToFill: %f (%d)\n",
 				rowIndex, colIndex,
-				tmp, math.Float64bits(tmp))
+				tmp, math.Float64bits(tmp),
+				prevToFill, math.Float64bits(prevToFill),
+			)
 			tmp += prevToFill
 			fmt.Printf("ROUNDING 3 rowIndex: %d colIndex: %d TMP: %f (%d)\n",
 				rowIndex, colIndex,
