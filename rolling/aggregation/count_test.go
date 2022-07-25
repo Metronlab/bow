@@ -14,8 +14,8 @@ func TestCount(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries("time", bow.Int64, []int64{}, nil),
-					bow.NewSeries("value", bow.Int64, []int64{}, nil),
+					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeries(valueCol, bow.Int64, []int64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -26,7 +26,7 @@ func TestCount(t *testing.T) {
 			testedBow: sparseFloatBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Int64},
 					[][]interface{}{
 						{10, 1},

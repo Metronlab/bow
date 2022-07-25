@@ -15,8 +15,8 @@ func TestIntegralStep(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries("time", bow.Int64, []int64{}, nil),
-					bow.NewSeries("value", bow.Float64, []float64{}, nil),
+					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -27,7 +27,7 @@ func TestIntegralStep(t *testing.T) {
 			testedBow: sparseFloatBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 100.},
@@ -46,7 +46,7 @@ func TestIntegralStep(t *testing.T) {
 			testedBow: sparseBoolBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 10.},
@@ -65,7 +65,7 @@ func TestIntegralStep(t *testing.T) {
 			testedBow: sparseStringBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 100.},
@@ -98,8 +98,8 @@ func TestIntegralStep_scaled(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries("time", bow.Int64, []int64{}, nil),
-					bow.NewSeries("value", bow.Float64, []float64{}, nil),
+					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -110,7 +110,7 @@ func TestIntegralStep_scaled(t *testing.T) {
 			testedBow: sparseFloatBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, factor * (100.)},
@@ -134,8 +134,8 @@ func TestIntegralTrapezoid(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries("time", bow.Int64, []int64{}, nil),
-					bow.NewSeries("value", bow.Float64, []float64{}, nil),
+					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -146,7 +146,7 @@ func TestIntegralTrapezoid(t *testing.T) {
 			testedBow: sparseFloatBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, nil},
@@ -165,7 +165,7 @@ func TestIntegralTrapezoid(t *testing.T) {
 			testedBow: sparseBoolBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, nil},
@@ -184,7 +184,7 @@ func TestIntegralTrapezoid(t *testing.T) {
 			testedBow: sparseStringBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, nil},
