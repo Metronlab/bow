@@ -1,6 +1,9 @@
 UNRELEASED [XXXX-XX-XX]
 -------------------
 
+v1.0.0 [2023-04-07]
+-------------------
+
 - General
   - bump to go 1.18
   - bump to arrow/go/v8
@@ -11,6 +14,7 @@ UNRELEASED [XXXX-XX-XX]
   - improve code readability
   - remove code gen to prepare for Timestamp support
   - add Bow data type in Buffer to decouple Go native types from Arrow types
+  - expose arrow record
 
 v0.18.0 [2022-02-16]
 -------------------
