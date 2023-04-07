@@ -16,6 +16,8 @@ import (
 type Bow interface {
 	String() string
 	Schema() *arrow.Schema
+	ArrowRecord() *arrow.Record
+
 	ColumnName(colIndex int) string
 	NumRows() int
 	NumCols() int
@@ -176,6 +178,11 @@ func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedDa
 // NewEmptySlice returns an empty slice of the Bow.
 func (b *bow) NewEmptySlice() Bow {
 	return b.NewSlice(0, 0)
+}
+
+// ArrowRecord return underlying arrow record to allow usage of arrow with other compatible libraries.
+func (b *bow) ArrowRecord() *arrow.Record {
+	return &b.Record
 }
 
 // DropNils drops any row that contains a nil for any of `colIndices`.
