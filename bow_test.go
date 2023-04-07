@@ -21,7 +21,7 @@ func TestNewBowEmpty(t *testing.T) {
 	assert.Equal(t, 0, NewBowEmpty().NumCols())
 }
 
-func TestNewBowFromColumnBasedInterface(t *testing.T) {
+func TestNewBowFromColBasedInterface(t *testing.T) {
 	t.Run("nil colTypes", func(t *testing.T) {
 		b, err := NewBowFromColBasedInterfaces(
 			[]string{"int", "float", "string", "bool"},
