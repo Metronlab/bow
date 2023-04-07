@@ -10,7 +10,7 @@ jobs:
       BENCH_COMPARISON_FILE_PATH: ${{ format('benchmarks/comparison-{0}-vs-{1}.txt', github.base_ref, github.sha) }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache: true
