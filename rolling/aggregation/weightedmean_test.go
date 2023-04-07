@@ -14,8 +14,8 @@ func TestWeightedAverageStep(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries("time", []int64{}, nil),
-					bow.NewSeries("value", []float64{}, nil),
+					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -26,7 +26,7 @@ func TestWeightedAverageStep(t *testing.T) {
 			testedBow: sparseFloatBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 10.},
@@ -45,7 +45,7 @@ func TestWeightedAverageStep(t *testing.T) {
 			testedBow: nilBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, nil},
@@ -60,7 +60,7 @@ func TestWeightedAverageStep(t *testing.T) {
 			testedBow: sparseBoolBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 1.},
@@ -79,7 +79,7 @@ func TestWeightedAverageStep(t *testing.T) {
 			testedBow: sparseStringBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, 10.},
@@ -103,8 +103,8 @@ func TestWeightedAverageLinear(t *testing.T) {
 			testedBow: emptyBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBow(
-					bow.NewSeries("time", []int64{}, nil),
-					bow.NewSeries("value", []float64{}, nil),
+					bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+					bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 				)
 				assert.NoError(t, err)
 				return b
@@ -115,7 +115,7 @@ func TestWeightedAverageLinear(t *testing.T) {
 			testedBow: sparseFloatBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, nil},
@@ -134,7 +134,7 @@ func TestWeightedAverageLinear(t *testing.T) {
 			testedBow: sparseBoolBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, nil},
@@ -153,7 +153,7 @@ func TestWeightedAverageLinear(t *testing.T) {
 			testedBow: sparseStringBow,
 			expectedBow: func() bow.Bow {
 				b, err := bow.NewBowFromRowBasedInterfaces(
-					[]string{"time", "value"},
+					[]string{timeCol, valueCol},
 					[]bow.Type{bow.Int64, bow.Float64},
 					[][]interface{}{
 						{10, nil},

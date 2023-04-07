@@ -20,7 +20,7 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 **Serialization**
 * [x] expose native Arrow stringer
 * [x] implement Parquet serialization
-* [ ] expose native Arrow CSV
+* [x] expose native Arrow CSV (through record / schema access)
 * [ ] expose native Arrow JSON
 * [ ] expose native Arrow IPC
 
@@ -32,7 +32,7 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 * [x] implement OuterJoin method
 * [x] implement Select columns method
 * [x] handle Arrow Schema metadata
-* [ ] implement Apply method
+* [x] implement Apply method
 * [ ] implement facade for all accessible features to simplify usage
 * [ ] improve Bow append method in collaboration with Arrow maintainers
 
@@ -40,5 +40,5 @@ Bow is currently developed internally at Metronlab with primary concerns about t
 * [ ] complete Go native doc
 * [ ] examples for each methods
 * [ ] implement package to compare Bow and Pandas performances
-* [ ] API frozen, new releases won't break your code
+* [x] API frozen, new releases won't break your code
 * [ ] support dataframes with several columns having the same name

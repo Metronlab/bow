@@ -11,106 +11,154 @@ import (
 )
 
 func TestLinear(t *testing.T) {
-	var rollInterval int64 = 2
+	var interval int64 = 2
 
-	ascendantLinearTestBow, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
-		{10, 15, 16, 25, 29},
-		{.10, .15, .16, .25, .29},
-	})
-
-	descendantLinearTestBow, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
-		{10, 15, 16, 25, 29},
-		{.30, .25, .24, .15, .11},
-	})
-
-	t.Run("ascendant no options", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
-		filled, err := r.
-			Interpolate(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
-
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
-			{10, 12, 14, 15, 16, 18, 20, 22, 24, 25, 26, 28, 29},
-			{.10, .12, .14, .15, .16, .18, .20, .22, .24, .25, .26, .27999999999999997, .29},
+	ascLinearTestBow, err := bow.NewBowFromRowBasedInterfaces(
+		[]string{timeCol, valueCol},
+		[]bow.Type{bow.Int64, bow.Float64},
+		[][]interface{}{
+			{10, 10.},
+			{15, 15.},
+			{17, 17.},
 		})
+	require.NoError(t, err)
 
-		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String(),
-			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
+	t.Run("asc no options", func(t *testing.T) {
+		expected, err := bow.NewBowFromRowBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10, 10.},
+				{12, 12.},
+				{14, 14.},
+				{15, 15.},
+				{16, 16.},
+				{17, 17.},
+			})
+		require.NoError(t, err)
+
+		r, err := rolling.IntervalRolling(ascLinearTestBow, timeCol, interval, rolling.Options{})
+		require.NoError(t, err)
+
+		filled, err := r.Interpolate(WindowStart(timeCol), Linear(valueCol)).Bow()
+		assert.NoError(t, err)
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected:\n%s\nactual:\n%s", expected.String(), filled.String()))
 	})
 
-	t.Run("descendant no options", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{})
-		filled, err := r.
-			Interpolate(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
+	t.Run("asc with offset", func(t *testing.T) {
+		expected, err := bow.NewBowFromRowBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{9, nil},
+				{10, 10.},
+				{11, 11.},
+				{13, 13.},
+				{15, 15.},
+				{17, 17.},
+			})
+		require.NoError(t, err)
 
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
-			{10, 12, 14, 15, 16, 18, 20, 22, 24, 25, 26, 28, 29},
-			{.3, .27999999999999997, .26, .25, .24, .22, .2, .18, .16, .15, .13999999999999999, .12, .11},
-		})
+		r, err := rolling.IntervalRolling(ascLinearTestBow, timeCol, interval, rolling.Options{Offset: 3})
+		require.NoError(t, err)
 
-		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String(),
-			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
+		filled, err := r.Interpolate(WindowStart(timeCol), Linear(valueCol)).Bow()
+		assert.NoError(t, err)
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected:\n%s\nactual:\n%s", expected.String(), filled.String()))
 	})
 
-	t.Run("ascendant with offset", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(ascendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
-		filled, err := r.
-			Interpolate(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
-
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
-			{9, 10, 11, 13, 15, 16, 17, 19, 21, 23, 25, 27, 29},
-			{nil, .1, .11, .13, .15, .16, .17, .19, .21000000000000002, .22999999999999998, .25, .27, .29},
+	descLinearTestBow, err := bow.NewBowFromRowBasedInterfaces(
+		[]string{timeCol, valueCol},
+		[]bow.Type{bow.Int64, bow.Float64},
+		[][]interface{}{
+			{10, 30.},
+			{15, 25.},
+			{17, 24.},
 		})
+	require.NoError(t, err)
 
-		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String(),
-			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
+	t.Run("desc no options", func(t *testing.T) {
+		expected, err := bow.NewBowFromRowBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{10, 30.},
+				{12, 28.},
+				{14, 26.},
+				{15, 25.},
+				{16, 24.5},
+				{17, 24.},
+			})
+		require.NoError(t, err)
+
+		r, err := rolling.IntervalRolling(descLinearTestBow, timeCol, interval, rolling.Options{})
+		require.NoError(t, err)
+
+		filled, err := r.Interpolate(WindowStart(timeCol), Linear(valueCol)).Bow()
+		assert.NoError(t, err)
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected:\n%s\nactual:\n%s", expected.String(), filled.String()))
 	})
 
-	t.Run("descendant with offset", func(t *testing.T) {
-		r, _ := rolling.IntervalRolling(descendantLinearTestBow, timeCol, rollInterval, rolling.Options{Offset: 3.})
-		filled, err := r.
-			Interpolate(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
+	t.Run("desc with offset", func(t *testing.T) {
+		expected, err := bow.NewBowFromRowBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Float64},
+			[][]interface{}{
+				{9, nil},
+				{10, 30.},
+				{11, 29.},
+				{13, 27.},
+				{15, 25.},
+				{17, 24.},
+			})
+		require.NoError(t, err)
 
-		expected, _ := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Float64}, [][]interface{}{
-			{9, 10, 11, 13, 15, 16, 17, 19, 21, 23, 25, 27, 29},
-			{nil, .3, .29, .27, .25, .24, .22999999999999998, .21, .19, .16999999999999998, .15, .13, .11},
-		})
+		r, err := rolling.IntervalRolling(descLinearTestBow, timeCol, interval, rolling.Options{Offset: 3})
+		require.NoError(t, err)
 
-		assert.Nil(t, err)
-		assert.Equal(t, expected.String(), filled.String(),
-			fmt.Sprintf("expected %s\nactual %s", expected.String(), filled.String()))
+		filled, err := r.Interpolate(WindowStart(timeCol), Linear(valueCol)).Bow()
+		assert.NoError(t, err)
+		assert.True(t, filled.Equal(expected),
+			fmt.Sprintf("expected:\n%s\nactual:\n%s", expected.String(), filled.String()))
 	})
 
 	t.Run("string error", func(t *testing.T) {
-		b, err := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.String}, [][]interface{}{
-			{10, 15},
-			{"test", "test2"},
-		})
+		b, err := bow.NewBowFromRowBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.String},
+			[][]interface{}{
+				{10, "test"},
+				{15, "test2"},
+			})
 		require.NoError(t, err)
-		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
-		_, err = r.
-			Interpolate(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
-		assert.EqualError(t, err, "interpolate: accepts types [int64 float64], got type utf8")
+
+		r, err := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{})
+		require.NoError(t, err)
+
+		_, err = r.Interpolate(WindowStart(timeCol), Linear(valueCol)).Bow()
+		assert.EqualError(t, err,
+			"intervalRolling.validateInterpolation: accepts types [int64 float64], got type utf8")
 	})
 
 	t.Run("bool error", func(t *testing.T) {
-		b, err := bow.NewBowFromColBasedInterfaces([]string{timeCol, valueCol}, []bow.Type{bow.Int64, bow.Boolean}, [][]interface{}{
-			{10, 15},
-			{true, false},
-		})
+		b, err := bow.NewBowFromRowBasedInterfaces(
+			[]string{timeCol, valueCol},
+			[]bow.Type{bow.Int64, bow.Boolean},
+			[][]interface{}{
+				{10, true},
+				{15, false},
+			})
 		require.NoError(t, err)
-		r, _ := rolling.IntervalRolling(b, timeCol, rollInterval, rolling.Options{})
-		res, err := r.
-			Interpolate(WindowStart(timeCol), Linear(valueCol)).
-			Bow()
-		assert.EqualError(t, err, "interpolate: accepts types [int64 float64], got type bool",
+
+		r, err := rolling.IntervalRolling(b, timeCol, interval, rolling.Options{})
+		require.NoError(t, err)
+
+		res, err := r.Interpolate(WindowStart(timeCol), Linear(valueCol)).Bow()
+		assert.EqualError(t, err,
+			"intervalRolling.validateInterpolation: accepts types [int64 float64], got type bool",
 			"have res: %v", res)
 	})
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v8/arrow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xitongsys/parquet-go/parquet"
@@ -33,7 +33,7 @@ func TestParquet(t *testing.T) {
 		require.NoError(t, os.Remove(testOutputFileName+".parquet"))
 	})
 
-	t.Run("bow supported types with rows and nils", func(t *testing.T) {
+	t.Run("all supported types with rows and nil values", func(t *testing.T) {
 		bBefore, err := NewBowFromRowBasedInterfaces(
 			[]string{"int", "float", "bool", "string"},
 			[]Type{Int64, Float64, Boolean, String},
@@ -83,8 +83,8 @@ func TestParquet(t *testing.T) {
 
 	t.Run("bow with context and col_types metadata", func(t *testing.T) {
 		var series = make([]Series, 2)
-		series[0] = NewSeries("time", []int64{0}, []bool{true})
-		series[1] = NewSeries("  va\"lue  ", []float64{0.}, []bool{true})
+		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
+		series[1] = NewSeries("  va\"lue  ", Float64, []float64{0.}, []bool{true})
 
 		var keys, values []string
 		type Unit struct {
@@ -125,8 +125,8 @@ func TestParquet(t *testing.T) {
 	t.Run("bow with wrong col_types metadata", func(t *testing.T) {
 		var series = make([]Series, 2)
 
-		series[0] = NewSeries("time", []int64{0}, []bool{true})
-		series[1] = NewSeries("value", []float64{0.}, []bool{true})
+		series[0] = NewSeries("time", Int64, []int64{0}, []bool{true})
+		series[1] = NewSeries("value", Float64, []float64{0.}, []bool{true})
 
 		var keys, values []string
 
@@ -142,8 +142,8 @@ func TestParquet(t *testing.T) {
 func TestBowGetParquetMetaColTimeUnit(t *testing.T) {
 	timeCol := "time"
 	var series = make([]Series, 2)
-	series[0] = NewSeries(timeCol, []int64{0}, nil)
-	series[1] = NewSeries("value", []float64{0.}, nil)
+	series[0] = NewSeries(timeCol, Int64, []int64{0}, nil)
+	series[1] = NewSeries("value", Float64, []float64{0.}, nil)
 
 	t.Run("time.Millisecond", func(t *testing.T) {
 		b, err := NewBowWithMetadata(

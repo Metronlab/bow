@@ -86,8 +86,8 @@ func TestAggregate(t *testing.T) {
 				{1., 2., 3.},
 			})
 		actual, err := Aggregate(b, timeCol,
-			WindowStart(timeCol).Rename("a"),
-			ArithmeticMean(valueCol).Rename("b"),
+			WindowStart(timeCol).RenameOutput("a"),
+			ArithmeticMean(valueCol).RenameOutput("b"),
 		)
 		require.Nil(t, err)
 		expected, _ := bow.NewBowFromColBasedInterfaces(
@@ -134,9 +134,9 @@ func TestAggregate(t *testing.T) {
 				{1., 2., 3.},
 			})
 		actual, err := Aggregate(b, timeCol,
-			ArithmeticMean(valueCol).Rename("a"),
-			ArithmeticMean(valueCol).Rename("b"),
-			ArithmeticMean(valueCol).Rename("c"),
+			ArithmeticMean(valueCol).RenameOutput("a"),
+			ArithmeticMean(valueCol).RenameOutput("b"),
+			ArithmeticMean(valueCol).RenameOutput("c"),
 		)
 		require.Nil(t, err)
 		expected, _ := bow.NewBowFromColBasedInterfaces(
@@ -164,7 +164,7 @@ func TestAggregate(t *testing.T) {
 			WindowStart("-"),
 		)
 		require.Nil(t, actual)
-		require.EqualError(t, err, "aggregate on 'time': no column '-'")
+		require.EqualError(t, err, "column aggregation 0: no column '-'")
 	})
 
 	t.Run("float", func(t *testing.T) {

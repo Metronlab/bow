@@ -31,7 +31,7 @@ func Linear(colName string) rolling.ColInterpolation {
 				return nil, nil
 			}
 
-			coef := (float64(w.Start) - t0) / (t2 - t0)
+			coef := (float64(w.FirstValue) - t0) / (t2 - t0)
 			return ((v2 - v0) * coef) + v0, nil
 		},
 	)

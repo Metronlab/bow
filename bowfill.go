@@ -5,30 +5,30 @@ import (
 	"math"
 	"sync"
 
-	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow/array"
 )
 
 // FillLinear fills the column toFillColIndex using the Linear interpolation method according
 // to the reference column refColIndex, which has to be sorted.
-// Fills only int64 and float64 types.
+// Fills only Int64 and Float64 types.
 func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 	if refColIndex < 0 || refColIndex > b.NumCols()-1 {
-		return nil, fmt.Errorf("bow.FillLinear: refColIndex is out of range")
+		return nil, fmt.Errorf("refColIndex is out of range")
 	}
 
 	if toFillColIndex < 0 || toFillColIndex > b.NumCols()-1 {
-		return nil, fmt.Errorf("bow.FillLinear: toFillColIndex is out of range")
+		return nil, fmt.Errorf("toFillColIndex is out of range")
 	}
 
 	if refColIndex == toFillColIndex {
-		return nil, fmt.Errorf("bow.FillLinear: refColIndex and toFillColIndex are equal")
+		return nil, fmt.Errorf("refColIndex and toFillColIndex are equal")
 	}
 
 	switch b.ColumnType(refColIndex) {
 	case Int64:
 	case Float64:
 	default:
-		return nil, fmt.Errorf("bow.FillLinear: refColIndex '%d' is of type '%s'",
+		return nil, fmt.Errorf("refColIndex '%d' is of type '%s'",
 			refColIndex, b.ColumnType(refColIndex))
 	}
 
@@ -37,7 +37,7 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 	}
 
 	if !b.IsColSorted(refColIndex) {
-		return nil, fmt.Errorf("bow.FillLinear: refColIndex '%d' is empty or not sorted",
+		return nil, fmt.Errorf("refColIndex '%d' is empty or not sorted",
 			refColIndex)
 	}
 
@@ -46,7 +46,7 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 	case Float64:
 	default:
 		return nil, fmt.Errorf(
-			"bow.FillLinear: toFillColIndex '%d' is of unsupported type '%s'",
+			"toFillColIndex '%d' is of unsupported type '%s'",
 			toFillColIndex, b.ColumnType(toFillColIndex))
 	}
 
@@ -108,7 +108,7 @@ func (b *bow) FillLinear(refColIndex, toFillColIndex int) (Bow, error) {
 func (b *bow) FillMean(colIndices ...int) (Bow, error) {
 	toFillCols, err := selectCols(b, colIndices)
 	if err != nil {
-		return nil, fmt.Errorf("bow.FillMean: %w", err)
+		return nil, err
 	}
 
 	for colIndex, col := range b.Schema().Fields() {
@@ -118,7 +118,7 @@ func (b *bow) FillMean(colIndices ...int) (Bow, error) {
 			case Float64:
 			default:
 				return nil, fmt.Errorf(
-					"bow.FillMean: column '%s' is of unsupported type '%s'",
+					"column '%s' is of unsupported type '%s'",
 					col.Name, b.ColumnType(colIndex))
 			}
 		}
@@ -177,7 +177,7 @@ func (b *bow) FillPrevious(colIndices ...int) (Bow, error) {
 func fill(method string, b *bow, colIndices ...int) (Bow, error) {
 	toFillCols, err := selectCols(b, colIndices)
 	if err != nil {
-		return nil, fmt.Errorf("bow.Fill%s: %w", method, err)
+		return nil, err
 	}
 
 	var wg sync.WaitGroup
@@ -279,7 +279,7 @@ func selectCols(b *bow, colIndices []int) ([]bool, error) {
 
 	for _, colIndex := range colIndices {
 		if colIndex < 0 || colIndex > b.NumCols()-1 {
-			return nil, fmt.Errorf("selectCols: out of range colIndex '%d'", colIndex)
+			return nil, fmt.Errorf("selectCols: colIndex '%d' out of range", colIndex)
 		}
 		selectedCols[colIndex] = true
 	}

@@ -1,19 +1,14 @@
 #user overridable variables
-all: lint count test
+all: lint test
 
 install:
 	@go install golang.org/x/perf/cmd/benchstat@latest
 	@go install github.com/jstemmer/go-junit-report@latest
 	@go install github.com/Metronlab/genius@latest
-
-gen:
-	@go generate $(PKG)
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin latest
 
 lint:
-	golangci-lint run -E gofmt --fix -v $(PKG)
-
-count:
-	@bash -c $(PWD)/scripts/count-code-lines.sh
+	golangci-lint run --fix -v $(PKG)
 
 test:
 	@RUN=$(RUN) PKG=$(PKG) TIMEOUT=$(TIMEOUT) bash -c $(PWD)/scripts/test.sh
@@ -37,4 +32,3 @@ bench-profile:
 	-lsof -ti tcp:9191 | xargs kill -9 2> /dev/null
 	go tool pprof -http=:9090 $(CPUPROFILE) &
 	go tool pprof -http=:9191 $(MEMPROFILE) &
-

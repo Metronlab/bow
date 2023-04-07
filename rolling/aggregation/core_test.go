@@ -6,7 +6,7 @@ import (
 
 	"github.com/metronlab/bow"
 	"github.com/metronlab/bow/rolling"
-	"github.com/metronlab/bow/transform"
+	"github.com/metronlab/bow/rolling/transformation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,8 +23,8 @@ type testCase struct {
 
 var (
 	emptyBow, _ = bow.NewBow(
-		bow.NewSeries(timeCol, []int64{}, nil),
-		bow.NewSeries(valueCol, []float64{}, nil),
+		bow.NewSeries(timeCol, bow.Int64, []int64{}, nil),
+		bow.NewSeries(valueCol, bow.Float64, []float64{}, nil),
 	)
 	nilBow, _ = bow.NewBowFromRowBasedInterfaces(
 		[]string{timeCol, valueCol},
@@ -88,7 +88,7 @@ var (
 )
 
 func runTestCases(t *testing.T, aggrConstruct rolling.ColAggregationConstruct,
-	aggrTransforms []transform.Transform, testCases []testCase) {
+	aggrTransforms []transformation.Func, testCases []testCase) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r, err := rolling.IntervalRolling(testCase.testedBow, timeCol, 10, rolling.Options{})
@@ -96,7 +96,7 @@ func runTestCases(t *testing.T, aggrConstruct rolling.ColAggregationConstruct,
 			aggregated, err := r.
 				Aggregate(
 					WindowStart(timeCol),
-					aggrConstruct(valueCol).Transform(aggrTransforms...)).
+					aggrConstruct(valueCol).SetTransformations(aggrTransforms...)).
 				Bow()
 			assert.NoError(t, err)
 			assert.NotNil(t, aggregated)

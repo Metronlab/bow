@@ -49,7 +49,7 @@ func IntegralStep(col string) rolling.ColAggregation {
 			for rowIndex >= 0 {
 				t1, v1, nextRowIndex := w.Bow.GetNextFloat64s(w.IntervalColIndex, colIndex, rowIndex+1)
 				if nextRowIndex < 0 {
-					t1 = float64(w.End)
+					t1 = float64(w.LastValue)
 				}
 
 				sum += v0 * (t1 - t0)

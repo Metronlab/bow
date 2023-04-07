@@ -16,7 +16,6 @@ func newFreshBow(t *testing.T, typ Type) Bow {
 			{20, 6, 30, 400, -10},
 			{13, nil, nil, nil, nil},
 			{10, 4, 10, 10, -5},
-			{1, nil, nil, 120, nil},
 			{0, nil, 3, 4, 0},
 			{nil, nil, nil, nil, nil},
 			{-2, 1, nil, nil, -8},
@@ -38,7 +37,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, 5, nil, nil, nil},
 					{10, 4, 10, 10, -5},
-					{1, 3, nil, 120, nil},
 					{0, 3, 3, 4, 0},
 					{nil, 3, nil, nil, nil},
 					{-2, 1, nil, nil, -8},
@@ -60,7 +58,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, 5, 20, 205, -8},
 					{10, 4, 10, 10, -5},
-					{1, 3, 7, 120, -3},
 					{0, 3, 3, 4, 0},
 					{-1, 3, nil, nil, -4},
 					{-2, 1, nil, nil, -8},
@@ -82,7 +79,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, 4, nil, nil, nil},
 					{10, 4, 10, 10, -5},
-					{1, 1, nil, 120, nil},
 					{0, 1, 3, 4, 0},
 					{nil, 1, nil, nil, nil},
 					{-2, 1, nil, nil, -8},
@@ -104,7 +100,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, 4, 10, 10, -5},
 					{10, 4, 10, 10, -5},
-					{1, 1, 3, 120, 0},
 					{0, 1, 3, 4, 0},
 					{-2, 1, nil, nil, -8},
 					{-2, 1, nil, nil, -8},
@@ -126,7 +121,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, 6, nil, nil, nil},
 					{10, 4, 10, 10, -5},
-					{1, 4, nil, 120, nil},
 					{0, 4, 3, 4, 0},
 					{nil, 4, nil, nil, nil},
 					{-2, 1, nil, nil, -8},
@@ -148,7 +142,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, 6, 30, 400, -10},
 					{10, 4, 10, 10, -5},
-					{1, 4, 10, 120, -5},
 					{0, 4, 3, 4, 0},
 					{0, 4, 3, 4, 0},
 					{-2, 1, 3, 4, -8},
@@ -170,7 +163,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, 5, nil, nil, nil},
 					{10, 4, 10, 10, -5},
-					{1, 2, nil, 120, nil},
 					{0, 2, 3, 4, 0},
 					{nil, nil, nil, nil, nil},
 					{-2, 1, nil, nil, -8},
@@ -191,7 +183,6 @@ func TestFill(t *testing.T) {
 					{20, 6, 30, 400, -10},
 					{13, nil, nil, nil, -7},
 					{10, 4, 10, 10, -5},
-					{1, nil, nil, 120, -1},
 					{0, nil, 3, 4, 0},
 					{nil, nil, nil, nil, nil},
 					{-2, 1, nil, nil, -8},
@@ -206,7 +197,7 @@ func TestFill(t *testing.T) {
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
 			b := newFreshBow(t, Int64)
 
-			_, err := b.FillLinear(3, 1)
+			_, err := b.FillLinear(4, 1)
 			require.Error(t, err)
 		})
 	})
@@ -222,7 +213,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, 5.0, nil, nil, nil},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, 2.5, nil, 120.0, nil},
 					{0.0, 2.5, 3.0, 4.0, 0.0},
 					{nil, 2.5, nil, nil, nil},
 					{-2.0, 1.0, nil, nil, -8.0},
@@ -244,7 +234,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, 5.0, 20.0, 205.0, -7.5},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, 2.5, 6.5, 120.0, -2.5},
 					{0.0, 2.5, 3.0, 4.0, 0.0},
 					{-1.0, 2.5, nil, nil, -4.0},
 					{-2.0, 1.0, nil, nil, -8.0},
@@ -266,7 +255,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, 4.0, nil, nil, nil},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, 1.0, nil, 120.0, nil},
 					{0.0, 1.0, 3.0, 4.0, 0.0},
 					{nil, 1.0, nil, nil, nil},
 					{-2.0, 1.0, nil, nil, -8.0},
@@ -288,7 +276,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, 4.0, 10.0, 10.0, -5.0},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, 1.0, 3.0, 120.0, 0.0},
 					{0.0, 1.0, 3.0, 4.0, 0.0},
 					{-2.0, 1.0, nil, nil, -8.0},
 					{-2.0, 1.0, nil, nil, -8.0},
@@ -310,7 +297,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, 6.0, nil, nil, nil},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, 4.0, nil, 120.0, nil},
 					{0.0, 4.0, 3.0, 4.0, 0.0},
 					{nil, 4.0, nil, nil, nil},
 					{-2.0, 1.0, nil, nil, -8.0},
@@ -332,7 +318,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, 6.0, 30.0, 400.0, -10.0},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, 4.0, 10.0, 120.0, -5.0},
 					{0.0, 4.0, 3.0, 4.0, 0.0},
 					{0.0, 4.0, 3.0, 4.0, 0.0},
 					{-2.0, 1.0, 3.0, 4.0, -8.0},
@@ -354,7 +339,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, 4.6, nil, nil, nil},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, 1.75, nil, 120.0, nil},
 					{0.0, 1.5, 3.0, 4.0, 0.0},
 					{nil, nil, nil, nil, nil},
 					{-2.0, 1.0, nil, nil, -8.0},
@@ -376,7 +360,6 @@ func TestFill(t *testing.T) {
 					{20.0, 6.0, 30.0, 400.0, -10.0},
 					{13.0, nil, nil, nil, -6.5},
 					{10.0, 4.0, 10.0, 10.0, -5.0},
-					{1.0, nil, nil, 120.0, -0.5},
 					{0.0, nil, 3.0, 4.0, 0.0},
 					{nil, nil, nil, nil, nil},
 					{-2.0, 1.0, nil, nil, -8.0},
@@ -391,7 +374,7 @@ func TestFill(t *testing.T) {
 		t.Run("Linear refCol not sorted", func(t *testing.T) {
 			b := newFreshBow(t, Float64)
 
-			_, err := b.FillLinear(3, 1)
+			_, err := b.FillLinear(4, 1)
 			require.Error(t, err)
 		})
 	})
@@ -405,7 +388,6 @@ func TestFill(t *testing.T) {
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
 					{10, false, nil},
-					{1, true, "hey"},
 					{0, nil, "yop"},
 					{-1, true, nil},
 					{-2, false, "ioi"},
@@ -419,8 +401,7 @@ func TestFill(t *testing.T) {
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
 					{10, false, "sfr"},
-					{1, true, "hey"},
-					{0, true, "yop"},
+					{0, false, "yop"},
 					{-1, true, "yop"},
 					{-2, false, "ioi"},
 				})
@@ -439,7 +420,6 @@ func TestFill(t *testing.T) {
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
 					{10, false, nil},
-					{1, true, "hey"},
 					{0, nil, "yop"},
 					{-1, true, nil},
 					{-2, false, "ioi"},
@@ -452,8 +432,7 @@ func TestFill(t *testing.T) {
 				[][]interface{}{
 					{20, false, "dgr"},
 					{13, false, "sfr"},
-					{10, false, "hey"},
-					{1, true, "hey"},
+					{10, false, "yop"},
 					{0, true, "yop"},
 					{-1, true, "ioi"},
 					{-2, false, "ioi"},
@@ -473,7 +452,6 @@ func TestFill(t *testing.T) {
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
 					{10, false, nil},
-					{1, true, "hey"},
 					{0, nil, "yop"},
 					{-1, true, nil},
 					{-2, false, "ioi"},
@@ -491,7 +469,6 @@ func TestFill(t *testing.T) {
 					{20, nil, "dgr"},
 					{13, false, "sfr"},
 					{10, false, nil},
-					{1, true, "hey"},
 					{0, nil, "yop"},
 					{-1, true, nil},
 					{-2, false, "ioi"},
@@ -506,13 +483,13 @@ func TestFill(t *testing.T) {
 	t.Run("with metadata", func(t *testing.T) {
 		// Previous
 		b1, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 1, 3}, []bool{true, true, true}),
-			NewSeries("float", []float64{1., 1., 3.}, []bool{true, true, true}),
+			NewSeries("int", Int64, []int64{1, 1, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 1., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -522,13 +499,13 @@ func TestFill(t *testing.T) {
 
 		// Next
 		b2, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 3, 3}, []bool{true, true, true}),
-			NewSeries("float", []float64{1., 3., 3.}, []bool{true, true, true}),
+			NewSeries("int", Int64, []int64{1, 3, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 3., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -538,13 +515,13 @@ func TestFill(t *testing.T) {
 
 		// Mean
 		b3, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 2, 3}, []bool{true, true, true}),
-			NewSeries("float", []float64{1., 2., 3.}, []bool{true, true, true}),
+			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, true, true}),
+			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, true, true}),
 		)
 		require.NoError(t, err)
 
@@ -554,13 +531,13 @@ func TestFill(t *testing.T) {
 
 		// Linear
 		b4, err := NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 0, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 0., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 0, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 0., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 		expected, err = NewBowWithMetadata(NewMetadata([]string{"k"}, []string{"v"}),
-			NewSeries("int", []int64{1, 2, 3}, []bool{true, false, true}),
-			NewSeries("float", []float64{1., 2., 3.}, []bool{true, false, true}),
+			NewSeries("int", Int64, []int64{1, 2, 3}, []bool{true, false, true}),
+			NewSeries("float", Float64, []float64{1., 2., 3.}, []bool{true, false, true}),
 		)
 		require.NoError(t, err)
 

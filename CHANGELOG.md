@@ -1,3 +1,17 @@
+UNRELEASED [XXXX-XX-XX]
+-------------------
+
+- General
+  - bump to go 1.18
+  - bump to arrow/go/v8
+  - remove useless count script
+  - add gci linter
+  - improve documentation
+  - improve error handling
+  - improve code readability
+  - remove code gen to prepare for Timestamp support
+  - add Bow data type in Buffer to decouple Go native types from Arrow types
+
 v0.18.0 [2022-02-16]
 -------------------
 

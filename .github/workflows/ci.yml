@@ -9,11 +9,11 @@ jobs:
       BENCH_RESULTS_DIR_PATH: benchmarks
       BENCH_COMPARISON_FILE_PATH: ${{ format('benchmarks/comparison-{0}-vs-{1}.txt', github.base_ref, github.sha) }}
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
         with:
-          go-version: 1.17
+          go-version-file: 'go.mod'
+          cache: true
 
       - name: Run tests
         run: |
@@ -28,17 +28,17 @@ jobs:
           BENCH_RESULTS_FILE_PATH: ${{ format('benchmarks/{0}.txt', github.sha) }}
 
       - name: ${{ format('Uploading artifact of sha {0} benchmark results', github.sha) }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ format('{0}-sha-benchmark-results', github.sha) }}
           path: ${{ format('benchmarks/{0}.txt', github.sha) }}
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: ${{ github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.base_ref }}
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ format('{0}-sha-benchmark-results', github.sha) }}
@@ -53,7 +53,7 @@ jobs:
 
       - name: ${{ format('Uploading artifact of base ref {0} benchmark results', github.base_ref) }}
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ format('{0}-base-ref-benchmark-results', github.base_ref) }}
           path: ${{ format('benchmarks/{0}.txt', github.base_ref) }}
@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload artifact of benchmark comparison results
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: benchmark-comparison-results
           path: ${{ format('benchmarks/comparison-{0}-vs-{1}.txt', github.base_ref, github.sha) }}
