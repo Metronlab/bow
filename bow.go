@@ -114,12 +114,12 @@ func NewBow(series ...Series) (Bow, error) {
 }
 
 // NewBowFromColBasedInterfaces returns a new Bow:
-// - colNames contains the Series names
-// - colTypes contains the Series data types, optional
-//   (if nil, the types will be automatically seeked)
-// - colBasedData contains the data itself as a two-dimensional slice,
-//   with the first dimension being the columns
-//   (colNames and colBasedData need to be of the same size)
+//   - colNames contains the Series names
+//   - colTypes contains the Series data types, optional
+//     (if nil, the types will be automatically seeked)
+//   - colBasedData contains the data itself as a two-dimensional slice,
+//     with the first dimension being the columns
+//     (colNames and colBasedData need to be of the same size)
 func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colBasedData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colBasedData) {
 		return nil, errors.New("colNames and colBasedData slices lengths don't match")
@@ -140,11 +140,11 @@ func NewBowFromColBasedInterfaces(colNames []string, colTypes []Type, colBasedDa
 }
 
 // NewBowFromRowBasedInterfaces returns a new Bow:
-// - colNames contains the Series names
-// - colTypes contains the Series data types, required
-// - rowBasedData contains the data itself as a two-dimensional slice,
-//   with the first dimension being the rows
-//   (colNames and rowBasedData need to be of the same size)
+//   - colNames contains the Series names
+//   - colTypes contains the Series data types, required
+//   - rowBasedData contains the data itself as a two-dimensional slice,
+//     with the first dimension being the rows
+//     (colNames and rowBasedData need to be of the same size)
 func NewBowFromRowBasedInterfaces(colNames []string, colTypes []Type, rowBasedData [][]interface{}) (Bow, error) {
 	if len(colNames) != len(colTypes) {
 		return nil, errors.New("colNames and colTypes slices lengths don't match")

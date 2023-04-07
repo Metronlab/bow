@@ -22,8 +22,8 @@ type Series struct {
 // - typ: Bow data Type
 // - dataArray: slice of the data
 // - validityArray:
-//  - if nil, the data will be non-nil
-//  - can be of type []bool or []byte to represent nil values
+//   - if nil, the data will be non-nil
+//   - can be of type []bool or []byte to represent nil values
 func NewSeries(name string, typ Type, dataArray, validityArray interface{}) Series {
 	return newSeries(name, typ, dataArray, validityArray)
 }
