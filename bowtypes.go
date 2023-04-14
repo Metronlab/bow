@@ -95,6 +95,15 @@ func (t Type) String() string {
 	return fmt.Sprintf("%s", at)
 }
 
+// ArrowDataType returns the arrow data type expected in schemas.
+func (t Type) ArrowDataType() arrow.DataType {
+	at, ok := mapBowToArrowTypes[t]
+	if !ok {
+		return nil
+	}
+	return at
+}
+
 func getBowTypeFromArrowFingerprint(fingerprint string) Type {
 	typ, ok := mapArrowFingerprintToBowTypes[fingerprint]
 	if !ok {
